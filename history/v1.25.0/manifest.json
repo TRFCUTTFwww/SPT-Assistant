@@ -1,0 +1,71 @@
+{
+  "version": "1.25.0",
+  "tag": "v1.25.0",
+  "importKind": "recovered-local-files-not-original-git-history",
+  "sourceStatus": "partial-source-snapshot",
+  "sourceBackup": "backup-before-1.25.1",
+  "sourceFiles": [
+    {
+      "path": "esp-cover/Esp.csproj",
+      "sha256": "C1D7161AC82CD40F4477F2931BBBBD947DBED2A9FFD5981097150DB7F9ECF118",
+      "bytes": 853
+    },
+    {
+      "path": "esp-cover/InterfaceMenu.cs",
+      "sha256": "4008658A249924812D8508D70F435D53A4C881C893A81141609F8126ADB0EF3B",
+      "bytes": 29009
+    },
+    {
+      "path": "esp-cover/RaidClock.cs",
+      "sha256": "F85495F458C217504CA81752C5B267C2035C7DCCE3446AF021EC5B1B4CD5F106",
+      "bytes": 9317
+    },
+    {
+      "path": "esp-cover/RuntimeModule.cs",
+      "sha256": "EE34723069A36F96BB0C0E15E3793077A985B2A076302B0120E5DDD443B7C5C8",
+      "bytes": 1221
+    },
+    {
+      "path": "installer/Installer.csproj",
+      "sha256": "0CA743EC9BD3786E52DCCC2D56C7EAC00D720C0F491DE2596ED505612E762DC3",
+      "bytes": 288
+    },
+    {
+      "path": "installer/Program.cs",
+      "sha256": "898BA7C9884D9C8947321F4D42CFCBCC328078E4D3E39FDC17199DC629565FD3",
+      "bytes": 13701
+    }
+  ],
+  "canonicalModule": {
+    "Version": "1.25.0",
+    "Path": "release-1.25.0/payload/Local.Spt5.ESP.Core.module",
+    "Sha256": "DA1BA7601D6A404D6DE143968A042DF855A747A03170E558DECC85A654C1C3E5",
+    "Length": 728064,
+    "Modified": "2026-11-02T11:06:30.2505153Z"
+  },
+  "archivedModuleCopies": [
+    {
+      "Version": "1.25.0",
+      "Path": "backup-installed-1.25.1-20261102-204439-372/Local.Spt5.ESP.Core.module",
+      "Sha256": "DA1BA7601D6A404D6DE143968A042DF855A747A03170E558DECC85A654C1C3E5",
+      "Length": 728064,
+      "Modified": "2026-11-02T11:06:30.2505153Z"
+    },
+    {
+      "Version": "1.25.0",
+      "Path": "release-1.25.0/payload/Local.Spt5.ESP.Core.module",
+      "Sha256": "DA1BA7601D6A404D6DE143968A042DF855A747A03170E558DECC85A654C1C3E5",
+      "Length": 728064,
+      "Modified": "2026-11-02T11:06:30.2505153Z"
+    }
+  ],
+  "artifactKind": "installer-package",
+  "assets": [
+    {
+      "name": "SPT-Assistant-1.25.0.zip",
+      "sha256": "5A8F52447E1AD329000A08A80D23969886E0B9E7B48C82C4E2546317FBD99BAF",
+      "bytes": 525009
+    }
+  ],
+  "inRaidVerifiedByThisImport": false
+}
