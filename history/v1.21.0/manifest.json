@@ -1,0 +1,696 @@
+{
+  "version": "1.21.0",
+  "tag": "v1.21.0",
+  "importKind": "recovered-local-files-not-original-git-history",
+  "sourceStatus": "client-source-snapshot",
+  "sourceBackup": "backup-before-1.22.0",
+  "sourceFiles": [
+    {
+      "path": "esp-cover/AggroDisplay.cs",
+      "sha256": "35EC3D745C3BF5CE142A0CB96FC35C1BD3D6B90871B943409C38A2E1867AD14F",
+      "bytes": 3720
+    },
+    {
+      "path": "esp-cover/AiActorControl.cs",
+      "sha256": "DD5D24E4C362F88E1A27C00BE4DB699FBBCD808CAD6B3AF1851F7D4BD737F513",
+      "bytes": 22441
+    },
+    {
+      "path": "esp-cover/AiBackpackEditor.cs",
+      "sha256": "DF443D56C98754073C7044C249140F8003993E0D64A68DF2A56E3C74D9C32C3A",
+      "bytes": 10271
+    },
+    {
+      "path": "esp-cover/AiBehaviorRules.cs",
+      "sha256": "D6F1B86BA87411C20A16B876239F31322FDE74B3CC830604419C8A8FBB47EC03",
+      "bytes": 379
+    },
+    {
+      "path": "esp-cover/AiControlRules.cs",
+      "sha256": "9F9636622C51CCAF1CFBE2C73842935923963A46C226AAC718AE470C9A32374C",
+      "bytes": 1573
+    },
+    {
+      "path": "esp-cover/AiEquipmentEditor.cs",
+      "sha256": "F32B927168BD24BC18540002D51E3BDDC26246C10DEB679A42100FFF84D19433",
+      "bytes": 16103
+    },
+    {
+      "path": "esp-cover/AiEquipmentRemoval.cs",
+      "sha256": "74C70F247F7DE28E44E099FED730640FCE95E98DFBE54EB5021575F7908D14D6",
+      "bytes": 4244
+    },
+    {
+      "path": "esp-cover/AiEquipmentRemovalRules.cs",
+      "sha256": "D86C32BBB067AE6B6C69DCC515901445022F50E6D1B0C4DC2BA90A04FFBD2D59",
+      "bytes": 381
+    },
+    {
+      "path": "esp-cover/AiLimitCompatibility.cs",
+      "sha256": "913E5E85F27F4C5EA231C143A81EBD06DCB942C6FC25C527653CB9CF77187BAC",
+      "bytes": 6001
+    },
+    {
+      "path": "esp-cover/AimMath.cs",
+      "sha256": "CF1C278466EAAF1C961FD75690AF75B75234D739D50CEC98C5EDF93D38955144",
+      "bytes": 1720
+    },
+    {
+      "path": "esp-cover/AimModes.cs",
+      "sha256": "2CAB8F963856439AE60D6C5692D2EBB3A3F5C11DADF32DFB33796E532F18E049",
+      "bytes": 399
+    },
+    {
+      "path": "esp-cover/AimTargetFilter.cs",
+      "sha256": "48EB1B1717CDCA1982F8BAE99F7463E40037D867FA4B20F322BB6A72398E9D41",
+      "bytes": 9077
+    },
+    {
+      "path": "esp-cover/AimTargetRules.cs",
+      "sha256": "D9FA3EFFF60CE5B6C2C0A330B01BF347BD27CA4C944F7F2867A55F2C9E555BAD",
+      "bytes": 1536
+    },
+    {
+      "path": "esp-cover/AiPairSelection.cs",
+      "sha256": "F20837AA93F471EECFA238F4F112A5AF2C20F75DDCA95BF27CCA45BB27DB457A",
+      "bytes": 983
+    },
+    {
+      "path": "esp-cover/AiPairTransfer.cs",
+      "sha256": "6793694371C4952DA475BEA1013D139CD88D8C9FDE3DB3D91CD02999ABF2B6E9",
+      "bytes": 5966
+    },
+    {
+      "path": "esp-cover/AirdropControl.cs",
+      "sha256": "A3DE9273A31A40D03E1DC5A979D2F035D440BABDB37ABEE2C38DFED7B932E8F6",
+      "bytes": 7206
+    },
+    {
+      "path": "esp-cover/AirdropDirectSpawn.cs",
+      "sha256": "EED70986787015D45D5F43FEB4756FB9AF2FC6619C585339AF0374A1F5D356EB",
+      "bytes": 4480
+    },
+    {
+      "path": "esp-cover/AirdropInformation.cs",
+      "sha256": "4D5544691A39E8FF9A71C3A485846EC127048451A0231A9204A63A8364F45AFE",
+      "bytes": 10711
+    },
+    {
+      "path": "esp-cover/AirdropLedger.cs",
+      "sha256": "3E004A29366AB7EF5527F8AEF9939184324C1794F518E905DAAC47D446D8A942",
+      "bytes": 898
+    },
+    {
+      "path": "esp-cover/AirdropTeleport.cs",
+      "sha256": "8DA14169A5C16C558B261B82CC20AE1BF9FECB2FD9C682F3FB8989563A13AECE",
+      "bytes": 1235
+    },
+    {
+      "path": "esp-cover/AiSpawnCatalog.cs",
+      "sha256": "7922A906D03B240736145100CF2F5A9B3B24572715A749F1AACC1873E4867DFF",
+      "bytes": 2095
+    },
+    {
+      "path": "esp-cover/AiTeamControl.cs",
+      "sha256": "A3F0028035A76E99BA99935F5C7DB9D01CC65B3BA544E7CF6D9A7497AF2A1D43",
+      "bytes": 16431
+    },
+    {
+      "path": "esp-cover/AiTeamRules.cs",
+      "sha256": "AEFA42E24B5E7116F697A99ABF0F56F06BD428A9B25BA7C3B13AD4C7B9007727",
+      "bytes": 451
+    },
+    {
+      "path": "esp-cover/AiTestControl.cs",
+      "sha256": "EC1F494BE07050A130492F030928059EF64F6E3A7F4834923101FB224A8600D7",
+      "bytes": 21770
+    },
+    {
+      "path": "esp-cover/AiTestRules.cs",
+      "sha256": "085411092BD3DC62AF3BA0971677AA174B274C59CD40A4F284FB96CB76069919",
+      "bytes": 1225
+    },
+    {
+      "path": "esp-cover/AiTypeFilter.cs",
+      "sha256": "37E081C5E10C6F75624BE0448FD57F25C5863B5BD9FF3250BAF9C96D89444B7C",
+      "bytes": 1345
+    },
+    {
+      "path": "esp-cover/AiTypePicker.cs",
+      "sha256": "E15D0B94CB440D0CA5174EBE80742D6F54381EC51E8EF5E01A28E68083C4C06D",
+      "bytes": 793
+    },
+    {
+      "path": "esp-cover/ArmorAnalysis.cs",
+      "sha256": "745CB559BD3B816668A656091FDF701556DC52EC03E1054188849DA070D1239F",
+      "bytes": 4377
+    },
+    {
+      "path": "esp-cover/BodyTint.cs",
+      "sha256": "E647E7801A5E9AD0793B1D5583B950A253511F9B67DCF0159D5DFFD9493C6B23",
+      "bytes": 5877
+    },
+    {
+      "path": "esp-cover/BossLabels.cs",
+      "sha256": "BAFEF8FDF223DFC5726B34F30D61167C2033D29B2A697060F3FFF030A5EE63B9",
+      "bytes": 1123
+    },
+    {
+      "path": "esp-cover/BossNameRules.cs",
+      "sha256": "3FC7E5F4073CAB2A8A480F91E694F102A090B7F7AFEB2D9BDFCC1AD5919FB0C8",
+      "bytes": 880
+    },
+    {
+      "path": "esp-cover/BtrDisplay.cs",
+      "sha256": "885BBC3AC68AFE7BA82D625A2E780F5E68B6E2FCD85659CC54E973E9C06B859D",
+      "bytes": 6190
+    },
+    {
+      "path": "esp-cover/BtrRouteRules.cs",
+      "sha256": "4EA2840D52CA925CD6B995C7020295C403DC290D99723BE8F0419B9060BEEF66",
+      "bytes": 805
+    },
+    {
+      "path": "esp-cover/BuffBatch.cs",
+      "sha256": "BB8CA53E108D3B9A6E165E50B1593EE9D68420BC595F405FC95506A5D54355CF",
+      "bytes": 797
+    },
+    {
+      "path": "esp-cover/BuffRules.cs",
+      "sha256": "1A49095E492FF3A5FA7ECFAAB1BDC147914892CEB2CAC1BA76A5D9266ADDDB8C",
+      "bytes": 4281
+    },
+    {
+      "path": "esp-cover/BulletTrajectories.cs",
+      "sha256": "0FD4489D5F6071D75B84775BE6E5587FA1C5A6DD3009E13E4315A3BF2096B0B7",
+      "bytes": 5645
+    },
+    {
+      "path": "esp-cover/CharacterBuffs.cs",
+      "sha256": "604FADDF007157458C60D0CDFF6689E10419B90BB25A0EDDED44EBFAF744DF91",
+      "bytes": 26720
+    },
+    {
+      "path": "esp-cover/CnConfig.cs",
+      "sha256": "7241687FA490F3625707693FAF42BC43591190B1F6A6E0A9ABD0C9DD7D1FDC04",
+      "bytes": 14888
+    },
+    {
+      "path": "esp-cover/CombatAssist.cs",
+      "sha256": "41B3CE02CE6974B60F1437274DFC5CA19364520347A2CA25AFFAEF8EB2BB560E",
+      "bytes": 17488
+    },
+    {
+      "path": "esp-cover/CommandoConsole.cs",
+      "sha256": "32D9D35059A5A8EE1ED83D63F916C7BB27D70EC9CA3396B6439CE488E1DA254D",
+      "bytes": 6299
+    },
+    {
+      "path": "esp-cover/ConfigLimits.cs",
+      "sha256": "22560F94FDA154F5B153E1BE8010EADDBDC735233724AC5EE39FC0E89B9612B8",
+      "bytes": 1895
+    },
+    {
+      "path": "esp-cover/ConfigProfiles.cs",
+      "sha256": "5CAC8EC004C49F51308ED179BC57DDB043F3991C32504BFEAE5C23FB4CDAEBDA",
+      "bytes": 5495
+    },
+    {
+      "path": "esp-cover/ContainerAnchor.cs",
+      "sha256": "0CFA3DABA0527042154F06E08D2BE194D11D58032D26CBF3B4F57D83FB020C32",
+      "bytes": 1033
+    },
+    {
+      "path": "esp-cover/CorpseDisplay.cs",
+      "sha256": "908EF3C0F3209972C155CBD867DE1B06566A098179BB2E29EC68C3449A11F8F0",
+      "bytes": 3108
+    },
+    {
+      "path": "esp-cover/DamagePreview.cs",
+      "sha256": "091A9ECDD7597FA339D5F37A38D2DB789E2B642489DEE45834A8F81A3AF85F11",
+      "bytes": 4729
+    },
+    {
+      "path": "esp-cover/DamagePreviewRules.cs",
+      "sha256": "BFCEC52882FF156BBB518EE3E8B041D0F4FDE4B23766D47D94E21650672EFFAC",
+      "bytes": 732
+    },
+    {
+      "path": "esp-cover/DeathInventory.cs",
+      "sha256": "8E5A7666FB1511AD175A4309BCB6435085BC81D706C11905DF2D17BF26E2DCC4",
+      "bytes": 934
+    },
+    {
+      "path": "esp-cover/DoorAssist.cs",
+      "sha256": "D1C91F989B965D5B29FD2F508412877AF62195862464C41E31B79A2526206849",
+      "bytes": 1735
+    },
+    {
+      "path": "esp-cover/Esp.csproj",
+      "sha256": "E6AE8FB6038FFF3E348B40442EEC6C8E30D6409EDF6EF10AA397E477B27D39C4",
+      "bytes": 853
+    },
+    {
+      "path": "esp-cover/ExfilDisplay.cs",
+      "sha256": "C6D731CEDDA157C41658D6DD0E69F3C153BADFF3832518E4FF6B4B798D9A6D0B",
+      "bytes": 27903
+    },
+    {
+      "path": "esp-cover/ExfilPolicy.cs",
+      "sha256": "E72DF7A562E31D03A35DCFD3C5F53832939D1AFCDFB8B64380F557B134DE537B",
+      "bytes": 1641
+    },
+    {
+      "path": "esp-cover/FeatureConfig.cs",
+      "sha256": "1E550B06AABAAC493C98ED7EF14D07BB23F72A998EB7ED777DCF5928812DE216",
+      "bytes": 440
+    },
+    {
+      "path": "esp-cover/FeatureToasts.cs",
+      "sha256": "043EB8EBFEE2065C998F137DCFBB329959D1CA2E709BD6011BF28468660ED47C",
+      "bytes": 2017
+    },
+    {
+      "path": "esp-cover/FloatingStatus.cs",
+      "sha256": "75758BD5D7A8859D34031AF1F254979579576AA3465113DF9FC64A1CE20B591B",
+      "bytes": 5217
+    },
+    {
+      "path": "esp-cover/FocusSelection.cs",
+      "sha256": "B5E95BE85D09C50CFE7C64076C62A562E090E4F4B3710028A4B4A05E0FC0D0E9",
+      "bytes": 1117
+    },
+    {
+      "path": "esp-cover/GearMailClient.cs",
+      "sha256": "4FA221E8073AEF5484447EF68853AFD39D1975D1626EF7166EFC05194D36D38F",
+      "bytes": 2584
+    },
+    {
+      "path": "esp-cover/GrenadeAlert.cs",
+      "sha256": "492A79F68FEB40E55775FFC9A38BADB29197AF2FC270A4C6FF26A826E8E0C2E8",
+      "bytes": 3054
+    },
+    {
+      "path": "esp-cover/GroundNavigation.cs",
+      "sha256": "713149DB89226550F4E55BBF6D2BBEC576635EC715A72EAD2EE79F47F1171B5A",
+      "bytes": 15817
+    },
+    {
+      "path": "esp-cover/HitDisplay.cs",
+      "sha256": "9251A0EB890622D822466DE8D4EB3BFDCC6F944E93A33C5E9DD646EF0B78A304",
+      "bytes": 9217
+    },
+    {
+      "path": "esp-cover/HitFeed.cs",
+      "sha256": "C9C596C217F93A88E4D607BA6997129B048D927A2D0FE211CB3EBD7C21CFAB9E",
+      "bytes": 1428
+    },
+    {
+      "path": "esp-cover/Hotkeys.cs",
+      "sha256": "98917BD1C0CEA42D12D9789F31097804E41CA3DB793DD57C092828318207F9AA",
+      "bytes": 298
+    },
+    {
+      "path": "esp-cover/IncomingDamage.cs",
+      "sha256": "99940967BF87CF541A2D04256D14B9F5C669EE0FFA147FCEFC822E94E3A30BD7",
+      "bytes": 8611
+    },
+    {
+      "path": "esp-cover/IncomingDamageFeed.cs",
+      "sha256": "CD51574485E99F8E85E8B7BFE8B374370095456E2F2F3CAFA53019DD4A2E2D7D",
+      "bytes": 1519
+    },
+    {
+      "path": "esp-cover/InteractionPoints.cs",
+      "sha256": "0AA1CD8CBEC33D32AD2B73A4B893E5923E371142B3D3A99AEC02553ABFDECC26",
+      "bytes": 4532
+    },
+    {
+      "path": "esp-cover/InterfaceMenu.cs",
+      "sha256": "50003B3570C5764896741438C0EE4239EE67F97E1BD1CC7F369EFEADC7BD4012",
+      "bytes": 28284
+    },
+    {
+      "path": "esp-cover/ItemAttachments.cs",
+      "sha256": "86BEF6966493F7C13C4BDCF2F8190F292F28775234CD5654FBB29989A0F69DE7",
+      "bytes": 10213
+    },
+    {
+      "path": "esp-cover/ItemCatalog.cs",
+      "sha256": "1FB8D187A224A3551D19733CBB60B998CB0FFDFAC16EB429A3F2B3A727BCF301",
+      "bytes": 2311
+    },
+    {
+      "path": "esp-cover/ItemComponentParameters.cs",
+      "sha256": "046CC881863401DDD1DAF6925F4C9B56A10493E641903C5519FAF2D9CAC60D7F",
+      "bytes": 8123
+    },
+    {
+      "path": "esp-cover/ItemSpawner.cs",
+      "sha256": "827BDB664F77CC30568A7691FC67CAF45D80899D1612F276773F7B7819DA58ED",
+      "bytes": 29357
+    },
+    {
+      "path": "esp-cover/ItemSpawnRules.cs",
+      "sha256": "6493FBB47C7F617AFE7594BA58F85A3F4A9037F8D3A532F629C4EB39BCED02CC",
+      "bytes": 1486
+    },
+    {
+      "path": "esp-cover/LabelLayout.cs",
+      "sha256": "2B399FA7733717F5D603264B1B0B8091A12F78EC50B64BB48A836012C07FE90C",
+      "bytes": 1774
+    },
+    {
+      "path": "esp-cover/LiveActorReference.cs",
+      "sha256": "EB5BA0870FA58F615F6F831DFFD0B0C2C9498FCECC199EC2E553C66D462D78F9",
+      "bytes": 1047
+    },
+    {
+      "path": "esp-cover/LoadoutPlans.cs",
+      "sha256": "0E2897045FB2FF6AB185EF614DC014B580763CAEE928748CA8EBD8CA2A5C3054",
+      "bytes": 9017
+    },
+    {
+      "path": "esp-cover/LootDisplay.cs",
+      "sha256": "2FCAADA03F4E7DD664FA524D54331B2C37BB91C82441F9D5FC19D78142652212",
+      "bytes": 9592
+    },
+    {
+      "path": "esp-cover/MagazineDisplay.cs",
+      "sha256": "E7924E20E9ECC56D941038A567788B2416A1BBCB22472BDE3E64E1E57B9513B1",
+      "bytes": 4511
+    },
+    {
+      "path": "esp-cover/MenuIconGeometry.cs",
+      "sha256": "487ED78538ACE55436B2EE68D45CBC22F1BA12FA11DE5D228111D675E1B56C97",
+      "bytes": 2857
+    },
+    {
+      "path": "esp-cover/MenuIcons.cs",
+      "sha256": "AA1DCCE1461886742A3E673983FCD29320AAC50C706AD46644B298CCF8E11F7A",
+      "bytes": 844
+    },
+    {
+      "path": "esp-cover/MenuInputGate.cs",
+      "sha256": "D239395AD760270B0C114AB7DCED78729D9694C3B19A443B22E5A2EFD69D0F7A",
+      "bytes": 497
+    },
+    {
+      "path": "esp-cover/MenuRowLayout.cs",
+      "sha256": "0099732A1CCF036DE8C15C3096F135BAF675100FF98BA55FE3B4F2073E000DE1",
+      "bytes": 914
+    },
+    {
+      "path": "esp-cover/MenuSections.cs",
+      "sha256": "B7A27933F6B9A8C1D1540F08AB09A0525816FB7F61740F7D3E396DD16C7A29D0",
+      "bytes": 906
+    },
+    {
+      "path": "esp-cover/MovementAssist.cs",
+      "sha256": "502BEE5A5320F18CD69FD775735B48FA0447C6DC1544E5F77F8611B1D9FB62B8",
+      "bytes": 3397
+    },
+    {
+      "path": "esp-cover/NativeRaidTimer.cs",
+      "sha256": "768B6DEAE533C06FEC80A6AB023B2B03910CFD693FACAF67F9701902FD93CCED",
+      "bytes": 2694
+    },
+    {
+      "path": "esp-cover/NextRaidLoot.cs",
+      "sha256": "0B005E11B7F0B70671084129D8EB892A63C452D80E752418D0CA7668E2A5A536",
+      "bytes": 8405
+    },
+    {
+      "path": "esp-cover/NightVisionAssist.cs",
+      "sha256": "E9C46F218C5A1FD93A0A6E7EC72104D6E2A134E63B649B12BA556B65D01F8C06",
+      "bytes": 1629
+    },
+    {
+      "path": "esp-cover/PanelPages.cs",
+      "sha256": "E40438A3EEB345CA5122A74F6D16AFE122A6CD5BC1DE6C126BA24915E9AD0A78",
+      "bytes": 826
+    },
+    {
+      "path": "esp-cover/PlayerDamageControl.cs",
+      "sha256": "E64F50796DA25B8B35F726D61E831B9092E411F3E132088176FB8C1DB612A36E",
+      "bytes": 610
+    },
+    {
+      "path": "esp-cover/PlayerWeaponPresets.cs",
+      "sha256": "6C8646D2B6315279F34A7A03A43B5E28068B8A472E76B981C8CD4253EFDC5472",
+      "bytes": 7631
+    },
+    {
+      "path": "esp-cover/Plugin.cs",
+      "sha256": "4BBBE7422D6BC7C02E587E2ADF764EB362272F63A9E41CD4801F3D206E394A66",
+      "bytes": 29101
+    },
+    {
+      "path": "esp-cover/PopulationTally.cs",
+      "sha256": "2C903DDF7C7FC1D8AA2498E8B8602BEC7380B6562145C3A2B30C4E2411495FD0",
+      "bytes": 1210
+    },
+    {
+      "path": "esp-cover/PresetStorage.cs",
+      "sha256": "DD60017ADDACAC95229698080DFC8C9ACE191BA7C9458A68FE4D0ADD93164E4E",
+      "bytes": 1114
+    },
+    {
+      "path": "esp-cover/ProfileAdminPanel.cs",
+      "sha256": "627A7FE9527D0217B225F0FA3574AADB75BBEC95CC1058280C934AFA59D63AD2",
+      "bytes": 9387
+    },
+    {
+      "path": "esp-cover/ProtectionRules.cs",
+      "sha256": "E42F40D549DB21C459D3B4DC6625B7CF95A437E66CEE4DD61C16AB3D8478ACA2",
+      "bytes": 336
+    },
+    {
+      "path": "esp-cover/RaidClock.cs",
+      "sha256": "F85495F458C217504CA81752C5B267C2035C7DCCE3446AF021EC5B1B4CD5F106",
+      "bytes": 9317
+    },
+    {
+      "path": "esp-cover/RaidEnd.cs",
+      "sha256": "7081CF4E0C94979CFEB7114BDAE446D1389BAEEDC5F4702EB6B0F7597ED40AC0",
+      "bytes": 3571
+    },
+    {
+      "path": "esp-cover/RaidEndRules.cs",
+      "sha256": "43A5E818C8CA8C2BA455CE61E5B6E7CBFEDA9B119C98DAE498E678D085951B35",
+      "bytes": 1175
+    },
+    {
+      "path": "esp-cover/RaidEnvironment.cs",
+      "sha256": "38ED3B9B1BCCC79A5ADD423715CF6B0E851E87B92EB3C9C5EDEB9E1512861A3E",
+      "bytes": 6875
+    },
+    {
+      "path": "esp-cover/RaidLoot.cs",
+      "sha256": "733FE7631E63F23D00489C2BE15FEFCFE930BCC8E87B266A6A4AB6C2775D3C01",
+      "bytes": 17327
+    },
+    {
+      "path": "esp-cover/RaidPopulation.cs",
+      "sha256": "FCD878703971F691DE00C0CD8138B6F84608BFAC33A482ED8576E4D06EBD83F6",
+      "bytes": 2367
+    },
+    {
+      "path": "esp-cover/RaidRules.cs",
+      "sha256": "5D9276EFBB57D70A83CFC8868390B3751C4C7AB37272CD0971889C7968B861AE",
+      "bytes": 2149
+    },
+    {
+      "path": "esp-cover/RaidSpawnControl.cs",
+      "sha256": "A6CCDB47C060448FC0A62F45EFA95844BCF85997615973F2AACBD7D8AE743F14",
+      "bytes": 2098
+    },
+    {
+      "path": "esp-cover/RecoilAssist.cs",
+      "sha256": "BB575F0ABF7F966D16A36DBE275D8E7973F6F16819B3E6D2646C025955C827AF",
+      "bytes": 3522
+    },
+    {
+      "path": "esp-cover/RolePalette.cs",
+      "sha256": "105BC547372CD31DD49AE10DB0613981DCA5A78E54F38BB3E1C74A31C747004E",
+      "bytes": 2034
+    },
+    {
+      "path": "esp-cover/RouteGeometry.cs",
+      "sha256": "D58B96BB70444E91CFCFC5F8E25CE44FFF9C287B84E2C67D64BA8BE305861B65",
+      "bytes": 2874
+    },
+    {
+      "path": "esp-cover/RuntimeModule.cs",
+      "sha256": "C3A0FBD9DE12A50CEDCAE47C3634A3BD145252F8B3DBED3DF27ADFFC132CCE62",
+      "bytes": 1221
+    },
+    {
+      "path": "esp-cover/RuntimePerformance.cs",
+      "sha256": "E72B18AA0FFAA52B20918AF29E0410B3ACD7F5874551D83E55D62BAA7AD9EEED",
+      "bytes": 2094
+    },
+    {
+      "path": "esp-cover/ShotCorrectionWindow.cs",
+      "sha256": "336059A10C83C8F98818F37230C614F606CC223C742457DFDFA9D5C97C413995",
+      "bytes": 574
+    },
+    {
+      "path": "esp-cover/SoftAimControl.cs",
+      "sha256": "FF257B07F11857C72B3D174E8043BAC9E633E4E334012EE3411401EC9B37C8C7",
+      "bytes": 3374
+    },
+    {
+      "path": "esp-cover/SoftAimRules.cs",
+      "sha256": "A30B52883AE182368CD0AD515DFF22BB8A38F5003790C7AD0302E92EA798CBF0",
+      "bytes": 850
+    },
+    {
+      "path": "esp-cover/SurvivalAssist.cs",
+      "sha256": "BC684C23801855C10226219962F9824D31F3606042B180F176AE4B8076D6AD15",
+      "bytes": 3391
+    },
+    {
+      "path": "esp-cover/TaskNeeds.cs",
+      "sha256": "DEC5E4911830BE69C95432A5F9A661E67BDF2A8DA9E6AEEDB3157ABDDB060B42",
+      "bytes": 6937
+    },
+    {
+      "path": "esp-cover/TeleportControl.cs",
+      "sha256": "D066D36FF1B43EF435607B185BE6A8AF6036EA76AA08ABC3899A370AFD0B3F9C",
+      "bytes": 22379
+    },
+    {
+      "path": "esp-cover/TeleportRules.cs",
+      "sha256": "427321A663385D0C43B5D8935AADDA4B45213F6EC14F2E1B96C271465BB0DC0C",
+      "bytes": 4191
+    },
+    {
+      "path": "esp-cover/TrajectoryPath.cs",
+      "sha256": "C31CAF3AC9493FE5FF6258A7E1392F6E6F598CBE604542D7F960EF3D83685F9B",
+      "bytes": 754
+    },
+    {
+      "path": "esp-cover/TransitDisplay.cs",
+      "sha256": "FE527A32BE74F4EFBD5B5FC156E973497656ED12C9D036B8FB718140C0705C91",
+      "bytes": 3995
+    },
+    {
+      "path": "esp-cover/TripwireGeometry.cs",
+      "sha256": "BDCC4D80011F6D0F2916E6D03C1C74B73A1F4961C762BB3576FD217E7E5CE755",
+      "bytes": 1001
+    },
+    {
+      "path": "esp-cover/TripwireHighlight.cs",
+      "sha256": "5F08A0800F854946871873FE4A89C404D34B8965AD0958057A38220BB2F3CB91",
+      "bytes": 5863
+    },
+    {
+      "path": "esp-cover/UiPageLayout.cs",
+      "sha256": "8A2E5411B7EDCD146CAAF02300696A43C927BCF0FCC33242F46CC42D83666FC2",
+      "bytes": 375
+    },
+    {
+      "path": "esp-cover/VitalsDisplay.cs",
+      "sha256": "7663F4FD44B9CEE38D3F3825E162A4A6D8A9FC292A5B13D0C6E0832A35324BA0",
+      "bytes": 2686
+    },
+    {
+      "path": "esp-cover/WeaponComfort.cs",
+      "sha256": "5CF59A98A16A9CA915347DE2F1A28165B433BF992FBFA54BE52050E4CF17CF03",
+      "bytes": 4156
+    },
+    {
+      "path": "esp-cover/WeaponConditionRules.cs",
+      "sha256": "D79F4E109930C92F0DACD3B5FFEFFADA58FE67BEB085FAB04CFD7674358C902F",
+      "bytes": 660
+    },
+    {
+      "path": "esp-cover/WeaponEditor.cs",
+      "sha256": "0D318F4BFD29575D3CD61E8E29A468A868877256BAA8CE1B2069024AC9B494BA",
+      "bytes": 22162
+    },
+    {
+      "path": "esp-cover/WeaponEditorRules.cs",
+      "sha256": "C794647F7EAE022582CEF285E96122DAAC58154A2087D4F443E453F94CA3F663",
+      "bytes": 966
+    },
+    {
+      "path": "raid-controls-server/RaidControls.cs",
+      "sha256": "ED525A280608CBEDA0A53D915FACA7F6A9B28ADAED100816D11A529A1FC1AC2E",
+      "bytes": 14584
+    },
+    {
+      "path": "raid-controls-server/RaidControls.csproj",
+      "sha256": "F299D5F126D85921C3A9C1192F394226D2F5B99DC7B141E07EC0DB9F1F35268E",
+      "bytes": 865
+    },
+    {
+      "path": "raid-controls-server/RaidGenerationRules.cs",
+      "sha256": "C7B9F11F43CF491F2D9A4D01E5DEB339BB800AA2F8ACC7AF2583C811514F6808",
+      "bytes": 3729
+    },
+    {
+      "path": "shared/RaidSettings.cs",
+      "sha256": "E6F1B981A124E1FA65C266607DD5C38691C164639EC0482E57E755FE4845D83D",
+      "bytes": 3469
+    },
+    {
+      "path": "shared/RaidSpawnRules.cs",
+      "sha256": "C78555C1C2E1C29EED7BA105A38958CD99FDFF3B09A8DA6436605E26B3ECCB8E",
+      "bytes": 2032
+    },
+    {
+      "path": "raid-controls-tests/Program.cs",
+      "sha256": "167EF2A781E9F08CF5631989AD6107E74C1F1A0BB9EEEDABB85B98134418A8DA",
+      "bytes": 19092
+    },
+    {
+      "path": "raid-controls-tests/Tests.csproj",
+      "sha256": "743FD3C0665AE326CC1EFFA43ACB5A2CEDD070C27D1123F5B432F4D7184E101B",
+      "bytes": 689
+    },
+    {
+      "path": "installer/Installer.csproj",
+      "sha256": "0CA743EC9BD3786E52DCCC2D56C7EAC00D720C0F491DE2596ED505612E762DC3",
+      "bytes": 288
+    },
+    {
+      "path": "installer/Program.cs",
+      "sha256": "4383481761F586635D7F7BD198ADF67F7772CE0B4E4D96D4ED7DA16FB3B81C0A",
+      "bytes": 13347
+    }
+  ],
+  "canonicalModule": {
+    "Version": "1.21.0",
+    "Path": "release-1.21.0/payload/Local.Spt5.ESP.Core.module",
+    "Sha256": "68C555697B2DC295901704016D0123E2CB998DCBE49C7A7D5F860700CF581939",
+    "Length": 698880,
+    "Modified": "2026-11-02T09:46:56.4638531Z"
+  },
+  "archivedModuleCopies": [
+    {
+      "Version": "1.21.0",
+      "Path": "backup-installed-1.22.0-20261102-181702-909/Local.Spt5.ESP.Core.module",
+      "Sha256": "68C555697B2DC295901704016D0123E2CB998DCBE49C7A7D5F860700CF581939",
+      "Length": 698880,
+      "Modified": "2026-11-02T09:46:56.4638531Z"
+    },
+    {
+      "Version": "1.21.0",
+      "Path": "release-1.21.0/payload/Local.Spt5.ESP.Core.module",
+      "Sha256": "68C555697B2DC295901704016D0123E2CB998DCBE49C7A7D5F860700CF581939",
+      "Length": 698880,
+      "Modified": "2026-11-02T09:46:56.4638531Z"
+    }
+  ],
+  "artifactKind": "installer-package",
+  "assets": [
+    {
+      "name": "SPT-Assistant-1.21.0.zip",
+      "sha256": "B2D05F00C918628B48C18118E005DEE1980CB963DBF9C12EB41B455C42F16461",
+      "bytes": 504507
+    }
+  ],
+  "inRaidVerifiedByThisImport": false
+}
