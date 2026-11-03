@@ -1,0 +1,116 @@
+{
+  "version": "1.25.1",
+  "tag": "v1.25.1",
+  "importKind": "recovered-local-files-not-original-git-history",
+  "sourceStatus": "partial-source-snapshot",
+  "sourceBackup": "backup-before-1.26.0",
+  "sourceFiles": [
+    {
+      "path": "esp-cover/AiActorControl.cs",
+      "sha256": "DD5D24E4C362F88E1A27C00BE4DB699FBBCD808CAD6B3AF1851F7D4BD737F513",
+      "bytes": 22441
+    },
+    {
+      "path": "esp-cover/AiBackpackEditor.cs",
+      "sha256": "DF443D56C98754073C7044C249140F8003993E0D64A68DF2A56E3C74D9C32C3A",
+      "bytes": 10271
+    },
+    {
+      "path": "esp-cover/AiEquipmentEditor.cs",
+      "sha256": "F32B927168BD24BC18540002D51E3BDDC26246C10DEB679A42100FFF84D19433",
+      "bytes": 16103
+    },
+    {
+      "path": "esp-cover/AiLimitCompatibility.cs",
+      "sha256": "913E5E85F27F4C5EA231C143A81EBD06DCB942C6FC25C527653CB9CF77187BAC",
+      "bytes": 6001
+    },
+    {
+      "path": "esp-cover/AiTeamControl.cs",
+      "sha256": "A3F0028035A76E99BA99935F5C7DB9D01CC65B3BA544E7CF6D9A7497AF2A1D43",
+      "bytes": 16431
+    },
+    {
+      "path": "esp-cover/AiTestControl.cs",
+      "sha256": "76D904A384067A1838AD97CD665B981984B7EE6B82A849234E978139C84E3200",
+      "bytes": 21946
+    },
+    {
+      "path": "esp-cover/Esp.csproj",
+      "sha256": "505E92F7AC56E9D134F7E92FBCA85D8B81F287EAED472320CE197280904BE20A",
+      "bytes": 853
+    },
+    {
+      "path": "esp-cover/InterfaceMenu.cs",
+      "sha256": "A512DB1A64A796D41ECDCCF1797F87E25D19A4F2FB752106E06E22B329BDD071",
+      "bytes": 29118
+    },
+    {
+      "path": "esp-cover/MenuIconGeometry.cs",
+      "sha256": "487ED78538ACE55436B2EE68D45CBC22F1BA12FA11DE5D228111D675E1B56C97",
+      "bytes": 2857
+    },
+    {
+      "path": "esp-cover/MenuSections.cs",
+      "sha256": "B7A27933F6B9A8C1D1540F08AB09A0525816FB7F61740F7D3E396DD16C7A29D0",
+      "bytes": 906
+    },
+    {
+      "path": "esp-cover/MovementAssist.cs",
+      "sha256": "502BEE5A5320F18CD69FD775735B48FA0447C6DC1544E5F77F8611B1D9FB62B8",
+      "bytes": 3397
+    },
+    {
+      "path": "esp-cover/Plugin.cs",
+      "sha256": "C62D8A645CF026F5431B169A79BFF236F9145DD64A23C1E29687BBE2FB89602C",
+      "bytes": 29363
+    },
+    {
+      "path": "esp-cover/RuntimeModule.cs",
+      "sha256": "9ABBDC1978C386FF66290ECAD4D5C5E3EE68C35E9E6E4526CF9C9C550BAA9A17",
+      "bytes": 1221
+    },
+    {
+      "path": "installer/Installer.csproj",
+      "sha256": "0CA743EC9BD3786E52DCCC2D56C7EAC00D720C0F491DE2596ED505612E762DC3",
+      "bytes": 288
+    },
+    {
+      "path": "installer/Program.cs",
+      "sha256": "9131A5741522921CEC977B18BF0A4630C5696C91235AC3703884F8DA168B406B",
+      "bytes": 13701
+    }
+  ],
+  "canonicalModule": {
+    "Version": "1.25.1",
+    "Path": "release-1.25.1/payload/Local.Spt5.ESP.Core.module",
+    "Sha256": "EEBD928704C302302055F77B35028DC28E5923013C91E31B7D00897FE00053F5",
+    "Length": 728064,
+    "Modified": "2026-11-02T12:44:16.6633443Z"
+  },
+  "archivedModuleCopies": [
+    {
+      "Version": "1.25.1",
+      "Path": "backup-installed-1.26.0-20261102-214006-460/Local.Spt5.ESP.Core.module",
+      "Sha256": "EEBD928704C302302055F77B35028DC28E5923013C91E31B7D00897FE00053F5",
+      "Length": 728064,
+      "Modified": "2026-11-02T12:44:16.6633443Z"
+    },
+    {
+      "Version": "1.25.1",
+      "Path": "release-1.25.1/payload/Local.Spt5.ESP.Core.module",
+      "Sha256": "EEBD928704C302302055F77B35028DC28E5923013C91E31B7D00897FE00053F5",
+      "Length": 728064,
+      "Modified": "2026-11-02T12:44:16.6633443Z"
+    }
+  ],
+  "artifactKind": "installer-package",
+  "assets": [
+    {
+      "name": "SPT-Assistant-1.25.1.zip",
+      "sha256": "3F85256C10E97A3404D2A974C77005CD05F94B9FA01E0A37244DF6BB50084BCC",
+      "bytes": 524839
+    }
+  ],
+  "inRaidVerifiedByThisImport": false
+}
