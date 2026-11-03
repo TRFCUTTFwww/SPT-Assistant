@@ -1,0 +1,330 @@
+{
+  "note": "Raw source backups with incomplete or unproven version assignment; directory names can describe the NEXT change. Do not treat these as complete buildable versions.",
+  "files": [
+    {
+      "path": "backup-before-1.23.1/root/CommandoConsole.cs",
+      "sha256": "32D9D35059A5A8EE1ED83D63F916C7BB27D70EC9CA3396B6439CE488E1DA254D",
+      "bytes": 6299
+    },
+    {
+      "path": "backup-before-1.24.0/root/CommandoConsole.cs",
+      "sha256": "98FABF48AA6AB7437066EEC81E3555E3A49F0A5AC365921E556A6020CC5C49CD",
+      "bytes": 7323
+    },
+    {
+      "path": "backup-before-1.25.0/root/CommandoConsole.cs",
+      "sha256": "91024CE0DBA5EBCE2C18FC3D8CBF05BC29E17D2D15D682387B06DB62003B9EFB",
+      "bytes": 9936
+    },
+    {
+      "path": "backup-before-1.30.1/root/Esp.csproj",
+      "sha256": "432AF7378D07A832679EA2FDFA397E23F5936AECC4E7AF4296395DDCA0B5AEF3",
+      "bytes": 853
+    },
+    {
+      "path": "backup-before-1.30.1/root/HotkeyPage.cs",
+      "sha256": "183B0C61805289B727EC488F7E5FFBCC54999D2F47FB2FEFEFEAE2669E92F5FA",
+      "bytes": 1781
+    },
+    {
+      "path": "backup-before-1.30.1/root/InterfaceMenu.cs",
+      "sha256": "51A73D29B8FBDE92A2B68F55138E2E5E49F1605184C1A603EEE4770C96C06802",
+      "bytes": 30529
+    },
+    {
+      "path": "backup-before-1.30.1/root/MenuSections.cs",
+      "sha256": "88D0950D1049E673CA3204CCD6611DD808B33B5325CDE16AA0B99167E97FE9C3",
+      "bytes": 4357
+    },
+    {
+      "path": "backup-before-1.30.1/root/Plugin.cs",
+      "sha256": "12914A61137C498773366425B65A8E639D283098C49840D1C4E3B753C95AEE73",
+      "bytes": 30768
+    },
+    {
+      "path": "backup-before-1.30.1/root/RuntimeModule.cs",
+      "sha256": "0AA4BBBD69287008774FB07089D05EAD4E8F83D49E7E0F06F083B3654E822104",
+      "bytes": 1321
+    },
+    {
+      "path": "backup-before-1.30.2/root/Esp.csproj",
+      "sha256": "1C1B79E1993B844A17FB4F0114A5CD5C3D9A92D00243D313542D078C6CA25243",
+      "bytes": 853
+    },
+    {
+      "path": "backup-before-1.30.2/root/InterfaceMenu.cs",
+      "sha256": "93306BA8F3C566CC991EB2C29A0AF510748C4A647CE173019070F659D37246BC",
+      "bytes": 30581
+    },
+    {
+      "path": "backup-before-1.30.2/root/Plugin.cs",
+      "sha256": "56F4D1A7A612EF9778B5AD7DA815D63EA6FCFD6EEFE2CF689C74D88258CA1C66",
+      "bytes": 30768
+    },
+    {
+      "path": "backup-before-1.30.2/root/RuntimeModule.cs",
+      "sha256": "CA258730651A47EC54FBD119162E6975BF379AE922633E5D7A8D4D37572FE473",
+      "bytes": 1321
+    },
+    {
+      "path": "companion-fix-1.32.2/root/AiSpawnService.cs",
+      "sha256": "BC75E891895CE82634A2F8C4F5EE7D56C4F9C445AAB9DBDD2FB27C8EEDE1C952",
+      "bytes": 17703
+    },
+    {
+      "path": "companion-fix-1.32.2/root/AiTeamControl.cs",
+      "sha256": "03E9DE043E2C1EDBADBCFCA325C40EF7FED6C87828D06DE03AFF4F84B40ABB16",
+      "bytes": 19097
+    },
+    {
+      "path": "companion-fix-1.32.2/root/CompanionSquad.cs",
+      "sha256": "4EC6DCDB8C89C36524D1909BA3E428394F2178E87A88872C178689CE516439A1",
+      "bytes": 22479
+    },
+    {
+      "path": "companion-fix-1.32.3/root/AiActivationRules.cs",
+      "sha256": "5514581990776344A5F8B5D7D72758C2F70B4743EBA176723473FBB10096F846",
+      "bytes": 243
+    },
+    {
+      "path": "companion-fix-1.32.3/root/AiActorControl.cs",
+      "sha256": "34B01927E40E87E529B83923C434EF390311C5AAC2162A5983411291E3EB6A13",
+      "bytes": 33007
+    },
+    {
+      "path": "companion-fix-1.32.3/root/AiSpawnService.cs",
+      "sha256": "56D034550A3F16A62B966AC2FCEDAA9BFE3D316046C0AB50B3C4B892DA977EAF",
+      "bytes": 19412
+    },
+    {
+      "path": "companion-fix-1.32.3/root/AiTestControl.cs",
+      "sha256": "5032D4F142D2D55FA0FD64D02A1B50B43091D14F1578022D6BE45B466ADE5F75",
+      "bytes": 21796
+    },
+    {
+      "path": "companion-fix-1.32.3/root/CompanionSquad.cs",
+      "sha256": "493986D224FB105D34B1D4C78AE8F607B6F79635562766B478498D5818AB9AA6",
+      "bytes": 22590
+    },
+    {
+      "path": "companion-fix-1.32.3/root/Plugin.cs",
+      "sha256": "18A6C205B3B838867396568632BB58EFD61C9C5A94611122FEB1C31ECEFC8835",
+      "bytes": 31151
+    },
+    {
+      "path": "companion-fix-1.32.3/root/ProtectionRules.cs",
+      "sha256": "E42F40D549DB21C459D3B4DC6625B7CF95A437E66CEE4DD61C16AB3D8478ACA2",
+      "bytes": 336
+    },
+    {
+      "path": "companion-fix-1.32.4/root/AiNativeRelations.cs",
+      "sha256": "9A037A0BAFC33FEDE4A700038636756BFBFB3628D96C6076D28026B8DBEB0EC4",
+      "bytes": 4563
+    },
+    {
+      "path": "companion-fix-1.32.4/root/AiTeamControl.cs",
+      "sha256": "8402732237E6E20EFB4612F82C6C5D72B840852FEFF15D4FA46147DA1F410023",
+      "bytes": 19339
+    },
+    {
+      "path": "companion-fix-1.32.4/root/CompanionLoot.cs",
+      "sha256": "D74760AABBB2D7DEEFFD524A342177524D878BAEEABF548619283522D60C040E",
+      "bytes": 12360
+    },
+    {
+      "path": "companion-fix-1.32.4/root/CompanionSquad.cs",
+      "sha256": "2CC60CB8005C85E0C09D25F1701FA6090C0F1287925FE688380D68867C5C3DBE",
+      "bytes": 24070
+    },
+    {
+      "path": "companion-fix-1.32.4/root/Program.cs",
+      "sha256": "7252F5210D96682B407B537C9C7850AE9BD91EADD276BC80F2B12E1817C09F24",
+      "bytes": 120865
+    },
+    {
+      "path": "companion-fix-1.32.5/root/CompanionLoot.cs",
+      "sha256": "7602B3FCB8AC3323379D51639DC78185B97FCC7CA9F2C6BDC4C9DD0253B435A3",
+      "bytes": 13697
+    },
+    {
+      "path": "companion-fix-1.32.5/root/CompanionRules.cs",
+      "sha256": "069CFC4D5D96728F08A5ACA9DD51A946232457A68EBED51EA861B7CA5F7709EB",
+      "bytes": 3151
+    },
+    {
+      "path": "companion-fix-1.32.5/root/CompanionSquad.cs",
+      "sha256": "CEC4FEE7B5FF612F861252703ECA5358412B0D57EA8ADC91F3DD5EC30EE550A7",
+      "bytes": 26257
+    },
+    {
+      "path": "companion-fix-1.32.5/root/Program.cs",
+      "sha256": "A224DBC1C9E2D2B37DB1FA38AD6223AC10523949FAC933D51ABE2EB2CACEBA95",
+      "bytes": 123550
+    },
+    {
+      "path": "companion-fix-1.32.6/root/AiActorControl.cs",
+      "sha256": "66C20905F8B86B83F514999EBD4531159F2BC79BFE1F1CBDF1F4DF4C1D00F4D6",
+      "bytes": 33501
+    },
+    {
+      "path": "companion-fix-1.32.6/root/AiSceneDirector.cs",
+      "sha256": "85AFAE80C83E857004AC56DD48977F7F2314871B0E8479F303E2D64907C3F3F0",
+      "bytes": 20383
+    },
+    {
+      "path": "companion-fix-1.32.6/root/CompanionNavigation.cs",
+      "sha256": "8370D568F4FDC7E9317B062F50BB75FE284C4300EB358F83EF029C3B34939221",
+      "bytes": 3542
+    },
+    {
+      "path": "companion-fix-1.32.6/root/CompanionSquad.cs",
+      "sha256": "FFBD577AA0EA0EC731744F066CCE145AF6887F9F5F3EC34E139063EDE321B6F3",
+      "bytes": 27307
+    },
+    {
+      "path": "companion-fix-1.32.6/root/Program.cs",
+      "sha256": "EC0FF3307468E6DEC4E575916093BD28C75ADC02A4F911B98C937570612EBA0E",
+      "bytes": 125364
+    },
+    {
+      "path": "companion-fix-1.32.7/root/CompanionLocomotion.cs",
+      "sha256": "297521947D398686F220D6F30AE80F4D8DB3750E909F6D09FDA66DCDD288749F",
+      "bytes": 4701
+    },
+    {
+      "path": "companion-fix-1.32.7/root/CompanionLoot.cs",
+      "sha256": "1A8942AB1B2213EC9634A974039358944F342D9D024AB422291301015A4612C7",
+      "bytes": 17538
+    },
+    {
+      "path": "companion-fix-1.32.7/root/CompanionNavigation.cs",
+      "sha256": "8370D568F4FDC7E9317B062F50BB75FE284C4300EB358F83EF029C3B34939221",
+      "bytes": 3542
+    },
+    {
+      "path": "companion-fix-1.32.7/root/CompanionRules.cs",
+      "sha256": "1705A90A03A5B9BFAB727C915F26A4290E7939FAA80E91A194E59E3A74C96075",
+      "bytes": 3756
+    },
+    {
+      "path": "companion-fix-1.32.7/root/CompanionSquad.cs",
+      "sha256": "6387BBCEBBB97208EAD8A2E5C03109AB50ED860452E43D3F158A58AE5FD64622",
+      "bytes": 26118
+    },
+    {
+      "path": "companion-fix-1.32.7/root/Program.cs",
+      "sha256": "D23F01DC2388DEAC6C7A932011579A88D8A2E2BD5E498A51CA491F9F227CF3D9",
+      "bytes": 127517
+    },
+    {
+      "path": "staging-pre-hotloader/AimMath.cs",
+      "sha256": "CF1C278466EAAF1C961FD75690AF75B75234D739D50CEC98C5EDF93D38955144",
+      "bytes": 1720
+    },
+    {
+      "path": "staging-pre-hotloader/BodyTint.cs",
+      "sha256": "05CF92312FF3E33A3AB1CF976C4CDEE2F7E21B53F07D25466D623F83D5AF1887",
+      "bytes": 5714
+    },
+    {
+      "path": "staging-pre-hotloader/CnConfig.cs",
+      "sha256": "C3B65F374171EA152E7BE07B92EE805FD58AB95C97793F746308F0064067E38D",
+      "bytes": 10495
+    },
+    {
+      "path": "staging-pre-hotloader/CombatAssist.cs",
+      "sha256": "0C31DECB6B8D09557365ABABCCD1E40656797CB7C9899E3206F5CDC25EAA56B8",
+      "bytes": 14547
+    },
+    {
+      "path": "staging-pre-hotloader/ContainerAnchor.cs",
+      "sha256": "0CFA3DABA0527042154F06E08D2BE194D11D58032D26CBF3B4F57D83FB020C32",
+      "bytes": 1033
+    },
+    {
+      "path": "staging-pre-hotloader/CorpseDisplay.cs",
+      "sha256": "6B7EC2119123108429CCA3D39BB0652D09C9B53DE105EDC0F12D998DADD411DF",
+      "bytes": 3073
+    },
+    {
+      "path": "staging-pre-hotloader/Esp.csproj",
+      "sha256": "F1585B8E7C7B70CAC9133BA06A35E04BA1DC275B03CB2C959AA51BEB1184F87E",
+      "bytes": 428
+    },
+    {
+      "path": "staging-pre-hotloader/ExfilDisplay.cs",
+      "sha256": "9AB4986C327A54137670969647D5EA778FFD9450A0C6045B5DFD6E227F86A7A7",
+      "bytes": 16189
+    },
+    {
+      "path": "staging-pre-hotloader/ExfilPolicy.cs",
+      "sha256": "D48760B8FA89F85C1CFC635093936F3A8F29E52AF337F8EA94D4D127210F5834",
+      "bytes": 1375
+    },
+    {
+      "path": "staging-pre-hotloader/FocusSelection.cs",
+      "sha256": "B5E95BE85D09C50CFE7C64076C62A562E090E4F4B3710028A4B4A05E0FC0D0E9",
+      "bytes": 1117
+    },
+    {
+      "path": "staging-pre-hotloader/HitDisplay.cs",
+      "sha256": "4AF0A57FA49EF4A4748406D5BF8750944B7ADCFBAB1F66B7025055BC28A5DD46",
+      "bytes": 8069
+    },
+    {
+      "path": "staging-pre-hotloader/HitFeed.cs",
+      "sha256": "61D02409F32FD5CD063604021757BAE847FC7DEAFD9D8D556CA76A3696E8AA85",
+      "bytes": 1211
+    },
+    {
+      "path": "staging-pre-hotloader/Hotkeys.cs",
+      "sha256": "CFC311AA78C56C1D5F87D1373A1F5C26CA404BAECB5F0C5F4FBDD3CBE315722F",
+      "bytes": 277
+    },
+    {
+      "path": "staging-pre-hotloader/LabelLayout.cs",
+      "sha256": "2B399FA7733717F5D603264B1B0B8091A12F78EC50B64BB48A836012C07FE90C",
+      "bytes": 1774
+    },
+    {
+      "path": "staging-pre-hotloader/LootDisplay.cs",
+      "sha256": "E23ADA03399D6C9D9106F90ED274BBB724B7701DDBB55A6C495BC3EF47CA3C06",
+      "bytes": 9259
+    },
+    {
+      "path": "staging-pre-hotloader/PanelPages.cs",
+      "sha256": "E40438A3EEB345CA5122A74F6D16AFE122A6CD5BC1DE6C126BA24915E9AD0A78",
+      "bytes": 826
+    },
+    {
+      "path": "staging-pre-hotloader/Plugin.cs",
+      "sha256": "33EDD6959967CF46363BFD082FD958BD953CAFEB71341C1384FDB71D63FD30BF",
+      "bytes": 24858
+    },
+    {
+      "path": "staging-pre-hotloader/PopulationTally.cs",
+      "sha256": "184A498C25BFCD2FE98A7FFD1B5997E7BE494E35079E0B9358D9A845AF0C4A99",
+      "bytes": 1173
+    },
+    {
+      "path": "staging-pre-hotloader/RaidPopulation.cs",
+      "sha256": "9E758D0509309E9AC6B716524DC51B052824AD13565849996940045B7DBD9B11",
+      "bytes": 2270
+    },
+    {
+      "path": "staging-pre-hotloader/RecoilAssist.cs",
+      "sha256": "BB575F0ABF7F966D16A36DBE275D8E7973F6F16819B3E6D2646C025955C827AF",
+      "bytes": 3522
+    },
+    {
+      "path": "staging-pre-hotloader/RolePalette.cs",
+      "sha256": "739105A052449CACCC3870BD2DA9031412C348EB8FAE5724645B0F956E6A6DC4",
+      "bytes": 1823
+    },
+    {
+      "path": "staging-pre-hotloader/TransitDisplay.cs",
+      "sha256": "FE527A32BE74F4EFBD5B5FC156E973497656ED12C9D036B8FB718140C0705C91",
+      "bytes": 3995
+    }
+  ]
+}
