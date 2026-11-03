@@ -1,0 +1,33 @@
+{
+  "version": "1.5.3",
+  "tag": "v1.5.3",
+  "importKind": "recovered-local-files-not-original-git-history",
+  "sourceStatus": "not-retained",
+  "sourceBackup": null,
+  "sourceFiles": [],
+  "canonicalModule": {
+    "Version": "1.5.3",
+    "Path": "backup-before-1.6.0-live-20261031-194954/Local.Spt5.ESP.Core.module",
+    "Sha256": "ED3C2730423F93BB0BEFCACA3CF362CBBEE644D150EFE1F6B2B1CB1D9D24CEA8",
+    "Length": 224256,
+    "Modified": "2026-10-31T11:27:24.2302557Z"
+  },
+  "archivedModuleCopies": [
+    {
+      "Version": "1.5.3",
+      "Path": "backup-before-1.6.0-live-20261031-194954/Local.Spt5.ESP.Core.module",
+      "Sha256": "ED3C2730423F93BB0BEFCACA3CF362CBBEE644D150EFE1F6B2B1CB1D9D24CEA8",
+      "Length": 224256,
+      "Modified": "2026-10-31T11:27:24.2302557Z"
+    }
+  ],
+  "artifactKind": "runtime-module-only",
+  "assets": [
+    {
+      "name": "SPT-Assistant-1.5.3.zip",
+      "sha256": "83DE0BA894C31023D3CC308A590825C021A84C65383BB35B2C35269E9864E8F4",
+      "bytes": 145891
+    }
+  ],
+  "inRaidVerifiedByThisImport": false
+}
