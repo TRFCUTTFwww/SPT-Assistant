@@ -1,0 +1,70 @@
+{
+  "version": "1.32.6",
+  "tag": "v1.32.6",
+  "importKind": "recovered-local-files-not-original-git-history",
+  "sourceStatus": "not-retained",
+  "sourceBackup": null,
+  "sourceFiles": [
+    {
+      "path": "installer/Installer.csproj",
+      "sha256": "0CA743EC9BD3786E52DCCC2D56C7EAC00D720C0F491DE2596ED505612E762DC3",
+      "bytes": 288
+    },
+    {
+      "path": "installer/Program.cs",
+      "sha256": "7A01DE44303A853116B63F9120DF59EEA51F532659005F83D311F564325310D4",
+      "bytes": 23653
+    }
+  ],
+  "canonicalModule": {
+    "Version": "1.32.6",
+    "Path": "release-1.32.6/payload/Local.Spt5.ESP.Core.module",
+    "Sha256": "34C492990338D4C7763E600E488C62965B8719D16306259DBC63A5FAC735AD35",
+    "Length": 1091072,
+    "Modified": "2026-11-03T15:00:22.6698644Z"
+  },
+  "archivedModuleCopies": [
+    {
+      "Version": "1.32.6",
+      "Path": "backup-installed-1.32.6-20261103-225906-163/Local.Spt5.ESP.Core.module",
+      "Sha256": "D4A62D5AA088442854927ED36EF6590E38165102D9D0ABAB44192D1FAFEBEE74",
+      "Length": 1091072,
+      "Modified": "2026-11-03T14:54:52.8980562Z"
+    },
+    {
+      "Version": "1.32.6",
+      "Path": "backup-installed-1.32.6-20261103-230025-949/Local.Spt5.ESP.Core.module",
+      "Sha256": "88097965A9FFC19685718C5C13BEA8BF800550A5F10A281541C94E89ED23B963",
+      "Length": 1090560,
+      "Modified": "2026-11-03T14:59:01.2334016Z"
+    },
+    {
+      "Version": "1.32.6",
+      "Path": "backup-installed-1.32.7-20261103-234226-335/Local.Spt5.ESP.Core.module",
+      "Sha256": "34C492990338D4C7763E600E488C62965B8719D16306259DBC63A5FAC735AD35",
+      "Length": 1091072,
+      "Modified": "2026-11-03T15:00:22.6698644Z"
+    },
+    {
+      "Version": "1.32.6",
+      "Path": "release-1.32.6/payload/Local.Spt5.ESP.Core.module",
+      "Sha256": "34C492990338D4C7763E600E488C62965B8719D16306259DBC63A5FAC735AD35",
+      "Length": 1091072,
+      "Modified": "2026-11-03T15:00:22.6698644Z"
+    }
+  ],
+  "artifactKind": "installer-package",
+  "assets": [
+    {
+      "name": "SPT-Assistant-1.32.6.zip",
+      "sha256": "7B68F767F6452F5F3E0036953B522CDA3E199D10F46E91F41EF2CE771D26066A",
+      "bytes": 730911
+    },
+    {
+      "name": "SPT-Assistant-1.32.6-archived-builds.zip",
+      "sha256": "C9DAF37100676A0B588CCB5EF54B9B78C822A895A59B4D415F6242E7B97F5E1E",
+      "bytes": 1397569
+    }
+  ],
+  "inRaidVerifiedByThisImport": false
+}
