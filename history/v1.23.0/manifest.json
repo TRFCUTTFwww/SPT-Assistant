@@ -1,0 +1,51 @@
+{
+  "version": "1.23.0",
+  "tag": "v1.23.0",
+  "importKind": "recovered-local-files-not-original-git-history",
+  "sourceStatus": "not-retained",
+  "sourceBackup": null,
+  "sourceFiles": [
+    {
+      "path": "installer/Installer.csproj",
+      "sha256": "0CA743EC9BD3786E52DCCC2D56C7EAC00D720C0F491DE2596ED505612E762DC3",
+      "bytes": 288
+    },
+    {
+      "path": "installer/Program.cs",
+      "sha256": "0DAE5F4D7AB51192F8730F1E032FDE7362D4001B1E824F1D3221F2F406C7755A",
+      "bytes": 13701
+    }
+  ],
+  "canonicalModule": {
+    "Version": "1.23.0",
+    "Path": "release-1.23.0/payload/Local.Spt5.ESP.Core.module",
+    "Sha256": "112A05D79F43F7711CC5E7E938E9C8BD72453148669C1BEF790A0CF233F8CBC4",
+    "Length": 721920,
+    "Modified": "2026-11-02T10:50:59.8628523Z"
+  },
+  "archivedModuleCopies": [
+    {
+      "Version": "1.23.0",
+      "Path": "backup-installed-1.23.1-20261102-185535-455/Local.Spt5.ESP.Core.module",
+      "Sha256": "112A05D79F43F7711CC5E7E938E9C8BD72453148669C1BEF790A0CF233F8CBC4",
+      "Length": 721920,
+      "Modified": "2026-11-02T10:50:59.8628523Z"
+    },
+    {
+      "Version": "1.23.0",
+      "Path": "release-1.23.0/payload/Local.Spt5.ESP.Core.module",
+      "Sha256": "112A05D79F43F7711CC5E7E938E9C8BD72453148669C1BEF790A0CF233F8CBC4",
+      "Length": 721920,
+      "Modified": "2026-11-02T10:50:59.8628523Z"
+    }
+  ],
+  "artifactKind": "installer-package",
+  "assets": [
+    {
+      "name": "SPT-Assistant-1.23.0.zip",
+      "sha256": "E811E495F7D79AF833D712ABBF08198CA310DB8BCB91244FE8D854C4B34AFDE8",
+      "bytes": 520778
+    }
+  ],
+  "inRaidVerifiedByThisImport": false
+}
