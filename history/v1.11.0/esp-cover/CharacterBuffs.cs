@@ -1,0 +1,126 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using BepInEx;
+using Comfort.Common;
+using EFT;
+using EFT.HealthSystem;
+using UnityEngine;
+using Effect=EFT.HealthSystem.ActiveHealthController.Effect;
+using Stimulator=EFT.HealthSystem.ActiveHealthController.Stimulator;
+using BuffSettings=EFT.HealthSystem.EffectsSettings.StimulatorSettings.StimulatorBuffSettings;
+namespace LocalSpt5Esp;
+internal static class CharacterBuffs {
+ sealed record Preset(string Key,string Name);
+ sealed record Row(long Pointer,int Id,string Type,string Name,string Part,string State,string Remaining,float Strength,string[] Details,bool Removable);
+ static readonly List<Row> rows=new();static readonly List<Preset> presets=new();
+ static readonly Dictionary<string,string> presetNames=new(StringComparer.Ordinal);
+ static readonly Dictionary<long,int> added=new();static readonly HashSet<long> expanded=new();
+ static IntPtr worldPointer,healthPointer;static string profile="",query="",presetQuery="",notice="",duration="300",strength="1",selectedPreset="BuffsPropital";
+ static int page,mode,common,part=2;static bool loaded;static float nextScan,nextError;
+ static Vector2 currentScroll,addScroll,detailScroll;
+ static readonly EBodyPart[] parts={EBodyPart.Common,EBodyPart.Head,EBodyPart.Chest,EBodyPart.Stomach,EBodyPart.LeftArm,EBodyPart.RightArm,EBodyPart.LeftLeg,EBodyPart.RightLeg};
+ internal static void Initialize(Plugin plugin){plugin.Log.LogInfo("Character buffs ready: native effect snapshots, timed common effects and live stimulator presets");}
+ static string Part(EBodyPart p)=>p switch {EBodyPart.Head=>"头部",EBodyPart.Chest=>"胸部",EBodyPart.Stomach=>"腹部",EBodyPart.LeftArm=>"左臂",EBodyPart.RightArm=>"右臂",EBodyPart.LeftLeg=>"左腿",EBodyPart.RightLeg=>"右腿",_=>"全身"};
+ static string State(Effect effect)=>effect.State switch {EEffectState.Added=>"准备中",EEffectState.Started=>"生效中",EEffectState.Residued=>"残留中",EEffectState.Paused=>"已暂停",EEffectState.Removed=>"已结束",_=>"等待中"};
+ static ActiveHealthController? Current(){try{var player=Singleton<GameWorld>.Instance?.MainPlayer;return RaidClock.Active&&player?.IsYourPlayer==true&&player.HealthController?.IsAlive==true?player.ActiveHealthController:null;}catch{return null;}}
+ static ActiveHealthController Target(){var health=Current()??throw new ArgumentException("需要进入战局且角色存活。");var world=Singleton<GameWorld>.Instance;var player=world?.MainPlayer;
+  if(world==null||player==null||!BuffRules.SameTarget(worldPointer.ToInt64(),healthPointer.ToInt64(),profile,world.Pointer.ToInt64(),health.Pointer.ToInt64(),player.ProfileId))throw new ArgumentException("当前角色或战局已改变，请刷新后操作。");return health;}
+ static Effect[] Effects(ActiveHealthController health){var list=health.Effects;var result=new List<Effect>();if(list!=null)for(int i=0;i<list.Count;i++){var e=list[i];if(e!=null&&!e.ForceRemoved&&e.State!=EEffectState.Removed)result.Add(e);}return result.ToArray();}
+ static EffectsSettings? Settings(ActiveHealthController health)=>Effect.EffectsSettings??Singleton<GlobalConfiguration>.Instance?.Health?.Effects;
+ static string PresetName(string key)=>presetNames.TryGetValue(key,out var name)?name:key;
+ static void LoadNames(){if(loaded)return;loaded=true;try{
+  using var items=JsonDocument.Parse(File.ReadAllText(Path.Combine(BepInEx.Paths.GameRootPath,"SPT_Runtime","SPT_Data","database","templates","items.json")));
+  using var names=JsonDocument.Parse(File.ReadAllText(Path.Combine(BepInEx.Paths.PluginPath,"LocalSpt5ESP","esp5-names.json")));
+  foreach(var item in items.RootElement.EnumerateObject())if(item.Value.TryGetProperty("_props",out var props)&&props.TryGetProperty("StimulatorBuffs",out var buff)&&buff.ValueKind==JsonValueKind.String){string key=buff.GetString()??"";if(key.Length==0||presetNames.ContainsKey(key))continue;string name=names.RootElement.TryGetProperty(item.Name+" ShortName",out var shortName)?shortName.GetString()??"":names.RootElement.TryGetProperty(item.Name,out var fullName)?fullName.GetString()??"":"";if(name.Length==0)name=item.Value.TryGetProperty("_name",out var raw)?raw.GetString()??key:key;presetNames[key]=name;}
+ }catch(Exception e){Warn(e);}}
+ internal static void Reset(){rows.Clear();presets.Clear();added.Clear();expanded.Clear();worldPointer=healthPointer=IntPtr.Zero;profile="";nextScan=0;notice="";}
+ internal static void Tick(GameWorld? world,Player? player){try{
+  if(world==null||player==null||!RaidClock.Active||player.ActiveHealthController==null){if(worldPointer!=IntPtr.Zero)Reset();return;}
+  var health=player.ActiveHealthController;if(worldPointer!=world.Pointer||healthPointer!=health.Pointer||profile!=player.ProfileId){Reset();worldPointer=world.Pointer;healthPointer=health.Pointer;profile=player.ProfileId;}
+  if(!InterfaceMenu.BuffPage||Time.unscaledTime<nextScan)return;nextScan=Time.unscaledTime+.25f;Scan(health);
+ }catch(Exception e){notice="读取状态失败："+e.Message;Warn(e);}}
+ static void Scan(ActiveHealthController health){
+  LoadNames();rows.Clear();var effects=Effects(health);var alive=effects.ToDictionary(e=>e.Pointer.ToInt64(),e=>e.Id);foreach(var key in added.Keys.ToArray())if(!alive.TryGetValue(key,out var id)||added[key]!=id)added.Remove(key);expanded.IntersectWith(alive.Keys);
+  foreach(var effect in effects){try{
+   string type=effect.Type?.Name??"Effect",name=BuffRules.Name(type);var details=new List<string>();var stim=effect.TryCast<Stimulator>();
+   if(stim!=null){name=PresetName(stim.Name??"");if(string.IsNullOrEmpty(name))name="针剂／食品效果";var buffs=stim._buffs;
+    if(buffs!=null)for(int i=0;i<buffs.Length;i++){var b=buffs[i];var settings=b?.Settings;if(b==null||settings==null)continue;float elapsed=stim._curTime;float end=b.WholeTime>0?b.WholeTime:settings.Delay+settings.Duration;
+     string state=BuffRules.SubState(b.Active,b.Processed,elapsed,settings.Delay,end);
+     float remaining=state=="待生效"?Math.Max(0,settings.Delay-elapsed):BuffRules.SubRemaining(elapsed,end);
+     details.Add(BuffName(settings.BuffType)+(string.IsNullOrEmpty(settings.SkillName)?"":" · "+SkillName(settings.SkillName))+" · "+b.Value.ToString("+0.###;-0.###;0",CultureInfo.InvariantCulture)+" · "+state+(state=="待生效"?" "+BuffRules.Time(remaining)+"后":state=="生效中"?" "+BuffRules.Time(remaining):""));
+    }
+   }
+   rows.Add(new(effect.Pointer.ToInt64(),effect.Id,type,name,Part(effect.BodyPart),State(effect),BuffRules.Time(effect.TimeLeft),effect.CurrentStrength,details.ToArray(),BuffRules.CanRemove(type)));
+  }catch(Exception e){Warn(e);}}
+  var available=Settings(health)?.Stimulator?.Buffs;presets.Clear();if(available!=null)foreach(var pair in available)presets.Add(new(pair.Key,PresetName(pair.Key)));
+  presets.Sort((a,b)=>string.Compare(a.Name,b.Name,StringComparison.Ordinal));
+ }
+ static string SkillName(string value)=>value switch {"Strength"=>"力量","Endurance"=>"耐力","StressResistance"=>"抗压","Vitality"=>"活力","Health"=>"健康","Metabolism"=>"代谢","Immunity"=>"免疫","Perception"=>"感知","Attention"=>"专注",_=>value};
+ static string BuffName(EStimulatorBuffType type)=>type switch {EStimulatorBuffType.HealthRate=>"生命恢复／秒",EStimulatorBuffType.EnergyRate=>"能量变化／秒",EStimulatorBuffType.HydrationRate=>"水分变化／秒",EStimulatorBuffType.SkillRate=>"技能等级",EStimulatorBuffType.MaxStamina=>"最大体力",EStimulatorBuffType.StaminaRate=>"体力恢复",EStimulatorBuffType.DamageModifier=>"伤害倍率",EStimulatorBuffType.WeightLimit=>"负重上限",EStimulatorBuffType.Pain=>"疼痛抑制",EStimulatorBuffType.HandsTremor=>"手部震颤",EStimulatorBuffType.RemoveNegativeEffects=>"清除负面状态",EStimulatorBuffType.RemoveAllBloodLosses=>"清除出血",EStimulatorBuffType.RemoveAllBuffs=>"清除全部增益",EStimulatorBuffType.Antidote=>"解毒",EStimulatorBuffType.BodyTemperature=>"体温变化",EStimulatorBuffType.LightBleeding=>"轻出血",EStimulatorBuffType.HeavyBleeding=>"重出血",EStimulatorBuffType.Fracture=>"骨折",EStimulatorBuffType.Contusion=>"挫伤",EStimulatorBuffType.UnknownToxin=>"毒素",EStimulatorBuffType.LethalToxin=>"致命毒素",_=>type.ToString()};
+ static Effect? Add<T>(ActiveHealthController health,EBodyPart body,float seconds,float amount) where T:Effect,new()=>health.AddEffect<T>(body,new Il2CppSystem.Nullable<float>(0),new Il2CppSystem.Nullable<float>(seconds),new Il2CppSystem.Nullable<float>(0),new Il2CppSystem.Nullable<float>(amount),null);
+ static void AddCommon(){var health=Target();var option=BuffRules.Common[common];var body=option.WholeBody?EBodyPart.Common:parts[part];
+  if(!option.WholeBody&&body==EBodyPart.Common)throw new ArgumentException("请选择具体作用部位。");if(option.Type=="Fracture"&&body is not (EBodyPart.LeftArm or EBodyPart.RightArm or EBodyPart.LeftLeg or EBodyPart.RightLeg))throw new ArgumentException("骨折请选四肢部位。");
+  float seconds=BuffRules.Number(duration,1,36000,"持续秒数"),amount=BuffRules.Number(strength,.01f,10,"强度倍率");var before=new HashSet<long>(Effects(health).Select(e=>e.Pointer.ToInt64()));
+  Effect? result=option.Type switch {
+   "PainKiller"=>Add<ActiveHealthController.PainKiller>(health,body,seconds,amount),"PainSuppressed"=>Add<ActiveHealthController.PainSuppressed>(health,body,seconds,amount),"LightBleedingSuppressed"=>Add<ActiveHealthController.LightBleedingSuppressed>(health,body,seconds,amount),"HeavyBleedingSuppressed"=>Add<ActiveHealthController.HeavyBleedingSuppressed>(health,body,seconds,amount),"FractureSuppressed"=>Add<ActiveHealthController.FractureSuppressed>(health,body,seconds,amount),"HealthBoost"=>Add<ActiveHealthController.HealthBoost>(health,body,seconds,amount),"Pain"=>Add<ActiveHealthController.Pain>(health,body,seconds,amount),"Tremor"=>Add<ActiveHealthController.Tremor>(health,body,seconds,amount),"LightBleeding"=>Add<ActiveHealthController.LightBleeding>(health,body,seconds,amount),"HeavyBleeding"=>Add<ActiveHealthController.HeavyBleeding>(health,body,seconds,amount),"Fracture"=>Add<ActiveHealthController.Fracture>(health,body,seconds,amount),"Contusion"=>Add<ActiveHealthController.Contusion>(health,body,seconds,amount),_=>throw new ArgumentException("该状态尚不支持添加。")};
+  foreach(var effect in Effects(health))if(!before.Contains(effect.Pointer.ToInt64()))added[effect.Pointer.ToInt64()]=effect.Id;
+  Scan(health);notice=result!=null?"已添加／刷新："+option.Name+" · "+Part(body)+" · "+BuffRules.Time(seconds):"游戏未返回该效果，请检查部位与当前状态。";
+ }
+ static void AddPreset(){var health=Target();var settings=Settings(health)?.Stimulator?.Buffs;if(settings==null||!settings.ContainsKey(selectedPreset))throw new ArgumentException("所选预设已不可用，请重新选择。");
+  var before=new HashSet<long>(Effects(health).Select(e=>e.Pointer.ToInt64()));health.DoExternalBuff(selectedPreset,0);
+  foreach(var effect in Effects(health))if(!before.Contains(effect.Pointer.ToInt64()))added[effect.Pointer.ToInt64()]=effect.Id;Scan(health);
+  notice=Effects(health).Any(e=>e.TryCast<Stimulator>()?.Name==selectedPreset)?"已应用："+PresetName(selectedPreset)+"。子效果按原有延迟和概率生效。":"已提交应用请求；未发现对应效果，请刷新检查。";
+ }
+ static void Remove(Row row){var health=Target();var effect=Effects(health).FirstOrDefault(e=>e.Pointer.ToInt64()==row.Pointer&&e.Id==row.Id);if(effect==null)throw new ArgumentException("该效果已结束，请刷新列表。");if(!BuffRules.CanRemove(effect.Type?.Name??""))throw new ArgumentException("基础生理进程不作为 Buff 移除。");effect.ForceRemove();added.Remove(row.Pointer);Scan(health);notice="已移除："+row.Name+"。由伤势或环境持续触发的状态可能再次出现。";}
+ static void ClearAdded(){var health=Target();int removed=0;foreach(var effect in Effects(health))if(added.TryGetValue(effect.Pointer.ToInt64(),out var expectedId)&&expectedId==effect.Id&&BuffRules.CanRemove(effect.Type?.Name??"")){effect.ForceRemove();removed++;}added.Clear();Scan(health);notice=$"已移除本次手动新增的 {removed} 个效果。";}
+ static void Action(Action action){try{action();}catch(Exception e){notice=e.Message;Warn(e);}}
+ internal static void Draw(Rect rect){
+  float x=rect.x,y=rect.y,w=rect.width;InterfaceMenu.Label(new Rect(x,y,w,27),"人物 Buff",InterfaceMenu.Text,18);y+=35;
+  if(InterfaceMenu.Button(new Rect(x,y,130,30),"当前状态",page==0))page=0;if(InterfaceMenu.Button(new Rect(x+138,y,130,30),"添加 Buff",page==1))page=1;
+  var old=GUI.enabled;GUI.enabled=old&&Current()!=null;if(InterfaceMenu.Button(new Rect(x+w-112,y,112,30),"刷新"))Action(()=>Scan(Target()));GUI.enabled=old;y+=40;
+  InterfaceMenu.Paragraph(new Rect(x,y,w,38),Current()==null?"进入战局且角色存活时，可查看、添加和移除当前角色的效果。":notice.Length>0?notice:$"当前效果 {rows.Count} 项 · 本次手动新增 {added.Count} 项 · 每 0.25 秒刷新",InterfaceMenu.Accent,12);y+=46;
+  if(page==0)DrawCurrent(new Rect(x,y,w,Math.Max(80,rect.yMax-y)));else DrawAdd(new Rect(x,y,w,Math.Max(80,rect.yMax-y)));
+ }
+ static void DrawCurrent(Rect rect){float x=rect.x,y=rect.y,w=rect.width;query=InterfaceMenu.Field(new Rect(x,y,w-180,30),query);var old=GUI.enabled;GUI.enabled=old&&Current()!=null&&added.Count>0;if(InterfaceMenu.Button(new Rect(x+w-170,y,170,30),"移除本次新增效果"))Action(ClearAdded);GUI.enabled=old;y+=40;
+  var visible=rows.Where(row=>BuffRules.Matches(row.Name+" "+row.Type+" "+row.Part+" "+string.Join(" ",row.Details),query)).ToArray();
+  float height=visible.Sum(row=>72f+(expanded.Contains(row.Pointer)?Math.Max(1,row.Details.Length)*23+10:0));var viewport=new Rect(x,y,w,Math.Max(40,rect.yMax-y));currentScroll=GUI.BeginScrollView(viewport,currentScroll,new Rect(0,0,w-20,Math.Max(viewport.height-1,height)));float top=0;
+  foreach(var row in visible){bool open=expanded.Contains(row.Pointer);float h=64+(open?Math.Max(1,row.Details.Length)*23+10:0);var card=new Rect(0,top,w-24,h);InterfaceMenu.Surface(card,Color.Lerp(InterfaceMenu.Background,InterfaceMenu.Text,.04f),9);
+   InterfaceMenu.Label(new Rect(12,top+6,card.width-115,25),row.Name+" · "+row.Part+(added.ContainsKey(row.Pointer)?" · 手动新增":""),InterfaceMenu.Text,14);
+   InterfaceMenu.Label(new Rect(12,top+34,card.width-122,24),row.State+" · 剩余 "+row.Remaining+" · 强度 "+row.Strength.ToString("0.###",CultureInfo.InvariantCulture),Color.Lerp(InterfaceMenu.Text,InterfaceMenu.Background,.3f),12);
+   if(row.Details.Length>0&&InterfaceMenu.Button(new Rect(card.width-114,top+34,102,24),open?"收起明细":"子效果 "+row.Details.Length)){if(open)expanded.Remove(row.Pointer);else expanded.Add(row.Pointer);}
+   old=GUI.enabled;GUI.enabled=old&&Current()!=null&&row.Removable;if(InterfaceMenu.Button(new Rect(card.width-100,top+6,88,25),row.Type=="Stimulator"?"移除整组":"移除"))Action(()=>Remove(row));GUI.enabled=old;
+   if(open)for(int i=0;i<row.Details.Length;i++)InterfaceMenu.Label(new Rect(18,top+68+i*23,card.width-30,23),row.Details[i],InterfaceMenu.Text,12);
+   top+=h+8;
+  }
+  if(visible.Length==0)InterfaceMenu.Label(new Rect(12,12,w-44,30),query.Length>0?"没有匹配的效果。":"当前没有可显示的效果。",InterfaceMenu.Text,13);GUI.EndScrollView();
+ }
+ static void DrawAdd(Rect rect){float x=rect.x,y=rect.y,w=rect.width;
+  if(InterfaceMenu.Button(new Rect(x,y,(w-8)/2,30),"常用状态",mode==0))mode=0;if(InterfaceMenu.Button(new Rect(x+(w+8)/2,y,(w-8)/2,30),"针剂／食品效果组合",mode==1))mode=1;y+=40;
+  var area=new Rect(x,y,w,rect.yMax-y);if(mode==0)DrawCommon(area);else DrawPresets(area);
+ }
+ static void DrawCommon(Rect rect){float x=rect.x,y=rect.y,w=rect.width;
+  float height=Math.Min(150,Math.Max(92,rect.height*.4f));addScroll=GUI.BeginScrollView(new Rect(x,y,w,height),addScroll,new Rect(0,0,w-20,MathF.Ceiling(BuffRules.Common.Length/3f)*37));float cell=(w-30)/3;
+  for(int i=0;i<BuffRules.Common.Length;i++)if(InterfaceMenu.Button(new Rect(i%3*(cell+5),i/3*37,cell,31),BuffRules.Common[i].Name,common==i))common=i;GUI.EndScrollView();y+=height+10;
+  var option=BuffRules.Common[common];InterfaceMenu.Paragraph(new Rect(x,y,w,35),option.Description,InterfaceMenu.Text,12);y+=39;
+  if(InterfaceMenu.Button(new Rect(x,y,Math.Min(210,w*.35f),30),"作用部位："+(option.WholeBody?"全身":Part(parts[part])))){if(!option.WholeBody){part=(part+1)%parts.Length;if(part==0)part=1;}}
+  InterfaceMenu.Label(new Rect(x+w*.38f,y,65,28),"持续秒数",InterfaceMenu.Text,12);duration=InterfaceMenu.Field(new Rect(x+w*.38f+65,y,Math.Min(110,w*.2f),28),duration);y+=38;
+  InterfaceMenu.Label(new Rect(x,y,80,28),"强度倍率",InterfaceMenu.Text,12);strength=InterfaceMenu.Field(new Rect(x+82,y,95,28),strength);
+  var old=GUI.enabled;GUI.enabled=old&&Current()!=null;if(InterfaceMenu.Button(new Rect(x+w-160,y,160,30),"添加／刷新状态"))Action(AddCommon);GUI.enabled=old;y+=38;
+  InterfaceMenu.Paragraph(new Rect(x,y,w,42),"时间范围 1～36000 秒，强度 0.01～10；1 为默认强度。添加出血等负面状态会产生对应影响。",Color.Lerp(InterfaceMenu.Text,InterfaceMenu.Background,.3f),12);
+ }
+ static void DrawPresets(Rect rect){float x=rect.x,y=rect.y,w=rect.width;float left=Math.Max(190,w*.4f),right=w-left-14;presetQuery=InterfaceMenu.Field(new Rect(x,y,left,28),presetQuery);y+=37;
+  var matches=presets.Where(p=>BuffRules.Matches(p.Name+" "+p.Key,presetQuery)).ToArray();addScroll=GUI.BeginScrollView(new Rect(x,y,left,Math.Max(60,rect.yMax-y)),addScroll,new Rect(0,0,left-18,matches.Length*46));
+  for(int i=0;i<matches.Length;i++)if(InterfaceMenu.Button(new Rect(0,i*46,left-22,40),matches[i].Name,selectedPreset==matches[i].Key)){selectedPreset=matches[i].Key;detailScroll=Vector2.zero;}GUI.EndScrollView();
+  float rx=x+left+14;InterfaceMenu.Label(new Rect(rx,rect.y,right,28),PresetName(selectedPreset),InterfaceMenu.Text,15);
+  var health=Current();var all=health!=null?Settings(health)?.Stimulator?.Buffs:null;var buffs=all!=null&&all.ContainsKey(selectedPreset)?all[selectedPreset]:null;
+  float textY=rect.y+36,textHeight=Math.Max(60,rect.height-126);detailScroll=GUI.BeginScrollView(new Rect(rx,textY,right,textHeight),detailScroll,new Rect(0,0,right-18,(buffs?.Length??1)*66));
+  if(buffs!=null)for(int i=0;i<buffs.Length;i++){var b=buffs[i];if(b==null)continue;InterfaceMenu.Paragraph(new Rect(0,i*66,right-22,60),BuffName(b.BuffType)+(string.IsNullOrEmpty(b.SkillName)?"":" · "+SkillName(b.SkillName))+"  "+b.Value.ToString("+0.###;-0.###;0",CultureInfo.InvariantCulture)+"\n延迟 "+(b.Delay<=0?"无":BuffRules.Time(b.Delay))+" · 持续 "+(b.Duration<=0?"即时":BuffRules.Time(b.Duration))+" · 概率 "+b.Chance.ToString("P0",CultureInfo.InvariantCulture),InterfaceMenu.Text,12);}else InterfaceMenu.Label(new Rect(0,0,right-22,40),"进入战局后载入可用预设。",InterfaceMenu.Text,12);GUI.EndScrollView();
+  var old=GUI.enabled;GUI.enabled=old&&health!=null&&buffs!=null;if(InterfaceMenu.Button(new Rect(rx,rect.yMax-79,right,32),"应用效果组合"))Action(AddPreset);GUI.enabled=old;
+  InterfaceMenu.Paragraph(new Rect(rx,rect.yMax-40,right,40),"使用原有时序、强度和触发概率，包含其副作用；不消耗物品。",Color.Lerp(InterfaceMenu.Text,InterfaceMenu.Background,.3f),11);
+ }
+ static void Warn(Exception e){if(Time.unscaledTime<nextError)return;nextError=Time.unscaledTime+15;Plugin.Self.Error(e);}
+}
