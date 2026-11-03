@@ -1,0 +1,2 @@
+# Preserve the original bytes and line endings of recovered source snapshots.
+* -text
