@@ -1,0 +1,27 @@
+{
+    "version":  "1.33.0",
+    "tag":  "v1.33.0",
+    "importKind":  "native-git-release",
+    "sourceStatus":  "native-git-source-at-tag-root",
+    "artifactKind":  "installer-package",
+    "canonicalModule":  {
+                            "version":  "1.33.0",
+                            "path":  "release-1.33.0/payload/Local.Spt5.ESP.Core.module",
+                            "sha256":  "B352BE7958A0AD90D8DCCEB195948B395FEBAEC2973DC0860AC14DBF980DCE43",
+                            "length":  1149440,
+                            "modified":  "2026-11-04T03:03:38.4226320Z"
+                        },
+    "assets":  [
+                   {
+                       "name":  "SPT-Assistant-1.33.0.zip",
+                       "sha256":  "173F8875E8C4467E9A13CF38A5C9762524CF399035ED03624CB978982607E903",
+                       "bytes":  725622
+                   },
+                   {
+                       "name":  "SPT-Assistant-1.33.0.zip.sha256",
+                       "sha256":  "27191D510CB298727DA30FBDA73FAE9587458383F219A08CDF3B35C19BC56B5B",
+                       "bytes":  92
+                   }
+               ],
+    "inRaidVerified":  false
+}

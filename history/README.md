@@ -70,3 +70,4 @@
 | [1.32.6](v1.32.6/README.md) | not-retained | installer-package |
 | [1.32.7](v1.32.7/README.md) | current-source-at-repository-root | installer-package |
 | [1.32.8](v1.32.8/README.md) | native-git-source-at-tag-root | installer-package |
+| [1.33.0](v1.33.0/README.md) | native-git-source-at-tag-root | installer-package |
