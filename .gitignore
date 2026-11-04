@@ -27,3 +27,4 @@
 **/*.suo
 **/.env*
 **/*credentials*
+!/installer-1.33.0/
