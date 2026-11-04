@@ -1,947 +1,966 @@
 [
-  {
-    "version": "1.4.14",
-    "sourceStatus": "staging-client-source",
-    "artifactKind": "runtime-module-only",
-    "manifest": "v1.4.14/manifest.json",
-    "moduleSha256": "EA3B081DF3139C3E90859B95E292F5CBBC34FEF1EB4BC23712C49753794FE9D1",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.4.14.zip",
-        "sha256": "F618D176534F265295B0CB8D19B2FB09BF6B6AD105A3D85CED932BCBB5230799",
-        "bytes": 95995
-      }
-    ]
-  },
-  {
-    "version": "1.4.15",
-    "sourceStatus": "not-retained",
-    "artifactKind": "runtime-module-only",
-    "manifest": "v1.4.15/manifest.json",
-    "moduleSha256": "F7CD3CFFAD405FD8EF171E7284DBC39AA87954DA92493B5419B4CC67D36CF2B7",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.4.15.zip",
-        "sha256": "E2AA99AE2D8B256CA6F5483C5878690A6A2939C6661CB88916FEB21EC45256A8",
-        "bytes": 95359
-      }
-    ]
-  },
-  {
-    "version": "1.4.16",
-    "sourceStatus": "not-retained",
-    "artifactKind": "runtime-module-only",
-    "manifest": "v1.4.16/manifest.json",
-    "moduleSha256": "4661BD211223B13E4399DFBA0B9A08CBEFB85DA268B1501DAF8D6F898735EA99",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.4.16.zip",
-        "sha256": "D28315A469A664A9230B9CF68D079FCE6C6DEE9148E0E9562C447170B1F0ED8B",
-        "bytes": 96794
-      }
-    ]
-  },
-  {
-    "version": "1.4.17",
-    "sourceStatus": "not-retained",
-    "artifactKind": "runtime-module-only",
-    "manifest": "v1.4.17/manifest.json",
-    "moduleSha256": "51C2A3C7052F3EFAE4B19B420E7FE3077C1BDA21541DAEFA3B14CAA7F0D3BF66",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.4.17.zip",
-        "sha256": "96BAF63E91453E1B25D4BAFFC7AA20A97566C1A217ED8440453CA3ECFF8759EC",
-        "bytes": 98392
-      }
-    ]
-  },
-  {
-    "version": "1.4.18",
-    "sourceStatus": "not-retained",
-    "artifactKind": "runtime-module-only",
-    "manifest": "v1.4.18/manifest.json",
-    "moduleSha256": "3649235255C7BFFFA268E2EC6C2EC2E55C01E02DFAE3FED65E34347E1CC6FC8B",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.4.18.zip",
-        "sha256": "A286821FE7252DD4788923BEBAD8994301D11DCE40C86ACCC9D120026E887F24",
-        "bytes": 100875
-      }
-    ]
-  },
-  {
-    "version": "1.4.19",
-    "sourceStatus": "not-retained",
-    "artifactKind": "runtime-module-only",
-    "manifest": "v1.4.19/manifest.json",
-    "moduleSha256": "6628304D1DFEB42F88467EE94A0F523517F741DCD09DE4FC3441114D27113311",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.4.19.zip",
-        "sha256": "A3A0048340A3F2FDCFEFF71E6D6B264F10CAE79C2CA7A5E7BEB345D875BE7199",
-        "bytes": 102427
-      }
-    ]
-  },
-  {
-    "version": "1.4.20",
-    "sourceStatus": "not-retained",
-    "artifactKind": "runtime-module-only",
-    "manifest": "v1.4.20/manifest.json",
-    "moduleSha256": "4ECE971B92DE3415470F53FBFCD5414AF9C63B4E2BE1C575CBFC11987C40FADE",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.4.20.zip",
-        "sha256": "EAFBB0BE287C50048F93DBE6F2A2F53181F057B251B1F315A18A08ABAEE5250A",
-        "bytes": 102882
-      }
-    ]
-  },
-  {
-    "version": "1.4.21",
-    "sourceStatus": "not-retained",
-    "artifactKind": "runtime-module-only",
-    "manifest": "v1.4.21/manifest.json",
-    "moduleSha256": "15889EEE4E56032C3FDC75F29DA6CBC9B3B3B3E000AA275C2CB345F082C0F767",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.4.21.zip",
-        "sha256": "A96EBC016189EE4591844ABE58A78FAAB37FB5B2E14F45C66C00570AD972D49C",
-        "bytes": 106135
-      }
-    ]
-  },
-  {
-    "version": "1.4.22",
-    "sourceStatus": "not-retained",
-    "artifactKind": "runtime-module-only",
-    "manifest": "v1.4.22/manifest.json",
-    "moduleSha256": "6871E2E17422A547FA28A4B790E17D1034D1A9B8B5CFC2A7D9A5442D680D750F",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.4.22.zip",
-        "sha256": "581310BED26B393AC200FF27449DA5D7F24FEC8E792E7B0E442C76CF98072B34",
-        "bytes": 108376
-      },
-      {
-        "name": "SPT-Assistant-1.4.22-archived-builds.zip",
-        "sha256": "F2C2ED49A2EE4AE845758F68D3529D2119134866062CF6A944F75CE6AEF6218F",
-        "bytes": 148168
-      }
-    ]
-  },
-  {
-    "version": "1.4.23",
-    "sourceStatus": "not-retained",
-    "artifactKind": "runtime-module-only",
-    "manifest": "v1.4.23/manifest.json",
-    "moduleSha256": "B27EFB9333CC4DF43152F04ED75DBE60366138512A22602904A628A483A9B880",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.4.23.zip",
-        "sha256": "CFF13759675AD9A640B278BC0B8E9A6A34E8E21A70CB0185DFA16EF5F9CBC17F",
-        "bytes": 116270
-      }
-    ]
-  },
-  {
-    "version": "1.4.24",
-    "sourceStatus": "not-retained",
-    "artifactKind": "runtime-module-only",
-    "manifest": "v1.4.24/manifest.json",
-    "moduleSha256": "93E235C5E4B32B004E610D244AC3AA37299CB9AADFC78D178C42C0C73586DD80",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.4.24.zip",
-        "sha256": "3E918A44164D4CC848CFE5894C284426C16D06DE80D1AEEC10418373E952F26F",
-        "bytes": 116680
-      }
-    ]
-  },
-  {
-    "version": "1.4.25",
-    "sourceStatus": "not-retained",
-    "artifactKind": "runtime-module-only",
-    "manifest": "v1.4.25/manifest.json",
-    "moduleSha256": "A6EB79E0A9084541F0938C7F2A515A3DE7B751CE62165E72053B1BF54C4C8D4E",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.4.25.zip",
-        "sha256": "CCDC8C209116F309D58970157E551957E012DA41DF005B29E23EECC304B84B24",
-        "bytes": 116753
-      }
-    ]
-  },
-  {
-    "version": "1.5.0",
-    "sourceStatus": "not-retained",
-    "artifactKind": "runtime-module-only",
-    "manifest": "v1.5.0/manifest.json",
-    "moduleSha256": "88C9EDDEBBE2F276C5FC5F12EDD6F2E269E957CE6223B0C4CF1101EB304D4F5D",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.5.0.zip",
-        "sha256": "C4C45CA909F397FDC0BAA10433198D746A4F31BE0DF23F1FE71F4AC32B189625",
-        "bytes": 130413
-      }
-    ]
-  },
-  {
-    "version": "1.5.1",
-    "sourceStatus": "not-retained",
-    "artifactKind": "runtime-module-only",
-    "manifest": "v1.5.1/manifest.json",
-    "moduleSha256": "5C70E9504D5AB912092C27A98E3FF778342B4D05714D69CF3B445AC1FE9B4008",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.5.1.zip",
-        "sha256": "76FDF52698F28D68D7EAA49D54ECD32680BC5849B2EF1DD96872C4E93F196B74",
-        "bytes": 139068
-      }
-    ]
-  },
-  {
-    "version": "1.5.2",
-    "sourceStatus": "not-retained",
-    "artifactKind": "runtime-module-only",
-    "manifest": "v1.5.2/manifest.json",
-    "moduleSha256": "C6B91959B0AA3DF1E3B0DA5CFE54D2E80D33ACE71A51C7D0A723B76017BCBE79",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.5.2.zip",
-        "sha256": "6BE621957063C70EDF094DF4C050476C544D1FBE7E613E26FADBED1FFFA709E0",
-        "bytes": 139172
-      }
-    ]
-  },
-  {
-    "version": "1.5.3",
-    "sourceStatus": "not-retained",
-    "artifactKind": "runtime-module-only",
-    "manifest": "v1.5.3/manifest.json",
-    "moduleSha256": "ED3C2730423F93BB0BEFCACA3CF362CBBEE644D150EFE1F6B2B1CB1D9D24CEA8",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.5.3.zip",
-        "sha256": "83DE0BA894C31023D3CC308A590825C021A84C65383BB35B2C35269E9864E8F4",
-        "bytes": 145891
-      }
-    ]
-  },
-  {
-    "version": "1.6.0",
-    "sourceStatus": "not-retained",
-    "artifactKind": "runtime-module-only",
-    "manifest": "v1.6.0/manifest.json",
-    "moduleSha256": "D841E85B71EB1F2007124D656B52CC0A415CBF45CE6E75AC91D870B7572F31D0",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.6.0.zip",
-        "sha256": "94E0081946150E04738D052B4AFB49FB66AE05B8E7F5B1B43416FD0DA075113C",
-        "bytes": 151663
-      }
-    ]
-  },
-  {
-    "version": "1.6.1",
-    "sourceStatus": "not-retained",
-    "artifactKind": "runtime-module-only",
-    "manifest": "v1.6.1/manifest.json",
-    "moduleSha256": "8DE452D8A774E34161587307849CD534527118C9864C6F065DDF751778B73B28",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.6.1.zip",
-        "sha256": "EC9009FE06DBE3BD1B40B022B72FE4F6C49DF745DD3958831E3905E7191296CB",
-        "bytes": 153830
-      }
-    ]
-  },
-  {
-    "version": "1.7.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "runtime-module-only",
-    "manifest": "v1.7.0/manifest.json",
-    "moduleSha256": "9E70E5AB1B58840F514390AEF19BE7C08D036F67F1B77077A6E1143C54928F1D",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.7.0.zip",
-        "sha256": "6D154C4A27F391AE08C74A7ABFB9F471A7F0FE86226E0AD62C57A72360AEE61E",
-        "bytes": 176277
-      },
-      {
-        "name": "SPT-Assistant-1.7.0-archived-builds.zip",
-        "sha256": "CE3B79864C65EA4C2DE93F9CF61F58A11DD2F450D0DB05E2597222AA6C92C61C",
-        "bytes": 250592
-      }
-    ]
-  },
-  {
-    "version": "1.8.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.8.0/manifest.json",
-    "moduleSha256": "DA8DC6A162CF8C949A469BFE38B97AB034511DB01DB1F272838FD745FAFB97DE",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.8.0.zip",
-        "sha256": "B0C0D7DEF5931617FE089B61535A73A9E10CABF6579B31F25F040E67177F9558",
-        "bytes": 238227
-      }
-    ]
-  },
-  {
-    "version": "1.9.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.9.0/manifest.json",
-    "moduleSha256": "96269B7BD28967E4ACFA9962672081D6908D764731D605297907D6EC42B6B05B",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.9.0.zip",
-        "sha256": "5D5BAA30E746AE10491E47260D4372C8DA057043822153F8FA7244716FD5DEDF",
-        "bytes": 255345
-      }
-    ]
-  },
-  {
-    "version": "1.9.1",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.9.1/manifest.json",
-    "moduleSha256": "F5A120E881DBA5B946A8680F0653815E827C54F4DA2B9CE22930A94E8465A2CE",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.9.1.zip",
-        "sha256": "9B3C4C37EE51B0C664D8D4B41000DA2626710B3E69928113183CBAB0D448EB33",
-        "bytes": 254400
-      }
-    ]
-  },
-  {
-    "version": "1.10.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.10.0/manifest.json",
-    "moduleSha256": "3B23EA567F8CA7FE5E7BE686B0E51436EA2FE6FA1C701C11F7BE2EF7189F8FB0",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.10.0.zip",
-        "sha256": "8BF5CE1C364E1BF83BC817C7EF8CC91989C1E62EDFB8355669CDD9EBB4BB05A4",
-        "bytes": 268112
-      }
-    ]
-  },
-  {
-    "version": "1.11.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.11.0/manifest.json",
-    "moduleSha256": "BF3DA48258010064E5B6477485B6AA49AB3F65E74B2655AB658F9EEDBE38006E",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.11.0.zip",
-        "sha256": "C5DCC633BD90802F68DA85E68310C259C2604FA2AF2375309EDF61241FF48981",
-        "bytes": 283840
-      }
-    ]
-  },
-  {
-    "version": "1.12.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.12.0/manifest.json",
-    "moduleSha256": "DAFC854426C19279B9C3A5159ACF4A2FD241F5B9EF80EEEA7FA39496BEBCAE81",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.12.0.zip",
-        "sha256": "6D5A51EA777E28219BCDA3688DF3FCE05EFDDC05B1A1735D9E176D4E516795B7",
-        "bytes": 293054
-      }
-    ]
-  },
-  {
-    "version": "1.13.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.13.0/manifest.json",
-    "moduleSha256": "9B6C6A656D31EDFAA370A463FEB8AF6980E170A2CBB709B7CE3D6929F4C99C34",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.13.0.zip",
-        "sha256": "F6CD454BDC1847CEA12CF4E6CD9441D9F838CF43BD6C1B723CAAC5CB376EF12C",
-        "bytes": 320584
-      }
-    ]
-  },
-  {
-    "version": "1.14.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.14.0/manifest.json",
-    "moduleSha256": "F2DD019E3261799D094A2A96DFCDCA46DC2A6BECF85778B33E7DC32A77BCD57B",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.14.0.zip",
-        "sha256": "DBD1A110D367B52B9DE1F4BA682432BC0B49A8FD0F7E43D3C22183FE7C14AD0E",
-        "bytes": 408962
-      },
-      {
-        "name": "SPT-Assistant-1.14.0-archived-builds.zip",
-        "sha256": "753598CD40DC41EBC981F1EE0C0A9395E82045EBC4B9D14F84390D19AF207171",
-        "bytes": 733910
-      }
-    ]
-  },
-  {
-    "version": "1.15.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.15.0/manifest.json",
-    "moduleSha256": "E2BEF3357FF365A427312D1BCF9FA16B1F21EDC2A1B7BCBFE840A440B0A54CC5",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.15.0.zip",
-        "sha256": "C75CD8C36786FE9606A21C9166153E19D08E6D017A4CD5BE1DE9A9229280734F",
-        "bytes": 437355
-      }
-    ]
-  },
-  {
-    "version": "1.15.1",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.15.1/manifest.json",
-    "moduleSha256": "3444AD263E176A5E8D33BF52EAD08B2A1ECF6F1A12C26B8E2B160D04111A42D7",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.15.1.zip",
-        "sha256": "A0773FF88E11A1AEB4DE58112E6D3B0106EA1D7A7D543985EE70FA34DFCBD9BB",
-        "bytes": 444433
-      }
-    ]
-  },
-  {
-    "version": "1.16.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.16.0/manifest.json",
-    "moduleSha256": "060E57058B986B73F5ADCD3CF8ABC2E3E6038D731054801F7A44E73908C941F2",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.16.0.zip",
-        "sha256": "BC069347CDE01531877D5D52DDBBBA4321D029160537724BA72CE7C2210AD779",
-        "bytes": 453909
-      }
-    ]
-  },
-  {
-    "version": "1.17.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.17.0/manifest.json",
-    "moduleSha256": "5C6E92B96E34654B2C064FEF113724A3D6C6374DFFDF2BE17026375C6A39B112",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.17.0.zip",
-        "sha256": "1C7C1ECDB842FEF028361687B506096B5CEE67C82CF74C013A12AF148D583740",
-        "bytes": 469296
-      }
-    ]
-  },
-  {
-    "version": "1.18.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.18.0/manifest.json",
-    "moduleSha256": "18547B905F8F4C0A7468857C5925ED07A54E009553E49CA9E59AAA8D7D0CD446",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.18.0.zip",
-        "sha256": "9AE0674105367B354FB3CF3A30A0F5B2C0E93350E9CB730857428B3342D1AD77",
-        "bytes": 481062
-      }
-    ]
-  },
-  {
-    "version": "1.19.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.19.0/manifest.json",
-    "moduleSha256": "3C9B9186D60FF26EEAAF99756A0D5E092E18880F1BC4B4D65B40ECFBF7E302E2",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.19.0.zip",
-        "sha256": "42A105627E9A0D7BBABDD179172F067A130725677815D911EAB0A1898ABC5890",
-        "bytes": 494645
-      }
-    ]
-  },
-  {
-    "version": "1.20.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.20.0/manifest.json",
-    "moduleSha256": "D99A04C932BAA7CBA9BACF91C2ABF9DE9C821FC904D058C957EC70CFBF6D77D6",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.20.0.zip",
-        "sha256": "2EAC84FAB0BCA64B5741BD7C111CD13DDD3F7EFADE48BA28F19E665626F8B8F8",
-        "bytes": 500162
-      }
-    ]
-  },
-  {
-    "version": "1.21.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.21.0/manifest.json",
-    "moduleSha256": "68C555697B2DC295901704016D0123E2CB998DCBE49C7A7D5F860700CF581939",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.21.0.zip",
-        "sha256": "B2D05F00C918628B48C18118E005DEE1980CB963DBF9C12EB41B455C42F16461",
-        "bytes": 504507
-      }
-    ]
-  },
-  {
-    "version": "1.22.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.22.0/manifest.json",
-    "moduleSha256": "2FCC9154A466321E8B1C4BF9D168E64A5B3360DFECCF9D2C2F246AAE76B6451E",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.22.0.zip",
-        "sha256": "D55632E3AD95FFC617A2B5F5775587E1E7D1C358EA396417F5D4ABB1AEF797BA",
-        "bytes": 524931
-      }
-    ]
-  },
-  {
-    "version": "1.23.0",
-    "sourceStatus": "not-retained",
-    "artifactKind": "installer-package",
-    "manifest": "v1.23.0/manifest.json",
-    "moduleSha256": "112A05D79F43F7711CC5E7E938E9C8BD72453148669C1BEF790A0CF233F8CBC4",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.23.0.zip",
-        "sha256": "E811E495F7D79AF833D712ABBF08198CA310DB8BCB91244FE8D854C4B34AFDE8",
-        "bytes": 520778
-      }
-    ]
-  },
-  {
-    "version": "1.23.1",
-    "sourceStatus": "not-retained",
-    "artifactKind": "installer-package",
-    "manifest": "v1.23.1/manifest.json",
-    "moduleSha256": "A60989AF6C6D0362979A9D4F37C30AEA3E25670EF7C342C4F7FE83EB60289DC6",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.23.1.zip",
-        "sha256": "80ED27E4A1E7724BA534517D84F304FDD8158ACD9B2C5D88590743A9E79F360D",
-        "bytes": 521484
-      }
-    ]
-  },
-  {
-    "version": "1.24.0",
-    "sourceStatus": "not-retained",
-    "artifactKind": "installer-package",
-    "manifest": "v1.24.0/manifest.json",
-    "moduleSha256": "2EE87295E2A1C8491EB0E2E9165DFABBF911E97CB396565898706D4DA5F059F6",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.24.0.zip",
-        "sha256": "353F39B4B32F67E30496551FD2D4ECFF5C9573E01DCFA9501A3328A23DF44818",
-        "bytes": 525192
-      }
-    ]
-  },
-  {
-    "version": "1.25.0",
-    "sourceStatus": "partial-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.25.0/manifest.json",
-    "moduleSha256": "DA1BA7601D6A404D6DE143968A042DF855A747A03170E558DECC85A654C1C3E5",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.25.0.zip",
-        "sha256": "5A8F52447E1AD329000A08A80D23969886E0B9E7B48C82C4E2546317FBD99BAF",
-        "bytes": 525009
-      }
-    ]
-  },
-  {
-    "version": "1.25.1",
-    "sourceStatus": "partial-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.25.1/manifest.json",
-    "moduleSha256": "EEBD928704C302302055F77B35028DC28E5923013C91E31B7D00897FE00053F5",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.25.1.zip",
-        "sha256": "3F85256C10E97A3404D2A974C77005CD05F94B9FA01E0A37244DF6BB50084BCC",
-        "bytes": 524839
-      }
-    ]
-  },
-  {
-    "version": "1.26.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.26.0/manifest.json",
-    "moduleSha256": "744771C5DAE46C0BB8E491C3195D63623850BAA9017D8AC2D80212E9A6F6D184",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.26.0.zip",
-        "sha256": "B574FC0A3DCC114AE549464F5DD0BEADB3156E043C4C4A7B583B47713E8A4D1A",
-        "bytes": 536993
-      },
-      {
-        "name": "SPT-Assistant-1.26.0-archived-builds.zip",
-        "sha256": "03C83F1EF006F8F904D431C588953DA755C93CD475C1AA1983E5C0E63F589ECC",
-        "bytes": 657726
-      }
-    ]
-  },
-  {
-    "version": "1.27.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.27.0/manifest.json",
-    "moduleSha256": "52AF29E8D1441EDC5E4B0DDC07C0717D8F143C59CA4698DE9439BAC165319400",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.27.0.zip",
-        "sha256": "E24F6FC7EDD56B6F26950A639B2B0D829E8D8C13980DA99247A1EEFF94AA909A",
-        "bytes": 560165
-      }
-    ]
-  },
-  {
-    "version": "1.27.1",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.27.1/manifest.json",
-    "moduleSha256": "E5E4692F62196C5EF734A3C10D8C1C7699C6C53B2451B610BFDCA88A13C73555",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.27.1.zip",
-        "sha256": "F0201DB4CC7A521FC1D1F8114EFCD4AC040AD2084C9A174437ADD7A4BA98C6AA",
-        "bytes": 565434
-      }
-    ]
-  },
-  {
-    "version": "1.28.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.28.0/manifest.json",
-    "moduleSha256": "5194F1D696EA3A9E963893EBC1FE9B76BCCFD606ECA9260C30516DEBFFD5638A",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.28.0.zip",
-        "sha256": "7B661D1EF49790B6A321ACDDA65FEB3855165634960A32188328C51BDCBD04F2",
-        "bytes": 567228
-      }
-    ]
-  },
-  {
-    "version": "1.28.1",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.28.1/manifest.json",
-    "moduleSha256": "1384C15C1E7EFFB059D99FFABEA9E6FF2AF50915823BE3F63EFCC5893ADF9AF5",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.28.1.zip",
-        "sha256": "33769613049C6170BC3627B20F69EDA8153F559794CB5969550A7149314C56D5",
-        "bytes": 576560
-      }
-    ]
-  },
-  {
-    "version": "1.29.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.29.0/manifest.json",
-    "moduleSha256": "23E671B23DD40C9DCE8236D81A458E438EBAB86680A26B2E1624430739C3ED1D",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.29.0.zip",
-        "sha256": "3D161EBD41F7FD43FFC6115CD7932F50212CBE96F1F9C8941EF28D1C68C392BF",
-        "bytes": 637060
-      }
-    ]
-  },
-  {
-    "version": "1.29.1",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.29.1/manifest.json",
-    "moduleSha256": "16731384C79B556EEA7864F7BF475174A85756E6928F6009B1D6596A31958D3D",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.29.1.zip",
-        "sha256": "5AB9E71D0F21C570CC7D1D742DCEA59894158FA16A348763474E297FE8330069",
-        "bytes": 637957
-      }
-    ]
-  },
-  {
-    "version": "1.29.2",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.29.2/manifest.json",
-    "moduleSha256": "480F6F7621897BDED9746A8A329E4E96DAF8494E738DBD9C886F5E67D7C00EFB",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.29.2.zip",
-        "sha256": "F305433EDCE383F6B8BB0B99DD295362E1BC3FC7CB0961FA21C347FDEAF8BB30",
-        "bytes": 648960
-      }
-    ]
-  },
-  {
-    "version": "1.29.3",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.29.3/manifest.json",
-    "moduleSha256": "13F2A125D0B87C651E97FDD3F81B8856437B9C52B555299C1448D0A818F92D7D",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.29.3.zip",
-        "sha256": "E24684611E1089C66B99FB34ECD68A48AE3EEBF1C5990008A2DCFBB7C64565C6",
-        "bytes": 651944
-      }
-    ]
-  },
-  {
-    "version": "1.29.4",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.29.4/manifest.json",
-    "moduleSha256": "3DAE502E233EE212BD3A9AE81E2C5E09E32BADCFDBFE316671A6E873B8B9F55F",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.29.4.zip",
-        "sha256": "3DB80F27260995EEAB98ED81D929B70ED079A621588663B3F44FD3210DEBB9BC",
-        "bytes": 654231
-      }
-    ]
-  },
-  {
-    "version": "1.30.0",
-    "sourceStatus": "not-retained",
-    "artifactKind": "installer-package",
-    "manifest": "v1.30.0/manifest.json",
-    "moduleSha256": "8E9820CEC35FC67FBAC6F45C80241DD5419390AE3D35ABF0E91D5A87506C16ED",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.30.0.zip",
-        "sha256": "37C5415CF631212191659EC7C06AECF43CE96E930BF09A9E11EE26FDCF0BCBDB",
-        "bytes": 659665
-      }
-    ]
-  },
-  {
-    "version": "1.30.1",
-    "sourceStatus": "not-retained",
-    "artifactKind": "installer-package",
-    "manifest": "v1.30.1/manifest.json",
-    "moduleSha256": "DF8356CDB7354FCECCC6255D57847EFECEBFBD15AC4DB490078F73E3CDFF8426",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.30.1.zip",
-        "sha256": "DE238E61EE8390E219239043CC305896A8F0CAFF998FC40E8D4C0462CF3ED438",
-        "bytes": 659930
-      }
-    ]
-  },
-  {
-    "version": "1.30.2",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.30.2/manifest.json",
-    "moduleSha256": "B3E3D69CE89D616EEBC81D397E587B9C6820DC2D7F94EB9E5B78BEB26E7076E0",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.30.2.zip",
-        "sha256": "92D439DC9D986CCF9392AE11F3388DD048478169B3F8CAAFFD8E409C49DAAD44",
-        "bytes": 660137
-      }
-    ]
-  },
-  {
-    "version": "1.31.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.31.0/manifest.json",
-    "moduleSha256": "C9034D70B83EEF2F1D88E18D2CDF3949DD2BD5C80623267A8B1A38D2AAC42BAA",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.31.0.zip",
-        "sha256": "A1799253E085891430E45511D6C9D25B9CD910B8D62961E3012DB487FB720E02",
-        "bytes": 665276
-      }
-    ]
-  },
-  {
-    "version": "1.31.1",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.31.1/manifest.json",
-    "moduleSha256": "4F69DA8251CFFCB879CC6B66E5936CD04D20814EF129782D04CFF62F00481162",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.31.1.zip",
-        "sha256": "82B6E17E4098B1F8D1A8783E35485BC2E22F80E4AABAB3DB6F63F9C4848F9B3B",
-        "bytes": 667269
-      }
-    ]
-  },
-  {
-    "version": "1.31.2",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.31.2/manifest.json",
-    "moduleSha256": "28E590B29F51C9F45E8B1AA1E30497C4C9710A8DF5066CED99E2098D32618FA8",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.31.2.zip",
-        "sha256": "1E6967B5DE23084A8A5A65633EA33FD92A03847B004EC8B9F050DC2837CD302C",
-        "bytes": 668375
-      }
-    ]
-  },
-  {
-    "version": "1.32.0",
-    "sourceStatus": "client-source-snapshot",
-    "artifactKind": "installer-package",
-    "manifest": "v1.32.0/manifest.json",
-    "moduleSha256": "042332C98A90147CD88552A304A9C4F39EAB1AD58DAE2176585BE2619526264A",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.32.0.zip",
-        "sha256": "98AD2A82058E4E5857AE1A006CC77CF9BF654E25D5602AD783D4977F6938F548",
-        "bytes": 706021
-      },
-      {
-        "name": "SPT-Assistant-1.32.0-archived-builds.zip",
-        "sha256": "B8F914EF9767D2495DAF2BA421FFCBB77E4F9508E44579F31887AEAE1093C981",
-        "bytes": 899563
-      }
-    ]
-  },
-  {
-    "version": "1.32.1",
-    "sourceStatus": "not-retained",
-    "artifactKind": "installer-package",
-    "manifest": "v1.32.1/manifest.json",
-    "moduleSha256": "407E72EE7CA03361ECACA1B27A863474BBF791FF92C87FAEC513935F14D6C4E3",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.32.1.zip",
-        "sha256": "E192EE531EA6DFD8A46ED7B3CC1A8AE2A776A0D4E98D8ACEA165894D0583E422",
-        "bytes": 711402
-      }
-    ]
-  },
-  {
-    "version": "1.32.2",
-    "sourceStatus": "not-retained",
-    "artifactKind": "installer-package",
-    "manifest": "v1.32.2/manifest.json",
-    "moduleSha256": "94CE2D481EED313370CA0728C90DCDC63422A290DFDEA96164B6D7928F4517EE",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.32.2.zip",
-        "sha256": "B392AEA36DBC3BE11AB6BE54A270AC173CB3C7FD3427DD273E6851A193024797",
-        "bytes": 713416
-      }
-    ]
-  },
-  {
-    "version": "1.32.3",
-    "sourceStatus": "not-retained",
-    "artifactKind": "installer-package",
-    "manifest": "v1.32.3/manifest.json",
-    "moduleSha256": "F3322D94E6B3A1DAA882A515C6466E30676F98DBAC8BB1EAA73441D4EA5DFDFB",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.32.3.zip",
-        "sha256": "9BD7CB595BEBBED582A85E96F6D4CBB1AD5F136578AE8502D425CAF2F47CD405",
-        "bytes": 718119
-      }
-    ]
-  },
-  {
-    "version": "1.32.4",
-    "sourceStatus": "not-retained",
-    "artifactKind": "installer-package",
-    "manifest": "v1.32.4/manifest.json",
-    "moduleSha256": "971CBA9092AC8F66F03442A99E0DB6734839A6EC9A5355028929BF5CD9985091",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.32.4.zip",
-        "sha256": "E80185F44289113F264F4CFD90D9E1153CD59AD4A5D1833096EAD38197C31F76",
-        "bytes": 722271
-      }
-    ]
-  },
-  {
-    "version": "1.32.5",
-    "sourceStatus": "not-retained",
-    "artifactKind": "installer-package",
-    "manifest": "v1.32.5/manifest.json",
-    "moduleSha256": "C28900DF78BE919329EE88CAF2D9E381D652427BCB0911D2AEF156F20D2DDEBA",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.32.5.zip",
-        "sha256": "9E57F204BA9C4AD941B613E25C1CB344BDEE3AC779872679144AD741F26B3685",
-        "bytes": 728234
-      }
-    ]
-  },
-  {
-    "version": "1.32.6",
-    "sourceStatus": "not-retained",
-    "artifactKind": "installer-package",
-    "manifest": "v1.32.6/manifest.json",
-    "moduleSha256": "34C492990338D4C7763E600E488C62965B8719D16306259DBC63A5FAC735AD35",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.32.6.zip",
-        "sha256": "7B68F767F6452F5F3E0036953B522CDA3E199D10F46E91F41EF2CE771D26066A",
-        "bytes": 730911
-      },
-      {
-        "name": "SPT-Assistant-1.32.6-archived-builds.zip",
-        "sha256": "C9DAF37100676A0B588CCB5EF54B9B78C822A895A59B4D415F6242E7B97F5E1E",
-        "bytes": 1397569
-      }
-    ]
-  },
-  {
-    "version": "1.32.7",
-    "sourceStatus": "current-source-at-repository-root",
-    "artifactKind": "installer-package",
-    "manifest": "v1.32.7/manifest.json",
-    "moduleSha256": "61216DC81319011C3D6D62D999AF1DAC566EFE44227CCDC74C7AAC3B1EE7B3E0",
-    "assets": [
-      {
-        "name": "SPT-Assistant-1.32.7.zip",
-        "sha256": "18BB39CBBF88DA9A7338374928D9EE40DBE170C52D8DAAB8FDD76B09637517D7",
-        "bytes": 734972
-      },
-      {
-        "name": "SPT-Assistant-1.32.7-archived-builds.zip",
-        "sha256": "B40FB463BA7DE68E6742343A44BBD8E605210AC05EA09DDE683AC03263066F43",
-        "bytes": 934284
-      }
-    ]
-  }
+    {
+        "version":  "1.4.14",
+        "sourceStatus":  "staging-client-source",
+        "artifactKind":  "runtime-module-only",
+        "manifest":  "v1.4.14/manifest.json",
+        "moduleSha256":  "EA3B081DF3139C3E90859B95E292F5CBBC34FEF1EB4BC23712C49753794FE9D1",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.4.14.zip",
+                           "sha256":  "F618D176534F265295B0CB8D19B2FB09BF6B6AD105A3D85CED932BCBB5230799",
+                           "bytes":  95995
+                       }
+                   ]
+    },
+    {
+        "version":  "1.4.15",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "runtime-module-only",
+        "manifest":  "v1.4.15/manifest.json",
+        "moduleSha256":  "F7CD3CFFAD405FD8EF171E7284DBC39AA87954DA92493B5419B4CC67D36CF2B7",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.4.15.zip",
+                           "sha256":  "E2AA99AE2D8B256CA6F5483C5878690A6A2939C6661CB88916FEB21EC45256A8",
+                           "bytes":  95359
+                       }
+                   ]
+    },
+    {
+        "version":  "1.4.16",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "runtime-module-only",
+        "manifest":  "v1.4.16/manifest.json",
+        "moduleSha256":  "4661BD211223B13E4399DFBA0B9A08CBEFB85DA268B1501DAF8D6F898735EA99",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.4.16.zip",
+                           "sha256":  "D28315A469A664A9230B9CF68D079FCE6C6DEE9148E0E9562C447170B1F0ED8B",
+                           "bytes":  96794
+                       }
+                   ]
+    },
+    {
+        "version":  "1.4.17",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "runtime-module-only",
+        "manifest":  "v1.4.17/manifest.json",
+        "moduleSha256":  "51C2A3C7052F3EFAE4B19B420E7FE3077C1BDA21541DAEFA3B14CAA7F0D3BF66",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.4.17.zip",
+                           "sha256":  "96BAF63E91453E1B25D4BAFFC7AA20A97566C1A217ED8440453CA3ECFF8759EC",
+                           "bytes":  98392
+                       }
+                   ]
+    },
+    {
+        "version":  "1.4.18",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "runtime-module-only",
+        "manifest":  "v1.4.18/manifest.json",
+        "moduleSha256":  "3649235255C7BFFFA268E2EC6C2EC2E55C01E02DFAE3FED65E34347E1CC6FC8B",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.4.18.zip",
+                           "sha256":  "A286821FE7252DD4788923BEBAD8994301D11DCE40C86ACCC9D120026E887F24",
+                           "bytes":  100875
+                       }
+                   ]
+    },
+    {
+        "version":  "1.4.19",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "runtime-module-only",
+        "manifest":  "v1.4.19/manifest.json",
+        "moduleSha256":  "6628304D1DFEB42F88467EE94A0F523517F741DCD09DE4FC3441114D27113311",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.4.19.zip",
+                           "sha256":  "A3A0048340A3F2FDCFEFF71E6D6B264F10CAE79C2CA7A5E7BEB345D875BE7199",
+                           "bytes":  102427
+                       }
+                   ]
+    },
+    {
+        "version":  "1.4.20",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "runtime-module-only",
+        "manifest":  "v1.4.20/manifest.json",
+        "moduleSha256":  "4ECE971B92DE3415470F53FBFCD5414AF9C63B4E2BE1C575CBFC11987C40FADE",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.4.20.zip",
+                           "sha256":  "EAFBB0BE287C50048F93DBE6F2A2F53181F057B251B1F315A18A08ABAEE5250A",
+                           "bytes":  102882
+                       }
+                   ]
+    },
+    {
+        "version":  "1.4.21",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "runtime-module-only",
+        "manifest":  "v1.4.21/manifest.json",
+        "moduleSha256":  "15889EEE4E56032C3FDC75F29DA6CBC9B3B3B3E000AA275C2CB345F082C0F767",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.4.21.zip",
+                           "sha256":  "A96EBC016189EE4591844ABE58A78FAAB37FB5B2E14F45C66C00570AD972D49C",
+                           "bytes":  106135
+                       }
+                   ]
+    },
+    {
+        "version":  "1.4.22",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "runtime-module-only",
+        "manifest":  "v1.4.22/manifest.json",
+        "moduleSha256":  "6871E2E17422A547FA28A4B790E17D1034D1A9B8B5CFC2A7D9A5442D680D750F",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.4.22.zip",
+                           "sha256":  "581310BED26B393AC200FF27449DA5D7F24FEC8E792E7B0E442C76CF98072B34",
+                           "bytes":  108376
+                       },
+                       {
+                           "name":  "SPT-Assistant-1.4.22-archived-builds.zip",
+                           "sha256":  "F2C2ED49A2EE4AE845758F68D3529D2119134866062CF6A944F75CE6AEF6218F",
+                           "bytes":  148168
+                       }
+                   ]
+    },
+    {
+        "version":  "1.4.23",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "runtime-module-only",
+        "manifest":  "v1.4.23/manifest.json",
+        "moduleSha256":  "B27EFB9333CC4DF43152F04ED75DBE60366138512A22602904A628A483A9B880",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.4.23.zip",
+                           "sha256":  "CFF13759675AD9A640B278BC0B8E9A6A34E8E21A70CB0185DFA16EF5F9CBC17F",
+                           "bytes":  116270
+                       }
+                   ]
+    },
+    {
+        "version":  "1.4.24",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "runtime-module-only",
+        "manifest":  "v1.4.24/manifest.json",
+        "moduleSha256":  "93E235C5E4B32B004E610D244AC3AA37299CB9AADFC78D178C42C0C73586DD80",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.4.24.zip",
+                           "sha256":  "3E918A44164D4CC848CFE5894C284426C16D06DE80D1AEEC10418373E952F26F",
+                           "bytes":  116680
+                       }
+                   ]
+    },
+    {
+        "version":  "1.4.25",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "runtime-module-only",
+        "manifest":  "v1.4.25/manifest.json",
+        "moduleSha256":  "A6EB79E0A9084541F0938C7F2A515A3DE7B751CE62165E72053B1BF54C4C8D4E",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.4.25.zip",
+                           "sha256":  "CCDC8C209116F309D58970157E551957E012DA41DF005B29E23EECC304B84B24",
+                           "bytes":  116753
+                       }
+                   ]
+    },
+    {
+        "version":  "1.5.0",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "runtime-module-only",
+        "manifest":  "v1.5.0/manifest.json",
+        "moduleSha256":  "88C9EDDEBBE2F276C5FC5F12EDD6F2E269E957CE6223B0C4CF1101EB304D4F5D",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.5.0.zip",
+                           "sha256":  "C4C45CA909F397FDC0BAA10433198D746A4F31BE0DF23F1FE71F4AC32B189625",
+                           "bytes":  130413
+                       }
+                   ]
+    },
+    {
+        "version":  "1.5.1",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "runtime-module-only",
+        "manifest":  "v1.5.1/manifest.json",
+        "moduleSha256":  "5C70E9504D5AB912092C27A98E3FF778342B4D05714D69CF3B445AC1FE9B4008",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.5.1.zip",
+                           "sha256":  "76FDF52698F28D68D7EAA49D54ECD32680BC5849B2EF1DD96872C4E93F196B74",
+                           "bytes":  139068
+                       }
+                   ]
+    },
+    {
+        "version":  "1.5.2",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "runtime-module-only",
+        "manifest":  "v1.5.2/manifest.json",
+        "moduleSha256":  "C6B91959B0AA3DF1E3B0DA5CFE54D2E80D33ACE71A51C7D0A723B76017BCBE79",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.5.2.zip",
+                           "sha256":  "6BE621957063C70EDF094DF4C050476C544D1FBE7E613E26FADBED1FFFA709E0",
+                           "bytes":  139172
+                       }
+                   ]
+    },
+    {
+        "version":  "1.5.3",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "runtime-module-only",
+        "manifest":  "v1.5.3/manifest.json",
+        "moduleSha256":  "ED3C2730423F93BB0BEFCACA3CF362CBBEE644D150EFE1F6B2B1CB1D9D24CEA8",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.5.3.zip",
+                           "sha256":  "83DE0BA894C31023D3CC308A590825C021A84C65383BB35B2C35269E9864E8F4",
+                           "bytes":  145891
+                       }
+                   ]
+    },
+    {
+        "version":  "1.6.0",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "runtime-module-only",
+        "manifest":  "v1.6.0/manifest.json",
+        "moduleSha256":  "D841E85B71EB1F2007124D656B52CC0A415CBF45CE6E75AC91D870B7572F31D0",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.6.0.zip",
+                           "sha256":  "94E0081946150E04738D052B4AFB49FB66AE05B8E7F5B1B43416FD0DA075113C",
+                           "bytes":  151663
+                       }
+                   ]
+    },
+    {
+        "version":  "1.6.1",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "runtime-module-only",
+        "manifest":  "v1.6.1/manifest.json",
+        "moduleSha256":  "8DE452D8A774E34161587307849CD534527118C9864C6F065DDF751778B73B28",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.6.1.zip",
+                           "sha256":  "EC9009FE06DBE3BD1B40B022B72FE4F6C49DF745DD3958831E3905E7191296CB",
+                           "bytes":  153830
+                       }
+                   ]
+    },
+    {
+        "version":  "1.7.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "runtime-module-only",
+        "manifest":  "v1.7.0/manifest.json",
+        "moduleSha256":  "9E70E5AB1B58840F514390AEF19BE7C08D036F67F1B77077A6E1143C54928F1D",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.7.0.zip",
+                           "sha256":  "6D154C4A27F391AE08C74A7ABFB9F471A7F0FE86226E0AD62C57A72360AEE61E",
+                           "bytes":  176277
+                       },
+                       {
+                           "name":  "SPT-Assistant-1.7.0-archived-builds.zip",
+                           "sha256":  "CE3B79864C65EA4C2DE93F9CF61F58A11DD2F450D0DB05E2597222AA6C92C61C",
+                           "bytes":  250592
+                       }
+                   ]
+    },
+    {
+        "version":  "1.8.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.8.0/manifest.json",
+        "moduleSha256":  "DA8DC6A162CF8C949A469BFE38B97AB034511DB01DB1F272838FD745FAFB97DE",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.8.0.zip",
+                           "sha256":  "B0C0D7DEF5931617FE089B61535A73A9E10CABF6579B31F25F040E67177F9558",
+                           "bytes":  238227
+                       }
+                   ]
+    },
+    {
+        "version":  "1.9.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.9.0/manifest.json",
+        "moduleSha256":  "96269B7BD28967E4ACFA9962672081D6908D764731D605297907D6EC42B6B05B",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.9.0.zip",
+                           "sha256":  "5D5BAA30E746AE10491E47260D4372C8DA057043822153F8FA7244716FD5DEDF",
+                           "bytes":  255345
+                       }
+                   ]
+    },
+    {
+        "version":  "1.9.1",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.9.1/manifest.json",
+        "moduleSha256":  "F5A120E881DBA5B946A8680F0653815E827C54F4DA2B9CE22930A94E8465A2CE",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.9.1.zip",
+                           "sha256":  "9B3C4C37EE51B0C664D8D4B41000DA2626710B3E69928113183CBAB0D448EB33",
+                           "bytes":  254400
+                       }
+                   ]
+    },
+    {
+        "version":  "1.10.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.10.0/manifest.json",
+        "moduleSha256":  "3B23EA567F8CA7FE5E7BE686B0E51436EA2FE6FA1C701C11F7BE2EF7189F8FB0",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.10.0.zip",
+                           "sha256":  "8BF5CE1C364E1BF83BC817C7EF8CC91989C1E62EDFB8355669CDD9EBB4BB05A4",
+                           "bytes":  268112
+                       }
+                   ]
+    },
+    {
+        "version":  "1.11.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.11.0/manifest.json",
+        "moduleSha256":  "BF3DA48258010064E5B6477485B6AA49AB3F65E74B2655AB658F9EEDBE38006E",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.11.0.zip",
+                           "sha256":  "C5DCC633BD90802F68DA85E68310C259C2604FA2AF2375309EDF61241FF48981",
+                           "bytes":  283840
+                       }
+                   ]
+    },
+    {
+        "version":  "1.12.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.12.0/manifest.json",
+        "moduleSha256":  "DAFC854426C19279B9C3A5159ACF4A2FD241F5B9EF80EEEA7FA39496BEBCAE81",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.12.0.zip",
+                           "sha256":  "6D5A51EA777E28219BCDA3688DF3FCE05EFDDC05B1A1735D9E176D4E516795B7",
+                           "bytes":  293054
+                       }
+                   ]
+    },
+    {
+        "version":  "1.13.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.13.0/manifest.json",
+        "moduleSha256":  "9B6C6A656D31EDFAA370A463FEB8AF6980E170A2CBB709B7CE3D6929F4C99C34",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.13.0.zip",
+                           "sha256":  "F6CD454BDC1847CEA12CF4E6CD9441D9F838CF43BD6C1B723CAAC5CB376EF12C",
+                           "bytes":  320584
+                       }
+                   ]
+    },
+    {
+        "version":  "1.14.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.14.0/manifest.json",
+        "moduleSha256":  "F2DD019E3261799D094A2A96DFCDCA46DC2A6BECF85778B33E7DC32A77BCD57B",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.14.0.zip",
+                           "sha256":  "DBD1A110D367B52B9DE1F4BA682432BC0B49A8FD0F7E43D3C22183FE7C14AD0E",
+                           "bytes":  408962
+                       },
+                       {
+                           "name":  "SPT-Assistant-1.14.0-archived-builds.zip",
+                           "sha256":  "753598CD40DC41EBC981F1EE0C0A9395E82045EBC4B9D14F84390D19AF207171",
+                           "bytes":  733910
+                       }
+                   ]
+    },
+    {
+        "version":  "1.15.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.15.0/manifest.json",
+        "moduleSha256":  "E2BEF3357FF365A427312D1BCF9FA16B1F21EDC2A1B7BCBFE840A440B0A54CC5",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.15.0.zip",
+                           "sha256":  "C75CD8C36786FE9606A21C9166153E19D08E6D017A4CD5BE1DE9A9229280734F",
+                           "bytes":  437355
+                       }
+                   ]
+    },
+    {
+        "version":  "1.15.1",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.15.1/manifest.json",
+        "moduleSha256":  "3444AD263E176A5E8D33BF52EAD08B2A1ECF6F1A12C26B8E2B160D04111A42D7",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.15.1.zip",
+                           "sha256":  "A0773FF88E11A1AEB4DE58112E6D3B0106EA1D7A7D543985EE70FA34DFCBD9BB",
+                           "bytes":  444433
+                       }
+                   ]
+    },
+    {
+        "version":  "1.16.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.16.0/manifest.json",
+        "moduleSha256":  "060E57058B986B73F5ADCD3CF8ABC2E3E6038D731054801F7A44E73908C941F2",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.16.0.zip",
+                           "sha256":  "BC069347CDE01531877D5D52DDBBBA4321D029160537724BA72CE7C2210AD779",
+                           "bytes":  453909
+                       }
+                   ]
+    },
+    {
+        "version":  "1.17.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.17.0/manifest.json",
+        "moduleSha256":  "5C6E92B96E34654B2C064FEF113724A3D6C6374DFFDF2BE17026375C6A39B112",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.17.0.zip",
+                           "sha256":  "1C7C1ECDB842FEF028361687B506096B5CEE67C82CF74C013A12AF148D583740",
+                           "bytes":  469296
+                       }
+                   ]
+    },
+    {
+        "version":  "1.18.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.18.0/manifest.json",
+        "moduleSha256":  "18547B905F8F4C0A7468857C5925ED07A54E009553E49CA9E59AAA8D7D0CD446",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.18.0.zip",
+                           "sha256":  "9AE0674105367B354FB3CF3A30A0F5B2C0E93350E9CB730857428B3342D1AD77",
+                           "bytes":  481062
+                       }
+                   ]
+    },
+    {
+        "version":  "1.19.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.19.0/manifest.json",
+        "moduleSha256":  "3C9B9186D60FF26EEAAF99756A0D5E092E18880F1BC4B4D65B40ECFBF7E302E2",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.19.0.zip",
+                           "sha256":  "42A105627E9A0D7BBABDD179172F067A130725677815D911EAB0A1898ABC5890",
+                           "bytes":  494645
+                       }
+                   ]
+    },
+    {
+        "version":  "1.20.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.20.0/manifest.json",
+        "moduleSha256":  "D99A04C932BAA7CBA9BACF91C2ABF9DE9C821FC904D058C957EC70CFBF6D77D6",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.20.0.zip",
+                           "sha256":  "2EAC84FAB0BCA64B5741BD7C111CD13DDD3F7EFADE48BA28F19E665626F8B8F8",
+                           "bytes":  500162
+                       }
+                   ]
+    },
+    {
+        "version":  "1.21.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.21.0/manifest.json",
+        "moduleSha256":  "68C555697B2DC295901704016D0123E2CB998DCBE49C7A7D5F860700CF581939",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.21.0.zip",
+                           "sha256":  "B2D05F00C918628B48C18118E005DEE1980CB963DBF9C12EB41B455C42F16461",
+                           "bytes":  504507
+                       }
+                   ]
+    },
+    {
+        "version":  "1.22.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.22.0/manifest.json",
+        "moduleSha256":  "2FCC9154A466321E8B1C4BF9D168E64A5B3360DFECCF9D2C2F246AAE76B6451E",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.22.0.zip",
+                           "sha256":  "D55632E3AD95FFC617A2B5F5775587E1E7D1C358EA396417F5D4ABB1AEF797BA",
+                           "bytes":  524931
+                       }
+                   ]
+    },
+    {
+        "version":  "1.23.0",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.23.0/manifest.json",
+        "moduleSha256":  "112A05D79F43F7711CC5E7E938E9C8BD72453148669C1BEF790A0CF233F8CBC4",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.23.0.zip",
+                           "sha256":  "E811E495F7D79AF833D712ABBF08198CA310DB8BCB91244FE8D854C4B34AFDE8",
+                           "bytes":  520778
+                       }
+                   ]
+    },
+    {
+        "version":  "1.23.1",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.23.1/manifest.json",
+        "moduleSha256":  "A60989AF6C6D0362979A9D4F37C30AEA3E25670EF7C342C4F7FE83EB60289DC6",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.23.1.zip",
+                           "sha256":  "80ED27E4A1E7724BA534517D84F304FDD8158ACD9B2C5D88590743A9E79F360D",
+                           "bytes":  521484
+                       }
+                   ]
+    },
+    {
+        "version":  "1.24.0",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.24.0/manifest.json",
+        "moduleSha256":  "2EE87295E2A1C8491EB0E2E9165DFABBF911E97CB396565898706D4DA5F059F6",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.24.0.zip",
+                           "sha256":  "353F39B4B32F67E30496551FD2D4ECFF5C9573E01DCFA9501A3328A23DF44818",
+                           "bytes":  525192
+                       }
+                   ]
+    },
+    {
+        "version":  "1.25.0",
+        "sourceStatus":  "partial-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.25.0/manifest.json",
+        "moduleSha256":  "DA1BA7601D6A404D6DE143968A042DF855A747A03170E558DECC85A654C1C3E5",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.25.0.zip",
+                           "sha256":  "5A8F52447E1AD329000A08A80D23969886E0B9E7B48C82C4E2546317FBD99BAF",
+                           "bytes":  525009
+                       }
+                   ]
+    },
+    {
+        "version":  "1.25.1",
+        "sourceStatus":  "partial-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.25.1/manifest.json",
+        "moduleSha256":  "EEBD928704C302302055F77B35028DC28E5923013C91E31B7D00897FE00053F5",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.25.1.zip",
+                           "sha256":  "3F85256C10E97A3404D2A974C77005CD05F94B9FA01E0A37244DF6BB50084BCC",
+                           "bytes":  524839
+                       }
+                   ]
+    },
+    {
+        "version":  "1.26.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.26.0/manifest.json",
+        "moduleSha256":  "744771C5DAE46C0BB8E491C3195D63623850BAA9017D8AC2D80212E9A6F6D184",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.26.0.zip",
+                           "sha256":  "B574FC0A3DCC114AE549464F5DD0BEADB3156E043C4C4A7B583B47713E8A4D1A",
+                           "bytes":  536993
+                       },
+                       {
+                           "name":  "SPT-Assistant-1.26.0-archived-builds.zip",
+                           "sha256":  "03C83F1EF006F8F904D431C588953DA755C93CD475C1AA1983E5C0E63F589ECC",
+                           "bytes":  657726
+                       }
+                   ]
+    },
+    {
+        "version":  "1.27.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.27.0/manifest.json",
+        "moduleSha256":  "52AF29E8D1441EDC5E4B0DDC07C0717D8F143C59CA4698DE9439BAC165319400",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.27.0.zip",
+                           "sha256":  "E24F6FC7EDD56B6F26950A639B2B0D829E8D8C13980DA99247A1EEFF94AA909A",
+                           "bytes":  560165
+                       }
+                   ]
+    },
+    {
+        "version":  "1.27.1",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.27.1/manifest.json",
+        "moduleSha256":  "E5E4692F62196C5EF734A3C10D8C1C7699C6C53B2451B610BFDCA88A13C73555",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.27.1.zip",
+                           "sha256":  "F0201DB4CC7A521FC1D1F8114EFCD4AC040AD2084C9A174437ADD7A4BA98C6AA",
+                           "bytes":  565434
+                       }
+                   ]
+    },
+    {
+        "version":  "1.28.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.28.0/manifest.json",
+        "moduleSha256":  "5194F1D696EA3A9E963893EBC1FE9B76BCCFD606ECA9260C30516DEBFFD5638A",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.28.0.zip",
+                           "sha256":  "7B661D1EF49790B6A321ACDDA65FEB3855165634960A32188328C51BDCBD04F2",
+                           "bytes":  567228
+                       }
+                   ]
+    },
+    {
+        "version":  "1.28.1",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.28.1/manifest.json",
+        "moduleSha256":  "1384C15C1E7EFFB059D99FFABEA9E6FF2AF50915823BE3F63EFCC5893ADF9AF5",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.28.1.zip",
+                           "sha256":  "33769613049C6170BC3627B20F69EDA8153F559794CB5969550A7149314C56D5",
+                           "bytes":  576560
+                       }
+                   ]
+    },
+    {
+        "version":  "1.29.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.29.0/manifest.json",
+        "moduleSha256":  "23E671B23DD40C9DCE8236D81A458E438EBAB86680A26B2E1624430739C3ED1D",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.29.0.zip",
+                           "sha256":  "3D161EBD41F7FD43FFC6115CD7932F50212CBE96F1F9C8941EF28D1C68C392BF",
+                           "bytes":  637060
+                       }
+                   ]
+    },
+    {
+        "version":  "1.29.1",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.29.1/manifest.json",
+        "moduleSha256":  "16731384C79B556EEA7864F7BF475174A85756E6928F6009B1D6596A31958D3D",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.29.1.zip",
+                           "sha256":  "5AB9E71D0F21C570CC7D1D742DCEA59894158FA16A348763474E297FE8330069",
+                           "bytes":  637957
+                       }
+                   ]
+    },
+    {
+        "version":  "1.29.2",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.29.2/manifest.json",
+        "moduleSha256":  "480F6F7621897BDED9746A8A329E4E96DAF8494E738DBD9C886F5E67D7C00EFB",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.29.2.zip",
+                           "sha256":  "F305433EDCE383F6B8BB0B99DD295362E1BC3FC7CB0961FA21C347FDEAF8BB30",
+                           "bytes":  648960
+                       }
+                   ]
+    },
+    {
+        "version":  "1.29.3",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.29.3/manifest.json",
+        "moduleSha256":  "13F2A125D0B87C651E97FDD3F81B8856437B9C52B555299C1448D0A818F92D7D",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.29.3.zip",
+                           "sha256":  "E24684611E1089C66B99FB34ECD68A48AE3EEBF1C5990008A2DCFBB7C64565C6",
+                           "bytes":  651944
+                       }
+                   ]
+    },
+    {
+        "version":  "1.29.4",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.29.4/manifest.json",
+        "moduleSha256":  "3DAE502E233EE212BD3A9AE81E2C5E09E32BADCFDBFE316671A6E873B8B9F55F",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.29.4.zip",
+                           "sha256":  "3DB80F27260995EEAB98ED81D929B70ED079A621588663B3F44FD3210DEBB9BC",
+                           "bytes":  654231
+                       }
+                   ]
+    },
+    {
+        "version":  "1.30.0",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.30.0/manifest.json",
+        "moduleSha256":  "8E9820CEC35FC67FBAC6F45C80241DD5419390AE3D35ABF0E91D5A87506C16ED",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.30.0.zip",
+                           "sha256":  "37C5415CF631212191659EC7C06AECF43CE96E930BF09A9E11EE26FDCF0BCBDB",
+                           "bytes":  659665
+                       }
+                   ]
+    },
+    {
+        "version":  "1.30.1",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.30.1/manifest.json",
+        "moduleSha256":  "DF8356CDB7354FCECCC6255D57847EFECEBFBD15AC4DB490078F73E3CDFF8426",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.30.1.zip",
+                           "sha256":  "DE238E61EE8390E219239043CC305896A8F0CAFF998FC40E8D4C0462CF3ED438",
+                           "bytes":  659930
+                       }
+                   ]
+    },
+    {
+        "version":  "1.30.2",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.30.2/manifest.json",
+        "moduleSha256":  "B3E3D69CE89D616EEBC81D397E587B9C6820DC2D7F94EB9E5B78BEB26E7076E0",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.30.2.zip",
+                           "sha256":  "92D439DC9D986CCF9392AE11F3388DD048478169B3F8CAAFFD8E409C49DAAD44",
+                           "bytes":  660137
+                       }
+                   ]
+    },
+    {
+        "version":  "1.31.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.31.0/manifest.json",
+        "moduleSha256":  "C9034D70B83EEF2F1D88E18D2CDF3949DD2BD5C80623267A8B1A38D2AAC42BAA",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.31.0.zip",
+                           "sha256":  "A1799253E085891430E45511D6C9D25B9CD910B8D62961E3012DB487FB720E02",
+                           "bytes":  665276
+                       }
+                   ]
+    },
+    {
+        "version":  "1.31.1",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.31.1/manifest.json",
+        "moduleSha256":  "4F69DA8251CFFCB879CC6B66E5936CD04D20814EF129782D04CFF62F00481162",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.31.1.zip",
+                           "sha256":  "82B6E17E4098B1F8D1A8783E35485BC2E22F80E4AABAB3DB6F63F9C4848F9B3B",
+                           "bytes":  667269
+                       }
+                   ]
+    },
+    {
+        "version":  "1.31.2",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.31.2/manifest.json",
+        "moduleSha256":  "28E590B29F51C9F45E8B1AA1E30497C4C9710A8DF5066CED99E2098D32618FA8",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.31.2.zip",
+                           "sha256":  "1E6967B5DE23084A8A5A65633EA33FD92A03847B004EC8B9F050DC2837CD302C",
+                           "bytes":  668375
+                       }
+                   ]
+    },
+    {
+        "version":  "1.32.0",
+        "sourceStatus":  "client-source-snapshot",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.32.0/manifest.json",
+        "moduleSha256":  "042332C98A90147CD88552A304A9C4F39EAB1AD58DAE2176585BE2619526264A",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.32.0.zip",
+                           "sha256":  "98AD2A82058E4E5857AE1A006CC77CF9BF654E25D5602AD783D4977F6938F548",
+                           "bytes":  706021
+                       },
+                       {
+                           "name":  "SPT-Assistant-1.32.0-archived-builds.zip",
+                           "sha256":  "B8F914EF9767D2495DAF2BA421FFCBB77E4F9508E44579F31887AEAE1093C981",
+                           "bytes":  899563
+                       }
+                   ]
+    },
+    {
+        "version":  "1.32.1",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.32.1/manifest.json",
+        "moduleSha256":  "407E72EE7CA03361ECACA1B27A863474BBF791FF92C87FAEC513935F14D6C4E3",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.32.1.zip",
+                           "sha256":  "E192EE531EA6DFD8A46ED7B3CC1A8AE2A776A0D4E98D8ACEA165894D0583E422",
+                           "bytes":  711402
+                       }
+                   ]
+    },
+    {
+        "version":  "1.32.2",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.32.2/manifest.json",
+        "moduleSha256":  "94CE2D481EED313370CA0728C90DCDC63422A290DFDEA96164B6D7928F4517EE",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.32.2.zip",
+                           "sha256":  "B392AEA36DBC3BE11AB6BE54A270AC173CB3C7FD3427DD273E6851A193024797",
+                           "bytes":  713416
+                       }
+                   ]
+    },
+    {
+        "version":  "1.32.3",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.32.3/manifest.json",
+        "moduleSha256":  "F3322D94E6B3A1DAA882A515C6466E30676F98DBAC8BB1EAA73441D4EA5DFDFB",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.32.3.zip",
+                           "sha256":  "9BD7CB595BEBBED582A85E96F6D4CBB1AD5F136578AE8502D425CAF2F47CD405",
+                           "bytes":  718119
+                       }
+                   ]
+    },
+    {
+        "version":  "1.32.4",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.32.4/manifest.json",
+        "moduleSha256":  "971CBA9092AC8F66F03442A99E0DB6734839A6EC9A5355028929BF5CD9985091",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.32.4.zip",
+                           "sha256":  "E80185F44289113F264F4CFD90D9E1153CD59AD4A5D1833096EAD38197C31F76",
+                           "bytes":  722271
+                       }
+                   ]
+    },
+    {
+        "version":  "1.32.5",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.32.5/manifest.json",
+        "moduleSha256":  "C28900DF78BE919329EE88CAF2D9E381D652427BCB0911D2AEF156F20D2DDEBA",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.32.5.zip",
+                           "sha256":  "9E57F204BA9C4AD941B613E25C1CB344BDEE3AC779872679144AD741F26B3685",
+                           "bytes":  728234
+                       }
+                   ]
+    },
+    {
+        "version":  "1.32.6",
+        "sourceStatus":  "not-retained",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.32.6/manifest.json",
+        "moduleSha256":  "34C492990338D4C7763E600E488C62965B8719D16306259DBC63A5FAC735AD35",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.32.6.zip",
+                           "sha256":  "7B68F767F6452F5F3E0036953B522CDA3E199D10F46E91F41EF2CE771D26066A",
+                           "bytes":  730911
+                       },
+                       {
+                           "name":  "SPT-Assistant-1.32.6-archived-builds.zip",
+                           "sha256":  "C9DAF37100676A0B588CCB5EF54B9B78C822A895A59B4D415F6242E7B97F5E1E",
+                           "bytes":  1397569
+                       }
+                   ]
+    },
+    {
+        "version":  "1.32.7",
+        "sourceStatus":  "current-source-at-repository-root",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.32.7/manifest.json",
+        "moduleSha256":  "61216DC81319011C3D6D62D999AF1DAC566EFE44227CCDC74C7AAC3B1EE7B3E0",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.32.7.zip",
+                           "sha256":  "18BB39CBBF88DA9A7338374928D9EE40DBE170C52D8DAAB8FDD76B09637517D7",
+                           "bytes":  734972
+                       },
+                       {
+                           "name":  "SPT-Assistant-1.32.7-archived-builds.zip",
+                           "sha256":  "B40FB463BA7DE68E6742343A44BBD8E605210AC05EA09DDE683AC03263066F43",
+                           "bytes":  934284
+                       }
+                   ]
+    },
+    {
+        "version":  "1.32.8",
+        "sourceStatus":  "native-git-source-at-tag-root",
+        "artifactKind":  "installer-package",
+        "manifest":  "v1.32.8/manifest.json",
+        "moduleSha256":  "0E483F1F3B9DC224B1F942C75F9B546F7966DD69856DEA797EC136898CCE1210",
+        "assets":  [
+                       {
+                           "name":  "SPT-Assistant-1.32.8.zip",
+                           "sha256":  "4DBCA0E8EE142233B76B1F510BE86BB3E1F009E447FFC2DEE0F05955EDAEBD62",
+                           "bytes":  715033
+                       },
+                       {
+                           "name":  "SPT-Assistant-1.32.8.zip.sha256",
+                           "sha256":  "97AFFAD81EE92AF9103612339D05D2FD92D46C811DEFE032EAA8F4701DE6B04D",
+                           "bytes":  92
+                       }
+                   ]
+    }
 ]
