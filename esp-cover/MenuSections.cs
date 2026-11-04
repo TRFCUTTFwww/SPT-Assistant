@@ -1,7 +1,7 @@
 using System;
 namespace LocalSpt5Esp;
 internal static class MenuSections {
- internal static readonly string[] Names={"战斗与枪械","人物与移动","AI 工作台","队友","玩具枪工具","镜头与画面","战局与物资","载具与空投","传送与导航","物品与装备","设置与热键"};
+ internal static readonly string[] Names={"战斗与枪械","人物与移动","AI 工作台","玩具枪工具","镜头与画面","战局与物资","载具与空投","传送与导航","物品与装备","设置与热键"};
  internal static string DisplayName(string category)=>category switch{"战斗与枪械"=>"射击","人物与移动"=>"人物","AI 工作台"=>"AI 管理","镜头与画面"=>"视觉","战局与物资"=>"战局","载具与空投"=>"BTR","传送与导航"=>"传送","物品与装备"=>"装备与预设","设置与热键"=>"其他",_=>category};
  internal static int Number(string section){int dot=section.IndexOf('.');return dot>=0&&int.TryParse(section.AsSpan(0,dot),out int value)?value:0;}
  internal static string Group(string section)=>Number(section) switch{8 or 9 or 10 or 28 or 39 or 40 or 44 or 45=>"战斗与枪械",2 or 19 or 20 or 29 or 43=>"人物与移动",34 or 49=>"AI 工作台",50 or 46=>"玩具枪工具",51=>"队友",1 or 6 or 7 or 11 or 12 or 16 or 21 or 22 or 23 or 35 or 48 or 52=>"镜头与画面",13 or 26 or 27 or 30 or 31 or 37 or 42=>"战局与物资",18 or 38=>"载具与空投",14 or 15 or 33 or 41=>"传送与导航",_=>"设置与热键"};

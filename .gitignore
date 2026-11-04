@@ -16,6 +16,7 @@
 !/gear-mail-tests/
 !/raid-controls-tests/
 !/installer-1.32.7/
+!/installer-1.32.8/
 **/bin/
 **/obj/
 **/*.dll

@@ -4,7 +4,8 @@ public sealed class RuntimeModule:IRuntimeModule {
  Plugin? plugin;
  Overlay? overlay;
  public int ApiVersion=>1;
- public string Version=>"1.32.7";
+ internal const string ReleaseVersion="1.32.8";
+ public string Version=>ReleaseVersion;
  public void Initialize(IHostServices host){plugin=new Plugin(host);plugin.Load();InterfaceMenu.Initialize(plugin);FeatureToasts.Initialize(plugin);overlay=new Overlay();}
  public void Update(){long stamp=RuntimePerformance.Start();try{FloatingStatus.Update();ConfigProfiles.Keys();InterfaceMenu.Update();DirectorStage.Update();EntertainmentControl.Update();HitSounds.Tick();overlay?.Update();}finally{RuntimePerformance.UpdateDone(stamp);}}
  public void LateUpdate(){long stamp=RuntimePerformance.Start();try{overlay?.LateUpdate();InterfaceMenu.KeepCursor();}finally{RuntimePerformance.LateDone(stamp);}}
