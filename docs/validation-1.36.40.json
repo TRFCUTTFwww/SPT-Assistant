@@ -1,0 +1,42 @@
+{
+    "version":  "1.36.40",
+    "utc":  "2026-11-05T14:27:13.2560380Z",
+    "backup":  "D:\\EFT SPT 5.0BE\\EFT SPT 5.0BE\\_spt5_esp_fix\\backup-remove-alpha-20261105-222503",
+    "removedActivePaths":  [
+                               "BepInEx/plugins/AlphaLaboratory",
+                               "BepInEx/config/local.alpha.laboratory.cfg"
+                           ],
+    "removedSource":  "esp-cover/AlphaEntry.cs",
+    "updatedSource":  [
+                          "RuntimeModule.cs",
+                          "MenuSections.cs",
+                          "InterfaceMenu.cs",
+                          "EventRaidDiagnostics.cs",
+                          "Esp.csproj"
+                      ],
+    "build":  {
+                  "errors":  0,
+                  "warnings":  2
+              },
+    "offlinePassGroups":  67,
+    "integrationIdentifiersAbsent":  true,
+    "liveReload":  {
+                       "apiVersion":  1,
+                       "hostVersion":  "1.4.11",
+                       "coreVersion":  "1.36.40",
+                       "generation":  3,
+                       "sha256":  "A139CB458758370BF381C16F2DCC70F7F793B0795D2CD330EB6E23F4D0044212",
+                       "ready":  true,
+                       "error":  null,
+                       "updatedUtc":  "2026-11-05T14:26:15.3904345Z"
+                   },
+    "fallbackSha256":  "A139CB458758370BF381C16F2DCC70F7F793B0795D2CD330EB6E23F4D0044212",
+    "independentPluginRestartRequired":  true,
+    "postRestartRaidTested":  false,
+    "preservedLaboratoryModes":  [
+                                     "normal",
+                                     "dark",
+                                     "halloween2024",
+                                     "event"
+                                 ]
+}

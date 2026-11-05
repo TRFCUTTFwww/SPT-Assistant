@@ -21,7 +21,7 @@ using SPTarkov.Common.Models.Logging;
 namespace LocalRaidControls;
 public record Metadata:IModMetadata {
  public string ModGuid{get;init;}="local.spt5.raid-controls";public string Name{get;init;}="Local Next Raid Loot Controls";public string Author{get;init;}="Local";public List<string>? Contributors{get;init;}
- public SemanticVersioning.Version Version{get;init;}=new("1.4.0");public SemanticVersioning.Range SptVersion{get;init;}=new("~5.0.0");public bool HasPrepatcher{get;init;}public List<string>? Incompatibilities{get;init;}public Dictionary<string,SemanticVersioning.Range>? ModDependencies{get;init;}public string? Url{get;init;}public string License{get;init;}="MIT";
+ public SemanticVersioning.Version Version{get;init;}=new("1.4.1");public SemanticVersioning.Range SptVersion{get;init;}=new("~5.0.0");public bool HasPrepatcher{get;init;}public List<string>? Incompatibilities{get;init;}public Dictionary<string,SemanticVersioning.Range>? ModDependencies{get;init;}public string? Url{get;init;}public string License{get;init;}="MIT";
 }
 [Injectable(TypePriority=OnLoadOrder.PostLoad+100)]
 public class Startup(ISptLogger<Startup> logger):IOnLoad {
@@ -38,7 +38,7 @@ public static partial class Patches {
  public sealed class Scope {internal RaidSettings? Previous;}
  internal static RaidSettings Read(){try{var file=Path.Combine(Home,"settings.json");var value=File.Exists(file)?JsonSerializer.Deserialize<RaidSettings>(File.ReadAllText(file))??new():new RaidSettings();value.Validate();return value;}catch(Exception e){Log.Warning("Raid loot settings ignored: "+e.Message);return new();}}
  static double Price(string tpl)=>tpl==BitcoinRules.Template&&LiveBitcoin.Effective is double live?live:prices.GetValueOrDefault(tpl);
- static void Status(string? map=null,RaidSettings? settings=null){try{Directory.CreateDirectory(Home);string file=Path.Combine(Home,"server-status.json");File.WriteAllText(file+".tmp",JsonSerializer.Serialize(new{version="1.4.0",serverPid=Environment.ProcessId,ready=true,map,settings,utc=DateTime.UtcNow},json));File.Move(file+".tmp",file,true);}catch(Exception e){Log.Warning("Raid status file: "+e.Message);}}
+ static void Status(string? map=null,RaidSettings? settings=null){try{Directory.CreateDirectory(Home);string file=Path.Combine(Home,"server-status.json");File.WriteAllText(file+".tmp",JsonSerializer.Serialize(new{version="1.4.1",serverPid=Environment.ProcessId,ready=true,map,settings,utc=DateTime.UtcNow},json));File.Move(file+".tmp",file,true);}catch(Exception e){Log.Warning("Raid status file: "+e.Message);}}
  internal static void Start(){Directory.CreateDirectory(Home);string file=Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,"..","BepInEx","plugins","LocalSpt5ESP","esp5-prices.json"));if(File.Exists(file))foreach(var pair in JsonSerializer.Deserialize<Dictionary<string,double>>(File.ReadAllText(file))??[])prices[pair.Key]=pair.Value;
   var h=new Harmony("local.spt5.raid-controls");void Patch(Type type,string method,string? before=null,string? after=null,string? final=null){h.Patch(AccessTools.Method(type,method),prefix:before==null?null:new HarmonyMethod(typeof(Patches),before),postfix:after==null?null:new HarmonyMethod(typeof(Patches),after),finalizer:final==null?null:new HarmonyMethod(typeof(Patches),final));}
   Patch(typeof(LocationLifecycleService),"HandleInsuredItemLostEvent",nameof(FilterDeathInsurance),final:nameof(RestoreDeathInsurance));

@@ -35,6 +35,7 @@ internal static class AiSpawnService {
   return hit.position;
  }
  internal static void Enqueue(GameWorld current,Vector3 position,AiSpawnOption option,int difficulty,int count,AiBirthPreset preset,string label,bool sceneRestore=false,string companionKey=""){
+    if(!string.IsNullOrEmpty(companionKey))throw new ArgumentException("队友生成已关闭。");
   if(!RaidClock.Active||current.MainPlayer?.HealthController?.IsAlive!=true)throw new ArgumentException("请进入战局且保持存活。");
   if(!GameStarted)throw new ArgumentException("等待战局正式开始后再生成 AI。");
   if(queue.Count>=16)throw new ArgumentException("生成队列已满，请等待或取消剩余请求。");

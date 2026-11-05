@@ -35,17 +35,27 @@ internal static class LootDisplay {
   string dir=Path.Combine(BepInEx.Paths.PluginPath,"LocalSpt5ESP");
   try{prices=JsonSerializer.Deserialize<Dictionary<string,double>>(File.ReadAllText(Path.Combine(dir,"esp5-prices.json")))??new();names=JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(Path.Combine(dir,"esp5-names.json")))??new();p.Log.LogInfo($"Loot price snapshot loaded: {prices.Count} prices, {names.Count} names");}
   catch(Exception e){p.Log.LogWarning("Loot price/name snapshot unavailable: "+e.Message);}
+  try{string fallback=Path.Combine(dir,"item-name-fallbacks.json");if(File.Exists(fallback))foreach(var pair in JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(fallback))??new()){
+   if(pair.Key.EndsWith(" ShortName",StringComparison.Ordinal)&&names.TryGetValue(pair.Key[..^10],out var fullName)&&ReadableName(fullName))continue;
+   if(!names.TryGetValue(pair.Key,out var existing)||!ReadableName(existing))names[pair.Key]=pair.Value;
+  }}
+  catch(Exception e){p.Log.LogWarning("Item name supplement unavailable: "+e.Message);}
+  foreach(var clue in new[]{("68616c6c6f7765656e6b6579","停车场车钥匙"),("68616c6c6f7765656e6d6170","收集者地图")}){names[clue.Item1]=clue.Item2;names[clue.Item1+" ShortName"]=clue.Item2;}
  }
  internal static void Reset()=>snapshots.Clear();
  internal static void Shutdown(){snapshots.Clear();prices=new(StringComparer.Ordinal);names=new(StringComparer.Ordinal);}
+ static bool ReadableName(string? text)=>!string.IsNullOrWhiteSpace(text)&&!System.Text.RegularExpressions.Regex.IsMatch(text,"^[a-fA-F0-9]{24}( Name| ShortName| Description)?$");
  internal static string ItemName(Item item,bool shortName=true){
   var id=item.StringTemplateId;
-  if(shortName&&names.TryGetValue(id+" ShortName",out var shortText))return shortText;
-  if(names.TryGetValue(id,out var full))return full;
+  if(shortName&&names.TryGetValue(id+" ShortName",out var shortText)&&ReadableName(shortText))return shortText;
+  if(names.TryGetValue(id,out var full)&&ReadableName(full))return full;
+  if(names.TryGetValue(id+" Name",out full)&&ReadableName(full))return full;
   var raw=shortName?item.ShortName:item.Name;
   string text=LocalizationExtensions.Localized(raw,EStringCase.None);
-  if(string.IsNullOrWhiteSpace(text))text=raw;
-  names[id]=text;return text;
+  if(!ReadableName(text))text=LocalizationExtensions.Localized(id+" Name",EStringCase.None);
+  if(!ReadableName(text))text=LocalizationExtensions.Localized(item.Name,EStringCase.None);
+  if(!ReadableName(text))return "未命名物品 · "+id;
+  names[shortName?id+" ShortName":id]=text;return text;
  }
  internal static string Money(double value)=>value>0?"₽"+Math.Round(value).ToString("N0",CultureInfo.InvariantCulture):"价格未知";
  internal static IEnumerable<Item> Children(Item item){

@@ -21,15 +21,16 @@ internal static class InterfaceMenu {
  static Rect window;
  static Vector2 scroll,dragOffset,resizeOrigin;
  static Vector2 sidebarScroll;
- static string category="战斗与枪械",otherPage="射击辅助",filter="",drag="",hex="";
+ static string category="镜头与画面",otherPage="人物显示",filter="",drag="",hex="";
  static int colorRole;
  static bool oldVisible,editing,windowDrag;
  static CursorLockMode oldLock;
  static float nextError;
  static readonly MenuInputGate inputGate=new();
  internal static bool Open=>inputGate.Open;
- internal static bool TeleportPage=>Open&&(category=="传送与导航"||category=="AI 工作台"&&otherPage=="位置传送");
+ internal static bool TeleportPage=>Open&&(category=="传送与导航"&&otherPage=="角色传送"||category=="AI 工作台"&&otherPage=="位置传送");
  internal static void ShowTeleport(){Navigate(category=="AI 工作台"?"AI 工作台":"传送与导航",category=="AI 工作台"?"位置传送":"角色传送");}
+ internal static bool CoordinatesPage=>Open&&category=="开发工具"&&otherPage=="坐标读取";
  internal static bool AiPage=>Open&&category=="AI 工作台";
  internal static bool AirdropPage=>Open&&category=="载具与空投"&&otherPage=="空投控制";
  internal static bool BuffPage=>Open&&category=="人物与移动"&&otherPage=="Buff 状态";
@@ -147,6 +148,7 @@ internal static class InterfaceMenu {
  static readonly Dictionary<string,string> rememberedPages=new();static readonly Dictionary<string,(Vector2 Scroll,string Filter)> pageState=new();static bool contextKeys;static ConfigEntryBase[]? visibleEntries;
  static string PageKey=>category+"/"+otherPage;
  internal static void Navigate(string section,string? page=null){
+  (section,page)=(section,page) switch{("战斗与枪械","枪械参数")=>("枪械编辑","枪械参数"),("人物与移动","模型与动作")=>("模型与镜头","人物模型"),("人物与移动","动作锁定")=>("模型与镜头","动作锁定"),("人物与移动","角色管理")=>("开发工具","角色管理"),("镜头与画面","镜头控制")=>("模型与镜头","自由镜头"),("设置与热键","命令控制台")=>("开发工具","命令控制台"),("传送与导航","撤离与过图")=>("传送与导航","撤离定位"),_=>(section,page)};
   pageState[PageKey]=(scroll,filter);rememberedPages[category]=otherPage;if(category=="AI 工作台"&&(section!=category||page!=otherPage))AiWorkspace.CloseEditors();category=section;var choices=MenuSections.Pages(section);otherPage=page??(rememberedPages.TryGetValue(section,out var previous)&&choices.Contains(previous)?previous:choices[0]);if(!choices.Contains(otherPage))otherPage=choices[0];var state=pageState.GetValueOrDefault(PageKey);scroll=state.Scroll;filter=state.Filter??"";contextKeys=false;
  }
  internal static string Tabs(Rect rect,string[] choices,string selected,out float height){int columns=Math.Min(choices.Length,MenuWorkspaceLayout.Columns(rect.width));float width=(rect.width-8*(columns-1))/columns;height=MenuWorkspaceLayout.Height(choices.Length,rect.width)+10;for(int i=0;i<choices.Length;i++)if(Button(new Rect(rect.x+i%columns*(width+8),rect.y+i/columns*40,width,32),choices[i],selected==choices[i]))selected=choices[i];return selected;}
@@ -157,22 +159,25 @@ internal static class InterfaceMenu {
    Panel(window);Surface(new Rect(window.x+10,window.y+10,202,window.height-20),Color.Lerp(Background,Color.black,.18f),10);Surface(new Rect(window.x+28,window.y+28,34,34),new Color(Accent.r,Accent.g,Accent.b,.14f),9);MenuIcons.Draw(new Rect(window.x+34,window.y+34,22,22),"战局",Accent);Label(new Rect(window.x+68,window.y+22,132,28),"SPT Assistant",Text,15);Label(new Rect(window.x+73,window.y+49,122,19),"控制中心  /  "+RuntimeModule.ReleaseVersion,Color.Lerp(Text,Background,.5f),11);
    if(Button(new Rect(window.xMax-70,window.y+20,48,30),"关闭")){SetOpen(false);return;}if(Button(new Rect(window.xMax-224,window.y+20,68,30),"布局")){editing=true;drag="";}if(Button(new Rect(window.xMax-148,window.y+20,68,30),contextKeys?"返回":"热键"))contextKeys=!contextKeys;
    Label(new Rect(window.x+236,window.y+18,Math.Max(100,window.width-500),31),MenuSections.DisplayName(category),Text,23);Label(new Rect(window.x+236,window.y+53,window.width-480,22),MenuSections.Subtitle(category),Color.Lerp(Text,Background,.4f),12);
-   var sidebar=new Rect(window.x+22,window.y+100,184,Math.Max(140,window.height-210));sidebarScroll.x=0;float sideWidth=sidebar.width-8;sidebarScroll=GUI.BeginScrollView(sidebar,sidebarScroll,new Rect(0,0,sideWidth,MenuSections.Names.Length*49),false,false,GUIStyle.none,GUIStyle.none);sidebarScroll.x=0;
-   for(int i=0;i<MenuSections.Names.Length;i++){string name=MenuSections.Names[i];var row=new Rect(0,i*49,sideWidth-4,41);if(Button(row,"",category==name))Navigate(name);if(category==name)Surface(new Rect(row.x+1,row.y+10,3,21),Accent,1);MenuIcons.Draw(new Rect(row.x+12,row.y+10,21,21),name,category==name?Accent:Color.Lerp(Text,Background,.35f));Label(new Rect(row.x+43,row.y,row.width-46,row.height),MenuSections.DisplayName(name),category==name?Accent:Text,14);}GUI.EndScrollView();Label(new Rect(window.x+30,window.yMax-82,165,22),RaidClock.Active?"●  战局进行中":"●  待命",RaidClock.Active?Accent:Color.Lerp(Text,Background,.4f),12);Label(new Rect(window.x+30,window.yMax-52,165,22),"右 Shift 开关菜单",Color.Lerp(Text,Background,.5f),11);
+   var sidebar=new Rect(window.x+22,window.y+100,184,Math.Max(140,window.height-210));sidebarScroll.x=0;float sideWidth=sidebar.width-8;sidebarScroll=GUI.BeginScrollView(sidebar,sidebarScroll,new Rect(0,0,sideWidth,MenuSections.Names.Length*49+84),false,false,GUIStyle.none,GUIStyle.none);sidebarScroll.x=0;
+   float sideY=0;string lastLane="";
+   foreach(string name in MenuSections.Names){string lane=MenuSections.Lane(name);if(lane!=lastLane){Label(new Rect(8,sideY,sideWidth-16,22),lane,Color.Lerp(Accent,Text,.4f),11);sideY+=28;lastLane=lane;}var row=new Rect(0,sideY,sideWidth-4,41);sideY+=49;if(Button(row,"",category==name))Navigate(name);if(category==name)Surface(new Rect(row.x+1,row.y+10,3,21),Accent,1);MenuIcons.Draw(new Rect(row.x+12,row.y+10,21,21),name,category==name?Accent:Color.Lerp(Text,Background,.35f));Label(new Rect(row.x+43,row.y,row.width-46,row.height),MenuSections.DisplayName(name),category==name?Accent:Text,14);}GUI.EndScrollView();Label(new Rect(window.x+30,window.yMax-82,165,22),RaidClock.Active?"●  战局进行中":"●  待命",RaidClock.Active?Accent:Color.Lerp(Text,Background,.4f),12);Label(new Rect(window.x+30,window.yMax-52,165,22),"右 Shift 开关菜单",Color.Lerp(Text,Background,.5f),11);
    var content=new Rect(window.x+236,window.y+99,window.width-260,window.height-123);
    if(contextKeys){HotkeyPage.Draw(content,category);return;}
    var pages=MenuSections.Pages(category);if(!pages.Contains(otherPage))otherPage=pages[0];string next=Tabs(content,pages,otherPage,out float tabsHeight);if(next!=otherPage)Navigate(category,next);content.y+=tabsHeight;content.height-=tabsHeight;
    if(category=="AI 工作台"){AiWorkspace.Draw(content,otherPage);return;}if(category=="队友"){CompanionPlans.Draw(content,otherPage);return;}if(category=="玩具枪工具"){ToyDeveloper.DrawWorkspace(content,otherPage);return;}if(category=="战局与物资"&&otherPage=="活动控制"){SeasonalEventControls.Draw(content);return;}
+   if(category=="战局与物资"&&otherPage=="地图模式"){EventRaidLauncher.Draw(content);return;}
    switch((category,otherPage)){
-    case ("战斗与枪械","枪械参数"):WeaponEditor.Draw(content);break;
+    case ("枪械编辑","枪械参数"):WeaponEditor.Draw(content);break;
     case ("战斗与枪械","微自瞄"):SoftAimControl.Draw(content);break;
     case ("战斗与枪械","瞄准排除"):AimTargetFilter.Draw(content);break;
     case ("战斗与枪械","命中音效"):HitSounds.Draw(content);break;
     case ("人物与移动","Buff 状态"):CharacterBuffs.Draw(content);break;
-    case ("人物与移动","动作锁定"):ModelPoseLock.Draw(content);break;
+    case ("模型与镜头","动作锁定"):ModelPoseLock.Draw(content);break;
     case ("人物与移动","死亡保留"):DeathInventory.Draw(content);break;
-    case ("人物与移动","角色管理"):ProfileAdminPanel.Draw(content);break;
-    case ("镜头与画面","镜头控制"):DirectorStage.Draw(content);break;
+    case ("开发工具","坐标读取"):CoordinateReader.Draw(content);break;
+    case ("开发工具","角色管理"):ProfileAdminPanel.Draw(content);break;
+    case ("模型与镜头","自由镜头"):DirectorStage.Draw(content);break;
     case ("镜头与画面","界面布局"):DrawAppearance(content);break;
     case ("战局与物资","时间与环境"):scroll=GUI.BeginScrollView(content,scroll,new Rect(0,0,content.width-20,980));RaidClock.DrawPanel(new Rect(4,4,content.width-32,964));GUI.EndScrollView();break;
     case ("战局与物资","本局物资"):RaidLoot.Draw(content);break;
@@ -182,13 +187,14 @@ internal static class InterfaceMenu {
     case ("载具与空投","空投控制"):AirdropControl.Draw(content);break;
     case ("传送与导航","角色传送"):TeleportControl.Draw(content);break;
     case ("传送与导航","路面导航"):GroundNavigation.Draw(content);break;
+    case ("传送与导航","撤离定位"):ExfilDisplay.DrawQuickActions(new Rect(content.x,content.y,content.width,46));DrawSettings(new Rect(content.x,content.y+58,content.width,content.height-58));break;
     case ("物品与装备","添加物品"):ItemSpawner.Draw(content);break;
     case ("物品与装备","玩家枪械预设"):PlayerWeaponPresets.Draw(content);break;
     case ("物品与装备","整套装备"):LoadoutPlans.Draw(content);break;
     case ("设置与热键","全部热键"):HotkeyPage.Draw(content);break;
     case ("设置与热键","配置方案"):ConfigProfiles.Draw(content);break;
     case ("设置与热键","主题与布局"):DrawAppearance(content);break;
-    case ("设置与热键","命令控制台"):CommandoConsole.Draw(content);break;
+    case ("开发工具","命令控制台"):CommandoConsole.Draw(content);break;
     default:DrawSettings(content);break;
    }
   }catch(Exception error){if(Time.unscaledTime>=nextError){nextError=Time.unscaledTime+10;Plugin.Self.Error(error);}}finally{var e=Event.current;if(InputBlocked&&e!=null&&(e.isMouse||e.type==EventType.ScrollWheel))e.Use();}

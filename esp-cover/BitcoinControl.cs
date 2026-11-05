@@ -10,9 +10,20 @@ using LocalRaidShared;
 using UnityEngine;
 namespace LocalSpt5Esp;
 internal static class BitcoinControl {
- static BitcoinStatus? status;static float nextRead;static string notice="";static double? price,baseline;
+ static BitcoinStatus? status;static float nextRead;static string notice="";static double? price,baseline;[ThreadStatic]static bool compareOriginal;
  internal static double? Price=>price;
- internal static void Initialize(Plugin plugin){plugin.Patches.Patch(AccessTools.PropertyGetter(typeof(BaseHandbookData),"Price"),prefix:new HarmonyMethod(typeof(BitcoinControl),nameof(BasePrice)));plugin.Patches.Patch(AccessTools.Method(typeof(Handbook),"GetBasePrice"),prefix:new HarmonyMethod(typeof(BitcoinControl),nameof(HandbookPrice)));}
+ internal static void Initialize(Plugin plugin){plugin.Patches.Patch(AccessTools.PropertyGetter(typeof(BaseHandbookData),"Price"),prefix:new HarmonyMethod(typeof(BitcoinControl),nameof(BasePrice)));plugin.Patches.Patch(AccessTools.Method(typeof(Handbook),"GetBasePrice"),prefix:new HarmonyMethod(typeof(BitcoinControl),nameof(HandbookPrice)));plugin.Patches.Patch(AccessTools.Method(typeof(SupplyData),"GetBasePrice"),prefix:new HarmonyMethod(typeof(BitcoinControl),nameof(SupplyPrice)));}
+ static bool SupplyPrice(MongoID __0,ref double __result){if(compareOriginal||__0.ToString()!=BitcoinRules.Template||(price??baseline) is not double live)return true;__result=live;return false;}
+ internal static object Diagnostics(TarkovApplication app){
+  nextRead=0;Tick();var session=app.GetClientBackEndSession().TryCast<EFT.Trading.ITradingSession>()??throw new InvalidOperationException("Trading session unavailable");var profile=app.GetProfileForLocalGame();EFT.InventoryLogic.Item? coin=null;
+  if(profile?.Inventory!=null)foreach(var item in profile.Inventory.GetAllItemByTemplate(BitcoinRules.Template)){coin=item;break;}
+  var rows=new System.Collections.Generic.List<object>();foreach(var trader in session.Traders){var supply=trader._supplyData;double? cached=supply?.MarketPrices!=null&&supply.MarketPrices.ContainsKey(BitcoinRules.Template)?supply.MarketPrices[BitcoinRules.Template]:null;int? before=null,after=null,disabledOffer=null;double? native=null,resolved=null,disabledBase=null;
+   try{compareOriginal=true;if(supply!=null)native=supply.GetBasePrice(new MongoID(BitcoinRules.Template));if(coin!=null&&trader.PricesLoaded){var value=trader.GetUserItemPrice(coin);if(value.HasValue)before=value.Value.Amount;}}finally{compareOriginal=false;}
+   if(supply!=null)resolved=supply.GetBasePrice(new MongoID(BitcoinRules.Template));if(coin!=null&&trader.PricesLoaded){var value=trader.GetUserItemPrice(coin);if(value.HasValue)after=value.Value.Amount;}
+   var savedPrice=price;try{price=null;if(supply!=null)disabledBase=supply.GetBasePrice(new MongoID(BitcoinRules.Template));if(coin!=null&&trader.PricesLoaded){var value=trader.GetUserItemPrice(coin);if(value.HasValue)disabledOffer=value.Value.Amount;}}finally{price=savedPrice;}
+   rows.Add(new{id=trader.Id,loaded=trader.PricesLoaded,cachedBase=cached,originalSupplyBase=native,liveSupplyBase=resolved,originalOffer=before,liveOffer=after,disabledBase,disabledOffer});
+  }return new{status,appliedBase=price,hasInventoryBitcoin=coin!=null,traders=rows};
+ }
  static bool BasePrice(BaseHandbookData __instance,ref float __result){if(__instance.Id!=BitcoinRules.Template||(price??baseline) is not double live)return true;__result=(float)live;return false;}
  static bool HandbookPrice(MongoID __0,ref double __result){if(__0.ToString()!=BitcoinRules.Template||(price??baseline) is not double live)return true;__result=live;return false;}
  internal static void Tick(){if(Time.unscaledTime<nextRead)return;nextRead=Time.unscaledTime+2;try{status=JsonSerializer.Deserialize<BitcoinStatus>(File.ReadAllText(Path.Combine(NextRaidLoot.Home,"bitcoin-status.json")));bool running=status!=null&&Process.GetProcessesByName("SPT.Server").Any(p=>p.Id==status.ServerPid);baseline=running&&status!.OriginalGameRub is >0?status.OriginalGameRub:null;price=running&&status!.Enabled&&BitcoinRules.Valid(status.Quote)?status.Quote!.GameRub:null;}catch{price=baseline=null;status=null;}}

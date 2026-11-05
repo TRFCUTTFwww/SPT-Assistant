@@ -48,6 +48,11 @@ internal static class ExfilDisplay {
  internal static bool TryNavigationExit(string id,out NavigationExit? exit){exit=null;var row=rows.FirstOrDefault(r=>r.Point.Pointer.ToInt64().ToString()==id);var player=Singleton<GameWorld>.Instance?.MainPlayer;if(row==null||player==null)return false;exit=RouteExit(row,player.Position);return true;}
  sealed record Row(ExfiltrationPoint Point,string Name,string Kind,string State,bool Available,float Distance,Vector3 Position,bool Forced,bool InPanel,string TrainMarker,ExfilFaction Faction);
  sealed record LeverMarker(Switch Switch,string ExitName,Vector3 Position,float Distance,bool Open);
+ internal static void DrawQuickActions(Rect rect){float width=(rect.width-16)/3;
+  if(InterfaceMenu.Button(new Rect(rect.x,rect.y,width,40),"显示全部撤离点",Enabled.Value&&MarkerMode.Value==ExfilMarkerMode.All)){Enabled.Value=true;MarkerMode.Value=ExfilMarkerMode.All;}
+  if(InterfaceMenu.Button(new Rect(rect.x+width+8,rect.y,width,40),"标记最近可用撤离点",Enabled.Value&&MarkerMode.Value==ExfilMarkerMode.Nearest)){Enabled.Value=true;MarkerMode.Value=ExfilMarkerMode.Nearest;}
+  if(InterfaceMenu.Button(new Rect(rect.x+2*(width+8),rect.y,width,40),"关闭空间标记",MarkerMode.Value==ExfilMarkerMode.Off))MarkerMode.Value=ExfilMarkerMode.Off;
+ }
  internal static void Initialize(Plugin p){
   Enabled=CnConfig.Bind(p.Config,"14. Exfiltration","Enabled",true);
   PanelMode=CnConfig.Bind(p.Config,"14. Exfiltration","Panel mode",ExfilPanelMode.Hold);

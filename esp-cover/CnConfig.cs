@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using BepInEx.Configuration;
 using UnityEngine;
@@ -62,6 +62,7 @@ internal static class CnConfig {
   ["Boss color"]=("BOSS 颜色","BOSS 的人物轮廓与标签颜色，默认红色；填写 #RRGGBB 十六进制颜色。"),
   ["Follower color"]=("保镖颜色","BOSS 随从的人物轮廓与标签颜色，默认紫色；填写 #RRGGBB。"),
   ["Cultist color"]=("邪教徒颜色","邪教徒的人物轮廓与标签颜色，默认黄色；填写 #RRGGBB。"),
+  ["Zombie color"]=("僵尸颜色","普通感染者的人物轮廓与标签颜色，默认荧光黄绿；填写 #RRGGBB。感染大锤继续使用 BOSS 颜色。"),
   ["Scav color"]=("Scav 颜色","普通 Scav 的人物轮廓与标签颜色，默认绿色；填写 #RRGGBB。"),
   ["Raider color"]=("掠夺者颜色","掠夺者的人物轮廓与标签颜色，默认橙色；填写 #RRGGBB。"),
   ["Rogue color"]=("游荡者颜色","游荡者的人物轮廓与标签颜色，默认青色；填写 #RRGGBB。"),
@@ -91,7 +92,7 @@ internal static class CnConfig {
  static readonly Dictionary<string,string> enabledHelp=new(){
   ["2. God mode"]="阻止本地玩家受到伤害或死亡，不阻止战局计时结束。",
   ["4. AI ignore"]="敌人忽略本地玩家，清理敌对识别、视觉跟踪和已有敌人记忆。",
-  ["7. Character colors"]="为 BOSS、保镖、邪教徒、Scav、掠夺者、游荡者、黑色军团、PMC 分别着色；标签和身体颜色一致，Ctrl+F6 同时控制显示。",
+  ["7. Character colors"]="为 BOSS、保镖、邪教徒、僵尸、Scav、掠夺者、游荡者、黑色军团、PMC 分别着色；标签和身体颜色一致，Ctrl+F6 同时控制显示。",
   ["9. Infinite launcher"]="仅让已登记的赠送 RShG-2 重复发射，不消耗膛内火箭或丢弃武器。",
   ["11. Hit display"]="显示你造成的实际生命值损失、命中部位及归因给你的击杀，不包括护甲耐久损失。",
   ["12. Corpse ESP"]="显示尸体标记，跟随人物显示 Ctrl+F6 开关，独立于地面物品显示范围。",
