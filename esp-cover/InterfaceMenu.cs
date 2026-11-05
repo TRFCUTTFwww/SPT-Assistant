@@ -172,6 +172,7 @@ internal static class InterfaceMenu {
     case ("战斗与枪械","微自瞄"):SoftAimControl.Draw(content);break;
     case ("战斗与枪械","瞄准排除"):AimTargetFilter.Draw(content);break;
     case ("战斗与枪械","命中音效"):HitSounds.Draw(content);break;
+    case ("战斗与枪械","击杀特效"):KillEffects.DrawSettings(content);break;
     case ("人物与移动","Buff 状态"):CharacterBuffs.Draw(content);break;
     case ("模型与镜头","动作锁定"):ModelPoseLock.Draw(content);break;
     case ("人物与移动","死亡保留"):DeathInventory.Draw(content);break;
@@ -238,7 +239,7 @@ internal static class InterfaceMenu {
   else Label(rect,value.ToString()??"");
  }
  static ConfigEntryBase? capture;
- static string EnumName(object value)=>value switch{BossNameLanguage language=>language==BossNameLanguage.English?"英文":"俄文",AimMode mode=>CnConfig.AimName(mode),ExfilPanelMode mode=>mode==ExfilPanelMode.Off?"关闭":mode==ExfilPanelMode.Hold?"按住显示":"常开",ExfilMarkerMode mode=>mode==ExfilMarkerMode.Off?"关闭":mode==ExfilMarkerMode.Nearest?"最近":"全部",AimTargetPart part=>new[]{"头部","胸部","腹部","左臂","右臂","左腿","右腿"}[(int)part],_=>value.ToString()??""};
+ static string EnumName(object value)=>value switch{KillEffectStyle effect=>effect switch{KillEffectStyle.Pulse=>"脉冲环",KillEffectStyle.Sparks=>"碎光",_=>"脉冲环与碎光"},BossNameLanguage language=>language==BossNameLanguage.English?"英文":"俄文",AimMode mode=>CnConfig.AimName(mode),ExfilPanelMode mode=>mode==ExfilPanelMode.Off?"关闭":mode==ExfilPanelMode.Hold?"按住显示":"常开",ExfilMarkerMode mode=>mode==ExfilMarkerMode.Off?"关闭":mode==ExfilMarkerMode.Nearest?"最近":"全部",AimTargetPart part=>new[]{"头部","胸部","腹部","左臂","右臂","左腿","右腿"}[(int)part],_=>value.ToString()??""};
  static void Appearance(Rect rect){
   Label(new Rect(rect.x,rect.y,rect.width,30),"选择主题",Text,18);
   var names=new[]{"深海蓝","石墨绿","暖琥珀","浅色"};

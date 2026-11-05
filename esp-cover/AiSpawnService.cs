@@ -12,7 +12,7 @@ using NativeTask=Il2CppSystem.Threading.Tasks.Task;
 namespace LocalSpt5Esp;
 internal static class AiSpawnService {
  sealed class Job {
-  internal bool SceneRestore;internal IntPtr World;internal Vector3 Position;internal AiSpawnOption Option=null!;internal int Difficulty;internal AiBirthPreset Preset=null!;internal SpawnLedger Ledger=null!;
+  internal CorpseRevival? Revival;internal bool SceneRestore;internal IntPtr World;internal Vector3 Position;internal AiSpawnOption Option=null!;internal int Difficulty;internal AiBirthPreset Preset=null!;internal SpawnLedger Ledger=null!;
   internal readonly Dictionary<string,Profile> Expected=new(StringComparer.Ordinal);internal int BatchWanted,BeforeBatch,Failures,Serial;internal float Started,PhaseStart,LastProgress,Completed=-1;
   internal string Label="",Phase="",CompanionKey="";internal int PresetFailures;internal GetProfileDataParams? RequestedProfile;
  }
@@ -34,7 +34,7 @@ internal static class AiSpawnService {
 
   return hit.position;
  }
- internal static void Enqueue(GameWorld current,Vector3 position,AiSpawnOption option,int difficulty,int count,AiBirthPreset preset,string label,bool sceneRestore=false,string companionKey=""){
+ internal static void Enqueue(GameWorld current,Vector3 position,AiSpawnOption option,int difficulty,int count,AiBirthPreset preset,string label,bool sceneRestore=false,string companionKey="",CorpseRevival? revival=null){
     if(!string.IsNullOrEmpty(companionKey))throw new ArgumentException("队友生成已关闭。");
   if(!RaidClock.Active||current.MainPlayer?.HealthController?.IsAlive!=true)throw new ArgumentException("请进入战局且保持存活。");
   if(!GameStarted)throw new ArgumentException("等待战局正式开始后再生成 AI。");
@@ -44,11 +44,12 @@ internal static class AiSpawnService {
   var area=native.GetClosestZone(position,out _)??throw new ArgumentException("目标位置没有原生 AI 区域。");
   if(!area.HaveFreeSpace(count))throw new ArgumentException("该区域当前空位不足；区域原生容量为 "+area.MaxPersons+"，请减少数量或更换位置。");
   if(!AiLimitCompatibility.HasNavigation(controller.CoversData,position)||AICorePointHolder.GetClosest(position)==null)throw new ArgumentException("目标缺少完整 AI 导航节点，请换到原生 AI 活动区域。");
-  queue.Enqueue(new(){SceneRestore=sceneRestore,World=current.Pointer,Position=position,Option=option,Difficulty=difficulty,Preset=preset,Ledger=new(count),Label=label,CompanionKey=companionKey});
+  queue.Enqueue(new(){SceneRestore=sceneRestore,World=current.Pointer,Position=position,Option=option,Difficulty=difficulty,Preset=preset,Ledger=new(count),Label=label,CompanionKey=companionKey,Revival=revival});
   Report("已排队："+option.Name+" ×"+count+"；等待请求 "+queue.Count,true);
  }
  internal static void Preload(AiSpawnOption option,int difficulty,int count){var creator=Controller().GetSpawner()?._botCreator??throw new ArgumentException("AI 资料加载器尚未就绪。");creator.AddToTargetBackup((BotDifficulty)difficulty,Enum.Parse<WildSpawnType>(option.Role),Math.Clamp(count,1,8));Report("已请求预加载："+option.Name+"；只准备资料和资源，不生成角色。",true);}
- static void CollectRetired(){
+ static readonly List<Job> cancelledRevivals=new();static float nextRevivalCleanup;
+ static void CollectRetired(){var world=Singleton<GameWorld>.Instance;if(world==null){cancelledRevivals.Clear();}else if(Time.unscaledTime>=nextRevivalCleanup){nextRevivalCleanup=Time.unscaledTime+.5f;foreach(var job in cancelledRevivals.ToArray()){if(job.World!=world.Pointer){cancelledRevivals.Remove(job);continue;}var actors=world.AllAlivePlayersList?.ToArray().Where(p=>p!=null&&job.Expected.ContainsKey(p.ProfileId)).ToArray()??Array.Empty<Player>();if(actors.Length>0)AiRemoval.Delete(world,actors,false);}}
   for(int i=retired.Count-1;i>=0;i--){var entry=retired[i];if(!entry.Task.IsCompleted)continue;try{entry.Data?.StopSpawn();if(entry.Task.TryCast<Il2CppSystem.Threading.Tasks.Task<BotCreationData>>() is {} generated&&!generated.IsFaulted&&!generated.IsCanceled)generated.Result?.StopSpawn();entry.Cancellation?.Dispose();}catch{}retired.RemoveAt(i);}
  }
  static void ReleaseBatch(bool stop){
@@ -60,11 +61,11 @@ internal static class AiSpawnService {
  }
  internal static void Cancel(bool notify){
   if(notify)SceneTemplates.CancelRestore();
-  int made=active?.Ledger.Created.Count??0,wanted=active?.Ledger.Wanted??0;if(active?.CompanionKey.Length>0)CompanionSquad.RequestCancelled(active.CompanionKey);foreach(var job in queue)if(job.CompanionKey.Length>0)CompanionSquad.RequestCancelled(job.CompanionKey);serial++;queue.Clear();ReleaseBatch(true);active=null;spawner=null;zone=null;callbacks.Clear();
+  int made=active?.Ledger.Created.Count??0,wanted=active?.Ledger.Wanted??0;if(active?.CompanionKey.Length>0)CompanionSquad.RequestCancelled(active.CompanionKey);foreach(var job in queue)if(job.CompanionKey.Length>0)CompanionSquad.RequestCancelled(job.CompanionKey);serial++;foreach(var queued in queue)queued.Revival?.Release();active?.Revival?.Release();if(active?.Revival is {Completed:false})cancelledRevivals.Add(active);queue.Clear();ReleaseBatch(true);active=null;spawner=null;zone=null;callbacks.Clear();
   if(notify)Report($"已取消剩余生成；已出现 {made}/{wanted} 名 AI 保留。",true);
  }
  internal static void Reset(){Cancel(false);CollectRetired();}
- static void Finish(string reason){var job=active;if(job==null)return;if(job.SceneRestore)SceneTemplates.SceneJobFinished(job.Ledger.Created.Count,job.Ledger.Wanted);if(job.CompanionKey.Length>0)CompanionSquad.RequestFinished(job.CompanionKey,job.Ledger.Created.Count,job.Ledger.Wanted,reason);ReleaseBatch(false);active=null;spawner=null;zone=null;Report($"{job.Option.Name}：实际生成 {job.Ledger.Created.Count}/{job.Ledger.Wanted}，用时 {Time.unscaledTime-job.Started:F1} 秒。"+reason+(job.PresetFailures>0?$" {job.PresetFailures} 名 AI 的部分出生设置失败，见日志。":""),true);}
+ static void Finish(string reason){var job=active;if(job==null)return;if(job.SceneRestore)SceneTemplates.SceneJobFinished(job.Ledger.Created.Count,job.Ledger.Wanted);if(job.CompanionKey.Length>0)CompanionSquad.RequestFinished(job.CompanionKey,job.Ledger.Created.Count,job.Ledger.Wanted,reason);ReleaseBatch(false);active=null;spawner=null;zone=null;if(job.Revival is {} revival){revival.Release();Report(revival.Completed?"已复活："+job.Preset.Name:"复活未完成，原尸体保留。"+(revival.Failure.Length>0?revival.Failure:reason),true);return;}Report($"{job.Option.Name}：实际生成 {job.Ledger.Created.Count}/{job.Ledger.Wanted}，用时 {Time.unscaledTime-job.Started:F1} 秒。"+reason+(job.PresetFailures>0?$" {job.PresetFailures} 名 AI 的部分出生设置失败，见日志。":""),true);}
  static void BeginBatch(GameWorld current){
   var job=active!;if(job.Ledger.Missing==0){Finish("已完成。");return;}
   var controller=Controller();spawner=controller.GetSpawner()??throw new ArgumentException("AI 生成器尚未就绪。");
@@ -92,7 +93,7 @@ internal static class AiSpawnService {
   var positions=new Il2CppSystem.Collections.Generic.List<ISpawnPoint>();
   for(int i=0;i<data.Profiles.Count;i++){
    var profile=data.Profiles[i];if(profile==null||job.Expected.ContainsKey(profile.Id))throw new ArgumentException("加载器返回了重复或无效的 AI 身份。");
-   AiSpawnPresets.Prepare(profile,job.Preset);job.Expected[profile.Id]=profile;
+   job.Revival?.Prepare(profile);AiSpawnPresets.Prepare(profile,job.Preset);job.Expected[profile.Id]=profile;
    if(job.CompanionKey.Length>0)CompanionSquad.Expect(current,profile.Id,job.CompanionKey);
    int index=job.Ledger.Created.Count+i;float radius=index==0?0:2.1f*Mathf.Sqrt(index);var point=Ground(job.Position+new Vector3(Mathf.Cos(index*2.4f),0,Mathf.Sin(index*2.4f))*radius,current.MainPlayer,job.SceneRestore);
    if(!AiLimitCompatibility.HasNavigation(Controller().CoversData,point))throw new ArgumentException("分散生成点缺少导航数据。");
@@ -114,7 +115,7 @@ internal static class AiSpawnService {
   if(!job.Ledger.Confirm(actor.ProfileId))return;
   Plugin.Self.Log.LogInfo($"Manual AI identity: requested={job.Option.Role}; actual={actor.Profile?.Info?.Settings?.Role}; nickname={actor.Profile?.Nickname}; side={actor.Profile?.Side}; profile={actor.ProfileId}");
   job.LastProgress=Time.unscaledTime;
-  try{string problems=AiSpawnPresets.Apply(current,actor,job.Preset);if(problems.Length>0){job.PresetFailures++;Plugin.Self.Log.LogWarning("AI birth settings "+actor.ProfileId+": "+problems);}}catch(Exception error){job.PresetFailures++;Plugin.Self.Log.LogWarning("AI birth settings: "+error);}if(job.SceneRestore)SceneTemplates.Restored(job.Preset.SceneKey,actor);if(job.CompanionKey.Length>0)CompanionSquad.Spawned(current,actor,job.CompanionKey);
+  try{string problems=AiSpawnPresets.Apply(current,actor,job.Preset);if(problems.Length>0){job.PresetFailures++;Plugin.Self.Log.LogWarning("AI birth settings "+actor.ProfileId+": "+problems);}}catch(Exception error){job.PresetFailures++;Plugin.Self.Log.LogWarning("AI birth settings: "+error);}if(job.Revival is {} revival)try{revival.Complete(current,actor);}catch(Exception error){revival.Failure=error.Message;job.PresetFailures++;AiRemoval.Delete(current,new[]{actor},false);Plugin.Self.Log.LogWarning("Corpse revival rolled back: "+error);}if(job.SceneRestore)SceneTemplates.Restored(job.Preset.SceneKey,actor);if(job.CompanionKey.Length>0)CompanionSquad.Spawned(current,actor,job.CompanionKey);
  }
  internal static bool Ready(Player actor,bool settled=true,bool faulted=false){
   var owner=actor.AIData?.BotOwner;var group=owner?.BotsGroup;

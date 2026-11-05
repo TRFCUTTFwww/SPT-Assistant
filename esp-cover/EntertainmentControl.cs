@@ -12,7 +12,7 @@ namespace LocalSpt5Esp;
 internal static class EntertainmentControl {
  static ConfigEntry<bool> thirdPerson=null!,firstOnAim=null!,jitter=null!,lookDown=null!;
  static ConfigEntry<float> distance=null!,shoulder=null!,frequency=null!,headYaw=null!,headPitch=null!,headRoll=null!,bodyAngle=null!,bowAngle=null!;
- static ConfigEntry<KeyCode> viewKey=null!;
+ static ConfigEntry<KeyCode> viewKey=null!,spinKey=null!;static ConfigEntry<bool> spin=null!,reverseSpin=null!;static ConfigEntry<float> spinSpeed=null!;static double spinOrigin;static bool spinning;
  static ConfigEntry<KeyCode> jitterKey=null!,bowKey=null!;
  static Player? owner;static PlayerCameraController? controller;static IntPtr world;
  static EPointOfView originalView;static bool viewCaptured;
@@ -37,6 +37,7 @@ internal static class EntertainmentControl {
   headPitch=FeatureConfig.Bind(section,"Head pitch","上下摇头幅度（度）",45f,"",new AcceptableValueRange<float>(0,80));
   headRoll=FeatureConfig.Bind(section,"Head roll","歪头幅度（度）",35f,"",new AcceptableValueRange<float>(0,80));
   bodyAngle=FeatureConfig.Bind(section,"Body jitter","上身晃动幅度（度）",18f,"",new AcceptableValueRange<float>(0,40));
+  spin=FeatureConfig.Bind(section,"Model continuous spin","人物模型高速 360° 旋转",false,"持续旋转本地人物的外观骨骼；建议用第三人称或自由镜头观察。");spinSpeed=FeatureConfig.Bind(section,"Model spin speed","模型旋转速度（度／秒）",1440f,"360 度为每秒一圈，1440 度为每秒四圈。",new AcceptableValueRange<float>(90,7200));reverseSpin=FeatureConfig.Bind(section,"Model spin reverse","模型反向旋转",false);spinKey=FeatureConfig.Bind(section,"Model spin toggle key","模型旋转切换键",KeyCode.None);
   ModelPoseLock.Initialize();
   plugin.Patches.Patch(AccessTools.Method(typeof(PlayerCameraController),"LateUpdate"),prefix:new HarmonyMethod(typeof(EntertainmentControl),nameof(BeforeCamera)),postfix:new HarmonyMethod(typeof(EntertainmentControl),nameof(AfterCamera)));
   plugin.Patches.Patch(AccessTools.Method(typeof(Player),"ComplexLateUpdate"),prefix:new HarmonyMethod(typeof(EntertainmentControl),nameof(BeforeVisual)),postfix:new HarmonyMethod(typeof(EntertainmentControl),nameof(AfterVisual)));
@@ -57,6 +58,8 @@ internal static class EntertainmentControl {
    ModelPoseLock.Update(current,player);
    if(!InterfaceMenu.InputBlocked&&viewKey.Value!=KeyCode.None&&Input.GetKeyDown(viewKey.Value)){thirdPerson.Value=!thirdPerson.Value;FeatureToasts.Show("第三人称",thirdPerson.Value);}
    if(!InterfaceMenu.InputBlocked){if(jitterKey.Value!=KeyCode.None&&Input.GetKeyDown(jitterKey.Value))jitter.Value=!jitter.Value;if(bowKey.Value!=KeyCode.None&&Input.GetKeyDown(bowKey.Value))lookDown.Value=!lookDown.Value;}
+   if(!InterfaceMenu.InputBlocked&&spinKey.Value!=KeyCode.None&&Input.GetKeyDown(spinKey.Value))spin.Value=!spin.Value;
+   if(spin.Value&&!spinning)spinOrigin=Time.realtimeSinceStartupAsDouble;spinning=spin.Value;
    UpdateView();
   }catch(Exception error){Warn(error);}
  }
@@ -110,8 +113,9 @@ internal static class EntertainmentControl {
  static void BeforeVisual(Player __instance){ModelPoseLock.Restore(__instance);if(Local(__instance))RestorePose();}
  static void AfterVisual(Player __instance){try{if(Local(__instance))ApplyPose();ModelPoseLock.Apply(__instance);}catch(Exception error){Warn(error);}}
  static void ApplyPose(){
-  RestorePose();if((!jitter.Value&&!lookDown.Value)||owner==null||!Local(owner)||ModelPoseLock.Locked(owner))return;
+  RestorePose();if((!jitter.Value&&!lookDown.Value&&!spin.Value)||owner==null||!Local(owner)||ModelPoseLock.Locked(owner))return;
   var bones=owner.PlayerBones;if(bones==null)return;
+  if(spin.Value){var root=bones.RootJoint??bones.Pelvis?.Original;if(root!=null&&root.Pointer!=owner.transform.Pointer&&root.IsChildOf(owner.transform))ApplyWorldBone(root,Quaternion.AngleAxis(EntertainmentRules.SpinAngle(Time.realtimeSinceStartupAsDouble-spinOrigin,spinSpeed.Value*(reverseSpin.Value?-1:1)),Vector3.up));}
   var sample=jitter.Value?EntertainmentRules.Jitter(Time.realtimeSinceStartupAsDouble,frequency.Value,headYaw.Value,headPitch.Value,headRoll.Value):System.Numerics.Vector3.Zero;
   sample=EntertainmentRules.HeadPose(sample,lookDown.Value);
   var torso=bones.Spine3?.Original;
@@ -135,7 +139,7 @@ internal static class EntertainmentControl {
  static void RestorePose(){for(int i=poses.Count-1;i>=0;i--)try{var pose=poses[i];if(pose.Bone!=null&&Quaternion.Angle(pose.Bone.localRotation,pose.Applied)<.01f)pose.Bone.localRotation=pose.Original;}catch{}poses.Clear();}
  static void RestoreCamera(){try{if(movedCamera!=null){movedCamera.transform.localPosition=originalCameraPosition;movedCamera.transform.localRotation=originalCameraRotation;}}catch{}movedCamera=null;}
  static void RestoreView(){if(!viewCaptured){RestoreCamera();nearWall=false;return;}viewCaptured=false;RestoreCamera();if(owner!=null&&Local(owner)&&controller!=null&&controller.Player?.Pointer==owner.Pointer&&!Spectating())SetView(originalView);nearWall=false;}
- internal static void Reset(){ModelPoseLock.Reset();RestorePose();try{RestoreView();}catch(Exception error){Warn(error);}owner=null;controller=null;world=IntPtr.Zero;viewCaptured=false;nearWall=false;}
+ internal static void Reset(){ModelPoseLock.Reset();RestorePose();try{RestoreView();}catch(Exception error){Warn(error);}owner=null;controller=null;world=IntPtr.Zero;spinning=false;viewCaptured=false;nearWall=false;}
  internal static void Shutdown(){Reset();if(renderCallback!=null){Camera.onPreCull-=renderCallback;renderCallback=null;}}
  static void Warn(Exception error){if(Time.unscaledTime<nextError)return;nextError=Time.unscaledTime+15;Plugin.Self.Log.LogWarning("Entertainment: "+error.Message);}
 }

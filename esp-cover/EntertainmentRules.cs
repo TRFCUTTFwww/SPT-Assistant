@@ -2,6 +2,7 @@ using System;
 using System.Numerics;
 namespace LocalSpt5Esp;
 internal static class EntertainmentRules {
+ internal static float SpinAngle(double seconds,float degreesPerSecond){if(!double.IsFinite(seconds)||seconds<0||!float.IsFinite(degreesPerSecond))return 0;double angle=(seconds*Math.Clamp((double)degreesPerSecond,-7200,7200))%360;return double.IsFinite(angle)?(float)(angle<0?angle+360:angle):0;}
  internal static Vector3 HeadPose(Vector3 jitter,bool down)=>down?new(Math.Clamp(80+jitter.X*.15f,65,88),jitter.Y,jitter.Z):jitter;
  internal static Quaternion WorldPitch(float yaw,float degrees){float radians=yaw*MathF.PI/180;return Quaternion.CreateFromAxisAngle(new Vector3(MathF.Cos(radians),0,-MathF.Sin(radians)),degrees*MathF.PI/180);}
  internal static float MovementFactor(bool normal,float normalFactor,bool crouch,float crouchFactor,bool duck,bool prone){

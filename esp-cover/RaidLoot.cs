@@ -50,6 +50,7 @@ internal static class RaidLoot {
  internal static void TrackTemplates(IEnumerable<string> targets){trackedTemplates.Clear();foreach(string id in targets)trackedTemplates.Add(id);trackFilter=TrackNeeds=false;selected="";RestoreTint();status="已高亮此需求的已加载物品。";}
  internal static void ClearTracking(){trackedTemplates.Clear();trackFilter=TrackNeeds=false;selected="";RestoreTint();}
  internal static void Reset(){scanner?.Dispose();scanner=null;entries.Clear();pending.Clear();containers=Array.Empty<LootableContainer>();worldPointer=IntPtr.Zero;nextScan=nextContainerScan=0;ClearTracking();}
+ internal static void Invalidate(){scanner?.Dispose();scanner=null;pending.Clear();nextScan=0;}
  internal static void Shutdown(){Reset();if(material!=null)Object.Destroy(material);material=null;}
  internal static void Tick(GameWorld? world,Player? player){try{
   if(!RaidClock.Active||world==null||player==null||!enabled.Value){if(worldPointer!=IntPtr.Zero)Reset();return;}
@@ -60,7 +61,7 @@ internal static class RaidLoot {
  }catch(Exception e){scanner?.Dispose();scanner=null;pending.Clear();nextScan=Time.unscaledTime+5;Warn(e);}}
  static IEnumerable<Entry> Scan(GameWorld world){
   var seen=new HashSet<IntPtr>();var loot=world.LootItems;
-  if(loot!=null)for(int i=0;i<loot.Count;i++){var root=loot.GetByIndex(i);if(root==null||root.Item==null)continue;var body=root.TryCast<Corpse>();if(body!=null){var item=body.ItemOwner?.RootItem;var secure=item?.TryCast<InventoryEquipment>()?.GetSlot(EquipmentSlot.SecuredContainer)?.ContainedItem;if(item!=null)foreach(var child in LootDisplay.Children(item)){if(secure!=null&&child.Pointer==secure.Pointer)continue;foreach(var entry in Walk(child,body,"尸体 · "+body.Side,seen,0))yield return entry;}}else foreach(var entry in Walk(root.Item,root,"地面",seen,0))yield return entry;}
+  if(loot!=null)for(int i=0;i<loot.Count;i++){var root=loot.GetByIndex(i);if(root==null)continue;var body=root.TryCast<Corpse>();if(body!=null){var item=body.ItemOwner?.RootItem;var secure=item?.TryCast<InventoryEquipment>()?.GetSlot(EquipmentSlot.SecuredContainer)?.ContainedItem;if(item!=null)foreach(var child in LootDisplay.Children(item)){if(secure!=null&&child.Pointer==secure.Pointer)continue;foreach(var entry in Walk(child,body,"尸体 · "+body.Side,seen,0))yield return entry;}}else if(root.Item!=null)foreach(var entry in Walk(root.Item,root,"地面",seen,0))yield return entry;}
   foreach(var container in containers){if(container==null||!container.IsInitialized||container.ItemOwner?.RootItem==null)continue;string source="容器 · "+(container.ItemOwner.ContainerName??container.TypeKey??"储物箱");foreach(var child in LootDisplay.Children(container.ItemOwner.RootItem))foreach(var entry in Walk(child,container,source,seen,0))yield return entry;}
  }
  static IEnumerable<Entry> Walk(Item item,Component anchor,string source,HashSet<IntPtr> seen,int depth){

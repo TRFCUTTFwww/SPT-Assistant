@@ -1,0 +1,26 @@
+{
+    "version":  "1.37.2",
+    "utc":  "2026-11-05T15:57:29.7452273Z",
+    "build":  {
+                  "errors":  0,
+                  "warnings":  2
+              },
+    "offlinePassGroups":  69,
+    "ui":  "Original icon IMGUI menu restored from f4993d7d98a4d384ca6e7cca76df4e4e18107960; only new feature routing and enum labels added",
+    "experimentalUiAbsent":  true,
+    "liveReload":  {
+                       "apiVersion":  1,
+                       "hostVersion":  "1.4.11",
+                       "coreVersion":  "1.37.2",
+                       "generation":  9,
+                       "sha256":  "A5C241527FB19246DD3F883B6A7D1AAE95B82227ED2D17B0E3AF72D2BA8B8806",
+                       "ready":  true,
+                       "error":  null,
+                       "updatedUtc":  "2026-11-05T15:55:02.0524397Z"
+                   },
+    "coreSha256":  "A5C241527FB19246DD3F883B6A7D1AAE95B82227ED2D17B0E3AF72D2BA8B8806",
+    "fallbackSha256":  "A5C241527FB19246DD3F883B6A7D1AAE95B82227ED2D17B0E3AF72D2BA8B8806",
+    "uiVisualVerified":  false,
+    "newGameplayInRaidVerified":  false,
+    "uiInspection":  "User chose to inspect the game interface personally"
+}

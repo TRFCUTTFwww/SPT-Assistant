@@ -98,9 +98,9 @@ internal static class HitDisplay {
   }catch(Exception e){Warn(e);}
  }
  static void FinishShot(ShotState? __state){if(__state!=null&&ReferenceEquals(shot,__state))shot=__state.Parent;}
- static void AfterDeath(Player __instance,IPlayer __0,EBodyPart __2){
+ static void AfterDeath(Player __instance,IPlayer __0,DamageInfo __1,EBodyPart __2){
   try{
-   GlobalKillFeed.Record(__instance,__0,__2);
+   CorpseRevival.RecordDeath(__instance);GlobalKillFeed.Record(__instance,__0,__2);KillEffects.Record(__instance,__0,__1,__2);
    if(!ready||!Enabled.Value||__instance.IsYourPlayer||!IsLocal(__0))return;
    if(__instance.HealthController==null||__instance.HealthController.IsAlive)return;
    for(var state=active;state!=null;state=state.Parent)if(state.Victim==__instance.ProfileId){state.Killed=true;return;}

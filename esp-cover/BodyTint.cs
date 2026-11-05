@@ -1,87 +1,42 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using BepInEx.Configuration;
+using Comfort.Common;
 using EFT;
-using Il2CppInterop.Runtime.InteropTypes.Arrays;
+using EFT.CameraControl;
+using Il2CppInterop.Runtime;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UiColor=UnityEngine.Color;
 namespace LocalSpt5Esp;
 internal static class BodyTint {
- internal static ConfigEntry<bool> Enabled=null!,ThroughWalls=null!;
- static ConfigEntry<float> Alpha=null!;
- static readonly ConfigEntry<string>[] colors=new ConfigEntry<string>[Enum.GetValues<CharacterKind>().Length];
- static readonly string?[] paletteCodes=new string?[Enum.GetValues<CharacterKind>().Length];
- static readonly Color[] palette=new Color[Enum.GetValues<CharacterKind>().Length];
- static readonly Material?[] materials=new Material?[Enum.GetValues<CharacterKind>().Length+1];
- record Saved(SkinnedMeshRenderer Renderer,Il2CppReferenceArray<Material> Original,CharacterKind Kind,bool Teammate);
- static readonly Dictionary<IntPtr,bool> friends=new();
- internal static readonly Color TeammateColor=new(55/255f,230/255f,121/255f);
- static readonly Dictionary<IntPtr,Saved> saved=new();
- static readonly Dictionary<IntPtr,CharacterKind> kinds=new();
- static readonly Dictionary<IntPtr,(SkinnedMeshRenderer[] Renderers,float Expires)> rendererCache=new();
- static float nextScan,nextShaderTry;
- internal static void Initialize(Plugin p){
-  Enabled=CnConfig.Bind(p.Config,"7. Character colors","Enabled",true);
-  ThroughWalls=CnConfig.Bind(p.Config,"7. Character colors","Through walls",true);
-  Alpha=CnConfig.Bind(p.Config,"7. Character colors","Opacity",0.65f,new ConfigDescription("",new AcceptableValueRange<float>(0.15f,1)));
-  foreach(var kind in Enum.GetValues<CharacterKind>())colors[(int)kind]=CnConfig.Bind(p.Config,"7. Character colors",kind+" color",RolePalette.Hex(kind));
+ internal static ConfigEntry<bool> Enabled=null!,ThroughWalls=null!;static ConfigEntry<bool> scopeOnly=null!,visibilityLabels=null!,splitDepth=null!;static ConfigEntry<float> opacity=null!,hiddenOpacity=null!;
+ static readonly ConfigEntry<string>[] colors=new ConfigEntry<string>[Enum.GetValues<CharacterKind>().Length];static readonly string?[] paletteCodes=new string?[Enum.GetValues<CharacterKind>().Length];static readonly UiColor[] palette=new UiColor[Enum.GetValues<CharacterKind>().Length];
+ static readonly Material?[] visible=new Material?[Enum.GetValues<CharacterKind>().Length+1],hidden=new Material?[Enum.GetValues<CharacterKind>().Length+1];
+ sealed record Mesh(SkinnedMeshRenderer Renderer,int Parts,int Color);
+ sealed record View(Camera Camera,CommandBuffer Commands){internal int Revision=-1;}
+ static readonly Dictionary<IntPtr,View> views=new();static readonly List<Mesh> meshes=new();static readonly Dictionary<IntPtr,bool> friends=new();static readonly Dictionary<IntPtr,CharacterKind> kinds=new();static readonly Dictionary<IntPtr,(SkinnedMeshRenderer[] Renderers,float Expires)> rendererCache=new();
+ static readonly Dictionary<IntPtr,(string Id,float Time,string Label)> visibility=new();static Camera.CameraCallback? before;static float nextScan,nextShader,nextColors;static int revision;static bool active;static int environmentMask;
+ internal static readonly UiColor TeammateColor=new(55/255f,230/255f,121/255f);
+ internal static void Initialize(Plugin plugin){const string section="7. Character colors";Enabled=CnConfig.Bind(plugin.Config,section,"Enabled",true);ThroughWalls=CnConfig.Bind(plugin.Config,section,"Through walls",true);opacity=CnConfig.Bind(plugin.Config,section,"Opacity",.65f,new ConfigDescription("",new AcceptableValueRange<float>(.15f,1)));foreach(var kind in Enum.GetValues<CharacterKind>())colors[(int)kind]=CnConfig.Bind(plugin.Config,section,kind+" color",RolePalette.Hex(kind));
+  scopeOnly=FeatureConfig.Bind(section,"Only inside optical scope","仅瞄准镜内人物上色",false,"仅在原生光学瞄具摄像机中绘制上色，镜外保留原始人物材质。红点、机瞄不启用此模式。");splitDepth=FeatureConfig.Bind(section,"Separate visible and occluded colors","区分直视与遮挡颜色",true,"直视像素使用明亮阵营色，被掩体遮挡的像素使用暗色与较低透明度；根据每个像素的场景深度区分。");hiddenOpacity=FeatureConfig.Bind(section,"Occluded tint opacity","遮挡部分上色透明度",.3f,"",new AcceptableValueRange<float>(.08f,.8f));visibilityLabels=FeatureConfig.Bind(section,"Visibility state labels","人物标签显示直视与遮挡状态",true,"对头、胸、腹三处采样环境视线，显示直视／遮挡／部分遮挡。文字状态是采样判断，上色使用实际像素深度。");before=DelegateSupport.ConvertDelegate<Camera.CameraCallback>(new Action<Camera>(BeforeCamera));Camera.onPreCull+=before;
  }
  internal static void BeginScan(){kinds.Clear();friends.Clear();}
  internal static bool Teammate(Player actor){if(!friends.TryGetValue(actor.Pointer,out bool value))friends[actor.Pointer]=value=AiTeamControl.IsTeammate(actor);return value;}
- internal static CharacterKind Kind(Player player){
-  if(kinds.TryGetValue(player.Pointer,out var kind))return kind;
-  kind=RolePalette.Classify(player.Profile?.Info?.Settings?.Role.ToString()??"",player.Profile?.Side==EPlayerSide.Savage);kinds[player.Pointer]=kind;return kind;
- }
- internal static string KindName(Player player)=>RolePalette.Name(Kind(player));
- static Color ForKind(CharacterKind kind){
-  int index=(int)kind;string code=colors[index]?.Value??RolePalette.Hex(kind);
-  if(paletteCodes[index]==code)return palette[index];
-  string hex=code.Trim().TrimStart('#');
-  if(hex.Length!=6||!uint.TryParse(hex,NumberStyles.HexNumber,CultureInfo.InvariantCulture,out uint rgb))rgb=uint.Parse(RolePalette.Hex(kind)[1..],NumberStyles.HexNumber,CultureInfo.InvariantCulture);
-  paletteCodes[index]=code;return palette[index]=new Color(((rgb>>16)&255)/255f,((rgb>>8)&255)/255f,(rgb&255)/255f);
- }
- internal static Color Color(Player player)=>Teammate(player)?TeammateColor:ForKind(Kind(player));
- static bool Materials(){
-  if(materials.All(m=>m!=null))return true;
-  if(Time.unscaledTime<nextShaderTry)return false;nextShaderTry=Time.unscaledTime+15;
-  Shader? shader=new[]{"Hidden/Internal-Colored","Unlit/Color","Sprites/Default"}.Select(Shader.Find).FirstOrDefault(s=>s!=null&&s.isSupported);
-  if(shader==null){Plugin.Self.Log.LogWarning("No supported character tint shader is available");return false;}
-  for(int i=0;i<materials.Length;i++){
-   if(materials[i]!=null)continue;var m=new Material(shader);materials[i]=m;
-   m.hideFlags=HideFlags.HideAndDontSave;m.SetInt("_SrcBlend",(int)BlendMode.SrcAlpha);m.SetInt("_DstBlend",(int)BlendMode.OneMinusSrcAlpha);m.SetInt("_Cull",(int)CullMode.Off);m.SetInt("_ZWrite",0);m.renderQueue=4000;
-  }
-  Plugin.Self.Log.LogInfo("Character tint shader: "+shader.name+"; "+materials.Length+" role colors");return true;
- }
- internal static void Update(IReadOnlyList<Player> players,Player local,bool showPeople,float range){
-  if(!Enabled.Value||!showPeople){Clear();return;}
-  if(Time.unscaledTime<nextScan)return;nextScan=Time.unscaledTime+1;
-  if(!Materials())return;
-  foreach(var kind in Enum.GetValues<CharacterKind>()){
-   var material=materials[(int)kind]!;material.SetInt("_ZTest",(int)(ThroughWalls.Value?CompareFunction.Always:CompareFunction.LessEqual));
-   var color=ForKind(kind);material.color=new Color(color.r,color.g,color.b,Alpha.Value);
-  }
-  var friendlyMaterial=materials[^1]!;friendlyMaterial.SetInt("_ZTest",(int)(ThroughWalls.Value?CompareFunction.Always:CompareFunction.LessEqual));friendlyMaterial.color=new Color(TeammateColor.r,TeammateColor.g,TeammateColor.b,Alpha.Value);
-  var active=new HashSet<IntPtr>();
-  var activePlayers=new HashSet<IntPtr>();
-  foreach(var player in players){
-   if(player==null||player.IsYourPlayer||player.HealthController==null||!player.HealthController.IsAlive||Vector3.Distance(local.Position,player.Position)>range)continue;
-   var kind=Kind(player);bool teammate=Teammate(player);var material=teammate?friendlyMaterial:materials[(int)kind]!;
-   activePlayers.Add(player.Pointer);
-   if(!rendererCache.TryGetValue(player.Pointer,out var cached)||Time.unscaledTime>=cached.Expires){cached=(player.GetComponentsInChildren<SkinnedMeshRenderer>(true).ToArray(),Time.unscaledTime+5);rendererCache[player.Pointer]=cached;}
-   foreach(var renderer in cached.Renderers){
-    if(renderer==null)continue;active.Add(renderer.Pointer);
-    if(saved.TryGetValue(renderer.Pointer,out var state)&&state.Kind==kind&&state.Teammate==teammate)continue;
-    var original=state?.Original??renderer.sharedMaterials;if(original==null||original.Length==0)continue;
-    saved[renderer.Pointer]=new(renderer,original,kind,teammate);
-    var replacement=new Il2CppReferenceArray<Material>(original.Length);for(int i=0;i<replacement.Length;i++)replacement[i]=material;renderer.sharedMaterials=replacement;
-   }
-  }
-  foreach(var key in saved.Keys.Where(k=>!active.Contains(k)).ToArray()){Restore(saved[key]);saved.Remove(key);}
-  foreach(var key in rendererCache.Keys.Where(k=>!activePlayers.Contains(k)).ToArray())rendererCache.Remove(key);
- }
- static void Restore(Saved entry){try{if(entry.Renderer!=null)entry.Renderer.sharedMaterials=entry.Original;}catch{}}
- internal static void Clear(){foreach(var entry in saved.Values)Restore(entry);saved.Clear();rendererCache.Clear();kinds.Clear();friends.Clear();nextScan=0;}
- internal static void Dispose(){Clear();for(int i=0;i<materials.Length;i++){if(materials[i]!=null)UnityEngine.Object.Destroy(materials[i]);materials[i]=null;}}
+ internal static CharacterKind Kind(Player actor){if(!kinds.TryGetValue(actor.Pointer,out var kind))kinds[actor.Pointer]=kind=RolePalette.Classify(actor.Profile?.Info?.Settings?.Role.ToString()??"",actor.Profile?.Side==EPlayerSide.Savage);return kind;}
+ internal static string KindName(Player actor)=>RolePalette.Name(Kind(actor));
+ static UiColor ForKind(CharacterKind kind){int index=(int)kind;string code=colors[index]?.Value??RolePalette.Hex(kind);if(paletteCodes[index]==code)return palette[index];string hex=code.Trim().TrimStart('#');if(hex.Length!=6||!uint.TryParse(hex,NumberStyles.HexNumber,CultureInfo.InvariantCulture,out uint rgb))rgb=uint.Parse(RolePalette.Hex(kind)[1..],NumberStyles.HexNumber,CultureInfo.InvariantCulture);paletteCodes[index]=code;return palette[index]=new UiColor(((rgb>>16)&255)/255f,((rgb>>8)&255)/255f,(rgb&255)/255f);}
+ internal static UiColor Color(Player actor)=>Teammate(actor)?TeammateColor:ForKind(Kind(actor));
+ static bool Materials(){if(visible.All(m=>m!=null)&&hidden.All(m=>m!=null))return true;if(Time.unscaledTime<nextShader)return false;nextShader=Time.unscaledTime+15;var shader=new[]{"Hidden/Internal-Colored","Unlit/Color","Sprites/Default"}.Select(Shader.Find).FirstOrDefault(s=>s!=null&&s.isSupported);if(shader==null)return false;for(int i=0;i<visible.Length;i++){visible[i]??=Make(shader,CompareFunction.LessEqual);hidden[i]??=Make(shader,CompareFunction.Greater);}return true;}
+ static Material Make(Shader shader,CompareFunction depth){var material=new Material(shader){hideFlags=HideFlags.HideAndDontSave};material.SetInt("_SrcBlend",(int)BlendMode.SrcAlpha);material.SetInt("_DstBlend",(int)BlendMode.OneMinusSrcAlpha);material.SetInt("_Cull",(int)CullMode.Off);material.SetInt("_ZWrite",0);material.SetInt("_ZTest",(int)depth);return material;}
+ static void Colors(){if(Time.unscaledTime<nextColors)return;nextColors=Time.unscaledTime+.15f;for(int i=0;i<visible.Length;i++){var color=i==visible.Length-1?TeammateColor:ForKind((CharacterKind)i);visible[i]!.color=new(color.r,color.g,color.b,opacity.Value);var dark=splitDepth.Value?UiColor.Lerp(color,UiColor.black,.52f):color;hidden[i]!.color=new(dark.r,dark.g,dark.b,splitDepth.Value?hiddenOpacity.Value:opacity.Value);}}
+ internal static void Update(IReadOnlyList<Player> players,Player local,bool showPeople,float range){if(!Enabled.Value||!showPeople||!RaidClock.Active){Clear();return;}active=true;if(!Materials())return;Colors();if(Time.unscaledTime<nextScan)return;nextScan=Time.unscaledTime+.75f;meshes.Clear();var current=new HashSet<IntPtr>();foreach(var actor in players){if(actor==null||actor.IsYourPlayer||actor.HealthController?.IsAlive!=true||Vector3.Distance(local.Position,actor.Position)>range)continue;current.Add(actor.Pointer);int color=Teammate(actor)?visible.Length-1:(int)Kind(actor);if(!rendererCache.TryGetValue(actor.Pointer,out var cached)||Time.unscaledTime>=cached.Expires){cached=(actor.GetComponentsInChildren<SkinnedMeshRenderer>(true).ToArray(),Time.unscaledTime+3);rendererCache[actor.Pointer]=cached;}foreach(var renderer in cached.Renderers)if(renderer!=null&&renderer.enabled&&renderer.gameObject.activeInHierarchy&&renderer.sharedMesh!=null)meshes.Add(new(renderer,renderer.sharedMesh.subMeshCount,color));}foreach(var key in rendererCache.Keys.Where(k=>!current.Contains(k)).ToArray()){rendererCache.Remove(key);visibility.Remove(key);}revision++;}
+ static void BeforeCamera(Camera camera){try{var manager=CameraManager.Instance;var optic=manager?.OpticCameraManager;bool scoped=scopeOnly.Value;bool allowed=active&&Enabled.Value&&RaidClock.Active&&Materials()&&(scoped?Singleton<GameWorld>.Instance?.MainPlayer?.ProceduralWeaponAnimation?.IsAiming==true&&optic?.CurrentOpticSight!=null&&optic.Camera?.Pointer==camera.Pointer:manager?.Camera?.Pointer==camera.Pointer);if(!allowed){if(views.ContainsKey(camera.Pointer))RemoveView(camera.Pointer);return;}foreach(var key in views.Keys.Where(k=>k!=camera.Pointer).ToArray())RemoveView(key);if(!views.TryGetValue(camera.Pointer,out var view)){var commands=new CommandBuffer{name="SPT Assistant character visibility tints"};camera.AddCommandBuffer(CameraEvent.BeforeImageEffects,commands);views[camera.Pointer]=view=new(camera,commands);}int state=revision*2+(ThroughWalls.Value?1:0);if(view.Revision==state)return;view.Revision=state;view.Commands.Clear();foreach(var entry in meshes){if(entry.Renderer==null)continue;for(int part=0;part<entry.Parts;part++){if(ThroughWalls.Value)view.Commands.DrawRenderer(entry.Renderer,hidden[entry.Color]!,part,0);view.Commands.DrawRenderer(entry.Renderer,visible[entry.Color]!,part,0);}}}catch(Exception error){DropViews();Plugin.Self.Log.LogWarning("Character tint camera: "+error.Message);}}
+ static void RemoveView(IntPtr key){if(!views.Remove(key,out var view))return;try{if(view.Camera!=null)view.Camera.RemoveCommandBuffer(CameraEvent.BeforeImageEffects,view.Commands);}catch{}view.Commands.Dispose();}
+ static void DropViews(){foreach(var key in views.Keys.ToArray())RemoveView(key);}
+ internal static string VisibilityTag(Player actor,Camera camera){if(!visibilityLabels.Value||!RaidClock.Active)return "";if(visibility.TryGetValue(actor.Pointer,out var cached)&&cached.Id==actor.ProfileId&&Time.unscaledTime<cached.Time)return cached.Label;try{if(environmentMask==0)environmentMask=LayerMask.GetMask("HighPolyCollider","Terrain","LowPolyCollider");if(environmentMask==0)return "";var origin=camera.transform.position;var bones=actor.PlayerBones;var points=new[]{bones?.Head?.Original?.position??actor.Position+Vector3.up*1.6f,bones?.Spine3?.Original?.position??actor.Position+Vector3.up*1.05f,bones?.Pelvis?.Original?.position??actor.Position+Vector3.up*.65f};int clear=0;foreach(var point in points){var delta=point-origin;float distance=delta.magnitude;if(distance<.1f||!Physics.Raycast(origin,delta/Math.Max(.001f,distance),Math.Max(0,distance-.08f),environmentMask,QueryTriggerInteraction.Ignore))clear++;}string tag=clear==3?" · 直视":clear==0?" · 遮挡":" · 部分遮挡";visibility[actor.Pointer]=(actor.ProfileId,Time.unscaledTime+.25f,tag);return tag;}catch{return "";}}
+ internal static void Clear(){active=false;DropViews();meshes.Clear();rendererCache.Clear();kinds.Clear();friends.Clear();visibility.Clear();nextScan=0;}
+ internal static void Dispose(){if(before!=null){Camera.onPreCull-=before;before=null;}Clear();for(int i=0;i<visible.Length;i++){if(visible[i]!=null)UnityEngine.Object.Destroy(visible[i]);if(hidden[i]!=null)UnityEngine.Object.Destroy(hidden[i]);visible[i]=hidden[i]=null;}}
 }
