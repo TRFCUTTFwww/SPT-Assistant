@@ -4,7 +4,7 @@ public sealed class RuntimeModule:IRuntimeModule {
  Plugin? plugin;
  Overlay? overlay;
  public int ApiVersion=>1;
- internal const string ReleaseVersion="1.37.3";
+ internal const string ReleaseVersion="1.37.4";
  public string Version=>ReleaseVersion;
  public void Initialize(IHostServices host){plugin=new Plugin(host);plugin.Load();CompanionPlans.Automatic.Value=false;InterfaceMenu.Initialize(plugin);FeatureToasts.Initialize(plugin);KillEffects.Initialize();overlay=new Overlay();}
  public void Update(){long stamp=RuntimePerformance.Start();try{CorpseRevival.Tick(Comfort.Common.Singleton<EFT.GameWorld>.Instance);GrenadeArc.Tick(Comfort.Common.Singleton<EFT.GameWorld>.Instance);KillEffects.Tick(Comfort.Common.Singleton<EFT.GameWorld>.Instance);EventRaidLauncher.Tick();EventRaidDiagnostics.Tick();FloatingStatus.Update();ConfigProfiles.Keys();InterfaceMenu.Update();DirectorStage.Update();EntertainmentControl.Update();HitSounds.Tick();overlay?.Update();PasscodeHints.Tick();CoordinateReader.Tick();}finally{RuntimePerformance.UpdateDone(stamp);}}
