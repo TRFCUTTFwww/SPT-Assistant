@@ -517,6 +517,8 @@ var capacityRestore=raidStashType.Methods.Single(m=>m.Name=="RestoreCapacity");
 Assert(capacityRestore.Body.Instructions.Any(i=>i.Operand is MethodReference r&&r.DeclaringType.Name=="Stash"&&r.Name=="UpdateBonuses")&&raidStashType.Methods.Single(m=>m.Name=="Load").Body.Instructions.Any(i=>i.Operand is MethodReference r&&r.Name=="get_BonusController"),"stash capacity restores native profile upgrades/additional rows after deserialization");
 Assert(!capacityRestore.Body.Instructions.Any(i=>i.Operand is MethodReference r&&r.Name.StartsWith("set_")),"capacity restore uses native resizing and layout buffers rather than overwriting grid fields");
 Console.WriteLine("PASS raid stash native root/grid/capacity restore, Tab injection, transaction exit guard, typed parent IDs and integrated loot toolbar");
+foreach(string method in new[]{"Load","Snapshot"})Assert(raidStashType.Methods.Single(m=>m.Name==method).Body.Instructions.Any(i=>i.Operand is MethodReference r&&r.DeclaringType.Name=="RaidStashJson"&&r.Name=="Normalize"),"stash "+method+" normalizes IL2CPP UnparsedData before reading or saving");
+Console.WriteLine("PASS raid stash JSON normalization is connected to both native load and snapshot paths");
 Console.WriteLine("PASS remaining-time green/yellow/red half-duration and strict ten-minute boundaries, overtime and missing timers");
 Assert(RaidRules.Clock(-10)=="00:00:00"&&RaidRules.Clock(3661)=="01:01:01"&&RaidRules.Clock(.1)=="00:00:01"&&RaidRules.Clock(double.NaN)=="未同步","expired, long and unsynced clock display");
 Assert(RaidRules.Match("5.56x45毫米 M995","id","5.56*45")&&RaidRules.Match("夜视仪","abc","夜视")&&!RaidRules.Match("头盔","abc","夜视"),"loot search aliases and nonmatches");

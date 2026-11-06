@@ -15,7 +15,7 @@ using SPTarkov.Server.Core.Utils;
 namespace LocalGearMail;
 
 public class CharacterDataRequest:IRequestData {
- [JsonPropertyName("stashItems")] public System.Collections.Generic.List<SPTarkov.Server.Core.Models.Eft.Common.Tables.Item>? StashItems{get;set;}
+ [JsonPropertyName("stashItems")] public System.Text.Json.JsonElement? StashItems{get;set;}
  [JsonPropertyName("stashRevision")] public string StashRevision{get;set;}="";
  [JsonPropertyName("apiKey")] public string ApiKey{get;set;}="";
  [JsonPropertyName("action")] public string Action{get;set;}="status";
@@ -35,6 +35,7 @@ public class CharacterDataService(SaveServer saves,JsonUtil json,HttpResponseUti
    if(request.Action is "raidStash" or "saveRaidStash")return await RaidStashService.Handle(request,session,profile,saves,json,http,ct);
    if(request.Action=="status")return Status(profile);
    var location=profile.InraidData?.Location;if(!string.IsNullOrEmpty(location)&&location!="none"&&location!="hideout")throw new ArgumentException("请先退出战局。");
+   if(request.Action=="repairRaidStash")return await RaidStashService.Handle(request,session,profile,saves,json,http,ct);
    snapshot=json.Deserialize<SptProfile>(json.Serialize(profile))!;
    var directory=System.IO.Path.Combine(AppContext.BaseDirectory,"user","mods","LocalGearMail","backups","character-data");Directory.CreateDirectory(directory);
    await File.WriteAllTextAsync(System.IO.Path.Combine(directory,$"{session}-{DateTime.UtcNow:yyyyMMdd-HHmmssfff}.json"),json.Serialize(profile,true),ct);

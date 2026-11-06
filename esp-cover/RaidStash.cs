@@ -35,7 +35,7 @@ internal static class RaidStash {
  static bool FindItem(Player.PlayerInventoryController __instance,MongoID __0,ref Option<Item> __result){try{if(Own(__instance)&&stash!=null&&stash.TryFindItem(__0.ToString(),out var item)&&item!=null){__result=new Option<Item>(item);return false;}}catch(Exception e){Plugin.Self.Error(e);}return true;}
  static void Closed(){try{if(ready)Save();}catch(Exception e){Fail(e.Message);}}
  static Task<string> Call(Dictionary<string,object?> payload)=>CharacterDataPanel.Call("/local/gear/data","characterData",payload);
- static string Snapshot(){var flat=Singleton<ItemFactory>.Instance.TreeToFlatItems(new Item[]{stash!});var json=System.Text.Json.Nodes.JsonNode.Parse(Newtonsoft.Json.JsonConvert.SerializeObject(new Il2CppSystem.Object(flat.Pointer)))!.AsArray();foreach(var entry in json){if(entry?["_id"]?.GetValue<string>()!=stash!.Id.ToString())continue;foreach(string key in new[]{"parentId","slotId","location"}){entry.AsObject().Remove(key);if(stashRoot.TryGetProperty(key,out var value))entry[key]=System.Text.Json.Nodes.JsonNode.Parse(value.GetRawText());}}return json.ToJsonString();}
+ static string Snapshot(){var flat=Singleton<ItemFactory>.Instance.TreeToFlatItems(new Item[]{stash!});var json=LocalSpt.Shared.RaidStashJson.Normalize(Newtonsoft.Json.JsonConvert.SerializeObject(new Il2CppSystem.Object(flat.Pointer)),out _,out _);foreach(var entry in json){if(entry?["_id"]?.GetValue<string>()!=stash!.Id.ToString())continue;foreach(string key in new[]{"parentId","slotId","location"}){entry.AsObject().Remove(key);if(stashRoot.TryGetProperty(key,out var value))entry[key]=System.Text.Json.Nodes.JsonNode.Parse(value.GetRawText());}}return json.ToJsonString();}
  static void Save(){if(!ready||request!=null||Local?.InventoryController?.HasActiveEvents==true)return;string current=Snapshot();if(current==saved)return;sent=current;request=Call(new(){{"action","saveRaidStash"},{"stashRevision",revision},{"stashItems",JsonSerializer.Deserialize<JsonElement>(current)}});}
  static bool BeforeStop(LocalGame __instance,string __0,ExitStatus __1,string __2,float __3){
   if(stopping||!ready||__0!=Local?.ProfileId)return true;
@@ -49,7 +49,7 @@ internal static class RaidStash {
   Plugin.Self.Log.LogInfo($"Raid stash capacity restored: {beforeWidth}x{beforeHeight} -> {grid.GridWidth}x{grid.GridHeight}; layout={grid.Layout.Count}");
  }
  static void Load(JsonElement data){
-  var factory=Singleton<ItemFactory>.Instance;var items=data.GetProperty("items");stashRoot=items.EnumerateArray().Single(i=>i.GetProperty("_id").GetString()==data.GetProperty("stash").GetString()).Clone();var flat=new Il2CppReferenceArray<JsonType.FlatItem>(items.GetArrayLength());int index=0;
+  var factory=Singleton<ItemFactory>.Instance;var normalized=LocalSpt.Shared.RaidStashJson.Normalize(data.GetProperty("items").GetRawText(),out _,out _);using var itemsDoc=JsonDocument.Parse(normalized.ToJsonString());var items=itemsDoc.RootElement;stashRoot=items.EnumerateArray().Single(i=>i.GetProperty("_id").GetString()==data.GetProperty("stash").GetString()).Clone();var flat=new Il2CppReferenceArray<JsonType.FlatItem>(items.GetArrayLength());int index=0;
   foreach(var item in items.EnumerateArray()){
    var native=new JsonType.FlatItem{_id=new MongoID(item.GetProperty("_id").GetString()!),_tpl=new MongoID(item.GetProperty("_tpl").GetString()!)};
    if(item.TryGetProperty("parentId",out var parent)&&parent.ValueKind==JsonValueKind.String)native.parentId=ParentId(parent.GetString()!);

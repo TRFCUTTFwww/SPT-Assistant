@@ -81,3 +81,31 @@ if(RaidStashRules.Merge(mergedStash,stashRoot.ToString(),stashAfter).Count!=3)th
 void RejectStash(List<Item> incoming){try{RaidStashRules.Merge(stashBefore,stashRoot.ToString(),incoming);}catch(ArgumentException){return;}throw new Exception("Malformed stash accepted");}
 RejectStash([]);RejectStash([stashBefore[0],stashBefore[0]]);RejectStash([stashBefore[0],new(){Id=raidItem,Template=template,ParentId="orphan"}]);RejectStash([stashBefore[0],new(){Id=raidItem,Template=template,ParentId=stashBag.ToString()},new(){Id=stashBag,Template=template,ParentId=raidItem.ToString()}]);RejectStash([new(){Id=stashRoot,Template=new MongoId(),ParentId=null}]);
 Console.WriteLine("PASS raid stash deposits/withdrawals, nested removal, identity preservation, idempotency, unrelated roots and malformed/cyclic tree rejection");
+
+// Captured IL2CPP wire shape, including repeated wrappers and later outer updates.
+string wrapped="""
+[{"_id":"5449016a4bdc2d6f028b456f","_tpl":"544fb45d4bdc2dee738b4568","parentId":"5449016a4bdc2d6f028b456e","slotId":"hideout","location":{"JToken":{"JToken":{"x":5,"y":50,"r":"Horizontal"}}},"upd":{"JToken":{"StackObjectsCount":42,"SpawnedInSession":true,"Repairable":{"Durability":33,"MaxDurability":80}},"StackObjectsCount":40}},
+{"_id":"5449016a4bdc2d6f028b4570","_tpl":"544fb45d4bdc2dee738b4568","parentId":"5449016a4bdc2d6f028b456f","slotId":"cartridges","location":{"JToken":3},"upd":{"JToken":{"FoodDrink":{"HpPercent":12.5},"Key":{"NumberOfUsages":4}}}}]
+""";
+var clean=LocalSpt.Shared.RaidStashJson.Normalize(wrapped,out int fixedLocations,out int fixedUpdates);
+var transport=nativeJson.Deserialize<CharacterDataRequest>("{\"stashItems\":"+wrapped+"}")!;
+var wire=LocalSpt.Shared.RaidStashJson.Normalize(transport.StashItems!.Value.GetRawText(),out _,out _);
+var roundtrip=nativeJson.Deserialize<List<Item>>(wire.ToJsonString())!;
+var persisted=System.Text.Json.Nodes.JsonNode.Parse(nativeJson.Serialize(roundtrip)!)!.AsArray();
+if(fixedLocations!=2||fixedUpdates!=2||roundtrip[0].Upd?.StackObjectsCount!=40||roundtrip[0].Upd?.SpawnedInSession!=true||roundtrip[0].Upd?.Repairable?.Durability!=33||roundtrip[1].Upd?.FoodDrink?.HpPercent!=12.5||roundtrip[1].Upd?.Key?.NumberOfUsages!=4||persisted[0]!["location"]!["x"]!.GetValue<int>()!=5||persisted[0]!["location"]!["y"]!.GetValue<int>()!=50||persisted[0]!["location"]!["r"]!.GetValue<string>()!="Horizontal"||persisted[1]!["location"]!.GetValue<int>()!=3||roundtrip[1].ParentId!=roundtrip[0].Id.ToString())throw new Exception("Native stash transport lost coordinates, rotation, nested identity or item attributes");
+var twice=LocalSpt.Shared.RaidStashJson.Normalize(clean.ToJsonString(),out int againLocations,out int againUpdates);
+if(againLocations!=0||againUpdates!=0||!System.Text.Json.Nodes.JsonNode.DeepEquals(clean,twice))throw new Exception("Stash normalization is not idempotent");
+try{LocalSpt.Shared.RaidStashJson.Normalize("[{\"upd\":{\"JToken\":4,\"StackObjectsCount\":2}}]",out _,out _);throw new Exception("Ambiguous wrapper accepted");}catch(ArgumentException){}
+Console.WriteLine("PASS captured IL2CPP request -> raw normalization -> native Item -> save roundtrip preserves grid, slot index, nested items, stack, durability, FiR and usage; rejects ambiguous data");
+
+using var originalDoc=JsonDocument.Parse(diskBefore);
+var rawItems=originalDoc.RootElement.GetProperty("characters").GetProperty("pmc").GetProperty("Inventory").GetProperty("items");
+var repair=LocalSpt.Shared.RaidStashJson.Normalize(rawItems.GetRawText(),out int actualLocations,out int actualUpdates);
+var repairTyped=nativeJson.Deserialize<List<Item>>(repair.ToJsonString())!;
+var liveTyped=nativeJson.Deserialize<SPTarkov.Server.Core.Models.Eft.Profile.SptProfile>(System.Text.Encoding.UTF8.GetString(diskBefore))!;
+var liveRaw=LocalSpt.Shared.RaidStashJson.Normalize(nativeJson.Serialize(liveTyped.CharacterData!.PmcData!.Inventory!.Items)!,out int liveLocations,out int liveUpdates);
+var liveRepair=nativeJson.Deserialize<List<Item>>(liveRaw.ToJsonString())!;
+if(actualLocations!=liveLocations||actualUpdates!=liveUpdates||repairTyped.Count!=rawItems.GetArrayLength()||!repairTyped.Select(i=>i.Id).SequenceEqual(liveRepair.Select(i=>i.Id))||nativeJson.Serialize(repairTyped)!=nativeJson.Serialize(liveRepair))throw new Exception("In-memory repair differs from repair of raw profile fields");
+var repairedWire=LocalSpt.Shared.RaidStashJson.Normalize(nativeJson.Serialize(liveRepair)!,out int remainingLocations,out int remainingUpdates);
+if(remainingLocations!=0||remainingUpdates!=0||!File.ReadAllBytes(profilePath).SequenceEqual(diskBefore))throw new Exception("Repair left wrappers or modified source profile");
+Console.WriteLine($"PASS actual profile repair dry run: {liveRepair.Count} identities retained, {actualLocations} locations/{actualUpdates} attributes normalized, no wrappers remain; source bytes unchanged");
