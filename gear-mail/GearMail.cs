@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -24,7 +24,7 @@ public record Metadata:IModMetadata{
  public string Name{get;init;}="Local Gear Mail API";
  public string Author{get;init;}="Local";
  public List<string>? Contributors{get;init;}
- public SemanticVersioning.Version Version{get;init;}=new("1.6.0");
+ public SemanticVersioning.Version Version{get;init;}=new("1.7.0");
  public SemanticVersioning.Range SptVersion{get;init;}=new("~5.0.0");
  public bool HasPrepatcher{get;init;}
  public List<string>? Incompatibilities{get;init;}
@@ -64,12 +64,12 @@ public class GearMailService(
  TemplateTable templates,ItemHelper helper,MailSendService mail,SaveServer saves,
  JsonUtil json,HttpResponseUtil http,ISptLogger<GearMailService> log){
  static readonly ConcurrentDictionary<string,SemaphoreSlim> Locks=new();
- internal static SemaphoreSlim SessionLock(MongoId session)=>Locks.GetOrAdd(session.ToString(),_=>new SemaphoreSlim(1,1));
+ public static SemaphoreSlim SessionLock(MongoId session)=>Locks.GetOrAdd(session.ToString(),_=>new SemaphoreSlim(1,1));
  static readonly Regex IdPattern=new("^[a-zA-Z0-9_.-]{1,80}$");
  static readonly Regex MongoPattern=new("^[0-9a-f]{24}$");
  const string ReceiptKey="localGearMailReceipts";
  readonly string home=Path.Combine(AppContext.BaseDirectory,"user","mods","LocalGearMail");
- public string Status()=>http.GetBody(new{ok=true,version="1.6.0",delivery="system-mail",assembledItems=true,chamberAttachments=true,customPoisonUses=true,customItemProperties=true,extendedItemProperties=true,magazineContents=true,profileManagement=true,scavPresets=true,maxPoisonUses=(double)float.MaxValue,parameterLimitKind="float32-storage-not-gameplay-ceiling"});
+ public string Status()=>http.GetBody(new{ok=true,version="1.7.0",delivery="system-mail",assembledItems=true,chamberAttachments=true,customPoisonUses=true,customItemProperties=true,extendedItemProperties=true,magazineContents=true,profileManagement=true,characterData=AdminModuleHost.Ready,storyManagement=AdminModuleHost.Ready,adminHotReload=true,scavPresets=true,maxPoisonUses=(double)float.MaxValue,parameterLimitKind="float32-storage-not-gameplay-ceiling"});
  public string Validate(MailRequest request){
   try{
    var key=File.ReadAllText(Path.Combine(home,"api-key.txt")).Trim();

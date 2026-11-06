@@ -34,7 +34,7 @@ internal static class ProfileAdminPanel {
   if(request?.IsCompleted==true){
    try{using var response=JsonDocument.Parse(request.GetAwaiter().GetResult());var root=response.RootElement;
     if(root.TryGetProperty("err",out var error)&&error.TryGetInt32(out int code)&&code!=0)status=root.TryGetProperty("errmsg",out var message)?message.GetString()??"操作失败":"操作失败";
-    else{data=Data(root).Clone();ready=true;values.Clear();status="角色数据已刷新；改动后请重新进入角色刷新原生界面。";}
+    else{data=Data(root).Clone();ready=true;values.Clear();status="已读取角色数据；保存后重新登录角色生效。";}
    }catch{status="服务响应无法读取。";}request=null;
   }
   InterfaceMenu.Label(new Rect(rect.x,rect.y,rect.width-90,28),"角色管理",InterfaceMenu.Accent,18);

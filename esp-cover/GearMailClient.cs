@@ -19,7 +19,7 @@ internal static class GearMailClient {
    var capability=Data(status.RootElement);
    bool enhanced=capability.TryGetProperty("customItemProperties",out var support)&&support.ValueKind==JsonValueKind.True;
    if(customProperties&&!enhanced)return "邮件服务需重启服务端后才能支持自定义属性。";
-   if(customProperties&&(!capability.TryGetProperty("extendedItemProperties",out var extended)||extended.ValueKind!=JsonValueKind.True))return "扩展物品参数需要重启服务端加载邮件接口新版。";
+   if(customProperties&&(!capability.TryGetProperty("extendedItemProperties",out var extended)||extended.ValueKind!=JsonValueKind.True))return "请更新并重启服务端。";
    string keyPath=Path.Combine(BepInEx.Paths.GameRootPath,"SPT_Runtime","user","mods","LocalGearMail","api-key.txt");
    var payload=new Dictionary<string,object?>{{"apiKey",File.ReadAllText(keyPath).Trim()},{"deliveryId",deliveryId},{"message","控制中心添加的物品已送达，请领取。"},{"items",items}};
    if(enhanced)payload["allowIncomplete"]=true;

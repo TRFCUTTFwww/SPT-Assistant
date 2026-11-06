@@ -47,6 +47,6 @@ internal static class BtrControl {
   if(stops!=null)foreach(var stop in stops){if(stop==null||string.IsNullOrWhiteSpace(stop.id))continue;if(InterfaceMenu.Button(new Rect(x,y,w,34),BtrDisplay.StopName(current!,stop.id),selected==stop.id))selected=stop.id;y+=42;}
   GUI.enabled=enabled&&!Disabled&&btr?.BtrVehicle!=null&&selected.Length>0;
   if(InterfaceMenu.Button(new Rect(x,y,w,38),"设置下一站："+(selected.Length>0?BtrDisplay.StopName(current!,selected):"未选择")))Action(()=>{if(stops==null||!stops.Any(s=>s!=null&&s.id==selected))throw new ArgumentException("站点已失效，请重新选择。");btr!.MoveToDestination(selected,current!.MainPlayer.PlayerId);});GUI.enabled=enabled;y+=52;
-  InterfaceMenu.Paragraph(new Rect(x,y,w,64),notice+"\n站点来自当前地图原生路线；无 BTR 路线的地图不会显示虚构站点。",null,12);GUI.EndScrollView();
+  InterfaceMenu.Paragraph(new Rect(x,y,w,64),notice+"\n请选择当前地图的 BTR 站点。",null,12);GUI.EndScrollView();
  }
 }

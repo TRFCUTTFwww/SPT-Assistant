@@ -122,6 +122,6 @@ internal static class ForceLoot {
  static void DrawBody(Rect rect){float y=rect.y;InterfaceMenu.Label(new(rect.x,y,rect.width,30),"拾取范围内物品",InterfaceMenu.Accent,20);y+=42;
   float half=(rect.width-12)/2;if(InterfaceMenu.Button(new(rect.x,y,half,34),busy?"正在执行…":"立即拾取"))Start();if(InterfaceMenu.Button(new(rect.x+half+12,y,half,34),"停止后续队列"))Stop();y+=46;
   foreach(var entry in new ConfigEntryBase[]{enabled,radius,key,containers,corpses}){InterfaceMenu.DrawEntry(entry,new(rect.x,y,rect.width,76));y+=84;}
-  InterfaceMenu.Paragraph(new(rect.x,y,rect.width,70),status+"\n通过原生库存事务转移，忽略普通交互距离；背包、胸挂和口袋满了会跳过，原物保留。任务专用物品及保险箱不取。",null,12);
+  InterfaceMenu.Paragraph(new(rect.x,y,rect.width,70),status+"\n背包、胸挂和口袋满了会跳过，原物保留。任务专用物品及保险箱不取。",null,12);
  }
 }

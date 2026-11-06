@@ -57,7 +57,7 @@ internal static class InterfaceMenu {
   if(background.Value=="#111827")background.Value="#121826";if(accent.Value=="#38BDF8")accent.Value="#77D9C7";if(Math.Abs(opacity.Value-.86f)<.001f)opacity.Value=.94f;
   AddSlot("noclip","穿墙速度",new Rect(Screen.width*.5f-130,Screen.height-110,260,32));
   AddSlot("damagepreview","准星伤害",new Rect(Screen.width*.5f-240,Screen.height*.5f+22,480,48));
-  AddSlot("performance","性能监测",new Rect(12,Math.Max(12,Screen.height-240),354,190));
+  AddSlot("performance","性能监测",new Rect(12,Math.Max(12,Screen.height-240),354,165));
   AddSlot("status","功能状态",new Rect(Math.Max(12,Screen.width-622),12,610,132));
   AddSlot("raidclock","战局时间",RaidClock.DefaultBounds());
   AddSlot("navigation","路面导航",new Rect(Math.Max(12,Screen.width/2-190),Math.Max(12,Screen.height-172),380,72));
@@ -166,7 +166,7 @@ internal static class InterfaceMenu {
    var content=new Rect(window.x+236,window.y+99,window.width-260,window.height-123);
    if(contextKeys){HotkeyPage.Draw(content,category);return;}
    var pages=MenuSections.Pages(category);if(!pages.Contains(otherPage))otherPage=pages[0];string next=Tabs(content,pages,otherPage,out float tabsHeight);if(next!=otherPage)Navigate(category,next);content.y+=tabsHeight;content.height-=tabsHeight;
-   if(category=="AI 工作台"){AiWorkspace.Draw(content,otherPage);return;}if(category=="队友"){CompanionPlans.Draw(content,otherPage);return;}if(category=="玩具枪工具"){ToyDeveloper.DrawWorkspace(content,otherPage);return;}if(category=="战局与物资"&&otherPage=="活动控制"){SeasonalEventControls.Draw(content);return;}
+   if(category=="剧情"){StoryPanel.Draw(content,otherPage);return;}if(category=="数据"&&otherPage!="角色管理"){CharacterDataPanel.Draw(content,otherPage);return;}if(category=="AI 工作台"){AiWorkspace.Draw(content,otherPage);return;}if(category=="队友"){CompanionPlans.Draw(content,otherPage);return;}if(category=="玩具枪工具"){ToyDeveloper.DrawWorkspace(content,otherPage);return;}if(category=="战局与物资"&&otherPage=="活动控制"){SeasonalEventControls.Draw(content);return;}
    if(category=="战局与物资"&&otherPage=="地图模式"){EventRaidLauncher.Draw(content);return;}
    switch((category,otherPage)){
     case ("枪械编辑","枪械参数"):WeaponEditor.Draw(content);break;
@@ -178,6 +178,7 @@ internal static class InterfaceMenu {
     case ("模型与镜头","动作锁定"):ModelPoseLock.Draw(content);break;
     case ("人物与移动","死亡保留"):DeathInventory.Draw(content);break;
     case ("开发工具","坐标读取"):CoordinateReader.Draw(content);break;
+    case ("数据","角色管理"):
     case ("开发工具","角色管理"):ProfileAdminPanel.Draw(content);break;
     case ("模型与镜头","自由镜头"):DirectorStage.Draw(content);break;
     case ("镜头与画面","界面布局"):DrawAppearance(content);break;

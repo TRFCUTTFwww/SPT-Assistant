@@ -57,11 +57,11 @@ internal static class SeasonalEventControls {
   InterfaceMenu.Label(new Rect(4,y,w,26),"万圣节内容",InterfaceMenu.Accent,16);y+=38;
   bool old=GUI.enabled;GUI.enabled=old&&mode is EventMode.Halloween or EventMode.Calendar;
   summon=Toggle(new Rect(4,y,w,34),"邪教徒召唤事件",summon);y+=44;zombies=Toggle(new Rect(4,y,w,34),"僵尸感染",zombies);y+=44;bool hasCult=seasonal?["eventBossSpawns"]?["halloweennightcult"] is JsonObject;GUI.enabled=GUI.enabled&&hasCult;cult=Toggle(new Rect(4,y,w,34),hasCult?"夜间特殊邪教徒":"当前版本没有独立夜间邪教徒活动",cult);y+=44;GUI.enabled=old;
-  InterfaceMenu.Paragraph(new Rect(4,y,w,62),"三个子活动分别控制。保存前检查万圣节角色、模板和地图数据；实际资源加载仍需实战验证。",null,12);y+=76;
+  InterfaceMenu.Paragraph(new Rect(4,y,w,62),"三个子活动可分别开启或关闭。",null,12);y+=76;
   division=Toggle(new Rect(4,y,w,36),"暗实验室黑色军团刷新",division);y+=46;
   InterfaceMenu.Paragraph(new Rect(4,y,w,48),"控制暗实验室中的 Wedge 与军团波次；不改变地图入口。",null,12);y+=62;
   float half=(w-12)/2;if(InterfaceMenu.Button(new Rect(4,y,half,34),"重新读取"))Action(()=>{Load();status="已重新读取磁盘配置。";});
-  if(InterfaceMenu.Button(new Rect(16+half,y,half,34),"检查万圣节数据"))Action(()=>{if(seasonal==null)Load();var next=EventConfigRules.Seasonal(seasonal!,originalSeasonal!,mode,summon,zombies,cult);bool enabled=next["enableSeasonalEventDetection"]?.GetValue<bool>()==true&&next["events"]!.AsArray().Any(e=>e?["type"]?.ToString()=="HALLOWEEN"&&e["enabled"]?.GetValue<bool>()==true);var problems=Audit(next);status=!enabled?"当前模式未开启万圣节，无万圣节数据需要检查。":problems.Length==0?"万圣节角色、模板和地图检查通过；实战资源加载仍需验证。":string.Join("\n",problems.Take(10));});y+=48;
+  if(InterfaceMenu.Button(new Rect(16+half,y,half,34),"检查万圣节数据"))Action(()=>{if(seasonal==null)Load();var next=EventConfigRules.Seasonal(seasonal!,originalSeasonal!,mode,summon,zombies,cult);bool enabled=next["enableSeasonalEventDetection"]?.GetValue<bool>()==true&&next["events"]!.AsArray().Any(e=>e?["type"]?.ToString()=="HALLOWEEN"&&e["enabled"]?.GetValue<bool>()==true);var problems=Audit(next);status=!enabled?"当前模式未开启万圣节，无万圣节数据需要检查。":problems.Length==0?"检查通过。":string.Join("\n",problems.Take(10));});y+=48;
   GUI.enabled=old&&!RaidClock.Active&&seasonal!=null;
   if(InterfaceMenu.Button(new Rect(4,y,half,38),"保存活动配置"))Action(()=>Save());if(InterfaceMenu.Button(new Rect(16+half,y,half,38),"恢复活动原始配置"))Action(()=>Save(true));GUI.enabled=old;y+=54;
   InterfaceMenu.Paragraph(new Rect(4,y,w,135),status,InterfaceMenu.Accent,12);GUI.EndScrollView();

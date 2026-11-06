@@ -21,7 +21,7 @@ internal sealed class ScopeBoxes {
  readonly Dictionary<IntPtr,(float Current,float Maximum,float Expires)> healthCache=new();
  float nextError;bool active;
  internal bool Active=>active&&camera!=null&&camera.isActiveAndEnabled;
- internal static void Initialize()=>Enabled=FeatureConfig.Bind("1. ESP","Optical scope boxes","瞄准镜内自适应方框",true,"使用光学镜自身摄像机绘制方框，跟随倍率并由原生镜片裁切；光学开镜时隐藏镜外人物方框及文字，保留镜内方框与血条。红点和机瞄保持普通显示。");
+ internal static void Initialize()=>Enabled=FeatureConfig.Bind("1. ESP","Optical scope boxes","瞄准镜内自适应方框",true,"开镜后方框跟随倍率，显示镜内人物和血条。红点和机瞄保持普通显示。");
  internal void Tick(IReadOnlyList<Player> actors,Player? local){try{
   this.actors=actors;this.local=local;
   var optic=CameraManager.Instance?.OpticCameraManager;

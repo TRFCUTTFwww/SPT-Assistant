@@ -17,7 +17,7 @@ internal static class NativeEventControl {
  static readonly List<Group> groups=new();static readonly List<Lamp> lamps=new();
  static Vector2 scroll;static IntPtr world;static NativeLabLight? applied;static float next;static string notice="",lightStatus="进入实验室后可控制原生灯光。";
  internal static void Initialize(Plugin plugin){if(!ClientEventVersion.Native)return;const string section="57. 原生活动";
-  mode=FeatureConfig.Bind(section,"Native laboratory map","原生实验室场景",NativeLabMode.MapDefault,"原生地图默认／常规实验室／断电实验室；准备战局时应用，不依赖旧活动移植组件。");
+  mode=FeatureConfig.Bind(section,"Native laboratory map","原生实验室场景",NativeLabMode.MapDefault,"可选择地图默认、常规或断电实验室；下局生效。");
   lights=FeatureConfig.Bind(section,"Native laboratory lights","原生实验室灯光",NativeLabLight.MapDefault,"原生灯具实时控制，地图默认会恢复接管前状态。");
   foreach(string method in new[]{"OnReadyToStartMatchingAsync","LocalGameMatching"})plugin.Patches.Patch(AccessTools.Method(typeof(TarkovApplication),method),prefix:new HarmonyMethod(typeof(NativeEventControl),nameof(Prepare)));
   plugin.Log.LogInfo("Native Halloween control ready: "+ClientEventVersion.Version+"; legacy map port is not loaded");
@@ -46,8 +46,8 @@ internal static class NativeEventControl {
  }
  static void SetEvent(bool enabled){try{SeasonalEventControls.SetNativeHalloween(enabled);notice="已写入原生万圣节配置，重启服务端和客户端后生效。";}catch(Exception error){notice=error.Message;}FeatureToasts.Show(notice);}
  internal static void Draw(Rect rect){scroll=GUI.BeginScrollView(rect,scroll,new Rect(0,0,rect.width-20,810));DrawBody(new Rect(4,4,rect.width-32,794));GUI.EndScrollView();}
- static void DrawBody(Rect rect){float y=rect.y;InterfaceMenu.Label(new(rect.x,y,rect.width,32),"原生万圣节与实验室",InterfaceMenu.Accent,20);y+=44;
-  InterfaceMenu.Paragraph(new(rect.x,y,rect.width,54),"EFT "+ClientEventVersion.Version+" 使用客户端自带的活动与地图资源。1.2 客户端才使用旧移植路径。",null,13);y+=68;
+ static void DrawBody(Rect rect){float y=rect.y;InterfaceMenu.Label(new(rect.x,y,rect.width,32),"万圣节与实验室",InterfaceMenu.Accent,20);y+=44;
+  InterfaceMenu.Paragraph(new(rect.x,y,rect.width,54),"活动开关重启后生效；地图选择在下局生效。",null,13);y+=68;
   bool prior=GUI.enabled;GUI.enabled=prior&&!RaidClock.Active;float half=(rect.width-12)/2;
   if(InterfaceMenu.Button(new(rect.x,y,half,36),"开启原生万圣节"))SetEvent(true);if(InterfaceMenu.Button(new(rect.x+half+12,y,half,36),"关闭原生季节活动"))SetEvent(false);GUI.enabled=prior;y+=50;
   foreach(var choice in new[]{NativeLabMode.MapDefault,NativeLabMode.Normal,NativeLabMode.Dark,NativeLabMode.Event}){string name=choice==NativeLabMode.MapDefault?"按原生地图选择":choice==NativeLabMode.Normal?"常规实验室":choice==NativeLabMode.Event?"原生万圣节实验室":"黑色军团断电实验室";GUI.enabled=prior&&!RaidClock.Active;if(InterfaceMenu.Button(new(rect.x,y,rect.width,34),name,mode.Value==choice))mode.Value=choice;y+=44;}GUI.enabled=prior;
