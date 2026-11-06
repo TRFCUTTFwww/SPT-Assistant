@@ -36,11 +36,12 @@ internal sealed class ScopeBoxes {
  }catch(Exception e){Failed(e);}}
  void BeforeRender(Camera target){
   if(camera==null||target==null||target.Pointer!=camera.Pointer)return;
+  long stamp=RuntimePerformance.Start();
   try{
    if(!Enabled.Value||!Plugin.Self.People.Value||!RaidClock.Active||DirectorStage.HudHidden||local?.ProceduralWeaponAnimation?.IsAiming!=true){commands?.Clear();active=false;return;}
    Build(target);lastRenderFrame=Time.frameCount;
    if(!renderReported){renderReported=true;Plugin.Self.Log.LogInfo("Optic ESP render synchronization active: native camera onPreRender, world vertices, render-time view/projection");}
-  }catch(Exception e){Failed(e);}
+  }catch(Exception e){Failed(e);}finally{RuntimePerformance.RenderDone(stamp);}
  }
  void Build(Camera target){
   if(actors==null||local==null)return;

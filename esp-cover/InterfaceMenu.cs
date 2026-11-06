@@ -57,6 +57,7 @@ internal static class InterfaceMenu {
   if(background.Value=="#111827")background.Value="#121826";if(accent.Value=="#38BDF8")accent.Value="#77D9C7";if(Math.Abs(opacity.Value-.86f)<.001f)opacity.Value=.94f;
   AddSlot("noclip","穿墙速度",new Rect(Screen.width*.5f-130,Screen.height-110,260,32));
   AddSlot("damagepreview","准星伤害",new Rect(Screen.width*.5f-240,Screen.height*.5f+22,480,48));
+  AddSlot("performance","性能监测",new Rect(12,Math.Max(12,Screen.height-240),354,190));
   AddSlot("status","功能状态",new Rect(Math.Max(12,Screen.width-622),12,610,132));
   AddSlot("raidclock","战局时间",RaidClock.DefaultBounds());
   AddSlot("navigation","路面导航",new Rect(Math.Max(12,Screen.width/2-190),Math.Max(12,Screen.height-172),380,72));

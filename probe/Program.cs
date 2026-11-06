@@ -10,6 +10,13 @@ using LocalRaidShared;
 var sourceRoot=Path.GetFullPath(Environment.GetEnvironmentVariable("SPT_SOURCE_ROOT")??"_spt5_esp_fix");
 var gameRoot=Environment.GetEnvironmentVariable("SPT_GAME_ROOT");if(!string.IsNullOrWhiteSpace(gameRoot))Directory.SetCurrentDirectory(gameRoot);
 try{
+var perfWindow=new PerformanceWindow();for(int i=0;i<300;i++)perfWindow.Add(new(1000d/60,1,2,.5,.25));var perf=perfWindow.Read();Assert(Math.Abs(perf.Fps-60)<.0001&&Math.Abs(perf.Frame-1000d/60)<.0001&&Math.Abs(perf.Mod-3.75)<.0001,"FPS uses total frames/elapsed time and nonoverlapping mod phases");
+perfWindow.Clear();for(int i=0;i<99;i++)perfWindow.Add(new(10,0,0,0,0));perfWindow.Add(new(100,0,0,0,0));perf=perfWindow.Read();Assert(perf.Peak==100&&perf.P99==10&&perf.Slow==1&&Math.Abs(perf.Fps-100000d/1090)<.0001,"one hitch counts once and FPS is not average instantaneous FPS");
+perfWindow.Add(new(double.NaN,0,0,0,0));perfWindow.Add(new(0,0,0,0,0));perfWindow.Add(new(10,-1,0,0,0));Assert(perfWindow.Read().Count==100,"nonfinite, zero and negative samples do not contaminate telemetry");
+perfWindow.Clear();perfWindow.Add(new(100,0,0,0,0));for(int i=0;i<500;i++)perfWindow.Add(new(10,0,0,0,0));perf=perfWindow.Read();Assert(perf.Count==500&&perf.Peak==10&&perf.Slow==0&&perf.Seconds==5,"hitches age out of a five-second rolling window");var boundedPerf=new PerformanceWindow(3);foreach(int ms in new[]{10,20,30,40})boundedPerf.Add(new(ms,0,0,0,0));Assert(boundedPerf.Read().Count==3&&boundedPerf.Read().Frame==30,"bounded ring wrap drops oldest sample");perfWindow.Clear();Assert(perfWindow.Read()==default,"reload/disable clears performance history");
+Console.WriteLine("PASS rolling frame telemetry, weighted FPS, nearest-rank P99, hitch expiry, finite validation and bounded ring/reset");
+Assert(MenuSections.Group("58. 性能监测")=="镜头与画面"&&MenuSections.Pages("镜头与画面").Contains("性能监测")&&MenuSections.OnPage("镜头与画面","性能监测","58. 性能监测","Performance monitor"),"performance controls reachable in original visual menu");
+Console.WriteLine("PASS performance settings navigation in original icon menu");
 foreach(float aspect in new[]{1f,16f/9f,21f/9f}){
  Assert(ScopeBoxRules.Bounds(new(.5f,.3f,20),new(.5f,.7f,20),aspect,out var scoped)&&Math.Abs(scoped.Width*aspect/scoped.Height-.45f)<.0001f,"scope box proportions survive non-square textures");
  Assert(ScopeBoxRules.Bounds(new(.5f,.1f,10),new(.5f,.9f,10),aspect,out var zoomed)&&Math.Abs(zoomed.Height/scoped.Height-2)<.0001f,"doubling optical image size doubles the box");
