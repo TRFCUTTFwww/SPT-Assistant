@@ -45,6 +45,7 @@ internal class Plugin {
   IgnoreAI=CnConfig.Bind(Config,"4. AI ignore","Enabled",true,"AI ignores the local player: suppresses hostility, visual targeting and existing enemy memory. F9 toggles. Does not hide your model from human players.");
   IgnoreAIKey=CnConfig.Bind(Config,"3. Keys","AI ignore toggle",KeyCode.F9);
   Patches=new Harmony("local.spt5.esp");
+  ContainerLoadCompatibility.Initialize(this);
   Patch("ApplyDamage",nameof(BlockDamage));
   Patch("Kill",nameof(BlockDeath));
   PatchAI(typeof(BotsGroup),"IsEnemy",nameof(IgnoreTarget));

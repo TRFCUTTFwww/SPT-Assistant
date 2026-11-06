@@ -1,0 +1,9 @@
+1.38.17 灯塔容器加载修复
+
+问题：进入灯塔时，原生 GameWorld.DestroyContainers 在销毁未选中生成的容器物体时触发 NullReferenceException，进而使 SpawnLoot 和本地战局创建失败。
+
+确认对象：Lighthouse_DesignStuff 场景中的 container_Lighthouse_DesignStuff_00525，路径 SBG_DesignStuff/OO/LOOTABLE/Corpse_BD_01/Corpse_BD_01_LOOTABLE，模板 6ad877a3651674c398039e8a。客户端的 GameObjectsToDestroy 列表包含一个空引用；SPT 数据中该容器生成概率为 0.08。失败现场的原生删除队列首项为空。该模板在本地中英文本中显示为“PMC 尸体 / PMC body”；内部资源名不代表战局内存在特定阵营 AI。
+
+修复：在 EFT 48558 的原生容器清理前，移除 GameObjectsToDestroy 中的空引用并记录容器编号。正常目标及原生的生成筛选、物体销毁和后续战利品加载流程仍由游戏执行。旧版 47888 不安装此兼容补丁。
+
+验证：在失败现场，仅对上述容器调用原生 DestroyContainers。修复前删除队列留下一个空项且流程中断；删除空引用后，同一原生调用完成，目标列表和删除队列均为空。永久补丁加载后，在同一失败场景的该容器中重新放入一条空引用，再调用原生清理：补丁已挂接、空引用被移除、原生删除队列正常清空，验证通过。48558 和 47888 客户端均编译通过（保留两条既有警告），现有 Probe 检查通过。1.38.17 模块已加载；完整战局进入及画面仍待用户实测。
