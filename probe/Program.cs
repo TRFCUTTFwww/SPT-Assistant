@@ -519,6 +519,14 @@ Assert(!capacityRestore.Body.Instructions.Any(i=>i.Operand is MethodReference r&
 Console.WriteLine("PASS raid stash native root/grid/capacity restore, Tab injection, transaction exit guard, typed parent IDs and integrated loot toolbar");
 foreach(string method in new[]{"Load","Snapshot"})Assert(raidStashType.Methods.Single(m=>m.Name==method).Body.Instructions.Any(i=>i.Operand is MethodReference r&&r.DeclaringType.Name=="RaidStashJson"&&r.Name=="Normalize"),"stash "+method+" normalizes IL2CPP UnparsedData before reading or saving");
 Console.WriteLine("PASS raid stash JSON normalization is connected to both native load and snapshot paths");
+var pauseClock=new RaidPauseState();
+Assert(pauseClock.Update(1,true,100,3600)==3600&&pauseClock.Update(1,true,220,3600)==3720,"pause extends deadline by elapsed time without freezing elapsed play time");
+pauseClock.SetRemaining(90);Assert(pauseClock.Update(1,true,221,3720)==311,"time edits while paused replace the frozen remainder");
+Assert(pauseClock.Update(1,false,222,311)==311&&pauseClock.Update(1,true,224,311)==311&&pauseClock.Update(1,true,225,311)==312,"resume preserves deadline and pausing again captures the new remainder");
+Assert(pauseClock.Update(2,true,20,1000)==1000&&pauseClock.Update(2,true,21,1000)==1001,"new raids capture their own timer");pauseClock.Reset();Assert(pauseClock.Update(2,true,100,1000)==1000,"unload or leaving raid clears frozen state");
+var raidClockType=core.MainModule.Types.Single(t=>t.Name=="RaidClock");Assert(raidClockType.Methods.Single(m=>m.Name=="Tick").Body.Instructions.All(i=>i.Operand is not MethodReference r||r.Name!="set_timeScale"),"pause never freezes Unity simulation");
+Check("ProductionController","Update",1);Check("ProductionController","UpdateProductions",1);
+Console.WriteLine("PASS pause/resume, paused time editing, raid replacement and reset retain elapsed time; native hideout production sync APIs present");
 Console.WriteLine("PASS remaining-time green/yellow/red half-duration and strict ten-minute boundaries, overtime and missing timers");
 Assert(RaidRules.Clock(-10)=="00:00:00"&&RaidRules.Clock(3661)=="01:01:01"&&RaidRules.Clock(.1)=="00:00:01"&&RaidRules.Clock(double.NaN)=="未同步","expired, long and unsynced clock display");
 Assert(RaidRules.Match("5.56x45毫米 M995","id","5.56*45")&&RaidRules.Match("夜视仪","abc","夜视")&&!RaidRules.Match("头盔","abc","夜视"),"loot search aliases and nonmatches");

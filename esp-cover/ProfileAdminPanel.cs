@@ -46,6 +46,7 @@ internal static class ProfileAdminPanel {
  }
  static string Edit(string key,string fallback,Rect rect){var value=values.TryGetValue(key,out var old)?old:fallback;value=InterfaceMenu.Field(rect,value);values[key]=value;return value;}
  static void Hideout(Rect rect){
+  HideoutCraftControl.Draw(new Rect(rect.x,rect.y,rect.width,70));rect=new Rect(rect.x,rect.y+78,rect.width,Math.Max(40,rect.height-78));
   if(!data.TryGetProperty("areas",out var areas)||areas.ValueKind!=JsonValueKind.Array)return;
   scroll=GUI.BeginScrollView(rect,scroll,new Rect(0,0,rect.width-18,areas.GetArrayLength()*52));float y=0,width=rect.width-25;
   foreach(var area in areas.EnumerateArray()){

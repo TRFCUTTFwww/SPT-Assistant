@@ -35,6 +35,7 @@ public class CharacterDataService(SaveServer saves,JsonUtil json,HttpResponseUti
    if(request.Action is "raidStash" or "saveRaidStash")return await RaidStashService.Handle(request,session,profile,saves,json,http,ct);
    if(request.Action=="status")return Status(profile);
    var location=profile.InraidData?.Location;if(!string.IsNullOrEmpty(location)&&location!="none"&&location!="hideout")throw new ArgumentException("请先退出战局。");
+   if(request.Action is "finishCrafts" or "craftStatus")return await HideoutCraftService.Handle(request,session,profile,saves,json,http,ct);
    if(request.Action=="repairRaidStash")return await RaidStashService.Handle(request,session,profile,saves,json,http,ct);
    snapshot=json.Deserialize<SptProfile>(json.Serialize(profile))!;
    var directory=System.IO.Path.Combine(AppContext.BaseDirectory,"user","mods","LocalGearMail","backups","character-data");Directory.CreateDirectory(directory);
