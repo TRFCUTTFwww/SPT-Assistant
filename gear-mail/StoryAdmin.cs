@@ -55,10 +55,11 @@ public class StoryService(SaveServer saves,JsonUtil json,HttpResponseUtil http,T
     var affected=StoryRules.Dependents(StoryRules.Alternatives(id,templates).Append(id),templates);
     return http.GetBody(new{ok=true,preview=true,revision=Revision(profile),affected=affected.Select(key=>new{id=key.ToString(),name=QuestName(key)})});
    }
-   if(request.Action is not ("replay" or "state" or "ending" or "waits"))throw new ArgumentException("未知剧情操作。");
+   if(request.Action is not ("replay" or "state" or "ending" or "waits" or "wait"))throw new ArgumentException("未知剧情操作。");
    snapshot=json.Deserialize<SptProfile>(json.Serialize(profile))!;var directory=System.IO.Path.Combine(AppContext.BaseDirectory,"user","mods","LocalGearMail","backups","story");Directory.CreateDirectory(directory);
    await File.WriteAllTextAsync(System.IO.Path.Combine(directory,$"{session}-{DateTime.UtcNow:yyyyMMdd-HHmmssfff}.json"),json.Serialize(profile,true),ct);long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-   if(request.Action=="waits")StoryRules.SkipWaits(pmc,templates,config,now);
+   if(request.Action=="wait")StoryRules.SkipWait(pmc,templates,id,now);
+   else if(request.Action=="waits")StoryRules.SkipWaits(pmc,templates,config,now);
    else if(ending){
     var selected=templates.Endings.Elements.SingleOrDefault(e=>e.Id==id)??throw new ArgumentException("未知结局。");
     var affected=new HashSet<MongoId>();foreach(var e in templates.Endings.Elements)foreach(var condition in e.Conditions??[])if(condition.ConditionType=="Quest")foreach(string target in StoryRules.Targets(condition))if(templates.Quests.ContainsKey(new MongoId(target))){affected.Add(new MongoId(target));StoryRules.Set(pmc,new MongoId(target),QuestStatusEnum.Fail,now);}

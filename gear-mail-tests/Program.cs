@@ -121,3 +121,9 @@ var productionTable=nativeJson.Deserialize<SPTarkov.Server.Core.Models.Eft.Hideo
 var ordinaryRecipes=HideoutCraftRules.OrdinaryRecipes(productionTable.Recipes!);
 if(ordinaryRecipes.Count==0||productionTable.Recipes!.Any(r=>r.Continuous&&ordinaryRecipes.Contains(r.Id)))throw new Exception("Continuous native recipes were not excluded when profile flag is absent");
 Console.WriteLine($"PASS native hideout recipe whitelist: {ordinaryRecipes.Count} ordinary crafts, continuous recipes excluded independently of optional profile flags");
+var contactId=new MongoId("67bc646c6e34475fea09d2a5");var contactPrior=new MongoId("68d82d29d34befa7d30b8771");
+var contactPmc=new SPTarkov.Server.Core.Models.Eft.Common.PmcData{Quests=[new(){StartTime=0,QId=contactId,Status=SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.AvailableAfter,AvailableAfter=20000,StatusTimers=[]},new(){StartTime=0,QId=contactPrior,Status=SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.Success,StatusTimers=new(){{SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.Success,10000}}},new(){StartTime=0,QId=otherId,Status=SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.AvailableAfter,AvailableAfter=50000,StatusTimers=[]}]};
+StoryRules.SkipWait(contactPmc,tables,contactId,11000);
+if(contactPmc.Quests[0].AvailableAfter!=10999||contactPmc.Quests[0].Status!=SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.AvailableAfter||contactPmc.Quests[1].StatusTimers[SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.Success]+8100>=11000||contactPmc.Quests[2].AvailableAfter!=50000)throw new Exception("Scoped contact wait changed unrelated wait, status or failed prerequisite backdating");
+contactPmc.Quests[1].Status=SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.Started;Deny(()=>StoryRules.SkipWait(contactPmc,tables,contactId,11000));
+Console.WriteLine("PASS scoped Kerman contact wait expiration preserves unrelated quests and choices; unmet predecessor rejected");

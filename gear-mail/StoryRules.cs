@@ -9,6 +9,21 @@ using SPTarkov.Server.Core.Models.Spt.Tables;
 namespace LocalGearMail;
 
 public static class StoryRules {
+ public static void SkipWait(PmcData pmc,TemplateTable templates,MongoId id,long now){
+  if(!templates.Quests.TryGetValue(id,out var quest)||quest.IsStoryQuest!=true)throw new ArgumentException("请选择剧情等待任务。");
+  var saved=pmc.Quests?.SingleOrDefault(q=>q.QId==id);if(saved?.Status!=QuestStatusEnum.AvailableAfter)throw new ArgumentException("该任务目前不处于等待状态。");
+  var updates=new List<(QuestStatus Quest,QuestStatusEnum State,double Time)>();
+  foreach(var condition in quest.Conditions?.AvailableForStart??[]){
+   if(condition.ConditionType!="Quest"||condition.AvailableAfter is not >0)continue;
+   foreach(string target in Targets(condition)){
+    var prior=pmc.Quests?.SingleOrDefault(q=>q.QId.ToString()==target);
+    if(prior==null||condition.Status?.Contains(prior.Status)!=true||prior.StatusTimers?.TryGetValue(prior.Status,out double time)!=true)throw new ArgumentException("该任务的前置条件尚未满足。");
+    if(time+condition.AvailableAfter>now)updates.Add((prior,prior.Status,now-condition.AvailableAfter.Value-1));
+   }
+  }
+  foreach(var update in updates)update.Quest.StatusTimers[update.State]=update.Time;
+  saved.AvailableAfter=now-1;
+ }
  public static IEnumerable<string> Targets(QuestCondition condition)=>condition.Target==null?[]:condition.Target.IsList?condition.Target.List??[]:condition.Target.IsItem&&condition.Target.Item!=null?[condition.Target.Item]:[];
  public static HashSet<MongoId> StoryTasks(TemplateTable templates){var found=templates.Quests.Where(p=>p.Value.IsStoryQuest==true).Select(p=>p.Key).ToHashSet();foreach(var id in found.ToArray())foreach(var condition in templates.Quests[id].Conditions?.AvailableForFinish??[])if(condition.ConditionType=="Quest")foreach(string target in Targets(condition))if(templates.Quests.ContainsKey(new MongoId(target)))found.Add(new MongoId(target));return found;}
  public static HashSet<MongoId> Alternatives(MongoId id,TemplateTable templates){
