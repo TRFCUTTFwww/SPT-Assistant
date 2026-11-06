@@ -354,7 +354,7 @@ internal static class ExfilDisplay {
  }
  static bool OnScreen(Camera camera,Vector3 position){var p=camera.WorldToViewportPoint(position);return p.z>0&&p.x>=0&&p.x<=1&&p.y>=0&&p.y<=1;}
  static (Rect Rect,string Arrow) PlaceMarker(Camera camera,Vector3 position,float width,List<Rect> occupied){
-  var screen=camera.WorldToScreenPoint(position);
+  var screen=OverlayProjection.ScreenPoint(camera,position);
   if(screen.z<=0){screen.x=Screen.width-screen.x;screen.y=Screen.height-screen.y;}
   float rawY=Screen.height-screen.y,half=width/2;
   float x=Math.Clamp(screen.x,half,Screen.width-half);

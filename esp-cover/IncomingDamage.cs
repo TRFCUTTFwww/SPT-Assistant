@@ -71,7 +71,7 @@ internal static class IncomingDamage {
  internal static void Reset(){feed.Clear();shot=damage=null;worldPointer=IntPtr.Zero;}
  internal static void Tick(GameWorld? world){var pointer=world?.Pointer??IntPtr.Zero;if(pointer!=worldPointer){Reset();worldPointer=pointer;}if(!enabled.Value)feed.Clear();feed.Prune(Time.unscaledTime,duration.Value,maximum.Value);}
  internal static void Preview(){
-  if(!RaidClock.Active)return;enabled.Value=true;var camera=Camera.main;if(camera==null)return;
+  if(!RaidClock.Active)return;enabled.Value=true;var camera=OverlayProjection.MainCamera;if(camera==null)return;
   foreach(float angle in new[]{-65f,135f}){var direction=Quaternion.AngleAxis(angle,Vector3.up)*Vector3.ProjectOnPlane(camera.transform.forward,Vector3.up).normalized;
    feed.Add(new IncomingDamageFeed.Entry{Key="preview"+angle,Name="方向预览",Part="胸部",Damage=angle<0?24:0,Direction=N(direction),Preview=true,Time=Time.unscaledTime},maximum.Value);}
  }

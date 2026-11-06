@@ -6,7 +6,7 @@ internal static class ContainerAnchor {
   var fallback=container.transform.position;
   try{
    var collider=container.Collider;
-   if(collider!=null){var bounds=collider.bounds;if(bounds.size.sqrMagnitude>0.000001f)return bounds.center;}
+   if(collider!=null){var owner=collider.GetComponentInParent<LootableContainer>();var bounds=collider.bounds;if(owner!=null&&owner.Pointer==container.Pointer&&bounds.size.sqrMagnitude>0.000001f)return bounds.center;}
   }catch{}
   // Handle is a native convenience getter that throws on containers without a handle.
   // Prefer a collider owned by this exact drawer, never a neighbouring drawer.

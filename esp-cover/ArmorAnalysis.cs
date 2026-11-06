@@ -26,7 +26,7 @@ internal static class ArmorAnalysis {
    for(int i=0;i<players.Count;i++){
     var candidate=players[i];if(candidate==null||candidate.IsYourPlayer||candidate.HealthController==null||!candidate.HealthController.IsAlive)continue;
     var head=candidate.PlayerBones?.Head!=null?candidate.PlayerBones.Head.position:candidate.Position+Vector3.up*1.6f;
-    var screen=camera.WorldToScreenPoint(head);if(screen.z<=0)continue;
+    var screen=OverlayProjection.ScreenPoint(camera,head);if(screen.z<=0)continue;
     float offset=Vector2.Distance(new Vector2(screen.x,screen.y),new Vector2(Screen.width/2f,Screen.height/2f));
     if(offset>Math.Min(170f,Screen.height*0.18f)||offset>=best)continue;
     best=offset;target=candidate;

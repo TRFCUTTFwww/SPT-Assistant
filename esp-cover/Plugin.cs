@@ -128,7 +128,7 @@ internal class Overlay {
   var p=w!=null?w.MainPlayer:null;
   if(w==null||p==null||!p.IsYourPlayer){BossLabels.Reset();BodyTint.Clear();LootDisplay.Reset();CombatAssist.Reset();HitDisplay.Reset();RecoilAssist.Reset();NightVisionAssist.Reset();DoorAssist.Reset();CorpseDisplay.Reset();RaidPopulation.Reset();ExfilDisplay.Reset();TransitDisplay.Reset();VitalsDisplay.Reset();MovementAssist.Reset();MagazineDisplay.Reset();ArmorAnalysis.Reset();DamagePreview.Reset();BulletTrajectories.Reset();AggroDisplay.Reset();focus.Clear();world=null;me=null;players.Clear();actorLabels.Clear();items.Clear();healthCache.Clear();containers=Array.Empty<LootableContainer>();containerAnchors.Clear();nextAnchor=0;inRaid=false;wasIgnoringAI=false;return;}
   if(world==null||world.Pointer!=w.Pointer){BossLabels.Reset();BodyTint.Clear();LootDisplay.Reset();CombatAssist.Reset();HitDisplay.Reset();RecoilAssist.Reset();NightVisionAssist.Reset();DoorAssist.Reset();CorpseDisplay.Reset();RaidPopulation.Reset();ExfilDisplay.Reset();TransitDisplay.Reset();VitalsDisplay.Reset();MovementAssist.Reset();MagazineDisplay.Reset();ArmorAnalysis.Reset();DamagePreview.Reset();BulletTrajectories.Reset();AggroDisplay.Reset();focus.Clear();names.Clear();actorLabels.Clear();healthCache.Clear();containers=Array.Empty<LootableContainer>();containerAnchors.Clear();nextAnchor=0;nextContainers=0;wasIgnoringAI=false;}
-  world=w;me=p;camera=Camera.main;DoorAssist.Tick(p);
+  world=w;me=p;camera=OverlayProjection.MainCamera;DoorAssist.Tick(p);
   BodyTint.BeginScan();
   RaidPopulation.Update(w,p);
   if(s.IgnoreAI.Value){ClearLocalEnemyMemory(w,p);wasIgnoringAI=true;}
@@ -160,13 +160,15 @@ internal class Overlay {
  public void OnDestroy(){GlobalKillFeed.Reset();CompanionSquad.Reset();SceneTemplates.Reset();AiSceneDirector.Reset();AiSceneEquipment.Reset();ToyDeveloper.Reset();ToyFireControl.Reset();BtrControl.Reset();DirectorStage.Reset();AutoTrigger.Reset();HitSounds.Shutdown();ImpactAiSpawner.Reset();EntertainmentControl.Shutdown();NoclipControl.Reset();RaidSpawnControl.Reset();AiRemoval.Reset();AiEquipmentEditor.Reset();TeleportControl.Reset();InteractionPoints.Reset();TripwireHighlight.Reset();WeaponEditor.Reset();AirdropControl.Reset();PlayerWeaponPresets.Reset();BossLabels.Reset();CharacterBuffs.Reset();AiTestControl.Reset();AiActorControl.Reset();IncomingDamage.Reset();GroundNavigation.Shutdown();NativeRaidTimer.Reset();RaidEnd.CancelConfirmation();RaidLoot.Shutdown();RaidEnvironment.Reset();SurvivalAssist.Reset();GrenadeAlert.Reset();TaskNeeds.Reset();ForceLoot.Reset();NativeEventControl.Reset();BodyTint.Dispose();LootDisplay.Reset();CombatAssist.Reset();HitDisplay.Reset();RecoilAssist.Reset();NightVisionAssist.Reset();DoorAssist.Reset();CorpseDisplay.Reset();RaidPopulation.Reset();VitalsDisplay.Reset();MovementAssist.Reset();MagazineDisplay.Reset();ArmorAnalysis.Reset();DamagePreview.Reset();BulletTrajectories.Reset();AggroDisplay.Reset();ExfilDisplay.Shutdown();TransitDisplay.Reset();BtrDisplay.Reset();focus.Clear();}
  void Warn(Exception e){if(Time.unscaledTime<nextError)return;nextError=Time.unscaledTime+20;Plugin.Self.Error(e);}
  public void OnGUI(){try{
+  camera=OverlayProjection.MainCamera;
   if(world==null||me==null||camera==null||Event.current.type!=EventType.Repaint)return;
   var s=Plugin.Self;
   if(style==null||lastFont!=s.FontSize.Value){lastFont=s.FontSize.Value;style=new GUIStyle(GUI.skin.label);style.fontSize=lastFont;style.alignment=TextAnchor.MiddleCenter;style.richText=false;}
   if(s.People.Value)foreach(var p in players){try{
    if(p==null||p.HealthController==null||!p.HealthController.IsAlive)continue;
    var pos=p.Position;float distance=Vector3.Distance(pos,me.Position);if(distance>s.PeopleRange.Value)continue;
-   var feet=camera.WorldToScreenPoint(pos);var head=camera.WorldToScreenPoint(pos+Vector3.up*1.8f);if(feet.z<=0||head.z<=0||head.x<0||head.x>Screen.width)continue;
+   var headPosition=p.PlayerBones?.Head?.Original?.position+Vector3.up*.15f??pos+Vector3.up*1.8f;
+   var feet=OverlayProjection.ScreenPoint(camera,pos);var head=OverlayProjection.ScreenPoint(camera,headPosition);if(feet.z<=0||head.z<=0||head.x<0||head.x>Screen.width)continue;
    float h=Math.Abs(head.y-feet.y);float width=h*0.45f;float top=Screen.height-head.y;
    Color color=BodyTint.Color(p);
    Box(new Rect(head.x-width/2,top,width,h),color);
@@ -204,7 +206,7 @@ internal class Overlay {
    style.alignment=TextAnchor.MiddleLeft;style.wordWrap=false;style.clipping=TextClipping.Clip;
    foreach(var m in items.Where(m=>m.Kind==0&&Plugin.Self.Loot.Value)){
     if(Vector3.Distance(m.Position,me!.Position)>Plugin.Self.LootRange.Value)continue;
-    var screen=camera!.WorldToScreenPoint(m.Position);
+    var screen=OverlayProjection.ScreenPoint(camera!,m.Position);
     if(screen.z<=0||screen.x<0||screen.x>Screen.width||screen.y<0||screen.y>Screen.height)continue;
     var lines=m.Name.Split('\n');
     float width=80;
@@ -262,7 +264,8 @@ internal class Overlay {
   var candidates=new List<FocusSelection.Candidate>();
   foreach(var marker in markers){
    if(marker.Kind==1&&Vector3.Distance(marker.Position,me!.Position)>Plugin.Self.LootRange.Value)continue;
-   var point=camera!.WorldToScreenPoint(marker.Position);
+   var position=marker.Kind==1&&containerAnchors.TryGetValue(new IntPtr(marker.Key),out var cached)&&cached.Container!=null?ContainerAnchor.Position(cached.Container):marker.Position;
+   var point=OverlayProjection.ScreenPoint(camera!,position);
    if(point.z<=0||point.x<0||point.x>Screen.width||point.y<0||point.y>Screen.height)continue;
    var screen=new Vector2(point.x,Screen.height-point.y);projected.Add((marker,screen));candidates.Add(new(marker.Key,screen.x,screen.y));
   }

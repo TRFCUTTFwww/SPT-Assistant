@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using BepInEx.Configuration;
@@ -55,7 +55,7 @@ internal static class TransitDisplay {
  internal static void Draw(Camera camera,GUIStyle style){
   if(!Enabled.Value)return;
   foreach(var row in Rows){
-   var point=camera.WorldToScreenPoint(row.Position);if(point.z<=0||point.x<0||point.x>Screen.width||point.y<0||point.y>Screen.height)continue;
+   var point=OverlayProjection.ScreenPoint(camera,row.Position);if(point.z<=0||point.x<0||point.x>Screen.width||point.y<0||point.y>Screen.height)continue;
    var old=GUI.color;
    try{GUI.color=row.Available?Color.cyan:Color.gray;GUI.Label(new Rect(point.x-200,Screen.height-point.y-24,400,48),$"转移 → {row.Destination} [{row.Distance:F0}米]\n{row.State}",style);}finally{GUI.color=old;}
   }

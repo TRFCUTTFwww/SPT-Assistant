@@ -47,5 +47,5 @@ internal static class EventCabinetDisplay {
    markers.Add(new(animator,position,text,color,distance));
   }catch(Exception error){Warn(error);}
  }
- internal static void Draw(Camera camera){if(!enabled.Value||!RaidClock.Active||Event.current.type!=EventType.Repaint)return;foreach(var marker in markers){if(marker.Animator==null)continue;var point=camera.WorldToScreenPoint(marker.Position);if(point.z<=.05f||point.x<0||point.x>Screen.width||point.y<0||point.y>Screen.height)continue;InterfaceMenu.Label(new Rect(point.x-140,Screen.height-point.y-28,300,28),marker.Text+" · "+marker.Distance.ToString("F0")+" 米",marker.Color,14);}}
+ internal static void Draw(Camera camera){if(!enabled.Value||!RaidClock.Active||Event.current.type!=EventType.Repaint)return;foreach(var marker in markers){if(marker.Animator==null)continue;var point=OverlayProjection.ScreenPoint(camera,marker.Position);if(point.z<=.05f||point.x<0||point.x>Screen.width||point.y<0||point.y>Screen.height)continue;InterfaceMenu.Label(new Rect(point.x-140,Screen.height-point.y-28,300,28),marker.Text+" · "+marker.Distance.ToString("F0")+" 米",marker.Color,14);}}
 }

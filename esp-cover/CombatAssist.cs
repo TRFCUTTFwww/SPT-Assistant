@@ -94,7 +94,7 @@ internal static class CombatAssist {
    }
   }catch(Exception e){Warn(e);}
  }
- internal static void OnPlayerShot(Shot shot){if(shot!=null&&ToyDeveloper.Uses(shot.Weapon))return;if(Mode.Value!=AimModes.Soft||InterfaceMenu.Open||shot==null||!RaidClock.Active)return;try{var current=Singleton<GameWorld>.Instance;var player=current?.MainPlayer;if(player==null||shot.PlayerRaidId!=player.RaidId||shot.Parent!=null)return;if(!softWindow.Fired(Time.unscaledTime,SoftAimControl.Seconds,shot.Weapon?.Pointer.ToInt64()??0,shot.FireIndex))return;local=player;view=Camera.main;game=current;if(!Ready()||current==null){softWindow.Reset();return;}if(!ValidTarget()||!Present(current,target))Select(current);if(target==null)softWindow.Reset();}catch(Exception e){softWindow.Reset();Warn(e);}}
+ internal static void OnPlayerShot(Shot shot){if(shot!=null&&ToyDeveloper.Uses(shot.Weapon))return;if(Mode.Value!=AimModes.Soft||InterfaceMenu.Open||shot==null||!RaidClock.Active)return;try{var current=Singleton<GameWorld>.Instance;var player=current?.MainPlayer;if(player==null||shot.PlayerRaidId!=player.RaidId||shot.Parent!=null)return;if(!softWindow.Fired(Time.unscaledTime,SoftAimControl.Seconds,shot.Weapon?.Pointer.ToInt64()??0,shot.FireIndex))return;local=player;view=OverlayProjection.MainCamera;game=current;if(!Ready()||current==null){softWindow.Reset();return;}if(!ValidTarget()||!Present(current,target))Select(current);if(target==null)softWindow.Reset();}catch(Exception e){softWindow.Reset();Warn(e);}}
  internal static string Diagnostics=>$"silent redirects={redirected}, no eligible target={missed}";
  static NumericsVector N(Vector3 v)=>new(v.x,v.y,v.z);
  static Vector3 U(NumericsVector v)=>new(v.X,v.Y,v.Z);
@@ -155,7 +155,7 @@ internal static class CombatAssist {
  }
  static bool PrepareSilent(Vector3 origin){
   if(Mode.Value!=AimMode.Silent||!TriggerActive)return false;
-  game=Singleton<GameWorld>.Instance;local=game!=null?game.MainPlayer:null;view=Camera.main;
+  game=Singleton<GameWorld>.Instance;local=game!=null?game.MainPlayer:null;view=OverlayProjection.MainCamera;
   if(!Ready()||game==null)return false;
   var controller=local!.HandsController?.TryCast<Player.FirearmController>();if(controller==null||controller._isInventoryOpened)return false;
   // A shot can arrive before LateUpdate, or after its cached target dies or moves.
