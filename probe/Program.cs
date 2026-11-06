@@ -26,6 +26,18 @@ Assert(!ScopeBoxRules.Clip(new(.2f,1.5f,.4f,.002f),out _)&&ScopeBoxRules.Clip(ne
 Assert(!ScopeBoxRules.Bounds(new(.5f,.3f,-1),new(.5f,.7f,-1),1,out _)&&!ScopeBoxRules.Bounds(new(float.NaN,.3f,1),new(.5f,.7f,1),1,out _)&&!ScopeBoxRules.Bounds(new(3,.3f,1),new(3,.7f,1),1,out _),"invalid/behind/offscreen scope targets are rejected");
 Assert(ScopeBoxRules.Clip(new(-.05f,.5f,.1f,.002f),out var clippedScope)&&clippedScope.X==0&&Math.Abs(clippedScope.Width-.05f)<.0001f,"texture-edge crossing preserves visible half of an original stripe");
 Console.WriteLine("PASS optical zoom/aspect proportions, close actor edge clipping and invalid/behind/offscreen rejection");
+foreach(float yaw in new[]{-.7f,0f,.7f})foreach(float pitch in new[]{-.25f,0f,.25f})foreach(float fov in new[]{20f,55f,90f}){
+ var rotation=System.Numerics.Matrix4x4.CreateRotationY(yaw)*System.Numerics.Matrix4x4.CreateRotationX(pitch);
+ var foot=System.Numerics.Vector3.Transform(new System.Numerics.Vector3(2,-1,-20),rotation);
+ var headAnchor=System.Numerics.Vector3.Transform(new System.Numerics.Vector3(2,.8f,-20),rotation);
+ Assert(ScopeBoxRules.ViewBounds(foot,headAnchor,out var b,out float d),"rotated camera produces a valid native box");
+ float scale=1/MathF.Tan(fov*MathF.PI/360);
+ float fy=foot.Y/-foot.Z*scale,hy=headAnchor.Y/-headAnchor.Z*scale;
+ Assert(Math.Abs(b.Y/d*scale-Math.Min(fy,hy))<.00001f&&Math.Abs((b.Y+b.Height)/d*scale-Math.Max(fy,hy))<.00001f,"box edges match both anchors under yaw, pitch and zoom with unequal depths");
+ Assert(Math.Abs(b.Width/b.Height-.45f)<.00001f,"camera-space proportions stay consistent across rotations");
+}
+Assert(!ScopeBoxRules.ViewBounds(new(0,0,1),new(0,1,-1),out _,out _)&&!ScopeBoxRules.ViewBounds(new(float.NaN,0,-1),new(0,1,-1),out _,out _),"native scene boxes reject near-plane crossing and nonfinite anchors");
+Console.WriteLine("PASS camera-space box alignment through yaw/pitch/FOV changes, unequal anchor depths and near-plane rejection");
 foreach(var size in new[]{(Width:1920,Height:1080),(Width:2560,Height:1440),(Width:3440,Height:1440)}){
  foreach(float renderScale in new[]{.5f,.588f,.667f,.75f,1f,2f}){
   float renderX=.75f*size.Width*renderScale,renderY=.25f*size.Height*renderScale;
@@ -380,7 +392,7 @@ using var core=AssemblyDefinition.ReadAssembly(Path.Combine(sourceRoot,"esp-cove
 var scopeBoxesType=core.MainModule.Types.Single(t=>t.Name=="ScopeBoxes");
 Assert(scopeBoxesType.Methods.Single(m=>m.Name=="Tick").Body.Instructions.Any(i=>i.Operand is MethodReference m&&m.DeclaringType.Name=="OpticCameraManager"&&m.Name=="get_Camera")&&scopeBoxesType.Methods.Single(m=>m.Name=="Detach").Body.Instructions.Any(i=>i.Operand is MethodReference m&&m.Name=="RemoveCommandBuffer"),"optic boxes bind the real camera and detach commands when leaving optics/unloading");
 var opticRenderCalls=scopeBoxesType.Methods.Where(m=>m.HasBody).SelectMany(m=>m.Body.Instructions).Select(i=>i.Operand).OfType<MethodReference>().ToArray();
-Assert(!opticRenderCalls.Any(m=>m.Name=="SetViewProjectionMatrices")&&opticRenderCalls.Any(m=>m.Name=="ViewportToWorldPoint"),"optic boxes keep world vertices and inherit render-time matrices instead of stale LateUpdate orthographic coordinates");
+Assert(!opticRenderCalls.Any(m=>m.Name is "SetViewProjectionMatrices" or "ViewportToWorldPoint" or "WorldToViewportPoint")&&opticRenderCalls.Any(m=>m.Name=="ViewBounds"),"scene boxes use camera-space anchors and native rendering without a screen/texture round trip");
 Assert(scopeBoxesType.Methods.Single(m=>m.Name=="BeforeRender").Body.Instructions.Any(i=>i.Operand is MethodReference m&&m.Name=="Build")&&opticRenderCalls.Any(m=>m.Name=="set_onPreRender")&&scopeBoxesType.Methods.Single(m=>m.Name=="Dispose").Body.Instructions.Any(i=>i.Operand is MethodReference m&&m.Name=="set_onPreRender"),"exact-camera pre-render refresh pairs native callback registration with unload cleanup");
 var opticEvents=scopeBoxesType.Methods.Single(m=>m.Name=="Resources").Body.Instructions.ToArray();int attachOptic=Array.FindIndex(opticEvents,i=>i.Operand is MethodReference m&&m.Name=="AddCommandBuffer");Assert(attachOptic>=2&&opticEvents.Take(attachOptic).TakeLast(3).Any(i=>i.OpCode.Code==Mono.Cecil.Cil.Code.Ldc_I4_S&&Convert.ToInt32(i.Operand)==18),"optic boxes enter BeforeImageEffects (18), sharing scene projection and postprocessing with characters");
 Console.WriteLine("PASS optic render-time world projection, exact-camera refresh, pre-effect stage and callback cleanup");

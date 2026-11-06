@@ -21,5 +21,17 @@ internal static class ScopeBoxRules {
   if(right<=x||top<=y)return false;
   clipped=new(x,y,right-x,top-y);return true;
  }
+ // Camera-space anchors lifted onto one depth plane. The scene renderer clips
+ // the resulting world geometry; no screen/texture round trip is involved.
+ internal static bool ViewBounds(Vector3 feet,Vector3 head,out Stripe box,out float depth){
+  box=default;depth=0;
+  if(!Finite(feet)||!Finite(head)||feet.Z>=-.01f||head.Z>=-.01f)return false;
+  depth=-(feet.Z+head.Z)*.5f;
+  float fy=feet.Y*depth/-feet.Z,hy=head.Y*depth/-head.Z;
+  float center=(feet.X*depth/-feet.Z+head.X*depth/-head.Z)*.5f;
+  float height=Math.Abs(hy-fy),width=height*.45f;
+  if(!float.IsFinite(center)||!float.IsFinite(height)||height<.00001f)return false;
+  box=new(center-width*.5f,Math.Min(fy,hy),width,height);return true;
+ }
  static bool Finite(Vector3 v)=>float.IsFinite(v.X)&&float.IsFinite(v.Y)&&float.IsFinite(v.Z);
 }
