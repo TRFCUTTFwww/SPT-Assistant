@@ -1,0 +1,9 @@
+1.38.10 — 真实 BTC 交易显示刷新与 Skipper 迁移
+
+真实 BTC：服务端 Coinbase 行情与游戏原生收购价计算均能更新，但客户端已加载的 SupplyData.MarketPrices 及交易物品标签、PreparedSum 没有同步刷新。新增 BitcoinTradingRefresh，在读取成功行情后同步已加载商人的 BTC 缓存，并在交易界面中调用原生 UpdateScheme 更新 BTC 标签；出售台包含 BTC 时，用原生 GetAssortmentPrice 重算总价并发出 PreparedSumChanged。只有报价变化、缓存被重新加载或新打开交易窗口才更新界面，不改变出售台物品、选中项、库存或其他商品价格。交易进行期间延后更新。关闭实时定价时恢复原价，卸载时恢复持有的缓存；移除对 BaseHandbookData.Price 生成字段访问器的无效挂钩。美元、欧元、原生商人收购系数与交易货币保持原规则；行情页显示基准价，并非每个商人的最终收购价。
+
+迁移：旧目录 BepInEx/plugins/Terkoiz.Skipper/Terkoiz.Skipper.dll 与 BepInEx/config/com.terkoiz.skipper.cfg 已复制到当前客户端对应位置。插件原版本 1.1.5-betav1（本机 IL2CPP port），SHA256 为 764C1A17E38DA5EBA3721825C6BE4ECD4F4E292CE33919C5B7F78E3F087414A2。核对该插件引用的 21 个游戏方法，48558 均存在且签名匹配，包含泛型任务条件更新。保留“启用=true、始终显示跳过按钮=true、快捷键 LeftControl”。普通商人任务目标旁显示跳过按钮，点击后仍使用原插件确认框；未替用户跳过任何任务。第三方 DLL 及用户配置均不纳入源码仓库。
+
+验证：48558/47888 独立构建，88 组 Probe 通过；回归检查涵盖 BTC 模板范围、原生总价重算、交易期间延后、无库存或出售调用、卸载还原及不挂字段访问器。保留原有两项空引用警告。已备份客户端模块、图像配置和退出前后角色存档，重启客户端一次；SPT 服务端进程保持运行。启动日志确认 Skipper 加载和驱动注册，辅助 1.38.10 ready=true、error=null。游戏内价格显示刷新、已放置 BTC 的出售总价和跳过按钮实际使用仍由用户验收；未实际出售物品或修改任务进度。
+
+重启后原生诊断：客户端 appliedBase 与服务器 Quote.GameRub 均为 1245951，行情获取时间 2026-11-06T11:50:33Z，Error 为空。验证时尚未打开商人窗口（tradingRefresh.screenActive=false），因此窗口内标签和出售总价刷新仍待游戏内确认。
