@@ -42,6 +42,12 @@ internal static class RaidStash {
   if(__1==ExitStatus.MissingInAction&&RaidClock.PreventTimeout.Value&&!RaidEnd.ManualEnding&&RaidClock.Remaining is <=1)return true;
   try{Save();if(request==null&&Local?.InventoryController?.HasActiveEvents!=true)return true;finishStop=()=>{stopping=true;try{__instance.Stop(__0,__1,__2,__3);}finally{stopping=false;}};return false;}catch(Exception e){Fail(e.Message);return false;}
  }
+ static void RestoreCapacity(Stash target,BonusController bonuses){
+  int beforeWidth=target.Grid.GridWidth,beforeHeight=target.Grid.GridHeight;
+  target.UpdateBonuses(bonuses);
+  var grid=target.Grid;if(grid.GridWidth<=0||grid.GridHeight<=0||grid.Layout.Count!=grid.GridWidth*grid.GridHeight)throw new InvalidOperationException("仓库容量尚未初始化。");
+  Plugin.Self.Log.LogInfo($"Raid stash capacity restored: {beforeWidth}x{beforeHeight} -> {grid.GridWidth}x{grid.GridHeight}; layout={grid.Layout.Count}");
+ }
  static void Load(JsonElement data){
   var factory=Singleton<ItemFactory>.Instance;var items=data.GetProperty("items");stashRoot=items.EnumerateArray().Single(i=>i.GetProperty("_id").GetString()==data.GetProperty("stash").GetString()).Clone();var flat=new Il2CppReferenceArray<JsonType.FlatItem>(items.GetArrayLength());int index=0;
   foreach(var item in items.EnumerateArray()){
@@ -54,6 +60,7 @@ internal static class RaidStash {
   }
   var tree=factory.FlatItemsToTree(flat,false,null);if(tree.DeserializationErrors?.Count>0)throw new InvalidOperationException("仓库物品无法完整读取。");stash=tree.Items[data.GetProperty("stash").GetString()!].TryCast<Stash>()??throw new InvalidOperationException("仓库读取失败。");
   if(stash.Id.ToString()!=data.GetProperty("stash").GetString())throw new InvalidOperationException("仓库编号不一致。");
+  RestoreCapacity(stash,Local!.Profile.BonusController??throw new InvalidOperationException("角色仓库加成尚未就绪。"));
   stash.CurrentAddress=Local!.InventoryController.CreateItemAddress();revision=data.GetProperty("revision").GetString()!;saved=Snapshot();ready=true;
   FeatureToasts.Show("仓库已就绪，按 Tab 访问");Plugin.Self.Log.LogInfo("Raid stash ready; items="+flat.Length);
  }
