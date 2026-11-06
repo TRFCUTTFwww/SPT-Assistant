@@ -13,8 +13,7 @@ namespace LocalSpt5Esp;
 // texture mapping, lens mask and eye relief; no guessed screen-space lens rect.
 internal sealed class ScopeBoxes {
  internal static ConfigEntry<bool> Enabled=null!;
- readonly bool optical;bool suppressed;Matrix4x4 cameraToWorld;
- internal ScopeBoxes(bool optical=true){this.optical=optical;}
+ Matrix4x4 cameraToWorld;
  Camera? camera;CommandBuffer? commands;Material? material;Mesh? mesh;
  Camera.CameraCallback? renderCallback;IReadOnlyList<Player>? actors;Player? local;
  int lastRenderFrame=-10;bool renderReported;
@@ -24,11 +23,10 @@ internal sealed class ScopeBoxes {
  float nextError;bool active;
  internal bool Active=>active&&camera!=null&&camera.isActiveAndEnabled;
  internal static void Initialize()=>Enabled=FeatureConfig.Bind("1. ESP","Optical scope boxes","瞄准镜内自适应方框",true,"开镜后方框跟随倍率，显示镜内人物和血条。红点和机瞄保持普通显示。");
- internal void Tick(IReadOnlyList<Player> actors,Player? local,bool suppressed=false){try{
-  this.actors=actors;this.local=local;this.suppressed=suppressed;
+ internal void Tick(IReadOnlyList<Player> actors,Player? local){try{
+  this.actors=actors;this.local=local;
   var optic=CameraManager.Instance?.OpticCameraManager;
-  var target=local!=null&&Plugin.Self.People.Value&&RaidClock.Active&&!DirectorStage.HudHidden&&!suppressed?
-   (optical?(Enabled.Value&&local?.ProceduralWeaponAnimation?.IsAiming==true&&optic?.CurrentOpticSight!=null?optic.Camera:null):OverlayProjection.MainCamera):null;
+  var target=Enabled.Value&&Plugin.Self.People.Value&&RaidClock.Active&&!DirectorStage.HudHidden&&local?.ProceduralWeaponAnimation?.IsAiming==true&&optic?.CurrentOpticSight!=null?optic.Camera:null;
   if(target==null||!target.isActiveAndEnabled){Detach();return;}
   if(camera==null||camera.Pointer!=target.Pointer){Detach();camera=target;}
   if(!Resources()){Detach();return;}
@@ -41,9 +39,9 @@ internal sealed class ScopeBoxes {
   if(camera==null||target==null||target.Pointer!=camera.Pointer)return;
   long stamp=RuntimePerformance.Start();
   try{
-   if(suppressed||!Plugin.Self.People.Value||!RaidClock.Active||DirectorStage.HudHidden||optical&&(!Enabled.Value||local?.ProceduralWeaponAnimation?.IsAiming!=true)){commands?.Clear();active=false;return;}
+   if(!Enabled.Value||!Plugin.Self.People.Value||!RaidClock.Active||DirectorStage.HudHidden||local?.ProceduralWeaponAnimation?.IsAiming!=true){commands?.Clear();active=false;return;}
    Build(target);lastRenderFrame=Time.frameCount;
-   if(!renderReported){renderReported=true;Plugin.Self.Log.LogInfo($"{(optical?"Optic":"Main")} ESP render synchronization active: native camera onPreRender, camera-space anchors, world vertices");}
+   if(!renderReported){renderReported=true;Plugin.Self.Log.LogInfo("Optic ESP render synchronization active: native camera onPreRender, camera-space anchors, world vertices");}
   }catch(Exception e){Failed(e);}finally{RuntimePerformance.RenderDone(stamp);}
  }
  void Build(Camera target){
@@ -88,15 +86,15 @@ internal sealed class ScopeBoxes {
    // Never freeze a LateUpdate camera matrix or force an orthographic overlay.
    commands.DrawMesh(mesh,Matrix4x4.identity,material!,0,0);
   }
-  if(!active)Plugin.Self.Log.LogInfo($"{(optical?"Optic":"Main")} ESP active: camera={target.name}, texture={target.pixelWidth}x{target.pixelHeight}, fov={target.fieldOfView:F2}; scene world geometry, one batch");active=true;
+  if(!active)Plugin.Self.Log.LogInfo($"Optic ESP active: camera={target.name}, texture={target.pixelWidth}x{target.pixelHeight}, fov={target.fieldOfView:F2}; scene world geometry, one batch");active=true;
  }
- void Failed(Exception e){Detach();if(Time.unscaledTime>=nextError){nextError=Time.unscaledTime+20;Plugin.Self.Log.LogWarning($"{(optical?"Optic":"Main")} ESP: "+e);}}
+ void Failed(Exception e){Detach();if(Time.unscaledTime>=nextError){nextError=Time.unscaledTime+20;Plugin.Self.Log.LogWarning("Optic ESP: "+e);}}
  bool Resources(){
   if(material==null){var shader=Shader.Find("Hidden/Internal-Colored");if(shader==null||!shader.isSupported)return false;
    material=new Material(shader){hideFlags=HideFlags.HideAndDontSave};material.SetInt("_SrcBlend",(int)BlendMode.SrcAlpha);material.SetInt("_DstBlend",(int)BlendMode.OneMinusSrcAlpha);material.SetInt("_Cull",(int)CullMode.Off);material.SetInt("_ZWrite",0);material.SetInt("_ZTest",(int)CompareFunction.Always);
   }
   if(mesh==null){mesh=new Mesh{hideFlags=HideFlags.HideAndDontSave};mesh.MarkDynamic();}
-  if(commands==null){commands=new CommandBuffer{name=optical?"SPT Assistant optic ESP boxes":"SPT Assistant main ESP boxes"};camera!.AddCommandBuffer(CameraEvent.BeforeImageEffects,commands);}
+  if(commands==null){commands=new CommandBuffer{name="SPT Assistant optic ESP boxes"};camera!.AddCommandBuffer(CameraEvent.BeforeImageEffects,commands);}
   return true;
  }
  float depth;

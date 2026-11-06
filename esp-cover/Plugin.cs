@@ -100,7 +100,7 @@ internal class Plugin {
 internal class Overlay {
 
  readonly List<Player> players=new();
- readonly ScopeBoxes scopeBoxes=new(),worldBoxes=new(false);
+ readonly ScopeBoxes scopeBoxes=new();
  readonly List<Marker> items=new();
  readonly Dictionary<string,string> names=new();
  readonly Dictionary<IntPtr,string> actorLabels=new();
@@ -111,7 +111,7 @@ internal class Overlay {
  readonly Dictionary<IntPtr,(LootableContainer Container,Vector3 Position)> containerAnchors=new();
  int nextAnchor;
  float nextAnchorRetry;
- GUIStyle? style;int lastFont;bool inRaid;
+ GUIStyle? style;int lastFont;bool inRaid,normalBoxesReported;
  readonly LabelLayout lootLayout=new();
  bool wasIgnoringAI;
  readonly FocusSelection focus=new();
@@ -157,8 +157,8 @@ internal class Overlay {
   }
   if(Time.unscaledTime>=nextStatus){nextStatus=Time.unscaledTime+30;Plugin.Self.Log.LogInfo($"ESP status: people={players.Count} loot={items.Count} god={s.God.Value}; {CombatAssist.Diagnostics}; {AutoTrigger.Diagnostics}");}
  }catch(Exception e){Warn(e);}}
- public void LateUpdate(){var active=RaidClock.Active;var current=active?Singleton<GameWorld>.Instance:null;var player=current?.MainPlayer;NextRaidLoot.Tick();ForceLoot.Tick(current,player);ArmorCare.Tick();RaidSpawnControl.Tick(current);BitcoinControl.Tick();NoclipControl.Tick();TeleportControl.Tick(current);InteractionPoints.Tick(current);TripwireHighlight.Tick(current,player);EventCabinetDisplay.Tick(current,player);AirdropControl.Tick(current);BulletTrajectories.Tick(current);NativeRaidTimer.Tick();RaidEnd.Tick();RaidEnvironment.Tick();RaidLoot.Tick(current,player);TaskNeeds.Tick(player);WeaponComfort.Tick(player);WeaponEditor.Tick(current,player);ToyFireControl.Tick(current,player);AiEquipmentEditor.Tick(current);SurvivalAssist.Tick(player);GrenadeAlert.Tick(current,player);IndexContainers();RecoilAssist.Tick(me);NightVisionAssist.Tick(me);CombatAssist.Tick(world,me,camera);AutoTrigger.Tick(current,player,camera);HitDisplay.Tick(world);GlobalKillFeed.Tick(current);ExfilDisplay.Tick(world,me);GroundNavigation.Tick(current,player);AiSpawnService.Tick(current,player);AiTestControl.Tick(current,player);AiSceneDirector.Tick(current);AiSceneEquipment.Tick(current);SceneTemplates.Tick(current);CompanionSquad.Tick(current,player);ToyDeveloper.Tick(current);CorpseCleanup.Tick(current);AiActorControl.Tick(current,player);AiLimitCompatibility.Tick(current);IncomingDamage.Tick(current);CharacterBuffs.Tick(current,player);TransitDisplay.Tick(world,me);BtrControl.Tick(current);BtrDisplay.Tick(world);MovementAssist.Tick(me);DirectorStage.Late();scopeBoxes.Tick(players,player);worldBoxes.Tick(players,player,scopeBoxes.Active);MuzzleLine.Tick(current,player);}
- public void OnDestroy(){scopeBoxes.Dispose();worldBoxes.Dispose();OverlayProjection.Shutdown();MuzzleLine.Dispose();GlobalKillFeed.Reset();CompanionSquad.Reset();SceneTemplates.Reset();AiSceneDirector.Reset();AiSceneEquipment.Reset();ToyDeveloper.Reset();ToyFireControl.Reset();BtrControl.Reset();DirectorStage.Reset();AutoTrigger.Reset();HitSounds.Shutdown();ImpactAiSpawner.Reset();EntertainmentControl.Shutdown();NoclipControl.Reset();RaidSpawnControl.Reset();AiRemoval.Reset();AiEquipmentEditor.Reset();TeleportControl.Reset();InteractionPoints.Reset();TripwireHighlight.Reset();WeaponEditor.Reset();AirdropControl.Reset();PlayerWeaponPresets.Reset();BossLabels.Reset();CharacterBuffs.Reset();AiTestControl.Reset();AiActorControl.Reset();IncomingDamage.Reset();GroundNavigation.Shutdown();NativeRaidTimer.Reset();RaidEnd.CancelConfirmation();RaidLoot.Shutdown();RaidEnvironment.Reset();SurvivalAssist.Reset();GrenadeAlert.Reset();TaskNeeds.Reset();ForceLoot.Reset();NativeEventControl.Reset();ContainerAnchor.Reset();BodyTint.Dispose();LootDisplay.Reset();CombatAssist.Reset();HitDisplay.Reset();RecoilAssist.Reset();NightVisionAssist.Reset();DoorAssist.Reset();CorpseDisplay.Reset();RaidPopulation.Reset();VitalsDisplay.Reset();MovementAssist.Reset();MagazineDisplay.Reset();ArmorAnalysis.Reset();DamagePreview.Reset();BulletTrajectories.Reset();AggroDisplay.Reset();ExfilDisplay.Shutdown();TransitDisplay.Reset();BtrDisplay.Reset();focus.Clear();}
+ public void LateUpdate(){var active=RaidClock.Active;var current=active?Singleton<GameWorld>.Instance:null;var player=current?.MainPlayer;NextRaidLoot.Tick();ForceLoot.Tick(current,player);ArmorCare.Tick();RaidSpawnControl.Tick(current);BitcoinControl.Tick();NoclipControl.Tick();TeleportControl.Tick(current);InteractionPoints.Tick(current);TripwireHighlight.Tick(current,player);EventCabinetDisplay.Tick(current,player);AirdropControl.Tick(current);BulletTrajectories.Tick(current);NativeRaidTimer.Tick();RaidEnd.Tick();RaidEnvironment.Tick();RaidLoot.Tick(current,player);TaskNeeds.Tick(player);WeaponComfort.Tick(player);WeaponEditor.Tick(current,player);ToyFireControl.Tick(current,player);AiEquipmentEditor.Tick(current);SurvivalAssist.Tick(player);GrenadeAlert.Tick(current,player);IndexContainers();RecoilAssist.Tick(me);NightVisionAssist.Tick(me);CombatAssist.Tick(world,me,camera);AutoTrigger.Tick(current,player,camera);HitDisplay.Tick(world);GlobalKillFeed.Tick(current);ExfilDisplay.Tick(world,me);GroundNavigation.Tick(current,player);AiSpawnService.Tick(current,player);AiTestControl.Tick(current,player);AiSceneDirector.Tick(current);AiSceneEquipment.Tick(current);SceneTemplates.Tick(current);CompanionSquad.Tick(current,player);ToyDeveloper.Tick(current);CorpseCleanup.Tick(current);AiActorControl.Tick(current,player);AiLimitCompatibility.Tick(current);IncomingDamage.Tick(current);CharacterBuffs.Tick(current,player);TransitDisplay.Tick(world,me);BtrControl.Tick(current);BtrDisplay.Tick(world);MovementAssist.Tick(me);DirectorStage.Late();scopeBoxes.Tick(players,player);MuzzleLine.Tick(current,player);}
+ public void OnDestroy(){scopeBoxes.Dispose();OverlayProjection.Shutdown();MuzzleLine.Dispose();GlobalKillFeed.Reset();CompanionSquad.Reset();SceneTemplates.Reset();AiSceneDirector.Reset();AiSceneEquipment.Reset();ToyDeveloper.Reset();ToyFireControl.Reset();BtrControl.Reset();DirectorStage.Reset();AutoTrigger.Reset();HitSounds.Shutdown();ImpactAiSpawner.Reset();EntertainmentControl.Shutdown();NoclipControl.Reset();RaidSpawnControl.Reset();AiRemoval.Reset();AiEquipmentEditor.Reset();TeleportControl.Reset();InteractionPoints.Reset();TripwireHighlight.Reset();WeaponEditor.Reset();AirdropControl.Reset();PlayerWeaponPresets.Reset();BossLabels.Reset();CharacterBuffs.Reset();AiTestControl.Reset();AiActorControl.Reset();IncomingDamage.Reset();GroundNavigation.Shutdown();NativeRaidTimer.Reset();RaidEnd.CancelConfirmation();RaidLoot.Shutdown();RaidEnvironment.Reset();SurvivalAssist.Reset();GrenadeAlert.Reset();TaskNeeds.Reset();ForceLoot.Reset();NativeEventControl.Reset();ContainerAnchor.Reset();BodyTint.Dispose();LootDisplay.Reset();CombatAssist.Reset();HitDisplay.Reset();RecoilAssist.Reset();NightVisionAssist.Reset();DoorAssist.Reset();CorpseDisplay.Reset();RaidPopulation.Reset();VitalsDisplay.Reset();MovementAssist.Reset();MagazineDisplay.Reset();ArmorAnalysis.Reset();DamagePreview.Reset();BulletTrajectories.Reset();AggroDisplay.Reset();ExfilDisplay.Shutdown();TransitDisplay.Reset();BtrDisplay.Reset();focus.Clear();}
  void Warn(Exception e){if(Time.unscaledTime<nextError)return;nextError=Time.unscaledTime+20;Plugin.Self.Error(e);}
  public void OnGUI(){try{
   camera=OverlayProjection.MainCamera;
@@ -172,7 +172,8 @@ internal class Overlay {
    var feet=OverlayProjection.ScreenPoint(camera,pos);var head=OverlayProjection.ScreenPoint(camera,headPosition);if(feet.z<=0||head.z<=0||head.x<0||head.x>Screen.width)continue;
    float h=Math.Abs(head.y-feet.y);float width=h*0.45f;float top=Screen.height-head.y;
    Color color=BodyTint.Color(p);
-   if(!worldBoxes.Active)Box(new Rect(head.x-width/2,top,width,h),color);
+   Box(new Rect(head.x-width/2,top,width,h),color);
+   if(!normalBoxesReported){normalBoxesReported=true;Plugin.Self.Log.LogInfo($"Normal ESP screen boxes submitted: camera={camera.name}, output={Screen.width}x{Screen.height}, box={width:F1}x{h:F1}; captured scene projection");}
    (float Current,float Maximum,float Updated) health=default;
    bool hasHealth=s.ShowHealth.Value&&TryGetHealth(p,out health);
    Text(new Rect(head.x-180,top-(hasHealth?50:26),360,24),$"{CompanionVisualRules.Label(actorLabels.TryGetValue(p.Pointer,out var label)?label:"人物",BodyTint.Teammate(p))} [{distance:F0}米]{BodyTint.VisibilityTag(p,camera)}",color);
@@ -180,9 +181,9 @@ internal class Overlay {
     float ratio=Math.Clamp(health.Current/health.Maximum,0f,1f);
     Color healthColor=BodyTint.Teammate(p)?BodyTint.TeammateColor:ratio>0.66f?new Color(0.25f,1f,0.3f):ratio>0.33f?new Color(1f,0.85f,0.15f):new Color(1f,0.2f,0.15f);
     Text(new Rect(head.x-120,top-28,240,24),$"HP {Math.Ceiling(health.Current):F0} / {Math.Ceiling(health.Maximum):F0}",healthColor);
-    if(!worldBoxes.Active){float barWidth=Math.Clamp(width,60f,120f);
+    float barWidth=Math.Clamp(width,60f,120f);
     GUI.color=new Color(0f,0f,0f,0.85f);GUI.DrawTexture(new Rect(head.x-barWidth/2-1,top-5,barWidth+2,5),Texture2D.whiteTexture);
-    GUI.color=healthColor;GUI.DrawTexture(new Rect(head.x-barWidth/2,top-4,barWidth*ratio,3),Texture2D.whiteTexture);}
+    GUI.color=healthColor;GUI.DrawTexture(new Rect(head.x-barWidth/2,top-4,barWidth*ratio,3),Texture2D.whiteTexture);
    }
   }catch(Exception e){Warn(e);}}
   if(s.Loot.Value||s.People.Value)DrawLoot();
