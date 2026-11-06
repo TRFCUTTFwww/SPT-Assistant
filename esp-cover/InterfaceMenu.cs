@@ -182,6 +182,8 @@ internal static class InterfaceMenu {
     case ("镜头与画面","界面布局"):DrawAppearance(content);break;
     case ("战局与物资","时间与环境"):scroll=GUI.BeginScrollView(content,scroll,new Rect(0,0,content.width-20,980));RaidClock.DrawPanel(new Rect(4,4,content.width-32,964));GUI.EndScrollView();break;
     case ("战局与物资","本局物资"):RaidLoot.Draw(content);break;
+    case ("战局与物资","范围拾取"):ForceLoot.Draw(content);break;
+    case ("物品与装备","修理与耐久"):ArmorCare.Draw(content);break;
     case ("战局与物资","刷新规则"):NextRaidLoot.Draw(content);break;
     case ("战局与物资","任务物资"):TaskNeeds.Draw(content);break;
     case ("载具与空投","BTR 控制"):BtrControl.Draw(content);break;

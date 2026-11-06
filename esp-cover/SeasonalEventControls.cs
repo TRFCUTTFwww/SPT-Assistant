@@ -23,7 +23,7 @@ internal static class SeasonalEventControls {
   string baseline=Path.Combine(Home,"original");originalSeasonal=File.Exists(Path.Combine(baseline,"seasonalevents.json"))?Read(Path.Combine(baseline,"seasonalevents.json")):(JsonObject)seasonal.DeepClone();
   originalDark=File.Exists(Path.Combine(baseline,"laboratory_dark.json"))?Read(Path.Combine(baseline,"laboratory_dark.json")):(JsonObject)dark.DeepClone();
   var halloween=seasonal["events"]!.AsArray().OfType<JsonObject>().FirstOrDefault(e=>e["type"]?.ToString()=="HALLOWEEN");
-  summon=halloween?["settings"]?["enableSummoning"]?.GetValue<bool>()==true;zombies=halloween?["settings"]?["zombieSettings"]?["enabled"]?.GetValue<bool>()==true;
+  summon=halloween?["settings"]?["enableSummoning"]?.GetValue<bool>()==true||seasonal["events"]!.AsArray().OfType<JsonObject>().Any(e=>e["type"]?.ToString()=="HALLOWEENSUMMON"&&e["enabled"]?.GetValue<bool>()==true);zombies=halloween?["settings"]?["zombieSettings"]?["enabled"]?.GetValue<bool>()==true;
   cult=seasonal["eventBossSpawns"]?["halloweennightcult"]?.AsObject().Any(pair=>pair.Value is JsonArray list&&list.Any(e=>EventConfigRules.Number(e?["BossChance"])>0))==true;
   division=dark["BossLocationSpawn"]!.AsArray().Any(e=>EventConfigRules.IsDivision(e?["BossName"]?.ToString()??"")&&EventConfigRules.Number(e?["BossChance"])>0);mode=EventMode.Current;
  }
@@ -46,6 +46,7 @@ internal static class SeasonalEventControls {
  }
  static void Write(string path,JsonObject value){string temporary=path+".assistant-writing";try{File.WriteAllText(temporary,value.ToJsonString(json),new UTF8Encoding(false));File.Move(temporary,path,true);}finally{if(File.Exists(temporary))File.Delete(temporary);}}
  static bool Toggle(Rect rect,string text,bool value)=>InterfaceMenu.Button(rect,text+" · "+(value?"开":"关"),value)?!value:value;
+ internal static void SetNativeHalloween(bool value){if(!ClientEventVersion.Native)throw new InvalidOperationException("当前客户端不支持原生活动路径。");Load();mode=value?EventMode.Halloween:EventMode.Off;if(value){zombies=true;summon=true;}Save();}
  internal static void Draw(Rect rect){
   if(seasonal==null)Action(Load);float w=rect.width-24;scroll=GUI.BeginScrollView(rect,scroll,new Rect(0,0,w,850));float y=4;
   InterfaceMenu.Label(new Rect(4,y,w,30),"活动控制",InterfaceMenu.Accent,19);y+=40;
@@ -55,7 +56,7 @@ internal static class SeasonalEventControls {
   for(int i=0;i<names.Length;i++)if(InterfaceMenu.Button(new Rect(4+i%columns*(cell+8),y+i/columns*42,cell,34),names[i],mode==(EventMode)i))mode=(EventMode)i;y+=MathF.Ceiling(names.Length/(float)columns)*42+20;
   InterfaceMenu.Label(new Rect(4,y,w,26),"万圣节内容",InterfaceMenu.Accent,16);y+=38;
   bool old=GUI.enabled;GUI.enabled=old&&mode is EventMode.Halloween or EventMode.Calendar;
-  summon=Toggle(new Rect(4,y,w,34),"邪教徒召唤事件",summon);y+=44;zombies=Toggle(new Rect(4,y,w,34),"僵尸感染",zombies);y+=44;cult=Toggle(new Rect(4,y,w,34),"夜间特殊邪教徒",cult);y+=44;GUI.enabled=old;
+  summon=Toggle(new Rect(4,y,w,34),"邪教徒召唤事件",summon);y+=44;zombies=Toggle(new Rect(4,y,w,34),"僵尸感染",zombies);y+=44;bool hasCult=seasonal?["eventBossSpawns"]?["halloweennightcult"] is JsonObject;GUI.enabled=GUI.enabled&&hasCult;cult=Toggle(new Rect(4,y,w,34),hasCult?"夜间特殊邪教徒":"当前版本没有独立夜间邪教徒活动",cult);y+=44;GUI.enabled=old;
   InterfaceMenu.Paragraph(new Rect(4,y,w,62),"三个子活动分别控制。保存前检查万圣节角色、模板和地图数据；实际资源加载仍需实战验证。",null,12);y+=76;
   division=Toggle(new Rect(4,y,w,36),"暗实验室黑色军团刷新",division);y+=46;
   InterfaceMenu.Paragraph(new Rect(4,y,w,48),"控制暗实验室中的 Wedge 与军团波次；不改变地图入口。",null,12);y+=62;

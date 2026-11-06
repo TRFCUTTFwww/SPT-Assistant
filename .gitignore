@@ -3,6 +3,7 @@
 !/.gitattributes
 !/README.md
 !/AGENTS.md
+!/Directory.Build.props
 !/CHANGELOG.md
 !/VERSION
 !/docs/

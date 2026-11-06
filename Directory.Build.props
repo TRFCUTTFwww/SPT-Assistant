@@ -1,0 +1,1 @@
+<Project><PropertyGroup><GameRoot Condition="'$(GameRoot)' == ''">D:/SPT-5.0.0-48558</GameRoot><EftBuild Condition="'$(EftBuild)' == ''">48558</EftBuild><DefineConstants Condition="'$(EftBuild)' == '48558'">$(DefineConstants);EFT_48558</DefineConstants></PropertyGroup></Project>

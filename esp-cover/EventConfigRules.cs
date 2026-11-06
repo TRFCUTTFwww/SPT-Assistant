@@ -10,6 +10,7 @@ internal static class EventConfigRules {
   var result=(JsonObject)current.DeepClone();if(mode==EventMode.Current)return result;
   var events=result["events"]?.AsArray()??throw new ArgumentException("服务端活动列表缺失。");
   var originals=original["events"]?.AsArray()??throw new ArgumentException("原始活动列表缺失。");
+  bool separateSummon=events.OfType<JsonObject>().Any(e=>e["type"]?.ToString()=="HALLOWEENSUMMON");
   result["enableSeasonalEventDetection"]=mode!=EventMode.Off;
   string desired=mode==EventMode.Halloween?"HALLOWEEN":"CHRISTMAS";bool picked=false;
   foreach(var entry in events.OfType<JsonObject>()){
@@ -19,11 +20,14 @@ internal static class EventConfigRules {
     if(seed!=null)foreach(string key in new[]{"enabled","startDay","startMonth","endDay","endMonth"})entry[key]=seed[key]?.DeepClone();
     chosen=entry["enabled"]?.GetValue<bool>()==true;
    }else{
-    chosen=mode!=EventMode.Off&&!picked&&type==desired;entry["enabled"]=chosen;
-    if(chosen){picked=true;entry["startDay"]="1";entry["startMonth"]="1";entry["endDay"]="31";entry["endMonth"]="12";}
+    chosen=mode!=EventMode.Off&&!picked&&type==desired;if(chosen)picked=true;
+    if(mode==EventMode.Halloween&&type=="HALLOWEENSUMMON")chosen=summon;
+    entry["enabled"]=chosen;
+    if(chosen){entry["startDay"]="1";entry["startMonth"]="1";entry["endDay"]="31";entry["endMonth"]="12";}
    }
+   if(mode==EventMode.Calendar&&type=="HALLOWEENSUMMON"&&!summon)entry["enabled"]=false;
    if(chosen&&type=="HALLOWEEN"){
-    var settings=entry["settings"]?.AsObject()??throw new ArgumentException("万圣节设置缺失。");settings["enableSummoning"]=summon;
+    var settings=entry["settings"]?.AsObject()??throw new ArgumentException("万圣节设置缺失。");if(!separateSummon||settings.ContainsKey("enableSummoning"))settings["enableSummoning"]=summon;
     var infection=settings["zombieSettings"]?.AsObject()??throw new ArgumentException("僵尸活动设置缺失。");infection["enabled"]=zombies;
    }
   }
@@ -53,7 +57,8 @@ internal static class EventConfigRules {
   var halloween=events.OfType<JsonObject>().FirstOrDefault(e=>e["type"]?.ToString()=="HALLOWEEN"&&e["enabled"]?.GetValue<bool>()==true);
   if(halloween==null)return errors.ToList();var settings=halloween["settings"];
   void Role(string? role){if(string.IsNullOrEmpty(role))return;if(!nativeRole(role))errors.Add("客户端缺少角色："+role);string profile=seasonal["eventBotMapping"]?[role]?.GetValue<string>()??role;if(!template(profile))errors.Add("服务端缺少角色模板："+role+" → "+profile);}
-  var groups=new List<string>{"halloweennightcult"};if(settings?["enableSummoning"]?.GetValue<bool>()==true)groups.Add("halloweensummon");
+  var groups=new List<string>();if(seasonal["eventBossSpawns"]?["halloweennightcult"] is JsonObject)groups.Add("halloweennightcult");
+  if(settings?["enableSummoning"]?.GetValue<bool>()==true||events.OfType<JsonObject>().Any(e=>e["type"]?.ToString()=="HALLOWEENSUMMON"&&e["enabled"]?.GetValue<bool>()==true))groups.Add("halloweensummon");
   bool zombies=settings?["zombieSettings"]?["enabled"]?.GetValue<bool>()==true;if(zombies)groups.Add("halloweenzombies");
   foreach(string group in groups){var maps=seasonal["eventBossSpawns"]?[group]?.AsObject();if(maps==null){errors.Add("缺少活动刷新组："+group);continue;}
    foreach(var map in maps){if(!mapExists(map.Key)){errors.Add("活动地图不存在："+map.Key);continue;}if(map.Value is not JsonArray bosses)continue;

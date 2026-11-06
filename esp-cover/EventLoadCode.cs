@@ -6,10 +6,15 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using EFT;
 using Il2CppInterop.Runtime;
+#if EFT_48558
+using MapLoadState=EFT.TarkovApplication._LoadMapAndData_d__236;
+#else
+using MapLoadState=EFT.TarkovApplication._LoadMapAndData_d__237;
+#endif
 namespace LocalSpt5Esp;
 internal static class EventLoadCode {
  internal static object RestoreStateMachine(){
-  var method=HarmonyLib.AccessTools.Method(typeof(TarkovApplication._LoadMapAndData_d__237),"MoveNext");
+  var method=HarmonyLib.AccessTools.Method(typeof(MapLoadState),"MoveNext");
   var patches=HarmonyLib.Harmony.GetPatchInfo(method);if(patches!=null&&patches.Owners.Count>0)throw new InvalidOperationException("MoveNext still has Harmony owners");
   var patcher=HarmonyLib.Public.Patching.PatchManager.GetMethodPatcher(method);
   var flags=BindingFlags.Instance|BindingFlags.NonPublic;var type=patcher.GetType();
@@ -40,9 +45,9 @@ internal static class EventLoadCode {
  internal static void Dump(string home){
   new HarmonyLib.Harmony("local.halloween2026.map-wait-probe").UnpatchSelf();
   var methods=new Dictionary<long,string>();var code=new List<object>();
-  foreach(var type in new[]{typeof(TarkovApplication),typeof(TarkovApplication._LoadMapAndData_d__237),typeof(GameWorld),typeof(LoadScenesFromPresetOperation),typeof(LoadScenesFromPresetOperation._LoadPresetAsync_d__17),typeof(AssetsManagerExtension),typeof(TasksExtensions),typeof(TasksExtensions.OperationAwaiter),typeof(Koenigz.PerfectCulling.EFT.PerfectCullingCrossSceneSampler),typeof(UnityEngine.SceneManagement.SceneManager),typeof(UnityEngine.Resources),typeof(UnityEngine.AsyncOperation),typeof(UnityEngine.Object),typeof(Il2CppSystem.Threading.Tasks.Task),typeof(Il2CppSystem.Runtime.CompilerServices.YieldAwaitable.YieldAwaiter)}){
+  foreach(var type in new[]{typeof(TarkovApplication),typeof(MapLoadState),typeof(GameWorld),typeof(LoadScenesFromPresetOperation),typeof(LoadScenesFromPresetOperation._LoadPresetAsync_d__17),typeof(AssetsManagerExtension),typeof(TasksExtensions),typeof(TasksExtensions.OperationAwaiter),typeof(Koenigz.PerfectCulling.EFT.PerfectCullingCrossSceneSampler),typeof(UnityEngine.SceneManagement.SceneManager),typeof(UnityEngine.Resources),typeof(UnityEngine.AsyncOperation),typeof(UnityEngine.Object),typeof(Il2CppSystem.Threading.Tasks.Task),typeof(Il2CppSystem.Runtime.CompilerServices.YieldAwaitable.YieldAwaiter)}){
    foreach(var field in type.GetFields(BindingFlags.Static|BindingFlags.NonPublic|BindingFlags.Public))if(field.Name.StartsWith("NativeMethodInfoPtr_")){var info=(IntPtr)field.GetValue(null)!;if(info==IntPtr.Zero)continue;var address=Marshal.ReadIntPtr(info);if(address==IntPtr.Zero)continue;methods[address.ToInt64()]=type.FullName+"."+field.Name;
-    if((type==typeof(TarkovApplication._LoadMapAndData_d__237)||type==typeof(LoadScenesFromPresetOperation._LoadPresetAsync_d__17))&&field.Name.Contains("MoveNext")||type==typeof(LoadScenesFromPresetOperation)&&field.Name.Contains("Execute")||type==typeof(AssetsManagerExtension)&&field.Name.Contains("LoadScenesFromPreset")){var bytes=new byte[12288];Marshal.Copy(address,bytes,0,bytes.Length);code.Add(new{method=type.FullName+"."+field.Name,address=address.ToInt64(),bytes=Convert.ToBase64String(bytes)});}
+    if((type==typeof(MapLoadState)||type==typeof(LoadScenesFromPresetOperation._LoadPresetAsync_d__17))&&field.Name.Contains("MoveNext")||type==typeof(LoadScenesFromPresetOperation)&&field.Name.Contains("Execute")||type==typeof(AssetsManagerExtension)&&field.Name.Contains("LoadScenesFromPreset")){var bytes=new byte[12288];Marshal.Copy(address,bytes,0,bytes.Length);code.Add(new{method=type.FullName+"."+field.Name,address=address.ToInt64(),bytes=Convert.ToBase64String(bytes)});}
    }
   }
   File.WriteAllText(Path.Combine(home,"native-load-code.json"),JsonSerializer.Serialize(new{methods,code}));

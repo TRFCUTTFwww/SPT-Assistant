@@ -7,6 +7,8 @@ public sealed class RaidSettings {
  public bool ItemWeightsEnabled {get;set;}
  public Dictionary<string,double> ItemWeights {get;set;}=new();
  public bool KeepOnDeath {get;set;}
+ public bool TraderRepairNoLoss {get;set;}=true;
+ public bool AllowContainerNesting {get;set;}=true;
  public bool NoAi {get;set;}
  public bool NoLoot {get;set;}
  public bool AiEnabled {get;set;}

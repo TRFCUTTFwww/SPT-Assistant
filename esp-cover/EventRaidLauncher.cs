@@ -19,6 +19,7 @@ internal static class EventRaidLauncher {
  static Action? infectionPrimer;
  static MethodInfo? refreshLocations,modeSignature;static int observedServer;static float nextServerPoll;
  internal static void Tick(){
+  if(ClientEventVersion.Native){NativeEventControl.Tick();return;}if(!ClientEventVersion.LegacyPort)return;
   if(pump!=null){pump();if(Time.unscaledTime>=nextCoreCheck){nextCoreCheck=Time.unscaledTime+.5f;var core=BotInternalSettingsController.Core;if(core!=null&&infectionFlags?.GetField("configured",BindingFlags.Static|BindingFlags.NonPublic)?.GetValue(null) is true&&infectionFlags.GetField("enabled",BindingFlags.Static|BindingFlags.NonPublic)?.GetValue(null) is bool desired&&core.ACTIVE_HALLOWEEN_ZOMBIES_EVENT!=desired)reloadInfection?.Invoke(null,null);}infectionPrimer?.Invoke();RefreshAfterServerChange();return;}
   if(attempted)return;string file=Path.Combine(Home,"Local.HalloweenEventPort.LabModes.dll");if(!File.Exists(file))return;attempted=true;
   try{var assembly=AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a=>a.GetName().Name=="Local.HalloweenEventPort.LabModes")??Assembly.LoadFrom(file);assembly.GetType("HalloweenEventPort.LabModes.Entry",true)!.GetMethod("Install",BindingFlags.Public|BindingFlags.Static)!.Invoke(null,new object[]{Home});var runtime=assembly.GetType("HalloweenEventPort.LabModes.LaboratoryRuntime",true)!;
@@ -50,7 +51,7 @@ internal static class EventRaidLauncher {
   }catch{lightStatus=installed?"等待实验室服务端组件就绪。":"等待实验室组件加载。";}
  }
  static void Action(Action action){try{action();}catch(Exception failure){notice=failure.Message;FeatureToasts.Show(notice);}}
- internal static void Draw(Rect rect){scroll=GUI.BeginScrollView(rect,scroll,new Rect(0,0,rect.width-20,1020));DrawBody(new Rect(4,4,rect.width-32,1000));GUI.EndScrollView();}
+ internal static void Draw(Rect rect){if(ClientEventVersion.Native){NativeEventControl.Draw(rect);return;}if(!ClientEventVersion.LegacyPort){InterfaceMenu.Paragraph(rect,"该客户端版本没有已验证的活动控制路径："+ClientEventVersion.Version);return;}scroll=GUI.BeginScrollView(rect,scroll,new Rect(0,0,rect.width-20,1020));DrawBody(new Rect(4,4,rect.width-32,1000));GUI.EndScrollView();}
  static void DrawBody(Rect rect){
   Read();float x=rect.x,y=rect.y,w=rect.width;InterfaceMenu.Label(new Rect(x,y,w,30),"实验室",InterfaceMenu.Accent,20);y+=44;
   InterfaceMenu.Paragraph(new Rect(x,y,w,48),"选择模式后，按游戏原流程准备实验室战局。开局前会应用所选地图与配置。",null,13);y+=62;
