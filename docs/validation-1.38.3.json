@@ -1,0 +1,49 @@
+{
+    "version":  "1.38.3",
+    "utc":  "2026-11-06T05:04:57.7724924Z",
+    "gameBuild":  48558,
+    "userConfirmedPreviousVersion":  {
+                                         "espAligned":  true,
+                                         "frameDropsReported":  true,
+                                         "graphicsRestored":  true,
+                                         "breachWorked":  false
+                                     },
+    "nativeAnalysis":  {
+                           "startDoorBreak":  "Inlines CanBeBreached/CanInteractWithBreach and IsOnBreachSide, writes MovementContext.NextBreachResult",
+                           "source":  "Local installed GameAssembly.dll and matching IL2CPP metadata",
+                           "clientBuild":  48558,
+                           "animation":  "BreachDoorState.ManualAnimatorMoveUpdate reads NextBreachResult to select failure vs successful execution"
+                       },
+    "clientBuild":  {
+                        "errors":  0,
+                        "warnings":  2
+                    },
+    "legacy47888Build":  {
+                             "separateModule":  true,
+                             "errors":  0,
+                             "warnings":  2
+                         },
+    "probePassGroups":  80,
+    "runtime":  {
+                    "apiVersion":  1,
+                    "hostVersion":  "1.4.11",
+                    "coreVersion":  "1.38.3",
+                    "generation":  4,
+                    "sha256":  "652AC5A7FFD449F4CB0BF2198028366AB35BD4F20978BE2DF1E060B9CAB942A0",
+                    "ready":  true,
+                    "error":  null,
+                    "updatedUtc":  "2026-11-06T05:04:12.5965481Z"
+                },
+    "coreSha256":  "652AC5A7FFD449F4CB0BF2198028366AB35BD4F20978BE2DF1E060B9CAB942A0",
+    "fallbackMatches":  true,
+    "optimizations":  [
+                          "Door flags use at most 32 local ray hits; no map-wide Door search or roster distance loop",
+                          "Container ownership/component discovery cached with live bounds and raid reset",
+                          "Native tint lifecycle maintained at 50 ms; state writes only on change; max 16 source pairs created per maintenance pass; offscreen skinning can cull",
+                          "Silent aim reselects at actual shot time; no idle 50 ms actor/bone/visibility scans"
+                      ],
+    "graphicsChangedThisVersion":  false,
+    "inRaidBreachVerified":  false,
+    "inRaidFrameTimeImprovementMeasured":  false,
+    "inRaidTintRegressionVerified":  false
+}

@@ -74,7 +74,9 @@ internal static class CombatAssist {
    if(controller==null||controller._isInventoryOpened){target=null;return;}
    if(Mode.Value==AimMode.Off||InterfaceMenu.Open||(Mode.Value==AimModes.Soft?!softWindow.Active(Time.unscaledTime):!TriggerActive)){target=null;}
    else{
-    if(Mode.Value!=AimModes.Soft&&Time.unscaledTime>=nextTarget){nextTarget=Time.unscaledTime+0.05f;Select(world);}
+    // Silent mode selects for each real shot in PrepareSilent; idle scans only
+    // repeat native player, bone and visibility reads without changing a shot.
+    if(Mode.Value==AimMode.Snap&&Time.unscaledTime>=nextTarget){nextTarget=Time.unscaledTime+0.05f;Select(world);}
     if(Mode.Value==AimMode.Snap&&ValidTarget()){
      var direction=(TargetPoint(target!)-view!.transform.position).normalized;
      var rotation=new Vector2(Mathf.Atan2(direction.x,direction.z)*Mathf.Rad2Deg,-Mathf.Asin(Mathf.Clamp(direction.y,-1,1))*Mathf.Rad2Deg);

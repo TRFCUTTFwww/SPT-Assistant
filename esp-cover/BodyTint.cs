@@ -48,24 +48,27 @@ internal static class BodyTint {
   foreach(var key in views.Keys.Where(k=>k!=scope?.Pointer).ToArray())RemoveView(key);
   if(scope!=null)SyncView(scope);Status(scope);
  }catch(Exception error){DropViews();DropLayers();if(Time.unscaledTime>=nextError){nextError=Time.unscaledTime+10;Plugin.Self.Log.LogWarning("Character tint rendering: "+error);}}}
+ static float nextLayers;
  static void NormalView(){
+  if(Time.unscaledTime<nextLayers)return;nextLayers=Time.unscaledTime+.05f;
   if(layerRevision!=revision){
-   var current=new HashSet<IntPtr>();
+   var current=new HashSet<IntPtr>();int budget=16;bool pending=false;
    foreach(var entry in meshes){var source=entry.Renderer;if(source==null||source.sharedMesh==null)continue;current.Add(source.Pointer);
     if(layers.TryGetValue(source.Pointer,out var layer)&&(layer.Color!=entry.Color||layer.Mesh!=source.sharedMesh.Pointer||layer.Visible==null||layer.Hidden==null)){RemoveLayer(source.Pointer);layer=null;}
-    if(layer==null){SkinnedMeshRenderer? shown=null;try{shown=MakeLayer(source,visible[entry.Color]!,entry.Parts,"visible");var occluded=MakeLayer(source,hidden[entry.Color]!,entry.Parts,"occluded");layers[source.Pointer]=new(source,shown,occluded,entry.Color,source.sharedMesh.Pointer);}catch{DestroyLayer(shown);throw;}}
+    if(layer==null){if(budget--<=0){pending=true;continue;}SkinnedMeshRenderer? shown=null;try{shown=MakeLayer(source,visible[entry.Color]!,entry.Parts,"visible");var occluded=MakeLayer(source,hidden[entry.Color]!,entry.Parts,"occluded");layers[source.Pointer]=new(source,shown,occluded,entry.Color,source.sharedMesh.Pointer);}catch{DestroyLayer(shown);throw;}}
    }
-   foreach(var key in layers.Keys.Where(k=>!current.Contains(k)).ToArray())RemoveLayer(key);layerRevision=revision;
+   foreach(var key in layers.Keys.Where(k=>!current.Contains(k)).ToArray())RemoveLayer(key);if(!pending)layerRevision=revision;
   }
   foreach(var layer in layers.Values){bool enabled=layer.Source!=null&&layer.Source.enabled&&layer.Source.gameObject.activeInHierarchy;
-   if(layer.Visible!=null)layer.Visible.enabled=enabled;if(layer.Hidden!=null)layer.Hidden.enabled=enabled&&ThroughWalls.Value;
+   if(layer.Visible!=null&&layer.Visible.enabled!=enabled)layer.Visible.enabled=enabled;
+   bool occluded=enabled&&ThroughWalls.Value;if(layer.Hidden!=null&&layer.Hidden.enabled!=occluded)layer.Hidden.enabled=occluded;
   }
  }
  static SkinnedMeshRenderer MakeLayer(SkinnedMeshRenderer source,Material material,int parts,string pass){
   var node=new GameObject("SPT Assistant tint "+pass){hideFlags=HideFlags.HideAndDontSave,layer=source.gameObject.layer};
   try{node.transform.SetParent(source.transform,false);var renderer=node.AddComponent<SkinnedMeshRenderer>();renderer.enabled=false;
    renderer.sharedMesh=source.sharedMesh;renderer.bones=source.bones;renderer.rootBone=source.rootBone;renderer.localBounds=source.localBounds;renderer.quality=source.quality;
-   renderer.updateWhenOffscreen=true;renderer.allowOcclusionWhenDynamic=false;renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;renderer.lightProbeUsage=LightProbeUsage.Off;renderer.reflectionProbeUsage=ReflectionProbeUsage.Off;renderer.motionVectorGenerationMode=MotionVectorGenerationMode.ForceNoMotion;
+   renderer.updateWhenOffscreen=false;renderer.allowOcclusionWhenDynamic=false;renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;renderer.lightProbeUsage=LightProbeUsage.Off;renderer.reflectionProbeUsage=ReflectionProbeUsage.Off;renderer.motionVectorGenerationMode=MotionVectorGenerationMode.ForceNoMotion;
    var materials=new Il2CppReferenceArray<Material>(parts);for(int part=0;part<parts;part++)materials[part]=material;renderer.sharedMaterials=materials;
    for(int shape=0;shape<source.sharedMesh.blendShapeCount;shape++)renderer.SetBlendShapeWeight(shape,source.GetBlendShapeWeight(shape));
    ownedRenderers.Add(renderer.Pointer);return renderer;
