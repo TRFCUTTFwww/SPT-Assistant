@@ -1,0 +1,40 @@
+{
+    "version":  "1.38.4",
+    "utc":  "2026-11-06T06:31:34.6255987Z",
+    "gameBuild":  48558,
+    "userConfirmedPreviousVersion":  {
+                                         "espAligned":  true,
+                                         "graphicsRestored":  true,
+                                         "breachWorked":  true
+                                     },
+    "clientBuild":  {
+                        "errors":  0,
+                        "warnings":  2
+                    },
+    "legacy47888Build":  {
+                             "separateModule":  true,
+                             "errors":  0,
+                             "warnings":  2
+                         },
+    "probePassGroups":  82,
+    "runtime":  {
+                    "apiVersion":  1,
+                    "hostVersion":  "1.4.11",
+                    "coreVersion":  "1.38.4",
+                    "generation":  5,
+                    "sha256":  "DB5D7D166485A03169A87DBA666C9714726B15F73D5044C7AA49B1F7F8D798AB",
+                    "ready":  true,
+                    "error":  null,
+                    "updatedUtc":  "2026-11-06T06:31:06.3822526Z"
+                },
+    "coreSha256":  "DB5D7D166485A03169A87DBA666C9714726B15F73D5044C7AA49B1F7F8D798AB",
+    "fallbackMatches":  true,
+    "backup":  "D:/SPT-5.0.0-48558/repair-backups/1.38.4-20261106-143015",
+    "scopeRendering":  "Current native optic camera projection; one vertex-color mesh command into optic target after image effects, native lens mapping and masking",
+    "scopeMainHud":  "Hide main-camera character boxes and labels while optic path active; red dot/irons remain unchanged",
+    "muzzleLine":  "Native FireportPosition/WeaponDirection, max 64 ray hits, nearest nonlocal hit, native depth-tested LineRenderer",
+    "graphicsChangedThisVersion":  false,
+    "inRaidScopeAlignmentVerified":  false,
+    "inRaidMuzzleLineVerified":  false,
+    "inRaidFrameTimeImprovementMeasured":  false
+}
