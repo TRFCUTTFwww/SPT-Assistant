@@ -24,6 +24,7 @@ internal static class RaidClock {
  static bool BeforeTimeout(EndByTimerScenario __instance){try{return !PreventTimeout.Value||!Active||Timer==null||__instance._timer==null||__instance._timer.Pointer!=Timer.Pointer;}catch(Exception e){Warn(e);return true;}}
  static bool BeforeStop(string __0,ExitStatus __1){try{if(RaidEnd.ManualEnding)return true;if(PreventTimeout.Value&&Active&&__1==ExitStatus.MissingInAction&&__0==Singleton<GameWorld>.Instance.MainPlayer.ProfileId&&Remaining is double seconds&&seconds<=1)return false;}catch(Exception e){Warn(e);}return true;}
  internal static double? Remaining {get{var timer=Timer;if(timer==null||!timer.SessionTime.HasValue)return null;return timer.SessionTime.Value.TotalSeconds-timer.PastTime.TotalSeconds;}}
+ static Color RemainingColor=>RaidRules.TimeTone(Remaining,Timer?.SessionTime is {} span&&span.HasValue?span.Value.TotalSeconds:null) switch{RaidTimeTone.Green=>Color.green,RaidTimeTone.Yellow=>Color.yellow,RaidTimeTone.Red=>Color.red,_=>InterfaceMenu.Accent};
  internal static string RemainingText=>Remaining is double s?RaidRules.Clock(s)+(s<=0&&PreventTimeout.Value?" · 超时保护中":""):"未进入战局 / 计时未同步";
  internal static string GameTime {get{try{return Active?Singleton<GameWorld>.Instance.GameDateTime?.Calculate().ToString("HH:mm:ss")??"未同步":"未进入战局";}catch{return "未同步";}}}
  internal static void SetRemaining(double seconds){var timer=Timer??throw new ArgumentException("请进入战局后修改时间。");double duration=RaidRules.Duration(timer.PastTime.TotalSeconds,seconds);var span=Il2CppSystem.TimeSpan.FromSeconds(duration);if(timer.StartDateTime.HasValue)timer.StartDateTime.Value.AddSeconds(duration);timer.ChangeSessionTime(span);if(Remaining is not double actual||Math.Abs(actual-seconds)>2)throw new InvalidOperationException("计时回读不一致，请重新检查。");bool synced=NativeRaidTimer.Changed(timer,duration);notice="剩余时间已设置为 "+RaidRules.Clock(seconds)+(synced?"，O 键面板已同步。":"；打开 O 键面板后更新。");Plugin.Self.Log.LogInfo($"Raid remaining seconds changed to {seconds}; duration={duration}; native UI synchronized={synced}");}
@@ -35,7 +36,7 @@ internal static class RaidClock {
   var clockCard=new Rect(rect.x,rect.y+42,half,102);var remainingCard=new Rect(rect.x+half+gap,rect.y+42,half,102);
   foreach(var card in new[]{clockCard,remainingCard})InterfaceMenu.Surface(card,Color.Lerp(InterfaceMenu.Background,InterfaceMenu.Text,.045f),11);
   InterfaceMenu.Label(new Rect(clockCard.x+18,clockCard.y+12,half-36,25),"游戏时间",Color.Lerp(InterfaceMenu.Text,InterfaceMenu.Background,.35f),12);InterfaceMenu.Label(new Rect(clockCard.x+18,clockCard.y+44,half-36,42),GameTime,InterfaceMenu.Text,29);
-  InterfaceMenu.Label(new Rect(remainingCard.x+18,remainingCard.y+12,half-36,25),"剩余时间",Color.Lerp(InterfaceMenu.Text,InterfaceMenu.Background,.35f),12);InterfaceMenu.Label(new Rect(remainingCard.x+18,remainingCard.y+44,half-36,42),Remaining is double seconds?RaidRules.Clock(seconds):"未同步",Remaining is <=300?Color.yellow:InterfaceMenu.Accent,29);
+  InterfaceMenu.Label(new Rect(remainingCard.x+18,remainingCard.y+12,half-36,25),"剩余时间",Color.Lerp(InterfaceMenu.Text,InterfaceMenu.Background,.35f),12);InterfaceMenu.Label(new Rect(remainingCard.x+18,remainingCard.y+44,half-36,42),Remaining is double seconds?RaidRules.Clock(seconds):"未同步",RemainingColor,29);
   float y=rect.y+164;var left=new Rect(rect.x,y,half,510);var right=new Rect(rect.x+half+gap,y,half,510);InterfaceMenu.Surface(left,Color.Lerp(InterfaceMenu.Background,InterfaceMenu.Text,.025f),11);InterfaceMenu.Surface(right,Color.Lerp(InterfaceMenu.Background,InterfaceMenu.Text,.025f),11);
   float x=left.x+16,w=left.width-32;InterfaceMenu.Label(new Rect(x,y+16,w,28),"时间控制",InterfaceMenu.Accent,17);
   if(InterfaceMenu.Button(new Rect(x,y+62,w,36),"超时不迷失  ·  "+(PreventTimeout.Value?"已开启":"已关闭"),PreventTimeout.Value))PreventTimeout.Value=!PreventTimeout.Value;
@@ -60,7 +61,7 @@ internal static class RaidClock {
   InterfaceMenu.Label(new Rect(rect.x+10,rect.y+4,rect.width-20,row),"现实  "+DateTime.Now.ToString("HH:mm:ss"),InterfaceMenu.Text,font);
   InterfaceMenu.Label(new Rect(rect.x+10,rect.y+4+row,rect.width-20,row),"游戏  "+GameTime,InterfaceMenu.Text,font);
   string remaining=Remaining is double s?RaidRules.Clock(s):"未同步";bool overtime=Remaining is <=0&&PreventTimeout.Value;
-  InterfaceMenu.Label(new Rect(rect.x+10,rect.y+4+2*row,rect.width-20,row),"剩余  "+remaining+(overtime?"  保护中":""),Remaining is <=300?Color.yellow:InterfaceMenu.Accent,font);
+  InterfaceMenu.Label(new Rect(rect.x+10,rect.y+4+2*row,rect.width-20,row),"剩余  "+remaining+(overtime?"  保护中":""),RemainingColor,font);
  }
  static void Warn(Exception e){if(Time.unscaledTime<nextError)return;nextError=Time.unscaledTime+20;Plugin.Self.Error(e);}
 }

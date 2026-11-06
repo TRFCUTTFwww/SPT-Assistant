@@ -356,6 +356,10 @@ if(args.Contains("--556")){
  Console.WriteLine("Total 5.56 ammunition: "+ammunition.Count);return;
 }
 Assert(catalog.Count>1000&&catalog.All(p=>p.Key.Length==24),"catalog validity");
+var questTemplates=catalog.Where(p=>p.Value.GetProperty("_props").TryGetProperty("QuestItem",out var questFlag)&&questFlag.ValueKind==JsonValueKind.True).ToList();
+Assert(questTemplates.Count>0&&questTemplates.All(p=>ItemCatalog.Category(p.Key)==LootCategory.任务物品),"every native quest-only template has quest category precedence");
+Assert(ItemCatalog.Category("5449016a4bdc2d6f028b456f")==LootCategory.交易材料&&ItemCatalog.Category("missing")==LootCategory.其他&&(int)LootCategory.其他==9,"ordinary loot and persisted categories remain compatible");
+Console.WriteLine("PASS native quest-item classification across the installed database and existing category compatibility");
 int magazines=0,compatible=0;bool complete556=false;
 var required556=new[]{"54527a984bdc2d4e668b4567","54527ac44bdc2d36668b4567","59e68f6f86f7746c9f75e846","59e6906286f7746c9f75e847","59e690b686f7746c9f75e848","601949593ae8f707c4608daa"};
 foreach(var item in catalog){var props=item.Value.GetProperty("_props");if(!props.TryGetProperty("Cartridges",out var cartridges)||cartridges.ValueKind!=JsonValueKind.Array)continue;
@@ -499,6 +503,14 @@ Assert(RaidRules.Minutes("1440.1")==1440.1*60&&RaidRules.Duration(100,86401)==86
 Assert(RaidRules.Minutes("0.5")==30&&RaidRules.Minutes("1440")==86400,"fractional and maximum raid duration");
 foreach(string invalid in new[]{"-1","1e300","NaN","Infinity","abc"})Reject(()=>RaidRules.Minutes(invalid),"raid minutes "+invalid);
 foreach(double invalid in new[]{double.NaN,double.PositiveInfinity,-1,TimeSpan.MaxValue.TotalSeconds})Reject(()=>RaidRules.Duration(40,invalid),"raid seconds "+invalid);
+Assert(RaidRules.TimeTone(1801,3600)==RaidTimeTone.Green&&RaidRules.TimeTone(1800,3600)==RaidTimeTone.Yellow&&RaidRules.TimeTone(1799,3600)==RaidTimeTone.Yellow,"half-time color boundary");
+Assert(RaidRules.TimeTone(600,3600)==RaidTimeTone.Yellow&&RaidRules.TimeTone(599.9,3600)==RaidTimeTone.Red&&RaidRules.TimeTone(599,900)==RaidTimeTone.Red&&RaidRules.TimeTone(0,3600)==RaidTimeTone.Red&&RaidRules.TimeTone(-100,3600)==RaidTimeTone.Red,"strict ten-minute threshold takes priority including short raids and overtime");
+Assert(RaidRules.TimeTone(null,3600)==RaidTimeTone.Unknown&&RaidRules.TimeTone(double.NaN,3600)==RaidTimeTone.Unknown&&RaidRules.TimeTone(1801,null)==RaidTimeTone.Unknown&&RaidRules.TimeTone(1801,0)==RaidTimeTone.Unknown&&RaidRules.TimeTone(1801,7200)==RaidTimeTone.Yellow,"unknown timers and changed total raid duration");
+var raidStashType=core.MainModule.Types.Single(t=>t.Name=="RaidStash");
+Assert(raidStashType.Methods.Single(m=>m.Name=="Load").Body.Instructions.Any(i=>i.Operand is MethodReference r&&r.Name=="FlatItemsToTree")&&!raidStashType.Methods.Single(m=>m.Name=="Load").Body.Instructions.Any(i=>i.Operand is MethodReference r&&r.Name=="FlatItemsToStash"),"raid stash restores the real root and grid instead of a fake mail container");
+Assert(raidStashType.Methods.Single(m=>m.Name=="BeforeShow").Parameters.Where(p=>p.ParameterType.IsByReference).Count()==2&&raidStashType.Methods.Single(m=>m.Name=="BeforeStop").Body.Instructions.Any(i=>i.Operand is MethodReference r&&r.Name=="get_HasActiveEvents"),"native UI injection and raid exit defer until inventory transactions settle");
+Console.WriteLine("PASS raid stash native root/grid restore, Tab injection and pending inventory transaction exit guard");
+Console.WriteLine("PASS remaining-time green/yellow/red half-duration and strict ten-minute boundaries, overtime and missing timers");
 Assert(RaidRules.Clock(-10)=="00:00:00"&&RaidRules.Clock(3661)=="01:01:01"&&RaidRules.Clock(.1)=="00:00:01"&&RaidRules.Clock(double.NaN)=="未同步","expired, long and unsynced clock display");
 Assert(RaidRules.Match("5.56x45毫米 M995","id","5.56*45")&&RaidRules.Match("夜视仪","abc","夜视")&&!RaidRules.Match("头盔","abc","夜视"),"loot search aliases and nonmatches");
 Check("LocalGame","Create",18);Check("LocalGame","CleanUp",0);Check("BotSpawner","ActivateBots",6);Check("BotSpawner","SpawnBotBTR",0);
