@@ -32,11 +32,11 @@
     "apiVersion": 1,
     "hostVersion": "1.4.11",
     "coreVersion": "1.38.1",
-    "generation": 4,
+    "generation": 1,
     "sha256": "5CB0C1B50D49DC70619549D158522E589911B733464FD6A58B2B13BBEF81F5C0",
     "ready": true,
     "error": null,
-    "updatedUtc": "2026-11-06T03:56:49.4371534Z"
+    "updatedUtc": "2026-11-06T03:58:39.2696199Z"
   },
   "coreSha256": "5cb0c1b50d49dc70619549d158522e589911b733464fd6a58b2b13bbef81f5c0",
   "fallbackSha256": "5cb0c1b50d49dc70619549d158522e589911b733464fd6a58b2b13bbef81f5c0",
@@ -44,9 +44,9 @@
     "keyConsumption": true,
     "nativeHalloween": true
   },
-  "raidControlsRuntimeVersion": "1.4.1",
+  "raidControlsRuntimeVersion": "1.5.0",
   "raidControlsInstalledVersion": "1.5.0",
-  "serverRestartRequired": true,
+  "serverRestartRequired": false,
   "newFeaturesInRaidVerified": false,
   "newMenuVisualVerified": false,
   "nativeEventAudit": {
@@ -57,5 +57,14 @@
     ],
     "unsupportedOptionalGroup": "Night cult (not present in 48558 server config)",
     "configWritten": false
+  },
+  "serverRuntime": {
+    "version": "1.5.0",
+    "ready": true,
+    "serverPid": 18800,
+    "utc": "2026-11-06T03:58:21.3265367Z",
+    "nestedCaseTemplates": 36,
+    "invalidProfileWarning": false,
+    "userManuallyRestarted": true
   }
 }
