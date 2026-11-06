@@ -70,7 +70,8 @@ internal static class RaidLoot {
   if(row!=null)yield return row;foreach(var child in LootDisplay.Children(item))foreach(var entry in Walk(child,anchor,source,seen,depth+1))yield return entry;
  }
  internal static void Draw(Rect rect){
-  InterfaceMenu.Label(new Rect(rect.x,rect.y,rect.width-170,28),$"本局物品 · {entries.Count} 个已加载条目",InterfaceMenu.Accent,18);if(InterfaceMenu.Button(new Rect(rect.xMax-155,rect.y,155,30),"立即重新扫描"))nextScan=nextContainerScan=0;
+  InterfaceMenu.Label(new Rect(rect.x,rect.y,rect.width-385,28),$"本局物品 · {entries.Count} 个已加载条目",InterfaceMenu.Accent,18);if(InterfaceMenu.Button(new Rect(rect.xMax-155,rect.y,155,30),"立即重新扫描"))nextScan=nextContainerScan=0;
+  RaidStash.DrawToggle(new Rect(rect.xMax-375,rect.y,208,30));
   query.Value=InterfaceMenu.Field(new Rect(rect.x,rect.y+40,Math.Max(120,rect.width-175),30),query.Value);if(InterfaceMenu.Button(new Rect(rect.xMax-163,rect.y+40,163,30),"类别："+category.Value))category.Value=(LootCategory)(((int)category.Value+1)%Enum.GetValues<LootCategory>().Length);
   float col=(rect.width-24)/3;
   if(InterfaceMenu.Button(new Rect(rect.x,rect.y+82,col,30),favoritesOnly.Value?"只看收藏 · 开":"只看收藏",favoritesOnly.Value))favoritesOnly.Value=!favoritesOnly.Value;

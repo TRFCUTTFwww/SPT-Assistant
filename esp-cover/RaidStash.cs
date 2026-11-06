@@ -18,7 +18,10 @@ internal static class RaidStash {
  static ConfigEntry<bool> enabled=null!;
  static Task<string>? request;static bool loading,ready,stopping;static IntPtr actor;static Stash? stash;
  static string revision="",saved="",sent="";static JsonElement stashRoot;static float next,check;static Action? finishStop;
+ internal static Il2CppSystem.Nullable<MongoID> ParentId(string id)=>new(new MongoID(id));
+ internal static void DrawToggle(Rect rect){if(InterfaceMenu.Button(rect,"战局仓库 · "+(enabled.Value?"开":"关"),enabled.Value))enabled.Value=!enabled.Value;}
  internal static void Initialize(Plugin plugin){
+  const string sample="5449016a4bdc2d6f028b456f";var parent=ParentId(sample);var flat=new JsonType.FlatItem{parentId=parent};if(!flat.parentId.HasValue||flat.parentId.Value.ToString()!=sample)throw new InvalidOperationException("Raid stash parent ID marshalling failed");plugin.Log.LogInfo("Raid stash parent ID marshalling verified");
   enabled=FeatureConfig.Bind("59. 战局仓库","Access stash in raid","战局 Tab 右侧访问仓库",true);
   var show=typeof(InventoryScreen).GetMethods().Single(m=>m.Name=="Show"&&m.GetParameters().Length==10);
   plugin.Patches.Patch(show,prefix:new HarmonyMethod(typeof(RaidStash),nameof(BeforeShow)));
@@ -43,7 +46,7 @@ internal static class RaidStash {
   var factory=Singleton<ItemFactory>.Instance;var items=data.GetProperty("items");stashRoot=items.EnumerateArray().Single(i=>i.GetProperty("_id").GetString()==data.GetProperty("stash").GetString()).Clone();var flat=new Il2CppReferenceArray<JsonType.FlatItem>(items.GetArrayLength());int index=0;
   foreach(var item in items.EnumerateArray()){
    var native=new JsonType.FlatItem{_id=new MongoID(item.GetProperty("_id").GetString()!),_tpl=new MongoID(item.GetProperty("_tpl").GetString()!)};
-   if(item.TryGetProperty("parentId",out var parent)&&parent.ValueKind==JsonValueKind.String)native.parentId=(Il2CppSystem.Nullable<MongoID>)parent.GetString()!;
+   if(item.TryGetProperty("parentId",out var parent)&&parent.ValueKind==JsonValueKind.String)native.parentId=ParentId(parent.GetString()!);
    if(item.TryGetProperty("slotId",out var slot)&&slot.ValueKind==JsonValueKind.String)native.slotId=slot.GetString();
    if(item.TryGetProperty("location",out var location)&&location.ValueKind!=JsonValueKind.Null)native.location=new UnparsedData{JToken=JToken.Parse(location.GetRawText())};
    if(item.TryGetProperty("upd",out var upd)&&upd.ValueKind!=JsonValueKind.Null)native.upd=new UnparsedData{JToken=JToken.Parse(upd.GetRawText())};
