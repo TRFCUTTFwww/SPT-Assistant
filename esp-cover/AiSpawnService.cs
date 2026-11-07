@@ -34,7 +34,7 @@ internal static class AiSpawnService {
 
   return hit.position;
  }
- internal static void Enqueue(GameWorld current,Vector3 position,AiSpawnOption option,int difficulty,int count,AiBirthPreset preset,string label,bool sceneRestore=false,CorpseRevival? revival=null){
+ internal static void Enqueue(GameWorld current,Vector3 position,AiSpawnOption option,int difficulty,int count,AiBirthPreset preset,string label,bool sceneRestore=false,CorpseRevival? revival=null){if(!option.Enabled)throw new ArgumentException(option.Unavailable);if(!Enum.TryParse<WildSpawnType>(option.Role,out _))throw new ArgumentException("当前客户端不支持此 AI 类型。");
   if(!RaidClock.Active||current.MainPlayer?.HealthController?.IsAlive!=true)throw new ArgumentException("请进入战局且保持存活。");
   if(!GameStarted)throw new ArgumentException("等待战局正式开始后再生成 AI。");
   if(queue.Count>=16)throw new ArgumentException("生成队列已满，请等待或取消剩余请求。");
@@ -46,7 +46,7 @@ internal static class AiSpawnService {
   queue.Enqueue(new(){SceneRestore=sceneRestore,World=current.Pointer,Position=position,Option=option,Difficulty=difficulty,Preset=preset,Ledger=new(count),Label=label,Revival=revival});
   Report("已排队："+option.Name+" ×"+count+"；等待请求 "+queue.Count,true);
  }
- internal static void Preload(AiSpawnOption option,int difficulty,int count){var creator=Controller().GetSpawner()?._botCreator??throw new ArgumentException("AI 资料加载器尚未就绪。");creator.AddToTargetBackup((BotDifficulty)difficulty,Enum.Parse<WildSpawnType>(option.Role),Math.Clamp(count,1,8));Report("已请求预加载："+option.Name+"；只准备资料和资源，不生成角色。",true);}
+ internal static void Preload(AiSpawnOption option,int difficulty,int count){if(!option.Enabled)throw new ArgumentException(option.Unavailable);if(!Enum.TryParse<WildSpawnType>(option.Role,out _))throw new ArgumentException("当前客户端不支持此 AI 类型。");var creator=Controller().GetSpawner()?._botCreator??throw new ArgumentException("AI 资料加载器尚未就绪。");creator.AddToTargetBackup((BotDifficulty)difficulty,Enum.Parse<WildSpawnType>(option.Role),Math.Clamp(count,1,8));Report("已请求预加载："+option.Name+"；只准备资料和资源，不生成角色。",true);}
  static readonly List<Job> cancelledRevivals=new();static float nextRevivalCleanup;
  static void CollectRetired(){var world=Singleton<GameWorld>.Instance;if(world==null){cancelledRevivals.Clear();}else if(Time.unscaledTime>=nextRevivalCleanup){nextRevivalCleanup=Time.unscaledTime+.5f;foreach(var job in cancelledRevivals.ToArray()){if(job.World!=world.Pointer){cancelledRevivals.Remove(job);continue;}var actors=world.AllAlivePlayersList?.ToArray().Where(p=>p!=null&&job.Expected.ContainsKey(p.ProfileId)).ToArray()??Array.Empty<Player>();if(actors.Length>0)AiRemoval.Delete(world,actors,false);}}
   for(int i=retired.Count-1;i>=0;i--){var entry=retired[i];if(!entry.Task.IsCompleted)continue;try{entry.Data?.StopSpawn();if(entry.Task.TryCast<Il2CppSystem.Threading.Tasks.Task<BotCreationData>>() is {} generated&&!generated.IsFaulted&&!generated.IsCanceled)generated.Result?.StopSpawn();entry.Cancellation?.Dispose();}catch{}retired.RemoveAt(i);}

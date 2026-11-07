@@ -13,15 +13,18 @@ namespace LocalSpt5Esp;
 internal static class EventRaidDiagnostics {
  static string Home=>Path.Combine(BepInEx.Paths.PluginPath,"HalloweenEventPort");
  static DateTime observed;static float nextPoll;static Il2CppSystem.Threading.Tasks.Task? task;
+ static System.Threading.Tasks.Task<object>? serverTask;
  static TarkovApplication App()=>Singleton<TarkovApplication>.Instance??UnityEngine.Object.FindObjectOfType<TarkovApplication>()??throw new InvalidOperationException("Application unavailable");
  static void Write(string stage,object? details){File.WriteAllText(Path.Combine(Home,"launch-diagnostics.json"),JsonSerializer.Serialize(new{stage,details,utc=DateTime.UtcNow},new JsonSerializerOptions{WriteIndented=true}));}
  internal static void Tick(){try{
+  if(serverTask?.IsCompleted==true){var completed=serverTask;serverTask=null;Write("server-controls-state",completed.GetAwaiter().GetResult());}
   EventAudioProbe.Tick();
   EventMapTrace.Tick();
   if(task?.IsCompleted==true){var completed=task;task=null;Write(completed.IsFaulted?"native-task-failed":"native-task-complete",new{error=completed.Exception?.ToString()});}
   if(Time.unscaledTime<nextPoll)return;nextPoll=Time.unscaledTime+.5f;string file=Path.Combine(Home,"launch-diagnostics-request.json");if(!File.Exists(file))return;var stamp=File.GetLastWriteTimeUtc(file);if(stamp==observed)return;observed=stamp;
   using var doc=JsonDocument.Parse(File.ReadAllText(file));string action=doc.RootElement.GetProperty("action").GetString()??"";var app=App();
   if(action=="inspect")Write("application-state",new{screen=EFT.UI.Screens.EftScreenManager.Instance?.CurrentScreenController?.ScreenType.ToString(),world=Singleton<GameWorld>.Instantiated,menuOperation=app._menuOperation!=null,matchmakerOperation=app._localMatchmakerOperation!=null,raidSettings=app._raidSettings!=null,weather=app._raidSettings?.TimeAndWeatherSettings!=null,localSettings=app._localRaidSettings!=null,location=app._raidSettings?.SelectedLocation?.Id,mode=app._raidSettings?.RaidMode.ToString(),profile=app.GetProfileForLocalGame()!=null,aiTestStatus=AiSpawnService.Status});
+  else if(action=="server-controls-state"){if(serverTask!=null)throw new InvalidOperationException("Server check already running");serverTask=ServerControlPanel.Diagnostics();}
   else if(action=="hideout-craft-state")Write("hideout-craft-state",HideoutCraftControl.Diagnostics());
   else if(action=="coordinates-state")Write("coordinates-state",CoordinateReader.Diagnostics());
   else if(action=="passcode-override-check")Write("passcode-override-check",PasscodeHints.CheckOverrideScopes());

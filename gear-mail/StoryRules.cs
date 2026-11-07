@@ -9,7 +9,7 @@ using SPTarkov.Server.Core.Models.Spt.Tables;
 namespace LocalGearMail;
 
 public static class StoryRules {
- public static void SkipWait(PmcData pmc,TemplateTable templates,MongoId id,long now){
+ public static void SkipWait(PmcData pmc,TemplateTable templates,MongoId id,long now,QuestConfig? config=null){
   if(!templates.Quests.TryGetValue(id,out var quest)||quest.IsStoryQuest!=true)throw new ArgumentException("请选择剧情等待任务。");
   var saved=pmc.Quests?.SingleOrDefault(q=>q.QId==id);if(saved?.Status!=QuestStatusEnum.AvailableAfter)throw new ArgumentException("该任务目前不处于等待状态。");
   var updates=new List<(QuestStatus Quest,QuestStatusEnum State,double Time)>();
@@ -23,6 +23,7 @@ public static class StoryRules {
   }
   foreach(var update in updates)update.Quest.StatusTimers[update.State]=update.Time;
   saved.AvailableAfter=now-1;
+  PromoteExpiredWaits(pmc,templates,[id],config,now);
  }
  public static IEnumerable<string> Targets(QuestCondition condition)=>condition.Target==null?[]:condition.Target.IsList?condition.Target.List??[]:condition.Target.IsItem&&condition.Target.Item!=null?[condition.Target.Item]:[];
  public static HashSet<MongoId> StoryTasks(TemplateTable templates){var found=templates.Quests.Where(p=>p.Value.IsStoryQuest==true).Select(p=>p.Key).ToHashSet();foreach(var id in found.ToArray())foreach(var condition in templates.Quests[id].Conditions?.AvailableForFinish??[])if(condition.ConditionType=="Quest")foreach(string target in Targets(condition))if(templates.Quests.ContainsKey(new MongoId(target)))found.Add(new MongoId(target));return found;}
@@ -57,6 +58,34 @@ public static class StoryRules {
   }
   foreach(var pair in config.HiddenVariableGates??[]){if(!selected.Contains(pair.Key)||pair.Value.Delay is not >0)continue;
    foreach(var id in pair.Value.Quests??[]){var saved=pmc.Quests?.SingleOrDefault(q=>q.QId==id);if(saved?.Status==QuestStatusEnum.Success&&saved.StatusTimers?.TryGetValue(QuestStatusEnum.Success,out double time)==true&&time+pair.Value.Delay>now){saved.StatusTimers[QuestStatusEnum.Success]=now-pair.Value.Delay.Value-1;count++;}}
-  }return count;
+  }
+  if(storyQuests)count+=PromoteExpiredWaits(pmc,templates,selected,config,now);
+  return count;
  }
+ // Only resolve existing story waits with fully understood, satisfied prerequisites.
+ // Unknown conditions stay under the native quest controller's authority.
+ public static int PromoteExpiredWaits(PmcData pmc,TemplateTable templates,IEnumerable<MongoId> ids,QuestConfig? config,long now){
+  int changed=0;
+  foreach(var id in ids){
+   var saved=pmc.Quests?.SingleOrDefault(q=>q.QId==id);
+   if(saved?.Status!=QuestStatusEnum.AvailableAfter||saved.AvailableAfter is not >0||saved.AvailableAfter>now||!templates.Quests.TryGetValue(id,out var quest)||quest.IsStoryQuest!=true)continue;
+   var conditions=quest.Conditions?.AvailableForStart;
+   if(conditions==null||conditions.Count==0||conditions.Any(c=>c.ConditionType!="Quest"||!Targets(c).Any()||c.Status?.Count is not >0))continue;
+   bool ready=true;
+   foreach(var condition in conditions)foreach(string target in Targets(condition)){
+    var prior=pmc.Quests?.SingleOrDefault(q=>q.QId.ToString()==target);
+    if(prior==null||condition.Status?.Contains(prior.Status)!=true){ready=false;continue;}
+    if(condition.AvailableAfter is >0&&(prior.StatusTimers?.TryGetValue(prior.Status,out double time)!=true||time+condition.AvailableAfter>now))ready=false;
+   }
+   if(config?.HiddenVariableGates?.TryGetValue(id,out var gate)==true){
+    if(gate.Quests?.Count is not >0)ready=false;
+    foreach(var priorId in gate.Quests??[]){var prior=pmc.Quests?.SingleOrDefault(q=>q.QId==priorId);if(prior?.Status!=QuestStatusEnum.Success||prior.StatusTimers?.TryGetValue(QuestStatusEnum.Success,out double time)!=true||time+(gate.Delay??0)>now)ready=false;}
+   }
+   if(!ready)continue;
+   saved.Status=QuestStatusEnum.AvailableForStart;saved.AvailableAfter=0;
+   saved.StatusTimers??=[];saved.StatusTimers[QuestStatusEnum.AvailableForStart]=now;changed++;
+  }
+  return changed;
+ }
+
 }

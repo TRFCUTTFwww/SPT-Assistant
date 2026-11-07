@@ -58,7 +58,7 @@ public class StoryService(SaveServer saves,JsonUtil json,HttpResponseUtil http,T
    if(request.Action is not ("replay" or "state" or "ending" or "waits" or "sidewaits" or "wait"))throw new ArgumentException("未知剧情操作。");
    snapshot=json.Deserialize<SptProfile>(json.Serialize(profile))!;var directory=System.IO.Path.Combine(AppContext.BaseDirectory,"user","mods","LocalGearMail","backups","story");Directory.CreateDirectory(directory);
    await File.WriteAllTextAsync(System.IO.Path.Combine(directory,$"{session}-{DateTime.UtcNow:yyyyMMdd-HHmmssfff}.json"),json.Serialize(profile,true),ct);long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-   if(request.Action=="wait")StoryRules.SkipWait(pmc,templates,id,now);
+   if(request.Action=="wait")StoryRules.SkipWait(pmc,templates,id,now,config);
    else if(request.Action=="waits")StoryRules.SkipWaits(pmc,templates,config,now);
    else if(request.Action=="sidewaits")StoryRules.SkipWaits(pmc,templates,config,now,storyQuests:false);
    else if(ending){

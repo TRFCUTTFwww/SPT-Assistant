@@ -490,5 +490,8 @@
   "瞄准 / {0}": "Aim / {0}",
   "偏离路线，正在重算 · {0}": "Off route; recalculating · {0}",
   "{0}\n{1}\n当前无后座已开启，会覆盖实际后座表现。": "{0}\n{1}\nNo recoil is currently enabled and overrides actual recoil behavior.",
-  "  | PMC {0}（USEC {1} / BEAR {2})\n各阵营：": "  | PMC {0} (USEC {1} / BEAR {2})\nFactions:"
+  "  | PMC {0}（USEC {1} / BEAR {2})\n各阵营：": "  | PMC {0} (USEC {1} / BEAR {2})\nFactions:",
+  "来源装备：{0}": "Source equipment: {0}",
+  "保存后装备：{0}": "Equipment after saving: {0}",
+  "待保存槽位：{0} · 当前预设：{1}": "Pending slots: {0} · Current preset: {1}"
 }

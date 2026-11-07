@@ -43,6 +43,12 @@ internal static class QuestWaitSync {
    if(state==EQuestStatus.AvailableAfter)waitingIds.Add(id);
    var local=controller.Profile.QuestsData?.FirstOrDefault(q=>q.Id==id);
    if(local==null||!QuestWaitSyncRules.SameQuest(controller.Profile.Id,sync.GetProperty("profileId").GetString()!,controller.InRaid,(int)local.Status,(int)state,local.StartTime,row.GetProperty("startTime").GetInt64()))continue;
+   if(local.Status==EQuestStatus.AvailableAfter&&state==EQuestStatus.AvailableForStart){
+    waitingIds.Add(id);local.AvailableAfter=0;
+    if(local.Quest is {} ready)ready.SetStatus(EQuestStatus.AvailableForStart,true,true);
+    else local.Status=EQuestStatus.AvailableForStart;
+    changed++;
+   }
    if(state==EQuestStatus.AvailableAfter&&row.TryGetProperty("availableAfter",out var after)&&after.TryGetInt32(out int availableTime)&&QuestWaitSyncRules.Shortens(local.AvailableAfter,availableTime)){local.AvailableAfter=availableTime;changed++;}
    if(local.StatusStartTimestamps==null||!row.TryGetProperty("timers",out var timers)||timers.ValueKind!=JsonValueKind.Object)continue;
    foreach(var timer in timers.EnumerateObject()){

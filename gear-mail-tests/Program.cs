@@ -1,3 +1,4 @@
+using Path = System.IO.Path;
 using System.Text.Json;
 using LocalGearMail;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
@@ -151,8 +152,8 @@ Console.WriteLine($"PASS native hideout recipe whitelist: {ordinaryRecipes.Count
 var contactId=new MongoId("67bc646c6e34475fea09d2a5");var contactPrior=new MongoId("68d82d29d34befa7d30b8771");
 var contactPmc=new SPTarkov.Server.Core.Models.Eft.Common.PmcData{Quests=[new(){StartTime=0,QId=contactId,Status=SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.AvailableAfter,AvailableAfter=20000,StatusTimers=[]},new(){StartTime=0,QId=contactPrior,Status=SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.Success,StatusTimers=new(){{SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.Success,10000}}},new(){StartTime=0,QId=otherId,Status=SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.AvailableAfter,AvailableAfter=50000,StatusTimers=[]}]};
 StoryRules.SkipWait(contactPmc,tables,contactId,11000);
-if(contactPmc.Quests[0].AvailableAfter!=10999||contactPmc.Quests[0].Status!=SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.AvailableAfter||contactPmc.Quests[1].StatusTimers[SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.Success]+8100>=11000||contactPmc.Quests[2].AvailableAfter!=50000)throw new Exception("Scoped contact wait changed unrelated wait, status or failed prerequisite backdating");
-contactPmc.Quests[1].Status=SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.Started;Deny(()=>StoryRules.SkipWait(contactPmc,tables,contactId,11000));
+if(contactPmc.Quests[0].AvailableAfter!=0||contactPmc.Quests[0].Status!=SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.AvailableForStart||contactPmc.Quests[1].StatusTimers[SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.Success]+8100>=11000||contactPmc.Quests[2].AvailableAfter!=50000)throw new Exception("Scoped contact wait changed unrelated wait or failed acceptance unlock/prerequisite backdating");
+contactPmc.Quests[0].Status=QuestStatusEnum.AvailableAfter;contactPmc.Quests[0].AvailableAfter=20000;contactPmc.Quests[1].Status=SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.Started;Deny(()=>StoryRules.SkipWait(contactPmc,tables,contactId,11000));
 Console.WriteLine("PASS scoped Kerman contact wait expiration preserves unrelated quests and choices; unmet predecessor rejected");
 
 // Exercise native delays on detached profiles; never write a live save.
@@ -210,3 +211,44 @@ StoryRules.SkipWaits(scopedPmc,sideTables,questConfig,sideNow);
 if(scopedPmc.Quests[0].AvailableAfter!=sideNow+100||scopedPmc.Quests[1].AvailableAfter>=sideNow)throw new Exception("Default main story action changed side wait scope");
 if(nativeJson.Serialize(sideTables.Quests)!=nativeQuestsBefore||nativeJson.Serialize(questConfig)!=nativeConfigBefore||!File.ReadAllBytes(profilePath).SequenceEqual(diskBefore))throw new Exception("Wait skip altered native templates, configuration or live profile bytes");
 Console.WriteLine("PASS unmet/missing prerequisite isolation, original main story scope, native template/configuration immutability and live save bytes unchanged");
+
+var testSettingsRoot=Path.Combine(Path.GetTempPath(),"spt-server-settings-"+Guid.NewGuid().ToString("N"));
+try{
+ string configRoot=Path.Combine(testSettingsRoot,"configs"),backupRoot=Path.Combine(testSettingsRoot,"state");Directory.CreateDirectory(configRoot);
+ foreach(string file in ServerSettingsRules.Definitions.Select(d=>d.File).Distinct())File.Copy(Path.Combine(gameRoot,"SPT_Runtime/SPT_Data/configs",file+".json"),Path.Combine(configRoot,file+".json"));
+ var store=new ServerSettingsService.ServerSettingsStore(configRoot,backupRoot);var original=store.Read();
+ if(original.Rows.Length!=ServerSettingsRules.Definitions.Length)throw new Exception("A listed server option has no native configuration field");
+ var bytesBefore=Directory.GetFiles(configRoot).ToDictionary(p=>Path.GetFileName(p)!,p=>File.ReadAllBytes(p));
+ var changes=new Dictionary<string,JsonElement>{{"insurance.prapor",JsonSerializer.SerializeToElement(42)},{"repair.price",JsonSerializer.SerializeToElement(2.5)}};
+ store.Save(changes,original.Revision);var saved=store.Read();if(saved.Revision==original.Revision||!store.RestartPending(saved.Revision))throw new Exception("Native config changes or restart marker missing");
+ if(saved.Rows.Single(r=>r.Id=="insurance.prapor").Value.GetDouble()!=42||saved.Rows.Single(r=>r.Id=="repair.price").Value.GetDouble()!=2.5)throw new Exception("Requested settings not applied");
+ foreach(var file in bytesBefore){var oldTree=System.Text.Json.Nodes.JsonNode.Parse(file.Value)!;var newTree=System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllBytes(Path.Combine(configRoot,file.Key!)))!;foreach(var setting in ServerSettingsRules.Definitions.Where(d=>d.File+".json"==file.Key&&changes.ContainsKey(d.Id)))ServerSettingsRules.Apply(oldTree.AsObject(),setting,changes[setting.Id]);if(!System.Text.Json.Nodes.JsonNode.DeepEquals(oldTree,newTree))throw new Exception("Unrelated native configuration changed");}
+ var after=Directory.GetFiles(configRoot).ToDictionary(p=>Path.GetFileName(p)!,p=>File.ReadAllBytes(p));
+ void DenySetting(Dictionary<string,JsonElement> values,string revision){try{store.Save(values,revision);throw new Exception("Invalid settings accepted");}catch(ArgumentException){}foreach(var file in after)if(!File.ReadAllBytes(Path.Combine(configRoot,file.Key!)).SequenceEqual(file.Value))throw new Exception("Rejected change modified a file");}
+ DenySetting(changes,original.Revision);DenySetting(new(){{"../../core",JsonSerializer.SerializeToElement(1)}},saved.Revision);DenySetting(new(){{"insurance.prapor",JsonSerializer.SerializeToElement(101)}},saved.Revision);DenySetting(new(){{"insurance.taken",JsonSerializer.SerializeToElement(1)}},saved.Revision);DenySetting(new(){{"hideout.craft",JsonSerializer.SerializeToElement(-.5)}},saved.Revision);
+ if(Directory.GetFiles(Path.Combine(backupRoot,"backups"),"*.json",SearchOption.AllDirectories).Length!=2)throw new Exception("Unexpected files backed up or invalid write entered the commit phase");
+ var karmaProfile=new PmcData{KarmaValue=.5,TradersInfo=new(){{new MongoId(KarmaRules.Fence),new(){Standing=1.25,LoyaltyLevel=1}},{new MongoId("54cb50c76803fa8b248b4571"),new(){Standing=2,LoyaltyLevel=4}}}};
+ KarmaRules.Apply(karmaProfile,"pmc",.8,.5,-7,15);KarmaRules.Apply(karmaProfile,"scav",6,1.25,-7,15);
+ if(karmaProfile.KarmaValue!=.8||KarmaRules.Scav(karmaProfile)!=6||karmaProfile.TradersInfo[new MongoId("54cb50c76803fa8b248b4571")].Standing!=2)throw new Exception("Karma edits crossed into unrelated profile values");
+ string beforeKarma=nativeJson.Serialize(karmaProfile)!;foreach(var input in new[]{("pmc",double.NaN,.8),("pmc",1.1,.8),("pmc",.1,.5),("scav",16d,6d),("unknown",1d,0d)}){try{KarmaRules.Apply(karmaProfile,input.Item1,input.Item2,input.Item3,-7,15);throw new Exception("Invalid karma accepted");}catch(ArgumentException){}}if(nativeJson.Serialize(karmaProfile)!=beforeKarma)throw new Exception("Rejected karma mutation changed the profile");
+ Console.WriteLine("PASS native server settings, multi-file backups, unrelated-field preservation, stale/type/range/path rejection and isolated PMC/Scav karma edits");
+}finally{if(Directory.Exists(testSettingsRoot))Directory.Delete(testSettingsRoot,true);}
+
+// Reproduce the installed Mechanic story wait on a detached profile.
+var mechanicId=new MongoId("67bc9eda1d99d6ebe5014b65");
+var mechanicQuest=sideTables.Quests[mechanicId];
+var mechanicCondition=mechanicQuest.Conditions.AvailableForStart.Single();
+var mechanicPrior=new MongoId(StoryRules.Targets(mechanicCondition).Single());
+var mechanicWait=new QuestStatus{QId=mechanicId,StartTime=0,Status=QuestStatusEnum.AvailableAfter,AvailableAfter=sideNow+86400,StatusTimers=[],CompletedConditions=[new MongoId()]};
+var mechanicSaved=new PmcData{Quests=[mechanicWait,new(){QId=mechanicPrior,StartTime=41,Status=QuestStatusEnum.Success,StatusTimers=new(){{QuestStatusEnum.Success,sideNow-60}}}]};
+string completedBefore=nativeJson.Serialize(mechanicWait.CompletedConditions)!;
+StoryRules.SkipWaits(mechanicSaved,sideTables,questConfig,sideNow);
+if(mechanicWait.Status!=QuestStatusEnum.AvailableForStart||mechanicWait.AvailableAfter!=0||mechanicWait.StartTime!=0||nativeJson.Serialize(mechanicWait.CompletedConditions)!=completedBefore||mechanicSaved.Quests[1].Status!=QuestStatusEnum.Success)throw new Exception("Mechanic expired wait did not unlock safely");
+string mechanicOnce=nativeJson.Serialize(mechanicSaved)!;if(StoryRules.SkipWaits(mechanicSaved,sideTables,questConfig,sideNow)!=0||nativeJson.Serialize(mechanicSaved)!=mechanicOnce)throw new Exception("Mechanic unlock is not idempotent");
+mechanicWait.Status=QuestStatusEnum.AvailableAfter;mechanicWait.AvailableAfter=sideNow-1;mechanicSaved.Quests[1].Status=QuestStatusEnum.Started;
+if(StoryRules.PromoteExpiredWaits(mechanicSaved,sideTables,[mechanicId],questConfig,sideNow)!=0||mechanicWait.Status!=QuestStatusEnum.AvailableAfter)throw new Exception("Unmet Mechanic predecessor bypassed");
+mechanicSaved.Quests[1].Status=QuestStatusEnum.Success;
+sideTables.Quests[mechanicId]=mechanicQuest with{Conditions=new(){AvailableForFinish=mechanicQuest.Conditions.AvailableForFinish,Fail=mechanicQuest.Conditions.Fail,AvailableForStart=[..mechanicQuest.Conditions.AvailableForStart,new(){Id=new MongoId(),DynamicLocale=false,ConditionType="UnknownNativeGate"}]}};
+if(StoryRules.PromoteExpiredWaits(mechanicSaved,sideTables,[mechanicId],questConfig,sideNow)!=0)throw new Exception("Unknown native gate bypassed");
+sideTables.Quests[mechanicId]=mechanicQuest;
+Console.WriteLine("PASS native Mechanic wait: unlocks acceptance only, preserves progress, rejects unmet/unknown gates, repeated skip is idempotent");

@@ -185,7 +185,7 @@ internal static class InterfaceMenu {
    var content=new Rect(window.x+236,window.y+99,window.width-260,window.height-123);
    if(contextKeys){HotkeyPage.Draw(content,category);return;}
    var pages=MenuSections.Pages(category);if(!pages.Contains(otherPage))otherPage=pages[0];string next=Tabs(content,pages,otherPage,out float tabsHeight);if(next!=otherPage)Navigate(category,next);content.y+=tabsHeight;content.height-=tabsHeight;
-   if(category=="剧情"){StoryPanel.Draw(content,otherPage);return;}if(category=="数据"&&otherPage!="角色管理"){CharacterDataPanel.Draw(content,otherPage);return;}if(category=="AI 工作台"){AiWorkspace.Draw(content,otherPage);return;}if(category=="玩具枪工具"){ToyDeveloper.DrawWorkspace(content,otherPage);return;}if(category=="战局与物资"&&otherPage=="活动控制"){SeasonalEventControls.Draw(content);return;}
+   if(category=="服务端"){ServerControlPanel.Draw(content,otherPage);return;}if(category=="剧情"){StoryPanel.Draw(content,otherPage);return;}if(category=="数据"&&otherPage!="角色管理"){CharacterDataPanel.Draw(content,otherPage);return;}if(category=="AI 工作台"){AiWorkspace.Draw(content,otherPage);return;}if(category=="玩具枪工具"){ToyDeveloper.DrawWorkspace(content,otherPage);return;}if(category=="战局与物资"&&otherPage=="活动控制"){SeasonalEventControls.Draw(content);return;}
    if(category=="战局与物资"&&otherPage=="地图模式"){EventRaidLauncher.Draw(content);return;}
    switch((category,otherPage)){
     case ("枪械编辑","枪械参数"):WeaponEditor.Draw(content);break;
