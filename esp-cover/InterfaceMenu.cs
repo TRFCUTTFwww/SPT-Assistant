@@ -29,6 +29,7 @@ internal static class InterfaceMenu {
  static readonly MenuInputGate inputGate=new();
  internal static bool Open=>inputGate.Open;
  internal static bool TeleportPage=>Open&&(category=="传送与导航"&&otherPage=="角色传送"||category=="AI 工作台"&&otherPage=="位置传送");
+ internal static bool LootDataPage=>TeleportPage||Open&&(category=="战局与物资"&&otherPage=="本局物资"||category=="传送与导航"&&otherPage=="路面导航");
  internal static void ShowTeleport(){Navigate(category=="AI 工作台"?"AI 工作台":"传送与导航",category=="AI 工作台"?"位置传送":"角色传送");}
  internal static bool CoordinatesPage=>Open&&category=="开发工具"&&otherPage=="坐标读取";
  internal static bool AiPage=>Open&&category=="AI 工作台";

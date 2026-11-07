@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using BepInEx.Configuration;
 using EFT;
@@ -55,8 +56,17 @@ internal static class RaidLoot {
  internal static void Tick(GameWorld? world,Player? player){try{
   if(!RaidClock.Active||world==null||player==null||!enabled.Value){if(worldPointer!=IntPtr.Zero)Reset();return;}
   if(worldPointer!=world.Pointer){Reset();worldPointer=world.Pointer;}
-  if(scanner==null&&Time.unscaledTime>=nextScan){pending.Clear();if(Time.unscaledTime>=nextContainerScan){containers=Object.FindObjectsOfType<LootableContainer>().ToArray();nextContainerScan=Time.unscaledTime+20;}scanner=Scan(world).GetEnumerator();}
-  if(scanner!=null){int budget=120;while(budget-->0){if(scanner.MoveNext()){pending.Add(scanner.Current);continue;}entries.Clear();entries.AddRange(pending);pending.Clear();scanner.Dispose();scanner=null;nextScan=Time.unscaledTime+3;if(selected.Length>0&&!entries.Any(e=>e.Key==selected)){selected="";RestoreTint();status="定位物品已被拿走或移出场景，已取消高亮。";}break;}}
+  // The full map inventory is needed by its pages and active trackers only.
+  // Keep navigation/selected-target refreshes running after the menu closes.
+  if(!InterfaceMenu.LootDataPage&&selected.Length==0&&!TrackNeeds&&!trackFilter&&trackedTemplates.Count==0)return;
+  if(scanner==null&&Time.unscaledTime>=nextScan){pending.Clear();if(Time.unscaledTime>=nextContainerScan){containers=Object.FindObjectsByType<LootableContainer>(FindObjectsSortMode.None).ToArray();nextContainerScan=Time.unscaledTime+20;}scanner=Scan(world).GetEnumerator();}
+  if(scanner!=null){int budget=120;long deadline=Stopwatch.GetTimestamp()+Stopwatch.Frequency/500;
+   while(budget-->0){
+    if(scanner.MoveNext()){pending.Add(scanner.Current);if(Stopwatch.GetTimestamp()>=deadline)break;continue;}
+    entries.Clear();entries.AddRange(pending);pending.Clear();scanner.Dispose();scanner=null;nextScan=Time.unscaledTime+3;
+    if(selected.Length>0&&!entries.Any(e=>e.Key==selected)){selected="";RestoreTint();status="定位物品已被拿走或移出场景，已取消高亮。";}break;
+   }
+  }
   var entry=entries.FirstOrDefault(e=>e.Key==selected);if(tintSelected.Value&&entry!=null)Tint(entry.Anchor);else RestoreTint();
  }catch(Exception e){scanner?.Dispose();scanner=null;pending.Clear();nextScan=Time.unscaledTime+5;Warn(e);}}
  static IEnumerable<Entry> Scan(GameWorld world){

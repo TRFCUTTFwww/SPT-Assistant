@@ -1553,6 +1553,7 @@
   "路线已规划": "Route planned",
   " · 路程 ": " · Route distance ",
   " · 偏离路线，正在重算": " · Off route; recalculating",
+  "偏离路线，正在重算": "Off route; recalculating",
   "寻路暂不可用：": "Navigation temporarily unavailable: ",
   "路线在特殊连接前停止，请手动通过。": "The route stops before a special connection. Cross it manually.",
   "只能找到部分路线，末端需自行寻找通道。": "Only a partial route was found. Find a passage from its endpoint manually.",

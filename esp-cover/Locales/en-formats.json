@@ -467,6 +467,7 @@
   "子弹替换已关闭 · {0}": "Ammunition replacement disabled · {0}",
   "后座 / {0}": "Recoil / {0}",
   "瞄准 / {0}": "Aim / {0}",
+  "偏离路线，正在重算 · {0}": "Off route; recalculating · {0}",
   "{0}\n{1}\n当前无后座已开启，会覆盖实际后座表现。": "{0}\n{1}\nNo recoil is currently enabled and overrides actual recoil behavior.",
   "  | PMC {0}（USEC {1} / BEAR {2})\n各阵营：": "  | PMC {0} (USEC {1} / BEAR {2})\nFactions:"
 }

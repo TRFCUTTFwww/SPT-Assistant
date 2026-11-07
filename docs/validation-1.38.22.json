@@ -1,0 +1,43 @@
+{
+    "version":  "1.38.22",
+    "utc":  "2026-11-07T06:02:31.0276711Z",
+    "clientBuilds":  {
+                         "48558":  {
+                                       "errors":  0,
+                                       "existingWarnings":  2
+                                   },
+                         "47888":  {
+                                       "errors":  0,
+                                       "existingWarnings":  2
+                                   }
+                     },
+    "tests":  {
+                  "probe":  "passed",
+                  "projection":  "TAA offsets, asymmetric lens, stale FOV, invalid matrices and orthographic isolation",
+                  "probeGroups":  89,
+                  "diffWhitespace":  "passed"
+              },
+    "deployment":  {
+                       "clientDeployedSha256":  "9DA9C2C7D47658DE5B0F20FD68AFFB9B98405CE7FD33874171B248C54B0825D9",
+                       "clientGeneration":  17,
+                       "clientBuildSha256":  "9DA9C2C7D47658DE5B0F20FD68AFFB9B98405CE7FD33874171B248C54B0825D9",
+                       "clientLoadedSha256":  "9DA9C2C7D47658DE5B0F20FD68AFFB9B98405CE7FD33874171B248C54B0825D9",
+                       "clientReady":  true,
+                       "backup":  "D:/SPT-5.0.0-48558/mod-backups/assistant-before-1.38.22-20261107-134705"
+                   },
+    "runtimeEvidence":  {
+                            "candidateAverageMs":  {
+                                                       "gui":  "1.651-1.846",
+                                                       "late":  "0.730-0.948",
+                                                       "update":  "0.416-0.497"
+                                                   },
+                            "candidateFrames":  [
+                                                    797,
+                                                    722
+                                                ],
+                            "stableProjection":  "FPS Camera nonJittered=True; varying sampling offsets removed at 1920x1080",
+                            "remainingPeakMs":  "114-185",
+                            "peakAttribution":  "Candidate combined exit and navigation updates; final build splits these counters. These samples do not establish an FPS improvement."
+                        },
+    "gameAcceptance":  "User must verify text/box stability and frame pacing in game. Offline checks and successful live reload do not prove visual correctness or complete hitch removal."
+}

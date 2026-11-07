@@ -183,7 +183,7 @@ internal static class ExfilDisplay {
   try{
    if(Time.unscaledTime>=nextSwitchScan){
     nextSwitchScan=Time.unscaledTime+20f;linkedSwitches.Clear();
-    foreach(var candidate in UnityEngine.Object.FindObjectsOfType<Switch>()){
+    foreach(var candidate in UnityEngine.Object.FindObjectsByType<Switch>(FindObjectsSortMode.None)){
      try{
       var point=candidate?.ExfiltrationPoint;if(point==null)continue;
       if(!linkedSwitches.TryGetValue(point.Pointer,out var list))linkedSwitches[point.Pointer]=list=new List<Switch>();

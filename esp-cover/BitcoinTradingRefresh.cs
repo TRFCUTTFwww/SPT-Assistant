@@ -16,6 +16,7 @@ internal static class BitcoinTradingRefresh {
  sealed record Cache(SupplyData Supply,double Original);
  static readonly Dictionary<IntPtr,Cache> caches=new();
  static TraderDealScreen? screen;static IntPtr sessionPointer;static double? displayed;
+ static TarkovApplication? application;
  static bool dirty=true;static float nextError;static int changedCaches,changedViews,refreshes;
  static DateTime lastRefresh;
  internal static bool Busy=>screen!=null&&screen.gameObject.activeInHierarchy&&screen._trader?.CurrentAssortment?.TransactionInProgress==true;
@@ -27,9 +28,9 @@ internal static class BitcoinTradingRefresh {
  static void Opened(TraderDealScreen __instance){screen=__instance;dirty=true;BitcoinControl.RequestRefresh();}
  static void Closed(TraderDealScreen __instance){if(screen!=null&&screen.Pointer==__instance.Pointer){screen=null;dirty=true;}}
  internal static void Tick(double? target,double? original){try{
-  if(Busy)return;
-  var app=Singleton<TarkovApplication>.Instance??Singleton<AbstractApplication>.Instance?.TryCast<TarkovApplication>()??UnityEngine.Object.FindObjectOfType<TarkovApplication>();
-  var session=app?.GetClientBackEndSession()?.TryCast<ITradingSession>();if(session==null)return;
+  if(RaidClock.Active||Busy)return;
+  if(application==null)application=Singleton<TarkovApplication>.Instance??Singleton<AbstractApplication>.Instance?.TryCast<TarkovApplication>()??UnityEngine.Object.FindObjectOfType<TarkovApplication>();
+  var session=application?.GetClientBackEndSession()?.TryCast<ITradingSession>();if(session==null)return;
   if(sessionPointer!=session.Pointer){Restore();sessionPointer=session.Pointer;dirty=true;}
   bool changed=false;changedCaches=0;
   foreach(var trader in session.Traders){
@@ -63,5 +64,5 @@ internal static class BitcoinTradingRefresh {
  }catch(Exception e){dirty=true;if(Time.unscaledTime>=nextError){nextError=Time.unscaledTime+15;Plugin.Self.Log.LogWarning("BTC trading refresh: "+e);}}}
  internal static object Diagnostics()=>new{trackedCaches=caches.Count,changedCaches,changedViews,refreshes,lastRefresh,screenActive=screen!=null&&screen.gameObject.activeInHierarchy,trader=screen?._trader?.Id,displayedBase=displayed};
  static void Restore(){foreach(var saved in caches.Values)try{var prices=saved.Supply?.MarketPrices;if(prices!=null&&prices.ContainsKey(BitcoinRules.Template))prices[BitcoinRules.Template]=saved.Original;}catch{}caches.Clear();}
- internal static void Reset(){Restore();screen=null;sessionPointer=IntPtr.Zero;displayed=null;dirty=true;}
+ internal static void Reset(){Restore();screen=null;application=null;sessionPointer=IntPtr.Zero;displayed=null;dirty=true;}
 }
