@@ -1,6 +1,6 @@
 ﻿{
     "version":  "1.38.21",
-    "utc":  "2026-11-07T05:41:08.7712874Z",
+    "utc":  "2026-11-07T05:42:20.0365267Z",
     "clientBuilds":  {
                          "48558":  {
                                        "errors":  0,
@@ -20,15 +20,15 @@
                   "liveSaveBytesUnchangedByTests":  true
               },
     "deployment":  {
-                       "clientGeneration":  11,
+                       "clientGeneration":  12,
                        "serverSha256":  "5A7A562BB87FC25BFB05139C70B4EDF302B64BA568A2564507079853F1638A66",
                        "serverGeneration":  3,
                        "backup":  "D:/SPT-5.0.0-48558/mod-backups/assistant-before-1.38.21-20261107-133035",
-                       "clientLoadedSha256":  "8B7E6E91B857C79981CCC577A902699633775A08FEEC2FD10C508C394088965F",
+                       "clientLoadedSha256":  "B90962FA8657C836023C6E7345458B1A0BD567427BDDE135D750857ADA981A60",
                        "clientReady":  true,
                        "serverReady":  true,
                        "clientDeployedSha256":  "B90962FA8657C836023C6E7345458B1A0BD567427BDDE135D750857ADA981A60",
-                       "finalClientLoaded":  false
+                       "finalClientLoaded":  true
                    },
     "gameAcceptance":  "Live logs/profile confirmed the reported quest was accepted/completed at 13:31, after its original timer expired. This does not isolate the fix. Template synchronization completed on candidate build at 05:35 UTC. Final UI acceptance and a newly skipped delay require user verification."
 }
