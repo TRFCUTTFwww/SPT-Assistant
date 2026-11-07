@@ -1,4 +1,11 @@
 {
+  "全部配置": "All settings",
+  "物资与 AI 刷新": "Loot and AI spawns",
+  "打开物资与 AI 刷新规则": "Open loot and AI spawn rules",
+  "配置参数保存后需重启服务端；重载管理模块只更新辅助功能。": "Saved configuration requires a server restart. Reloading the admin module only updates assistant features.",
+  "管理模块已重载；磁盘配置仍需重启服务端生效。": "Admin module reloaded. Saved configuration still requires a server restart.",
+  "搜索全部分类的配置名称或说明…": "Search names and descriptions across all categories…",
+  "没有匹配的配置；请清空搜索或切换分类。": "No matching settings. Clear the search or choose another category.",
   "暂停游戏时间（昼夜）": "Pause game time (day / night)",
   "固定当前游戏时刻，优先于系统时钟同步和自定义流速；不暂停战局倒计时。恢复后继续使用之前的时间设置。": "Holds the current game time, taking precedence over system clock synchronization and custom speed. The raid countdown continues. Resuming restores the selected time settings.",
   "使用电脑本地时间，按真实一秒一秒推进。暂停游戏时间时暂缓同步，恢复后重新对齐系统时间。\n不会改变本局剩余时间。": "Uses the computer's local time and advances one real second at a time. Synchronization is suspended while game time is paused and resumes on unpause.\nDoes not change the raid's remaining time.",

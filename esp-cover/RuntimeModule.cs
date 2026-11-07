@@ -6,7 +6,7 @@ public sealed class RuntimeModule:IRuntimeModule {
  Plugin? plugin;
  Overlay? overlay;
  public int ApiVersion=>1;
- internal const string ReleaseVersion="1.38.29";
+ internal const string ReleaseVersion="1.38.30";
  public string Version=>ReleaseVersion;
  // Optional methods are discovered by the 1.5 host. API 1 still loads on older
  // hosts, allowing the core to be installed before the one-time host restart.
@@ -15,6 +15,7 @@ public sealed class RuntimeModule:IRuntimeModule {
  public void Initialize(IHostServices host){foreach(var step in InitializeSteps(host))step();}
  public IEnumerable<Action> InitializeSteps(IHostServices host){
   yield return ()=>{FeatureRetirement.Apply(host.Config,host.PluginDirectory,host.Log);plugin=new Plugin(host);};
+  yield return ()=>PlayerVisualGuard.Initialize(plugin!);
   foreach(var step in plugin!.LoadSteps())yield return step;
   yield return ()=>InterfaceMenu.Initialize(plugin);
   yield return PerformanceHud.Initialize;

@@ -21,14 +21,13 @@ internal static class AiWorkspace {
   switch(page){
    case "AI 列表":AiTestControl.DrawWorkspace(rect,0);break;
    case "生成 AI":AiTestControl.DrawWorkspace(rect,1);break;case "换武器":AiSceneEquipment.Draw(rect);break;
-   case "全局控制":AiTestControl.DrawWorkspace(rect,2);break;
+   case "全局控制":if(InterfaceMenu.Button(new Rect(rect.x,rect.y,rect.width,32),"打开物资与 AI 刷新规则"))InterfaceMenu.Navigate("战局与物资","刷新规则");AiTestControl.DrawWorkspace(new Rect(rect.x,rect.y+44,rect.width,Math.Max(40,rect.height-44)),2);break;
    case "动作与路线":actionPage=InterfaceMenu.Tabs(rect,new[]{"导演动作","模型动作锁定"},actionPage,out float actionHeight);var actionsRect=new Rect(rect.x,rect.y+actionHeight,rect.width,Math.Max(70,rect.height-actionHeight));if(actionPage=="导演动作")AiSceneDirector.Draw(actionsRect);else ModelPoseLock.DrawAi(actionsRect);break;
    case "装备与 Buff":DrawEquipment(rect,selected,fingerprint);break;
    case "位置传送":if(fingerprint!=teleportSelection){teleportSelection=fingerprint;if(Singleton<GameWorld>.Instance is {} current)TeleportControl.SetAiSources(current,selected);}TeleportControl.Draw(rect);break;
    case "AI 模板":SceneTemplates.Draw(rect);break;
    case "地图场景":SceneTemplates.Draw(rect,true);break;
    case "尸体清理":CorpseCleanup.Draw(rect);break;
-   case "刷新规则":NextRaidLoot.Draw(rect);break;
   }
  }
  static void DrawEquipment(Rect rect,Player[] selected,string fingerprint){

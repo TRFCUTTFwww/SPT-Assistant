@@ -41,7 +41,7 @@ internal static class EntertainmentControl {
   ModelPoseLock.Initialize();
   plugin.Patches.Patch(AccessTools.Method(typeof(PlayerCameraController),"LateUpdate"),prefix:new HarmonyMethod(typeof(EntertainmentControl),nameof(BeforeCamera)),postfix:new HarmonyMethod(typeof(EntertainmentControl),nameof(AfterCamera)));
   plugin.Patches.Patch(AccessTools.Method(typeof(Player),"ComplexLateUpdate"),prefix:new HarmonyMethod(typeof(EntertainmentControl),nameof(BeforeVisual)),postfix:new HarmonyMethod(typeof(EntertainmentControl),nameof(AfterVisual)));
-  plugin.Patches.Patch(AccessTools.Method(typeof(Player),"VisualPass"),prefix:new HarmonyMethod(typeof(EntertainmentControl),nameof(BeforeVisual)),postfix:new HarmonyMethod(typeof(EntertainmentControl),nameof(AfterVisual)));
+  plugin.Patches.Patch(AccessTools.Method(typeof(Player),"VisualPass"),prefix:new HarmonyMethod(typeof(EntertainmentControl),nameof(BeforeVisualPass)),postfix:new HarmonyMethod(typeof(EntertainmentControl),nameof(AfterVisualPass)));
   plugin.Patches.Patch(AccessTools.Method(typeof(Player),"ComplexUpdate"),prefix:new HarmonyMethod(typeof(EntertainmentControl),nameof(BeforeVisual)));
   plugin.Patches.Patch(AccessTools.Method(typeof(Player),"ManualUpdate"),prefix:new HarmonyMethod(typeof(EntertainmentControl),nameof(BeforeVisual)));
   renderCallback=DelegateSupport.ConvertDelegate<Camera.CameraCallback>(new Action<Camera>(BeforeRender));Camera.onPreCull+=renderCallback;
@@ -111,6 +111,8 @@ internal static class EntertainmentControl {
   if(Time.unscaledTime>=nextViewLog){nextViewLog=Time.unscaledTime+20;Plugin.Self.Log.LogInfo($"Third-person render position: headDistance={Vector3.Distance(position,head!=null?head.position:owner.Position):F2}m, wallFallback={nearWall}, ownCollidersIgnored={ignored}");}
  }
  static void BeforeVisual(Player __instance){ModelPoseLock.Restore(__instance);if(Local(__instance))RestorePose();}
+ static bool BeforeVisualPass(Player __instance,out bool __state){__state=PlayerVisualGuard.Ready(__instance);if(__state)BeforeVisual(__instance);return __state;}
+ static void AfterVisualPass(Player __instance,bool __state){if(__state)AfterVisual(__instance);}
  static void AfterVisual(Player __instance){try{if(Local(__instance))ApplyPose();ModelPoseLock.Apply(__instance);}catch(Exception error){Warn(error);}}
  static void ApplyPose(){
   RestorePose();if((!jitter.Value&&!lookDown.Value&&!spin.Value)||owner==null||!Local(owner)||ModelPoseLock.Locked(owner))return;

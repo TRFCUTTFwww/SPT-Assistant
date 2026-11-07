@@ -17,6 +17,7 @@ internal static class ProfileAdminPanel {
  static bool requested,ready;
  static string tab="藏身处",status="",mode="once",source="pmc",activeSlot="FirstPrimaryWeapon",search="";
  static Vector2 scroll,itemScroll;
+ internal static void OpenScav(){tab="Scav 装备";scroll=itemScroll=Vector2.zero;}
  static async Task<string> Call(Dictionary<string,object?> payload){
   try{
    using var capability=JsonDocument.Parse(await RequestHandler.PostJsonAsync("/local/gear/status","{}"));

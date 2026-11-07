@@ -69,7 +69,10 @@ internal static class QuestWaitSync {
    var controller=pendingController;var completed=templates;templates=null;pendingController=null;
    if(controller==null||Controller()?.Pointer!=controller.Pointer||controller.InRaid)return;
    var incoming=completed.GetAwaiter().GetResult().ToArray();int before=controller.Quests.Count;
-   controller.TryAddNewQuestsByTemplate(incoming);
+   // Refresh only missing native quest objects; replaying templates for existing
+   // quests can reach the native duplicate-registration error after a reload.
+   var missing=incoming.GroupBy(t=>t.Id.ToString()).Select(g=>g.First()).Where(t=>controller.Quests.GetConditional(t.Id)==null).ToArray();
+   if(missing.Length>0)controller.TryAddNewQuestsByTemplate(missing);
    var expired=new List<object>();long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
    foreach(var data in controller.Profile.QuestsData){var quest=data.Quest;if(quest==null||!waitingIds.Contains(data.Id)||quest.QuestStatus!=EQuestStatus.AvailableAfter||data.AvailableAfter<=0||data.AvailableAfter>now)continue;
     quest.CheckForStatusChange(false,false,true);
@@ -77,7 +80,7 @@ internal static class QuestWaitSync {
    }
    notice="原生任务列表已刷新，请重新打开商人任务页。";
    var waiting=waitingIds.Select(id=>{var saved=controller.Profile.QuestsData.FirstOrDefault(q=>q.Id==id);var quest=controller.Quests.GetConditional(id);return new{id,profileState=saved?.Status.ToString(),profileAfter=saved?.AvailableAfter,questState=quest?.QuestStatus.ToString(),visible=quest?.IsVisible,hasTemplate=incoming.Any(t=>t.Id==id),timers=quest?.StatusStartTimestamps==null?"":string.Join(",",quest.StatusStartTimestamps.Select(p=>p.Key+":"+p.Value))};}).ToArray();
-   var report=new{utc=DateTime.UtcNow,profileId=controller.Profile.Id,templates=incoming.Length,before,after=controller.Quests.Count,expired,waiting};
+   var report=new{utc=DateTime.UtcNow,profileId=controller.Profile.Id,templates=incoming.Length,missing=missing.Length,before,after=controller.Quests.Count,expired,waiting};
    File.WriteAllText(Path.Combine(BepInEx.Paths.PluginPath,"LocalSpt5ESP","runtime","quest-wait-sync.json"),JsonSerializer.Serialize(report));
    Plugin.Self.Log.LogInfo("Quest wait sync complete: "+JsonSerializer.Serialize(report));
   }

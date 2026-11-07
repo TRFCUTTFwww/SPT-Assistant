@@ -27,6 +27,7 @@ internal static class EventRaidDiagnostics {
   else if(action=="server-controls-state"){if(serverTask!=null)throw new InvalidOperationException("Server check already running");serverTask=ServerControlPanel.Diagnostics();}
   else if(action=="hideout-craft-state")Write("hideout-craft-state",HideoutCraftControl.Diagnostics());
   else if(action=="coordinates-state")Write("coordinates-state",CoordinateReader.Diagnostics());
+  else if(action=="visual-lifecycle-state")Write("visual-lifecycle-state",PlayerVisualGuard.Diagnostics());
   else if(action=="passcode-override-check")Write("passcode-override-check",PasscodeHints.CheckOverrideScopes());
   else if(action=="passcode-hint-state")Write("passcode-hint-state",PasscodeHints.Diagnostics());
 #if EFT_48558

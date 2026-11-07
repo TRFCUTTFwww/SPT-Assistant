@@ -634,7 +634,8 @@ var catalogRoles=AiSpawnCatalog.Options.Select(o=>o.Role).ToHashSet(StringCompar
 var enumRoles=assembly.MainModule.GetTypes().Single(t=>t.Name=="WildSpawnType").Fields.Where(f=>f.HasConstant).Select(f=>f.Name).ToArray();
 Assert(AiSpawnCatalog.Options.Length==catalogRoles.Count&&enumRoles.All(catalogRoles.Contains),"every native AI role has one catalog entry, including explicitly unsupported aliases");
 foreach(var option in AiSpawnCatalog.Options.Where(o=>!o.Enabled))Assert(option.Unavailable.Length>10,"unavailable AI has an actionable reason: "+option.Role);
-Assert(MenuSections.Pages("服务端").SequenceEqual(new[]{"配置参数","业力","Scav 装备","刷新规则"}),"server sidebar exposes settings, separate karma controls, Scav equipment and generation rules");
+Assert(MenuSections.Pages("服务端").SequenceEqual(new[]{"配置参数","业力"})&&!MenuSections.Pages("AI 工作台").Contains("刷新规则")&&MenuSections.Names.Count(n=>MenuSections.Pages(n).Contains("刷新规则"))==1&&MenuSections.Pages("战局与物资").Contains("刷新规则"),"server settings and karma remain editable; generation has one canonical workspace");
+Check("Player","get_Destroyed",0);Check("Player","get_PlayerBones",0);Check("Player","get_MovementContext",0);Check("Player","VisualPass",0);
 Assert(ServerEditRules.Number("0.25",0,1)==.25&&ServerEditRules.Number("2147483647",0,int.MaxValue,true)==int.MaxValue,"server editor retains double precision and exact Int32 time limits");
 foreach(string invalidValue in new[]{"NaN","Infinity","-0.5","2.2"})Reject(()=>ServerEditRules.Number(invalidValue,-1,10,true,true),"invalid server editor number");
 Console.WriteLine("PASS complete AI role catalog, unavailable-role reasons, server sidebar routing and precise numeric editor boundaries");
