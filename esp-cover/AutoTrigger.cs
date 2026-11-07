@@ -35,7 +35,7 @@ internal static class AutoTrigger {
  static void ReleaseOwned(){var previous=owned;owned=null;if(previous==null||Manual)return;try{driving=true;previous.SetTriggerPressed(false);}catch{}finally{driving=false;}}
  static void Yield(string reason){status=reason;pulse.Reset();gate.Ready("",Time.unscaledTime,0,1);ReleaseOwned();}
  internal static void Reset(){ReleaseOwned();pulse.Reset();gate.Reset();world=drivenController=IntPtr.Zero;drivenFrame=manualFrame=-1;requestedWeapon="";}
- static bool Ally(Player target,Player local){var bot=target.AIData?.BotOwner;if(bot==null)return false;var rule=AiActorControl.Relation(bot,local);if(rule.HasValue)return !rule.Value;if(AiActorControl.Ignored(bot,local))return true;var group=bot.BotsGroup;return group!=null&&(group.Pointer==AiTeamControl.Group(local)?.Pointer||group.Allies.ContainsKey(local));}
+ static bool Ally(Player target,Player local){var bot=target.AIData?.BotOwner;if(bot==null)return false;var rule=AiActorControl.Relation(bot,local);if(rule.HasValue)return !rule.Value;if(AiActorControl.Ignored(bot,local))return true;var group=bot.BotsGroup;return group!=null&&(group.Pointer==NativeAiGroups.Group(local)?.Pointer||group.Allies.ContainsKey(local));}
  [HarmonyPriority(Priority.First)]
  static void MergeInput(Player.FirearmController __instance,ref bool __0){
   if(driving||!Local(__instance))return;if(ToyFireControl.MergeInput(__instance,ref __0))return;

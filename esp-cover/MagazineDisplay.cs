@@ -78,7 +78,7 @@ internal static class MagazineDisplay {
   var old=GUI.color;
   try{
    InterfaceMenu.Panel(panel);
-   for(int i=0;i<lines.Count;i++){GUI.color=InterfaceMenu.Tint(lines[i].Color);GUI.Label(new Rect(x+8,y+5+i*line,width-16,line),lines[i].Text,style);}
+   for(int i=0;i<lines.Count;i++){GUI.color=InterfaceMenu.Tint(lines[i].Color);GUI.Label(new Rect(x+8,y+5+i*line,width-16,line),I18n.Text(lines[i].Text),style);}
   }finally{GUI.color=old;}
  }
  static void Warn(Exception error){if(Time.unscaledTime<nextError)return;nextError=Time.unscaledTime+20;Plugin.Self.Error(error);}

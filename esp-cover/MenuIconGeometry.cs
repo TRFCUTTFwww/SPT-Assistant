@@ -16,7 +16,6 @@ internal static class MenuIconGeometry {
    case "射击":Circle(16,16,9);Line(16,2,16,10);Line(16,22,16,30);Line(2,16,10,16);Line(22,16,30,16);break;
    case "枪械":Line(3,12,24,12);Line(24,12,24,18);Line(24,18,14,18);Line(14,18,11,27);Line(11,27,6,27);Line(6,27,8,18);Line(8,18,3,18);Line(3,18,3,12);Line(24,14,30,14);Line(17,18,17,23);break;
    case "人物":Circle(16,9,4.8f);Curve(6,28,6,15,26,15,26,28);break;
-   case "队友":Circle(16,8,4);Circle(5,13,3);Circle(27,13,3);Curve(8,29,8,16,24,16,24,29);Curve(1,28,1,19,7,19,9,22);Curve(31,28,31,19,25,19,23,22);break;
    case "娱乐":Curve(4,11,1,30,10,31,14,23);Curve(28,11,31,30,22,31,18,23);Line(4,11,28,11);Line(14,23,18,23);Line(7,17,13,17);Line(10,14,10,20);Circle(22,16,1.5f);Circle(25,20,1.5f);break;
    case "视觉":Curve(3,16,10,4,22,4,29,16);Curve(3,16,10,28,22,28,29,16);Circle(16,16,4.2f);break;
    case "战局":Line(5,5,27,5);Line(27,5,27,27);Line(27,27,5,27);Line(5,27,5,5);Circle(16,16,6);Line(16,8,16,13);Line(16,19,16,24);Line(8,16,13,16);Line(19,16,24,16);break;

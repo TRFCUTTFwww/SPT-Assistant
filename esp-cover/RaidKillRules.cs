@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 namespace LocalSpt5Esp;
-internal sealed record RaidKillNotice(string Victim,string Killer,string VictimName,string KillerName,string Detail,bool VictimTeammate,bool KillerTeammate,bool PlayerRelated,bool Known,double Time);
+internal sealed record RaidKillNotice(string Victim,string Killer,string VictimName,string KillerName,string Detail,bool PlayerRelated,bool Known,double Time);
 internal sealed class RaidKillBuffer {
  readonly Dictionary<string,RaidKillNotice> pending=new(StringComparer.Ordinal);readonly HashSet<string> seen=new(StringComparer.Ordinal),known=new(StringComparer.Ordinal);internal readonly List<RaidKillNotice> Entries=new();
  internal void Clear(){pending.Clear();seen.Clear();known.Clear();Entries.Clear();}

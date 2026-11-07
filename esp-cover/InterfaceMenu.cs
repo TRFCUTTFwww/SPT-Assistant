@@ -133,16 +133,19 @@ internal static class InterfaceMenu {
   field.normal.background=null;field.focused.background=null;field.hover.background=null;field.active.background=null;
  }
  static void Fill(Rect rect,Color color){if(Event.current.type!=EventType.Repaint)return;var old=GUI.color;GUI.color=color;GUI.DrawTexture(rect,Texture2D.whiteTexture);GUI.color=old;}
- internal static void Label(Rect rect,string value,Color? color=null,int size=14){Styles();var old=GUI.color;GUI.color=color??Text;label!.fontSize=size;GUI.Label(rect,value,label);GUI.color=old;}
- internal static bool Button(Rect rect,string value,bool selected=false){
+ internal static void Label(Rect rect,string value,Color? color=null,int size=14){value=I18n.Text(value);Styles();var old=GUI.color;GUI.color=color??Text;label!.fontSize=size;label.wordWrap=I18n.English&&rect.height>=30;
+  if(I18n.English){var content=new GUIContent(value);while(label.fontSize>10&&(label.wordWrap?label.CalcHeight(content,Math.Max(1,rect.width))>rect.height:label.CalcSize(content).x>rect.width))label.fontSize--;}
+  GUI.Label(rect,value,label);GUI.color=old;}
+ internal static bool Button(Rect rect,string value,bool selected=false){value=I18n.Text(value);
   Styles();Surface(rect,selected?new Color(Accent.r,Accent.g,Accent.b,.19f):new Color(1,1,1,rect.Contains(Event.current.mousePosition)?.10f:.055f),7);
-  var old=GUI.color;GUI.color=selected?Accent:Text;bool clicked=GUI.Button(rect,value,button);GUI.color=old;return clicked;
+  var old=GUI.color;GUI.color=selected?Accent:Text;button!.wordWrap=I18n.English;button.fontSize=14;if(I18n.English){var content=new GUIContent(value);while(button.fontSize>10&&button.CalcHeight(content,Math.Max(1,rect.width))>rect.height)button.fontSize--;}
+  bool clicked=GUI.Button(rect,value,button);GUI.color=old;return clicked;
  }
  internal static string Field(Rect rect,string value){Styles();Surface(rect,Color.Lerp(Background,Text,.085f),6);var old=GUI.color;GUI.color=Text;var result=GUI.TextField(rect,value,field);GUI.color=old;return result;}
- internal static float ButtonHeight(string value,float width,float minimum=44){Styles();return Math.Max(minimum,wrappedButton!.CalcHeight(new GUIContent(value),Math.Max(1,width)));}
- internal static float ParagraphHeight(string value,float width,int size=14){Styles();wrappedLabel!.fontSize=size;return wrappedLabel.CalcHeight(new GUIContent(value),Math.Max(1,width));}
- internal static void Paragraph(Rect rect,string value,Color? color=null,int size=14){Styles();wrappedLabel!.fontSize=size;var old=GUI.color;GUI.color=color??Text;GUI.Label(rect,value,wrappedLabel);GUI.color=old;}
- internal static bool WrappedButton(Rect rect,string value,bool selected=false){Styles();Fill(rect,selected?new Color(Accent.r,Accent.g,Accent.b,.24f):new Color(1,1,1,rect.Contains(Event.current.mousePosition)?.1f:.045f));var old=GUI.color;GUI.color=selected?Accent:Text;bool clicked=GUI.Button(rect,value,wrappedButton);GUI.color=old;return clicked;}
+ internal static float ButtonHeight(string value,float width,float minimum=44){value=I18n.Text(value);Styles();return Math.Max(minimum,wrappedButton!.CalcHeight(new GUIContent(I18n.Text(value)),Math.Max(1,width)));}
+ internal static float ParagraphHeight(string value,float width,int size=14){value=I18n.Text(value);Styles();wrappedLabel!.fontSize=size;return wrappedLabel.CalcHeight(new GUIContent(I18n.Text(value)),Math.Max(1,width));}
+ internal static void Paragraph(Rect rect,string value,Color? color=null,int size=14){value=I18n.Text(value);Styles();wrappedLabel!.fontSize=size;var old=GUI.color;GUI.color=color??Text;GUI.Label(rect,I18n.Text(value),wrappedLabel);GUI.color=old;}
+ internal static bool WrappedButton(Rect rect,string value,bool selected=false){value=I18n.Text(value);Styles();Fill(rect,selected?new Color(Accent.r,Accent.g,Accent.b,.24f):new Color(1,1,1,rect.Contains(Event.current.mousePosition)?.1f:.045f));var old=GUI.color;GUI.color=selected?Accent:Text;bool clicked=GUI.Button(rect,I18n.Text(value),wrappedButton);GUI.color=old;return clicked;}
  static float Slider(Rect rect,float value,float min,float max){
   var old=GUI.color;GUI.color=Accent;value=GUI.HorizontalSlider(rect,value,min,max);GUI.color=old;return value;
  }
@@ -158,15 +161,15 @@ internal static class InterfaceMenu {
    if(editing){DrawLayout();return;}float width=Math.Min(1320,Screen.width-32),height=Math.Min(900,Screen.height-32);if(window.width!=width||window.height!=height)window=new Rect((Screen.width-width)/2,(Screen.height-height)/2,width,height);
    var e=Event.current;var header=new Rect(window.x,window.y,window.width-250,74);if(e.type==EventType.MouseDown&&e.button==0&&header.Contains(e.mousePosition)){windowDrag=true;dragOffset=e.mousePosition-window.position;e.Use();}if(e.type==EventType.MouseDrag&&windowDrag){window.position=e.mousePosition-dragOffset;window.x=Math.Clamp(window.x,0,Math.Max(0,Screen.width-window.width));window.y=Math.Clamp(window.y,0,Math.Max(0,Screen.height-window.height));e.Use();}if(e.type==EventType.MouseUp)windowDrag=false;
    Panel(window);Surface(new Rect(window.x+10,window.y+10,202,window.height-20),Color.Lerp(Background,Color.black,.18f),10);Surface(new Rect(window.x+28,window.y+28,34,34),new Color(Accent.r,Accent.g,Accent.b,.14f),9);MenuIcons.Draw(new Rect(window.x+34,window.y+34,22,22),"战局",Accent);Label(new Rect(window.x+68,window.y+22,132,28),"SPT Assistant",Text,15);Label(new Rect(window.x+73,window.y+49,122,19),"控制中心  /  "+RuntimeModule.ReleaseVersion,Color.Lerp(Text,Background,.5f),11);
-   if(Button(new Rect(window.xMax-70,window.y+20,48,30),"关闭")){SetOpen(false);return;}if(Button(new Rect(window.xMax-224,window.y+20,68,30),"布局")){editing=true;drag="";}if(Button(new Rect(window.xMax-148,window.y+20,68,30),contextKeys?"返回":"热键"))contextKeys=!contextKeys;
-   Label(new Rect(window.x+236,window.y+18,Math.Max(100,window.width-500),31),MenuSections.DisplayName(category),Text,23);Label(new Rect(window.x+236,window.y+53,window.width-480,22),MenuSections.Subtitle(category),Color.Lerp(Text,Background,.4f),12);
+   if(Button(new Rect(window.xMax-224,window.y+55,202,27),I18n.English?"English · 中文":"中文 · English"))I18n.Toggle();if(Button(new Rect(window.xMax-70,window.y+20,48,30),"关闭")){SetOpen(false);return;}if(Button(new Rect(window.xMax-224,window.y+20,68,30),"布局")){editing=true;drag="";}if(Button(new Rect(window.xMax-148,window.y+20,68,30),contextKeys?"返回":"热键"))contextKeys=!contextKeys;
+   Label(new Rect(window.x+236,window.y+18,Math.Max(100,window.width-500),31),MenuSections.DisplayName(category),Text,23);Label(new Rect(window.x+236,window.y+53,window.width-490,22),MenuSections.Subtitle(category),Color.Lerp(Text,Background,.4f),12);
    var sidebar=new Rect(window.x+22,window.y+100,184,Math.Max(140,window.height-210));sidebarScroll.x=0;float sideWidth=sidebar.width-8;sidebarScroll=GUI.BeginScrollView(sidebar,sidebarScroll,new Rect(0,0,sideWidth,MenuSections.Names.Length*49+84),false,false,GUIStyle.none,GUIStyle.none);sidebarScroll.x=0;
    float sideY=0;string lastLane="";
    foreach(string name in MenuSections.Names){string lane=MenuSections.Lane(name);if(lane!=lastLane){Label(new Rect(8,sideY,sideWidth-16,22),lane,Color.Lerp(Accent,Text,.4f),11);sideY+=28;lastLane=lane;}var row=new Rect(0,sideY,sideWidth-4,41);sideY+=49;if(Button(row,"",category==name))Navigate(name);if(category==name)Surface(new Rect(row.x+1,row.y+10,3,21),Accent,1);MenuIcons.Draw(new Rect(row.x+12,row.y+10,21,21),name,category==name?Accent:Color.Lerp(Text,Background,.35f));Label(new Rect(row.x+43,row.y,row.width-46,row.height),MenuSections.DisplayName(name),category==name?Accent:Text,14);}GUI.EndScrollView();Label(new Rect(window.x+30,window.yMax-82,165,22),RaidClock.Active?"●  战局进行中":"●  待命",RaidClock.Active?Accent:Color.Lerp(Text,Background,.4f),12);Label(new Rect(window.x+30,window.yMax-52,165,22),"右 Shift 开关菜单",Color.Lerp(Text,Background,.5f),11);
    var content=new Rect(window.x+236,window.y+99,window.width-260,window.height-123);
    if(contextKeys){HotkeyPage.Draw(content,category);return;}
    var pages=MenuSections.Pages(category);if(!pages.Contains(otherPage))otherPage=pages[0];string next=Tabs(content,pages,otherPage,out float tabsHeight);if(next!=otherPage)Navigate(category,next);content.y+=tabsHeight;content.height-=tabsHeight;
-   if(category=="剧情"){StoryPanel.Draw(content,otherPage);return;}if(category=="数据"&&otherPage!="角色管理"){CharacterDataPanel.Draw(content,otherPage);return;}if(category=="AI 工作台"){AiWorkspace.Draw(content,otherPage);return;}if(category=="队友"){CompanionPlans.Draw(content,otherPage);return;}if(category=="玩具枪工具"){ToyDeveloper.DrawWorkspace(content,otherPage);return;}if(category=="战局与物资"&&otherPage=="活动控制"){SeasonalEventControls.Draw(content);return;}
+   if(category=="剧情"){StoryPanel.Draw(content,otherPage);return;}if(category=="数据"&&otherPage!="角色管理"){CharacterDataPanel.Draw(content,otherPage);return;}if(category=="AI 工作台"){AiWorkspace.Draw(content,otherPage);return;}if(category=="玩具枪工具"){ToyDeveloper.DrawWorkspace(content,otherPage);return;}if(category=="战局与物资"&&otherPage=="活动控制"){SeasonalEventControls.Draw(content);return;}
    if(category=="战局与物资"&&otherPage=="地图模式"){EventRaidLauncher.Draw(content);return;}
    switch((category,otherPage)){
     case ("枪械编辑","枪械参数"):WeaponEditor.Draw(content);break;
@@ -216,7 +219,7 @@ internal static class InterfaceMenu {
  }
  static CnConfig.ConfigurationManagerAttributes? Metadata(ConfigEntryBase entry)=>entry.Description.Tags.OfType<CnConfig.ConfigurationManagerAttributes>().FirstOrDefault();
  static string Category(ConfigEntryBase entry)=>Metadata(entry)?.Category??entry.Definition.Section;
- static string Name(ConfigEntryBase entry)=>Metadata(entry)?.DispName??entry.Definition.Key;
+ static string Name(ConfigEntryBase entry)=>I18n.Text(Metadata(entry)?.DispName??entry.Definition.Key);
  internal static void DrawEntry(ConfigEntryBase entry,Rect rect){
   Surface(rect,Color.Lerp(Background,Text,.035f),9);rect=new Rect(rect.x+13,rect.y+9,rect.width-26,rect.height-18);
   Label(new Rect(rect.x,rect.y,rect.width,25),Name(entry),null,13);
@@ -256,7 +259,7 @@ internal static class InterfaceMenu {
   hex=Field(new Rect(rect.x,rect.y+174,150,30),hex);
   if(Button(new Rect(rect.x+160,rect.y+174,72,30),"应用")&&ColorUtility.TryParseHtmlString(hex,out _))entries[colorRole].Value=hex;
   var swatches=new[]{"#38BDF8","#86CFA5","#F0B866","#C4A6FF","#F58AA7","#FFFFFF","#111827","#E5EAF1"};
-  for(int i=0;i<swatches.Length;i++){var r=new Rect(rect.x+i*42,rect.y+220,34,30);Fill(r,Parse(swatches[i],Color.white));if(GUI.Button(r,"",GUIStyle.none)){entries[colorRole].Value=swatches[i];hex=swatches[i];}}
+  for(int i=0;i<swatches.Length;i++){var r=new Rect(rect.x+i*42,rect.y+220,34,30);Fill(r,Parse(swatches[i],Color.white));if(GUI.Button(r,I18n.Text(""),GUIStyle.none)){entries[colorRole].Value=swatches[i];hex=swatches[i];}}
   Label(new Rect(rect.x,rect.y+272,rect.width,24),$"面板不透明度  {opacity.Value:P0}");
   float next=Slider(new Rect(rect.x,rect.y+306,rect.width,22),opacity.Value,.15f,1f);if(Math.Abs(next-opacity.Value)>.005f)opacity.Value=next;
   var preview=new Rect(rect.x,rect.y+350,rect.width,80);Panel(preview);Label(new Rect(preview.x+15,preview.y+8,preview.width-30,24),"实时预览  /  弹夹信息",Accent,16);Label(new Rect(preview.x+15,preview.y+39,preview.width-30,25),"5.56×45 mm  ·  30 / 30  ·  穿透 40");

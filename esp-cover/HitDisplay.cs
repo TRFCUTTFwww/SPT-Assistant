@@ -140,12 +140,12 @@ internal static class HitDisplay {
     if(rect.yMax>Screen.height-40)break;
     InterfaceMenu.Panel(rect,alpha);
     GUI.color=hit.Ricochet?new Color(0.5f,0.8f,1f,alpha):hit.Killed?new Color(1,0.3f,0.2f,alpha):new Color(1,0.9f,0.4f,alpha);
-    if(hit.Ricochet){GUI.Label(new Rect(rect.x+9,rect.y,rect.width-18,rect.height),"跳弹 · 弹丸被弹开",style);continue;}
+    if(hit.Ricochet){GUI.Label(new Rect(rect.x+9,rect.y,rect.width-18,rect.height),I18n.Text("跳弹 · 弹丸被弹开"),style);continue;}
     string damage=hit.Damage.HasValue?$"{hit.Damage.Value:F1} 伤害":"伤害未记录";
     string name=hit.Name.Replace('\n',' ').Replace('\r',' ');
     if(name.Length>12)name=name[..12]+"…";
     string text=$"{(hit.Killed?"击杀":"命中")} · {name} · {hit.Part} · {damage}";
-    GUI.Label(new Rect(rect.x+9,rect.y,rect.width-18,rect.height),text,style);
+    GUI.Label(new Rect(rect.x+9,rect.y,rect.width-18,rect.height),I18n.Text(text),style);
    }
   }finally{GUI.color=oldColor;}
  }

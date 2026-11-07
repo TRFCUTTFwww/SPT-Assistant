@@ -67,7 +67,7 @@ internal static class ArmorAnalysis {
   var old=GUI.color;
   try{
    InterfaceMenu.Panel(panel);
-   for(int i=0;i<lines.Length;i++){GUI.color=i==3?Color.yellow:i==0?InterfaceMenu.Accent:InterfaceMenu.Text;GUI.Label(new Rect(x+8,y+5+i*line,width-16,line),lines[i],style);}
+   for(int i=0;i<lines.Length;i++){GUI.color=i==3?Color.yellow:i==0?InterfaceMenu.Accent:InterfaceMenu.Text;GUI.Label(new Rect(x+8,y+5+i*line,width-16,line),I18n.Text(lines[i]),style);}
   }finally{GUI.color=old;}
  }
  static void Warn(Exception error){if(Time.unscaledTime<nextError)return;nextError=Time.unscaledTime+20;Plugin.Self.Error(error);}

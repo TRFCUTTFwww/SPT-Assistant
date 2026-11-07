@@ -25,6 +25,10 @@ internal static class EventRaidDiagnostics {
   else if(action=="coordinates-state")Write("coordinates-state",CoordinateReader.Diagnostics());
   else if(action=="passcode-override-check")Write("passcode-override-check",PasscodeHints.CheckOverrideScopes());
   else if(action=="passcode-hint-state")Write("passcode-hint-state",PasscodeHints.Diagnostics());
+#if EFT_48558
+  else if(action=="entry-key-state")Write("entry-key-state",ArmorCare.EntryDiagnostics(app));
+#endif
+  else if(action=="i18n-state")Write("i18n-state",I18n.Diagnostics());
   else if(action=="bitcoin-state")Write("bitcoin-state",BitcoinControl.Diagnostics(app));
   else if(action=="event-loot-state")Write("event-loot-state",EventLootDiagnostics.Read());
   else if(action=="record-clue-anchor"){var anchor=EventLootDiagnostics.Anchor();File.WriteAllText(Path.Combine(Home,"clue-anchor.json"),JsonSerializer.Serialize(new{utc=DateTime.UtcNow,anchor},new JsonSerializerOptions{WriteIndented=true}));Write("clue-anchor-recorded",anchor);}
@@ -60,7 +64,7 @@ internal static class EventRaidDiagnostics {
    var world=Singleton<GameWorld>.Instance??throw new InvalidOperationException("No raid");var local=world.MainPlayer??throw new InvalidOperationException("No player");var actors=new List<object>();
    foreach(var actor in world.AllAlivePlayersList){if(actor==null||actor.IsYourPlayer||actor.HealthController?.IsAlive!=true)continue;string role=actor.Profile?.Info?.Settings?.Role.ToString()??"";if(!role.StartsWith("infected",StringComparison.OrdinalIgnoreCase))continue;
     var owner=actor.AIData?.BotOwner;var memory=owner?.Memory;var group=owner?.BotsGroup;
-    actors.Add(new{role,side=actor.Profile?.Side.ToString(),distance=Vector3.Distance(actor.Position,local.Position),owner=owner!=null,botState=owner?.BotState.ToString(),playerClass=actor.GetIl2CppType()?.Name,active=actor.gameObject.activeInHierarchy,paused=AiTestControl.IsPaused(actor),locked=ModelPoseLock.Locked(actor),teammate=AiTeamControl.IsTeammate(actor),individualIgnore=owner!=null&&AiActorControl.Ignored(owner,local),groupEnemy=group?.Enemies?.ContainsKey(local),remembered=owner?.EnemiesController?.EnemyInfos?.ContainsKey(local),goalIsPlayer=memory?.GoalEnemy?.Person?.ProfileId==local.ProfileId,peace=memory?.IsPeace,hands=actor.HandsController?.GetIl2CppType()?.Name,handsItem=actor.HandsController?.Item?.StringTemplateId});
+    actors.Add(new{role,side=actor.Profile?.Side.ToString(),distance=Vector3.Distance(actor.Position,local.Position),owner=owner!=null,botState=owner?.BotState.ToString(),playerClass=actor.GetIl2CppType()?.Name,active=actor.gameObject.activeInHierarchy,paused=AiTestControl.IsPaused(actor),locked=ModelPoseLock.Locked(actor),individualIgnore=owner!=null&&AiActorControl.Ignored(owner,local),groupEnemy=group?.Enemies?.ContainsKey(local),remembered=owner?.EnemiesController?.EnemyInfos?.ContainsKey(local),goalIsPlayer=memory?.GoalEnemy?.Person?.ProfileId==local.ProfileId,peace=memory?.IsPeace,hands=actor.HandsController?.GetIl2CppType()?.Name,handsItem=actor.HandsController?.Item?.StringTemplateId});
    }Write("zombie-combat-state",new{ignore=Plugin.Self.IgnoreAI.Value,localSide=local.Profile?.Side.ToString(),actors});
   }
   else if(action=="trigger-infection-start"){

@@ -1,0 +1,56 @@
+{
+    "version":  "1.38.19",
+    "companions":  {
+                       "controllersRemoved":  true,
+                       "plansArchived":  true,
+                       "retiredConfigEntriesRemoved":  16
+                   },
+    "visualAcceptance":  "Not performed; user verification required",
+    "clientBuilds":  {
+                         "48558":  {
+                                       "errors":  0,
+                                       "existingWarnings":  2
+                                   },
+                         "47888":  {
+                                       "errors":  0,
+                                       "existingWarnings":  2
+                                   }
+                     },
+    "runtimeReady":  true,
+    "entryCard":  {
+                      "validCardAccepted":  true,
+                      "actualRaidEntryPerformed":  false,
+                      "hook":  true,
+                      "inventoryUnchanged":  true,
+                      "missingCardRejected":  true,
+                      "disabledUsesNative":  true
+                  },
+    "english":  {
+                    "manualTranslations":  true,
+                    "settingsMetadata":  true,
+                    "verbatimArgumentRules":  37,
+                    "conditionalCoverageMissing":  0,
+                    "runtimeSwitch":  true,
+                    "staticEntries":  3004,
+                    "formats":  470
+                },
+    "generation":  5,
+    "tests":  {
+                  "raidControls":  12,
+                  "gearMail":  12,
+                  "probe":  87
+              },
+    "profiles":  {
+                     "jsonValid":  true,
+                     "itemIdentitiesUnchanged":  true
+                 },
+    "bitcoin":  {
+                    "normalEligibilityRetained":  true,
+                    "liveRubOffer":  1241989,
+                    "actualSalePerformed":  false,
+                    "quoteGameRub":  1241989,
+                    "traderCaches":  4
+                },
+    "utc":  "2026-11-07T04:55:58.4723205Z",
+    "coreSha256":  "4233DD189736E2CD440AD6DA971C682AF0A9FF50D8BBED73F54D00F15F4F90C3"
+}

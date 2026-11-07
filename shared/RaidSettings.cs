@@ -50,6 +50,13 @@ public static class LootWeightMath {
 public sealed record BitcoinQuote(double Rub,double Usd,double GameRub,DateTime FetchedUtc,string Source);
 public sealed class BitcoinStatus {public bool Enabled{get;set;}public bool Available{get;set;}public double? OriginalGameRub{get;set;}public BitcoinQuote? Quote{get;set;}public string Error{get;set;}="";public int ServerPid{get;set;}public DateTime UpdatedUtc{get;set;}}
 public static class BitcoinRules {
+ // A native null offer remains null at the call site. Round in the trader's original currency.
+ public static int? TraderOffer(double unitRub,int quantity,double rubPerCurrency){
+  if(!double.IsFinite(unitRub)||unitRub<=0||quantity<=0||!double.IsFinite(rubPerCurrency)||rubPerCurrency<=0)return null;
+  double total=Math.Round(unitRub*quantity/rubPerCurrency,MidpointRounding.AwayFromZero);
+  return double.IsFinite(total)&&total>=1&&total<=int.MaxValue?(int)total:null;
+ }
+
  public const string Template="59faff1d86f7746c51718c9c";
  public static double GamePrice(double rub){if(!double.IsFinite(rub)||rub<=0||rub*.2>float.MaxValue)throw new ArgumentException("BTC 卢布价格无效。");return (double)(float)Math.Max(1,Math.Round(rub*.2,MidpointRounding.AwayFromZero));}
  public static BitcoinQuote Parse(string response,DateTime fetchedUtc){using var data=System.Text.Json.JsonDocument.Parse(response);var quote=data.RootElement.GetProperty("data");if(quote.GetProperty("currency").GetString()!="BTC")throw new ArgumentException("行情基准币种不是 BTC。");double Rate(string currency){var raw=quote.GetProperty("rates").GetProperty(currency);string value=raw.ValueKind==System.Text.Json.JsonValueKind.String?raw.GetString()??"":raw.GetRawText();if(!double.TryParse(value,System.Globalization.NumberStyles.Float,System.Globalization.CultureInfo.InvariantCulture,out double result)||!double.IsFinite(result)||result<=0)throw new ArgumentException("行情汇率无效："+currency);return result;}double rub=Rate("RUB"),usd=Rate("USD");return new(rub,usd,GamePrice(rub),fetchedUtc,"Coinbase");}

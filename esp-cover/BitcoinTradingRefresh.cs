@@ -20,6 +20,7 @@ internal static class BitcoinTradingRefresh {
  static DateTime lastRefresh;
  internal static bool Busy=>screen!=null&&screen.gameObject.activeInHierarchy&&screen._trader?.CurrentAssortment?.TransactionInProgress==true;
  internal static void Initialize(Plugin plugin){
+  screen=UnityEngine.Object.FindObjectOfType<TraderDealScreen>(true);
   plugin.Patches.Patch(AccessTools.Method(typeof(TraderDealScreen),"Show"),postfix:new HarmonyMethod(typeof(BitcoinTradingRefresh),nameof(Opened)));
   plugin.Patches.Patch(AccessTools.Method(typeof(TraderDealScreen),"Close"),prefix:new HarmonyMethod(typeof(BitcoinTradingRefresh),nameof(Closed)));
  }
@@ -27,7 +28,7 @@ internal static class BitcoinTradingRefresh {
  static void Closed(TraderDealScreen __instance){if(screen!=null&&screen.Pointer==__instance.Pointer){screen=null;dirty=true;}}
  internal static void Tick(double? target,double? original){try{
   if(Busy)return;
-  var app=Singleton<TarkovApplication>.Instance;
+  var app=Singleton<TarkovApplication>.Instance??Singleton<AbstractApplication>.Instance?.TryCast<TarkovApplication>()??UnityEngine.Object.FindObjectOfType<TarkovApplication>();
   var session=app?.GetClientBackEndSession()?.TryCast<ITradingSession>();if(session==null)return;
   if(sessionPointer!=session.Pointer){Restore();sessionPointer=session.Pointer;dirty=true;}
   bool changed=false;changedCaches=0;

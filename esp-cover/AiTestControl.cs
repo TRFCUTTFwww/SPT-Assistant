@@ -49,7 +49,7 @@ internal static class AiTestControl {
   get {var current=Singleton<GameWorld>.Instance;var all=current?.AllAlivePlayersList;var result=new List<Player>();if(all==null)return result.ToArray();for(int i=0;i<all.Count;i++){var actor=all[i];if(actor!=null&&!actor.IsYourPlayer&&actor.HealthController?.IsAlive==true&&checkedBots.Contains(actor.ProfileId))result.Add(actor);}return result.Count>0?result.ToArray():AiActorControl.PoseSelection;}
  }
  static bool AllowBrain(BotOwner __instance)=>!AiEquipmentRemoval.Blocks(__instance?.GetPlayer)&&(!selection.Any||!IsPaused(__instance?.GetPlayer));
- static bool AllowTrigger(Player.FirearmController __instance,bool __0)=>!__0||!CompanionSquad.BlockFire(__instance?._player)&&!AiEquipmentRemoval.Blocks(__instance?._player)&&(!selection.Any||!IsPaused(__instance?._player));
+ static bool AllowTrigger(Player.FirearmController __instance,bool __0)=>!__0||!AiEquipmentRemoval.Blocks(__instance?._player)&&(!selection.Any||!IsPaused(__instance?._player));
  internal static void Tick(GameWorld? current,Player? local){try{
   if(current==null||local==null){if(worldPointer!=IntPtr.Zero)Reset();return;}
   if(worldPointer!=current.Pointer){Reset();worldPointer=current.Pointer;world=current;player=local;notice="先选择准星地面或前方距离作为生成位置。";}

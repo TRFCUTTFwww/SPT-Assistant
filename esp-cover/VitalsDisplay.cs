@@ -65,6 +65,6 @@ internal static class VitalsDisplay {
 
  static void DrawStat(Rect rect,string name,Stat value){
   GUI.color=value.Ratio<0.25f?new Color(1f,0.35f,0.3f):value.Ratio<0.5f?new Color(1f,0.86f,0.3f):InterfaceMenu.Text;
-  GUI.Label(rect,$"{name} {Math.Ceiling(value.Current):F0}/{Math.Ceiling(value.Maximum):F0}",labelStyle);
+  GUI.Label(rect,I18n.Text($"{name} {Math.Ceiling(value.Current):F0}/{Math.Ceiling(value.Maximum):F0}"),labelStyle);
  }
 }

@@ -96,9 +96,9 @@ internal static class LootDisplay {
   }
   var sb=new StringBuilder(snap.Name+$" [{distance:F0}m]");
   var lineColors=new List<Color>{snap.Lines.Any(x=>x.Value>=HighValueThreshold.Value)?HighValueColor:ContainerColor};
-  if(Prices.Value)sb.Append("  估值 ").Append(snap.Count==0?"₽0":Money(snap.Value));
-  if(snap.Count==0)sb.Append(" [空]");
-  else if(expanded){int limit=Math.Min(ContentLines.Value,snap.Lines.Count);for(int i=0;i<limit;i++){var row=snap.Lines[i];sb.Append('\n').Append(row.Name).Append(" ×").Append(row.Count);if(Prices.Value)sb.Append("  ").Append(Money(row.Value));lineColors.Add(row.Value>=HighValueThreshold.Value?HighValueColor:ContainerColor);}if(snap.Lines.Count>limit){sb.Append("\n…另 ").Append(snap.Lines.Count-limit).Append(" 类（总估值已包含）");lineColors.Add(ContainerColor);}}
+  if(Prices.Value)sb.Append(I18n.Text("  估值 ")).Append(snap.Count==0?"₽0":Money(snap.Value));
+  if(snap.Count==0)sb.Append(I18n.Text(" [空]"));
+  else if(expanded){int limit=Math.Min(ContentLines.Value,snap.Lines.Count);for(int i=0;i<limit;i++){var row=snap.Lines[i];sb.Append('\n').Append(row.Name).Append(" ×").Append(row.Count);if(Prices.Value)sb.Append("  ").Append(Money(row.Value));lineColors.Add(row.Value>=HighValueThreshold.Value?HighValueColor:ContainerColor);}if(snap.Lines.Count>limit){sb.Append(I18n.Text("\n…另 ")).Append(snap.Lines.Count-limit).Append(I18n.Text(" 类（总估值已包含）"));lineColors.Add(ContainerColor);}}
   colors=lineColors.ToArray();
   return sb.ToString();
  }
@@ -120,13 +120,13 @@ internal static class LootDisplay {
   var color=new Color(0.75f,0.75f,0.85f);
   var lineColors=new List<Color>{sorted.Any(r=>r.Value.Value>=HighValueThreshold.Value)?HighValueColor:color};
   var sb=new StringBuilder(name+$" [{distance:F0}米]");
-  if(Prices.Value)sb.Append(" 估值 ").Append(total>0?Money(total):"₽0");
-  if(root==null)sb.Append(" [物品未加载]");
-  else if(sorted.Length==0)sb.Append(" [空]");
+  if(Prices.Value)sb.Append(I18n.Text(" 估值 ")).Append(total>0?Money(total):"₽0");
+  if(root==null)sb.Append(I18n.Text(" [物品未加载]"));
+  else if(sorted.Length==0)sb.Append(I18n.Text(" [空]"));
   else if(expanded){
    int limit=Math.Min(ContentLines.Value,sorted.Length);
    for(int i=0;i<limit;i++){var r=sorted[i];sb.Append('\n').Append(r.Key).Append(" ×").Append(r.Value.Count);if(Prices.Value)sb.Append(" ").Append(Money(r.Value.Value));lineColors.Add(r.Value.Value>=HighValueThreshold.Value?HighValueColor:color);}
-   if(sorted.Length>limit){sb.Append("\n…另 ").Append(sorted.Length-limit).Append(" 类物品（总估值已包含）");lineColors.Add(color);}
+   if(sorted.Length>limit){sb.Append(I18n.Text("\n…另 ")).Append(sorted.Length-limit).Append(I18n.Text(" 类物品（总估值已包含）"));lineColors.Add(color);}
   }
   colors=lineColors.ToArray();return sb.ToString();
  }

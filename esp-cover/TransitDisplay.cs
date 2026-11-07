@@ -57,7 +57,7 @@ internal static class TransitDisplay {
   foreach(var row in Rows){
    var point=OverlayProjection.ScreenPoint(camera,row.Position);if(point.z<=0||point.x<0||point.x>Screen.width||point.y<0||point.y>Screen.height)continue;
    var old=GUI.color;
-   try{GUI.color=row.Available?Color.cyan:Color.gray;GUI.Label(new Rect(point.x-200,Screen.height-point.y-24,400,48),$"转移 → {row.Destination} [{row.Distance:F0}米]\n{row.State}",style);}finally{GUI.color=old;}
+   try{GUI.color=row.Available?Color.cyan:Color.gray;GUI.Label(new Rect(point.x-200,Screen.height-point.y-24,400,48),I18n.Text($"转移 → {row.Destination} [{row.Distance:F0}米]\n{row.State}"),style);}finally{GUI.color=old;}
   }
  }
  static void Warn(Exception e){if(Time.unscaledTime<nextError)return;nextError=Time.unscaledTime+10;Plugin.Self.Error(e);}

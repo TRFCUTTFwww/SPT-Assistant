@@ -55,10 +55,10 @@ internal static class AggroDisplay {
    InterfaceMenu.Panel(panel);
    int locked=threats.Count(t=>t.Targeting);
    GUI.color=locked>0?new Color(1f,0.45f,0.35f):InterfaceMenu.Accent;
-   GUI.Label(new Rect(x+8,y+5,width-16,line),$"仇恨追踪 · 当前锁定 {locked} · 记住你 {threats.Count-locked}",style);
+   GUI.Label(new Rect(x+8,y+5,width-16,line),I18n.Text($"仇恨追踪 · 当前锁定 {locked} · 记住你 {threats.Count-locked}"),style);
    for(int i=0;i<shown;i++){
     var threat=threats[i];GUI.color=threat.Targeting?new Color(1f,0.65f,0.45f):InterfaceMenu.Text;
-    GUI.Label(new Rect(x+8,y+5+(i+1)*line,width-16,line),$"{(threat.Targeting?"锁定":"记忆")} · {threat.Label} · {threat.Distance:F0}米",style);
+    GUI.Label(new Rect(x+8,y+5+(i+1)*line,width-16,line),I18n.Text($"{(threat.Targeting?"锁定":"记忆")} · {threat.Label} · {threat.Distance:F0}米"),style);
    }
   }finally{GUI.color=old;}
  }

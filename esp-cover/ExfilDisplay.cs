@@ -305,8 +305,8 @@ internal static class ExfilDisplay {
    if(Enabled.Value)foreach(var row in rows.Where(r=>r.InPanel).OrderBy(r=>r.Available?0:r.Kind!="普通"?1:2).ThenBy(r=>r.Distance))captions.Add(($"[{row.Kind} · {ExfilPolicy.FactionLabel(row.Faction)}] {row.Name} {row.Distance:F0}米 · {row.State}",row.Available?Color.green:new Color(1,0.8f,0.3f)));
    if(transit){var closest=TransitDisplay.Rows.FirstOrDefault(r=>r.Available);if(closest.Available)headers.Add(($"转移：{closest.Destination} · {closest.Distance:F0}米 · {Direction(camera,closest.Position-player.Position)}",Color.cyan));foreach(var row in TransitDisplay.Rows)captions.Add(($"[转移] {row.Destination} {row.Distance:F0}米 · {row.State}",row.Available?Color.cyan:Color.gray));}
    if(btr)headers.Add((BtrDisplay.Status,Color.cyan));
-   foreach(var text in headers){float height=Math.Max(line,panelStyle.CalcHeight(new GUIContent(text.Text),width-16)+4);headerHeights.Add(height);headerHeight+=height;}
-   foreach(var text in captions)captionHeights.Add(Math.Max(line,panelStyle.CalcHeight(new GUIContent(text.Text),width-16)+4));
+   foreach(var text in headers){float height=Math.Max(line,panelStyle.CalcHeight(new GUIContent(I18n.Text(text.Text)),width-16)+4);headerHeights.Add(height);headerHeight+=height;}
+   foreach(var text in captions)captionHeights.Add(Math.Max(line,panelStyle.CalcHeight(new GUIContent(I18n.Text(text.Text)),width-16)+4));
    pages=PanelPages.Build(captionHeights,Lines.Value,Math.Max(line,Screen.height-122-headerHeight-line-12));
   }
   if(Hotkeys.Pressed(KeyCode.PageDown))pageIndex++;
@@ -317,9 +317,9 @@ internal static class ExfilDisplay {
   var oldColor=GUI.color;
   try{
    InterfaceMenu.Panel(panel);float top=y+6;
-   for(int i=0;i<headers.Count;i++){GUI.color=InterfaceMenu.Tint(headers[i].Color);GUI.Label(new Rect(x+8,top,width-16,headerHeights[i]),headers[i].Text,panelStyle);top+=headerHeights[i];}
-   GUI.color=InterfaceMenu.Accent;GUI.Label(new Rect(x+8,top,width-16,line),$"撤离／转移 {pageIndex+1}/{pages.Count}",panelStyle);top+=line;
-   for(int i=page.Start;i<page.Start+page.Count;i++){GUI.color=InterfaceMenu.Tint(captions[i].Color);float height=Math.Min(captionHeights[i],Screen.height-top-18);GUI.Label(new Rect(x+8,top,width-16,height),captions[i].Text,panelStyle);top+=captionHeights[i];}
+   for(int i=0;i<headers.Count;i++){GUI.color=InterfaceMenu.Tint(headers[i].Color);GUI.Label(new Rect(x+8,top,width-16,headerHeights[i]),I18n.Text(headers[i].Text),panelStyle);top+=headerHeights[i];}
+   GUI.color=InterfaceMenu.Accent;GUI.Label(new Rect(x+8,top,width-16,line),I18n.Text($"撤离／转移 {pageIndex+1}/{pages.Count}"),panelStyle);top+=line;
+   for(int i=page.Start;i<page.Start+page.Count;i++){GUI.color=InterfaceMenu.Tint(captions[i].Color);float height=Math.Min(captionHeights[i],Screen.height-top-18);GUI.Label(new Rect(x+8,top,width-16,height),I18n.Text(captions[i].Text),panelStyle);top+=captionHeights[i];}
   }finally{GUI.color=oldColor;}
  }
  static bool PanelKeyHeld(){
@@ -342,13 +342,13 @@ internal static class ExfilDisplay {
    var (rect,arrow)=PlaceMarker(camera,row.Position,markerWidth,occupied);
    GUI.color=row.Available?Color.green:row.Forced?Color.cyan:new Color(1f,0.8f,0.3f);
    string label=row.TrainMarker.Length>0?$"{arrow}[列车 · {ExfilPolicy.FactionLabel(row.Faction)}] {row.Distance:F0}米 · {row.TrainMarker}":$"{arrow}[{row.Kind} · {ExfilPolicy.FactionLabel(row.Faction)}] {row.Name} {row.Distance:F0}米";
-   GUI.Label(rect,label,style);
+   GUI.Label(rect,I18n.Text(label),style);
   }
   if(ShowLeverMarkers.Value)foreach(var lever in leverMarkers){
    if(!OnScreen(camera,lever.Position))continue;
    var (rect,arrow)=PlaceMarker(camera,lever.Position,Math.Min(Screen.width-8,310),occupied);
    GUI.color=lever.Open?Color.green:new Color(1f,0.7f,0.2f);
-   GUI.Label(rect,$"{arrow}[拉闸] {lever.ExitName} · {lever.Distance:F0}米 · {(lever.Open?"已开启":"未开启")}",style);
+   GUI.Label(rect,I18n.Text($"{arrow}[拉闸] {lever.ExitName} · {lever.Distance:F0}米 · {(lever.Open?"已开启":"未开启")}"),style);
   }
   GUI.color=Color.white;
  }

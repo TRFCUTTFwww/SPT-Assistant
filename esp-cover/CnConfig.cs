@@ -120,27 +120,27 @@ internal static class CnConfig {
  }
  static void DrawAimMode(ConfigEntryBase entry){
   int current=(int)(AimMode)entry.BoxedValue;
-  int chosen=GUILayout.Toolbar(current,new[]{"关闭","暴力","静默","微自瞄"},Array.Empty<GUILayoutOption>());
+  int chosen=GUILayout.Toolbar(current,I18n.Texts(new[]{"关闭","暴力","静默","微自瞄"}),Array.Empty<GUILayoutOption>());
   if(chosen!=current)entry.BoxedValue=(AimMode)chosen;
  }
  static void DrawAimTargetPart(ConfigEntryBase entry){
   int current=(int)(AimTargetPart)entry.BoxedValue;
-  int chosen=GUILayout.Toolbar(current,new[]{"头","胸","腹","左臂","右臂","左腿","右腿"},Array.Empty<GUILayoutOption>());
+  int chosen=GUILayout.Toolbar(current,I18n.Texts(new[]{"头","胸","腹","左臂","右臂","左腿","右腿"}),Array.Empty<GUILayoutOption>());
   if(chosen!=current)entry.BoxedValue=(AimTargetPart)chosen;
  }
  static void DrawExfilPanelMode(ConfigEntryBase entry){
   int current=(int)(ExfilPanelMode)entry.BoxedValue;
-  int chosen=GUILayout.Toolbar(current,new[]{"关闭","按住显示","常开"},Array.Empty<GUILayoutOption>());
+  int chosen=GUILayout.Toolbar(current,I18n.Texts(new[]{"关闭","按住显示","常开"}),Array.Empty<GUILayoutOption>());
   if(chosen!=current)entry.BoxedValue=(ExfilPanelMode)chosen;
  }
  static void DrawExfilMarkerMode(ConfigEntryBase entry){
   int current=(int)(ExfilMarkerMode)entry.BoxedValue;
-  int chosen=GUILayout.Toolbar(current,new[]{"关闭","最近","全部"},Array.Empty<GUILayoutOption>());
+  int chosen=GUILayout.Toolbar(current,I18n.Texts(new[]{"关闭","最近","全部"}),Array.Empty<GUILayoutOption>());
   if(chosen!=current)entry.BoxedValue=(ExfilMarkerMode)chosen;
  }
  static void DrawBoolean(ConfigEntryBase entry){
   bool current=(bool)entry.BoxedValue;
-  bool chosen=GUILayout.Toggle(current,OnOff(current),Array.Empty<GUILayoutOption>());
+  bool chosen=GUILayout.Toggle(current,I18n.Text(OnOff(current)),Array.Empty<GUILayoutOption>());
   if(chosen!=current)entry.BoxedValue=chosen;
  }
  internal static string OnOff(bool value)=>value?"开启":"关闭";
