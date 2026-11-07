@@ -44,6 +44,14 @@ internal static class IncomingDamage {
  static State? Capture(Player player,DamageInfo info,EBodyPart part){
   if(!ready||!enabled.Value||!RaidClock.Active||player==null||!player.IsYourPlayer||info==null||player.HealthController==null)return null;
   var entry=new IncomingDamageFeed.Entry{Key=info.DamageType.ToString(),Name=Combat(info.DamageType)?"未知来源":info.DamageType.ToString(),Part=Part(part),Time=Time.unscaledTime,GodBlocked=Plugin.Self.God.Value};
+  if(info.DamageType is EDamageType.Bullet or EDamageType.Sniper){
+   entry.Ballistic=true;entry.AmmoId=info.SourceId??"";entry.WeaponId=info.Weapon?.StringTemplateId??"";
+   entry.Weapon=info.Weapon!=null?LootDisplay.ItemName(info.Weapon):"枪械未知";
+   entry.ImpactDamage=float.IsFinite(info.Damage)?Math.Max(0,info.Damage):0;
+   entry.Penetration=float.IsFinite(info.PenetrationPower)?Math.Max(0,info.PenetrationPower):0;
+   entry.Ammo="弹药未知";entry.AmmoStats="弹药参数未知";
+   try{var round=BallisticReadout.Resolve(entry.AmmoId);entry.Ammo=round?.Name??entry.Ammo;entry.AmmoStats=round?.Stats??entry.AmmoStats;}catch(Exception error){Warn(error);}
+  }
   var attacker=info.Player?.iPlayer;
   if(Combat(info.DamageType)){
    if(attacker!=null&&attacker.ProfileId!=player.ProfileId&&Valid(attacker.Position)){
@@ -86,11 +94,16 @@ internal static class IncomingDamage {
    for(int i=0;i<12;i++)RaidLoot.Line(Point(angle-14+i*28f/12,radius.Value),Point(angle-14+(i+1)*28f/12,radius.Value),color,4);
    RaidLoot.Line(Point(angle-5,radius.Value-12),Point(angle,radius.Value-22),color,3);RaidLoot.Line(Point(angle+5,radius.Value-12),Point(angle,radius.Value-22),color,3);
   }
-  if(!details.Value)return;float row=font.Value+12;var rect=InterfaceMenu.Place("incoming",new Rect(12,Screen.height*.65f,460,feed.Entries.Count*row));int n=0;
-  for(int i=feed.Entries.Count-1;i>=0;i--){var entry=feed.Entries[i];float alpha=Math.Clamp((duration.Value-(Time.unscaledTime-entry.Time))/.7f,0,1);var r=new Rect(rect.x,rect.y+n++*row,rect.width,row-3);InterfaceMenu.Panel(r,alpha);
+  if(!details.Value)return;float line=font.Value+8,total=0;foreach(var entry in feed.Entries)total+=line*(entry.Ballistic?3:1)+6;
+  var rect=InterfaceMenu.Place("incoming",new Rect(12,Screen.height*.65f,Math.Min(720,Screen.width-24),total));float y=rect.y;
+  for(int i=feed.Entries.Count-1;i>=0;i--){var entry=feed.Entries[i];float alpha=Math.Clamp((duration.Value-(Time.unscaledTime-entry.Time))/.7f,0,1);float height=line*(entry.Ballistic?3:1)+3;var r=new Rect(rect.x,y,rect.width,height);y+=height+3;InterfaceMenu.Panel(r,alpha);
    var name=entry.Name.Replace('\n',' ').Replace('\r',' ');if(name.Length>14)name=name[..14]+"…";
-   string loss=entry.Damage>.001f?$"损血 {entry.Damage:F1}":entry.GodBlocked?"无敌开启 · 未损血":"未损血／护甲挡下";
-   InterfaceMenu.Label(new Rect(r.x+10,r.y,r.width-20,r.height),(entry.Preview?"[预览] ":"受击 · ")+name+(entry.Distance.HasValue?$" [{entry.Distance:F0}米]":"")+" · "+entry.Part+" · "+loss,new Color(1,.62f,.47f,alpha),font.Value);
+   string loss=entry.Damage>.001f?$"损血 {entry.Damage:F1}":entry.GodBlocked?"无敌开启 · 未损血":"未损血";
+   InterfaceMenu.Label(new Rect(r.x+10,r.y,r.width-20,line),(entry.Preview?"[预览] ":"受击 · ")+name+(entry.Distance.HasValue?$" [{entry.Distance:F0}米]":"")+" · "+entry.Part+" · "+loss+(entry.Hits>1?$" · 合并 {entry.Hits} 次":""),new Color(1,.62f,.47f,alpha),font.Value);
+   if(entry.Ballistic){
+    InterfaceMenu.Label(new Rect(r.x+10,r.y+line,r.width-20,line),$"命中枪弹：{entry.Weapon} · {entry.Ammo}",new Color(1,.88f,.68f,alpha),font.Value);
+    InterfaceMenu.Label(new Rect(r.x+10,r.y+2*line,r.width-20,line),entry.AmmoStats+$" · 事件伤害 {entry.ImpactDamage:F1} / 穿 {entry.Penetration:F1}",new Color(1,.88f,.68f,alpha),font.Value);
+   }
   }
  }
  static void Warn(Exception e){if(Time.unscaledTime<nextError)return;nextError=Time.unscaledTime+15;Plugin.Self.Error(e);}

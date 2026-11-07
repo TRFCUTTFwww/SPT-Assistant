@@ -20,7 +20,6 @@ internal static class ArmorAnalysis {
   if(Time.unscaledTime<nextRead)return;
   nextRead=Time.unscaledTime+0.25f;lines=Array.Empty<string>();
   try{
-   var ammo=MagazineDisplay.CurrentAmmo(local);if(ammo==null)return;
    Player? target=null;float best=float.MaxValue;
    var players=world.AllAlivePlayersList;if(players==null)return;
    for(int i=0;i<players.Count;i++){
@@ -32,42 +31,53 @@ internal static class ArmorAnalysis {
     best=offset;target=candidate;
    }
    if(target==null)return;
-   int armorClass=0;float durability=0,maximum=0;
-   var equipment=target.Profile?.Inventory?.Equipment;
-   if(equipment!=null){
-    Inspect(equipment.GetSlot(EquipmentSlot.Headwear)?.ContainedItem,ref armorClass,ref durability,ref maximum,0);
-    Inspect(equipment.GetSlot(EquipmentSlot.FaceCover)?.ContainedItem,ref armorClass,ref durability,ref maximum,0);
-   }
-   string armor=armorClass>0?$"头/面最高护甲 {armorClass} 级"+(maximum>0?$" · 耐久 {durability:F0}/{maximum:F0}":""):"未检测到头面护甲";
-   int delta=ammo.PenetrationPower-armorClass*10;
-   string penetration=armorClass==0?"无遮挡":delta>=10?"高":delta>=0?"中":delta>=-10?"低":"极低";
-   int damage=ammo.Damage;
-   string prediction=armorClass==0?$"粗估头部伤害 ≤{damage}（受距离影响）":$"粗估穿甲后 {Math.Round(damage*0.7f):F0}–{damage} · 未穿 0–{Math.Round(damage*0.15f):F0}";
    string name=target.Profile?.Nickname??"目标";if(name.Length>15)name=name[..15]+"…";
-   lines=new[]{"头甲分析 · "+name,armor,$"{LootDisplay.ItemName(ammo)} · 伤 {damage} / 穿 {ammo.PenetrationPower}",$"穿透倾向：{penetration}（穿甲差 {delta:+0;-0;0}）",prediction};
+   var result=new List<string>{"弹道与防护分析 · "+name};
+   var weapon=target.HandsController?.TryCast<Player.FirearmController>()?.Item;
+   result.Add("对方枪械："+(weapon!=null?LootDisplay.ItemName(weapon):"当前未持枪"));
+   var opponent=BallisticReadout.Current(target);
+   result.Add("对方膛内／下一发："+(opponent is {} round?round.Name:"弹药未知／空膛"));
+   if(opponent is {} threat)result.Add(threat.Stats);
+   result.Add("自身头面："+Armor(local,true));result.Add("自身躯干："+Armor(local,false));
+   if(opponent is {} incoming){
+    result.Add("对方弹药 → 自身头部："+BallisticReadout.Protection(local,EBodyPart.Head,incoming.Penetration));
+    result.Add("对方弹药 → 自身胸部："+BallisticReadout.Protection(local,EBodyPart.Chest,incoming.Penetration));
+   }
+   result.Add("对方头面："+Armor(target,true));
+   var ammo=BallisticReadout.Current(local);
+   result.Add("自身弹药："+(ammo is {} own?own.Name:"弹药未知／空膛"));
+   if(ammo is {} outgoing){result.Add(outgoing.Stats);result.Add("自身弹药 → 对方头部："+BallisticReadout.Protection(target,EBodyPart.Head,outgoing.Penetration));}
+   result.Add("基伤为弹药参数；实际损血受距离、命中区域与护甲影响。");lines=result.ToArray();
   }catch(Exception error){Warn(error);}
+ }
+ static string Armor(Player player,bool head){
+  int armorClass=0;float durability=0,maximum=0;var equipment=player.Profile?.Inventory?.Equipment;if(equipment==null)return "防护数据未知";
+  foreach(var slot in head?new[]{EquipmentSlot.Headwear,EquipmentSlot.FaceCover}:new[]{EquipmentSlot.ArmorVest,EquipmentSlot.TacticalVest})Inspect(equipment.GetSlot(slot)?.ContainedItem,ref armorClass,ref durability,ref maximum,0);
+  return armorClass>0?$"最高 {armorClass} 级 · 对应耐久 {durability:F0}/{maximum:F0}":"未检测到有效护甲";
  }
  static void Inspect(Item? item,ref int bestClass,ref float durability,ref float maximum,int depth){
   if(item==null||depth>4)return;
   var armor=item.GetItemComponent<ArmorComponent>();
-  if(armor!=null&&armor.ArmorClass>bestClass){
+  if(armor!=null&&armor.Repairable?.Durability>0&&armor.ArmorClass>bestClass){
    bestClass=armor.ArmorClass;
-   var repair=item.GetItemComponent<RepairableComponent>();
+   var repair=armor.Repairable;
    durability=repair?.Durability??0;maximum=repair?.MaxDurability??0;
   }
-  foreach(var child in LootDisplay.Children(item))Inspect(child,ref bestClass,ref durability,ref maximum,depth+1);
+  // Only installed parts protect the wearer; spare plates in rig grids do not.
+  var slots=item.TryCast<CompoundItem>()?.Slots;
+  if(slots!=null)foreach(var slot in slots)Inspect(slot?.ContainedItem,ref bestClass,ref durability,ref maximum,depth+1);
  }
  internal static void Draw(GameWorld world,Player local,Camera camera,GUIStyle source){
   if(!Enabled.Value)return;
   Read(world,local,camera);if(lines.Length==0)return;
   if(style==null)style=new GUIStyle(source){alignment=TextAnchor.MiddleLeft,wordWrap=false,richText=false,clipping=TextClipping.Clip};
   style.fontSize=Math.Min(source.fontSize,14);
-  float line=Math.Max(21,style.fontSize+7),width=Math.Min(385,Screen.width-24),height=lines.Length*line+10,x=Screen.width-width-12,y=165;
+  float line=Math.Max(21,style.fontSize+7),width=Math.Min(620,Screen.width-24),height=lines.Length*line+10,x=Screen.width-width-12,y=165;
   var panel=InterfaceMenu.Place("armor",new Rect(x,y,width,height));x=panel.x;y=panel.y;
   var old=GUI.color;
   try{
    InterfaceMenu.Panel(panel);
-   for(int i=0;i<lines.Length;i++){GUI.color=i==3?Color.yellow:i==0?InterfaceMenu.Accent:InterfaceMenu.Text;GUI.Label(new Rect(x+8,y+5+i*line,width-16,line),I18n.Text(lines[i]),style);}
+   for(int i=0;i<lines.Length;i++){GUI.color=i==0?InterfaceMenu.Accent:InterfaceMenu.Text;GUI.Label(new Rect(x+8,y+5+i*line,panel.width-16,line),I18n.Text(lines[i]),style);}
   }finally{GUI.color=old;}
  }
  static void Warn(Exception error){if(Time.unscaledTime<nextError)return;nextError=Time.unscaledTime+20;Plugin.Self.Error(error);}

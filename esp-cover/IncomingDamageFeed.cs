@@ -12,17 +12,19 @@ internal static class DamageDirection {
 }
 internal sealed class IncomingDamageFeed {
  internal sealed class Entry {
-  internal string Key="",Name="",Part="";
+  internal string Key="",Name="",Part="",AmmoId="",WeaponId="",Ammo="",Weapon="",AmmoStats="";
   internal Vector3? Origin,Direction;
   internal float? Distance;
-  internal float Damage,Time;
+  internal float Damage,Time,ImpactDamage,Penetration;
+  internal int Hits=1;
+  internal bool Ballistic;
   internal bool Preview,GodBlocked;
  }
  internal readonly List<Entry> Entries=new();
  internal void Add(Entry entry,int maximum){
   entry.Damage=float.IsFinite(entry.Damage)?Math.Max(0,entry.Damage):0;
   var prior=Entries.Count>0?Entries[^1]:null;
-  if(prior!=null&&prior.Key==entry.Key&&prior.Part==entry.Part&&prior.Preview==entry.Preview&&entry.Time>=prior.Time&&entry.Time-prior.Time<=.12f){entry.Damage+=prior.Damage;Entries.RemoveAt(Entries.Count-1);}
+  if(prior!=null&&prior.Key==entry.Key&&prior.Part==entry.Part&&prior.Preview==entry.Preview&&prior.GodBlocked==entry.GodBlocked&&prior.AmmoId==entry.AmmoId&&prior.WeaponId==entry.WeaponId&&prior.Ballistic==entry.Ballistic&&prior.AmmoStats==entry.AmmoStats&&prior.Penetration==entry.Penetration&&entry.Time>=prior.Time&&entry.Time-prior.Time<=.12f){entry.Damage+=prior.Damage;entry.ImpactDamage+=prior.ImpactDamage;entry.Hits+=prior.Hits;Entries.RemoveAt(Entries.Count-1);}
   Entries.Add(entry);while(Entries.Count>Math.Clamp(maximum,1,12))Entries.RemoveAt(0);
  }
  internal void Prune(float time,float duration,int maximum){Entries.RemoveAll(e=>time-e.Time>=duration||time<e.Time);while(Entries.Count>Math.Clamp(maximum,1,12))Entries.RemoveAt(0);}

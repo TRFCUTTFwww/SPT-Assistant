@@ -14,7 +14,7 @@ internal static class CnConfig {
   ["1. ESP"]="01. 透视显示",["2. God mode"]="02. 玩家无敌",["3. Keys"]="03. 快捷键",
   ["4. AI ignore"]="04. 敌人忽略",["6. Loot details"]="06. 物品与容器详情",["7. Character colors"]="07. 人物颜色",
   ["8. Aim assist"]="08. 辅助瞄准",["9. Infinite launcher"]="09. 无限发射器",["10. Recoil assist"]="10. 无后座",
-  ["11. Hit display"]="11. 命中与击杀提示",["12. Corpse ESP"]="12. 尸体显示",["13. Raid population"]="13. 局内存活人数",["14. Exfiltration"]="14. 撤离点状态",["15. Transit points"]="15. 转移点",["16. Night vision"]="16. 夜视",["17. Force doors"]="17. 破门强开",["18. BTR"]="18. BTR 站点",["19. Vitals"]="19. 生存状态",["20. Movement"]="20. 体力与移动",["21. Magazine"]="21. 弹夹信息",["22. Armor analysis"]="22. 头甲分析",["23. Aggro tracking"]="23. 仇恨追踪"
+  ["11. Hit display"]="11. 命中与击杀提示",["12. Corpse ESP"]="12. 尸体显示",["13. Raid population"]="13. 局内存活人数",["14. Exfiltration"]="14. 撤离点状态",["15. Transit points"]="15. 转移点",["16. Night vision"]="16. 夜视",["17. Force doors"]="17. 破门强开",["18. BTR"]="18. BTR 站点",["19. Vitals"]="19. 生存状态",["20. Movement"]="20. 体力与移动",["21. Magazine"]="21. 弹夹信息",["22. Armor analysis"]="22. 弹道与防护分析",["23. Aggro tracking"]="23. 仇恨追踪"
  };
  static readonly Dictionary<string,(string Name,string Help)> common=new(){
   ["Enabled"]=("启用","开启或关闭本组功能。"),
@@ -102,7 +102,7 @@ internal static class CnConfig {
   ["19. Vitals"]="战局中常驻显示自己的总血量、水分和能量；约每 0.2 秒更新，低数值变色提醒。",
   ["20. Movement"]="分别控制腿部与手臂无限体力，并可调节本地玩家的移动速度。",
   ["21. Magazine"]="左侧显示当前武器弹夹内的弹种、数量、伤害和穿透值。",
-  ["22. Armor analysis"]="瞄准敌人附近时，根据当前弹药和对方头甲显示粗略穿透与伤害估计。",
+  ["22. Armor analysis"]="查看准星附近对方的枪械、膛内或下一发弹药及伤害参数；比较自身头面、躯干护甲对该弹药的防护，并分析自身弹药对对方头部的穿透风险。穿透率为按覆盖区域的原生估算。",
   ["23. Aggro tracking"]="按住 + 在左侧中间显示当前把你作为目标的 AI，以及仍记得你的 AI；也支持小键盘 +。"
  };
  internal static ConfigEntry<T> Bind<T>(ConfigFile file,string section,string key,T value,string description="")=>Bind(file,section,key,value,new ConfigDescription(description));

@@ -45,6 +45,11 @@ internal static class LootDisplay {
  internal static void Reset()=>snapshots.Clear();
  internal static void Shutdown(){snapshots.Clear();prices=new(StringComparer.Ordinal);names=new(StringComparer.Ordinal);}
  static bool ReadableName(string? text)=>!string.IsNullOrWhiteSpace(text)&&!System.Text.RegularExpressions.Regex.IsMatch(text,"^[a-fA-F0-9]{24}( Name| ShortName| Description)?$");
+ internal static string TemplateName(string id){
+  foreach(var key in new[]{id+" ShortName",id,id+" Name"})if(names.TryGetValue(key,out var name)&&ReadableName(name))return name;
+  foreach(var suffix in new[]{" ShortName"," Name"}){string text=LocalizationExtensions.Localized(id+suffix,EStringCase.None);if(ReadableName(text)){names[id+suffix]=text;return text;}}
+  return id;
+ }
  internal static string ItemName(Item item,bool shortName=true){
   var id=item.StringTemplateId;
   if(shortName&&names.TryGetValue(id+" ShortName",out var shortText)&&ReadableName(shortText))return shortText;

@@ -65,10 +65,10 @@ internal static class InterfaceMenu {
   AddSlot("vitals","生存状态",new Rect(12,110,382,28));
   AddSlot("magazine","弹夹信息",new Rect(12,145,310,130));
   AddSlot("aggro","仇恨追踪",new Rect(12,Screen.height/2-70,340,140));
-  AddSlot("armor","头甲分析",new Rect(Screen.width-397,165,385,115));
+  AddSlot("armor","弹道与防护分析",new Rect(Screen.width-632,165,620,283));
   AddSlot("exfil","撤离信息",new Rect(Screen.width-452,Screen.height-300,440,280));
   AddSlot("population","局内人数",new Rect(12,12,Math.Min(880,Math.Max(350,Screen.width-660)),48));
-  AddSlot("incoming","受击来源",new Rect(12,Screen.height*.65f,460,104));
+  AddSlot("incoming","受击来源",new Rect(12,Screen.height*.65f,720,288));
   AddSlot("hits","命中提示",new Rect(Screen.width-672,Screen.height*.26f,660,160));
   AddSlot("allkills","全战局击杀",new Rect(Screen.width-652,Screen.height*.49f,640,180));
   try{
