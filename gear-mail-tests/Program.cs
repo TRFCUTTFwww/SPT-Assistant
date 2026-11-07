@@ -2,6 +2,9 @@ using System.Text.Json;
 using LocalGearMail;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Models.Common;
+using SPTarkov.Server.Core.Models.Eft.Common;
+using SPTarkov.Server.Core.Models.Enums;
+using SPTarkov.Server.Core.Models.Spt.Tables;
 using var props=JsonDocument.Parse("{\"MaxHpResource\":400,\"MaxResource\":60,\"MaximumNumberOfUsage\":40}");
 var upd=new Upd{Repairable=new UpdRepairable{Durability=100,MaxDurability=100},MedKit=new UpdMedKit{HpResource=400},FoodDrink=new UpdFoodDrink{HpPercent=60}};
 GearAttributeRules.Apply(upd,new GearAttributes{Durability=50,MaxDurability=75,MedicalResource=200,FoodResource=30,KeyUses=4,FoundInRaid=true},props.RootElement);
@@ -127,3 +130,59 @@ StoryRules.SkipWait(contactPmc,tables,contactId,11000);
 if(contactPmc.Quests[0].AvailableAfter!=10999||contactPmc.Quests[0].Status!=SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.AvailableAfter||contactPmc.Quests[1].StatusTimers[SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.Success]+8100>=11000||contactPmc.Quests[2].AvailableAfter!=50000)throw new Exception("Scoped contact wait changed unrelated wait, status or failed prerequisite backdating");
 contactPmc.Quests[1].Status=SPTarkov.Server.Core.Models.Enums.QuestStatusEnum.Started;Deny(()=>StoryRules.SkipWait(contactPmc,tables,contactId,11000));
 Console.WriteLine("PASS scoped Kerman contact wait expiration preserves unrelated quests and choices; unmet predecessor rejected");
+
+// Exercise native delays on detached profiles; never write a live save.
+var sideTables=(TemplateTable)Activator.CreateInstance(typeof(TemplateTable))!;
+typeof(TemplateTable).GetProperty("Quests")!.SetValue(sideTables,Read<Dictionary<MongoId,Quest>>("quests.json"));
+var mainIds=StoryRules.StoryTasks(sideTables);var mainId=mainIds.First();
+const long sideNow=2000000000;int ordinaryWaitCases=0;
+string nativeQuestsBefore=nativeJson.Serialize(sideTables.Quests)!,nativeConfigBefore=nativeJson.Serialize(questConfig)!;
+foreach(var entry in sideTables.Quests.Where(p=>!mainIds.Contains(p.Key)))
+foreach(var condition in entry.Value.Conditions?.AvailableForStart??[]){
+ if(condition.ConditionType!="Quest"||condition.AvailableAfter is not >0||condition.Status?.Count is not >0)continue;
+ foreach(var priorIdText in StoryRules.Targets(condition)){
+  var priorId=new MongoId(priorIdText);if(priorId==entry.Key||priorId==mainId)continue;
+  var currentState=condition.Status.First();
+  var waiting=new QuestStatus{QId=entry.Key,StartTime=37,Status=QuestStatusEnum.AvailableAfter,AvailableAfter=sideNow+86400,StatusTimers=[],CompletedConditions=[new MongoId()]};
+  var priorQuest=new QuestStatus{QId=priorId,StartTime=23,Status=currentState,StatusTimers=new(){{currentState,sideNow-1}}};
+  var mainWait=new QuestStatus{QId=mainId,StartTime=0,Status=QuestStatusEnum.AvailableAfter,AvailableAfter=sideNow+43200,StatusTimers=[]};
+  var unknownWait=new QuestStatus{QId=new MongoId(),StartTime=0,Status=QuestStatusEnum.AvailableAfter,AvailableAfter=sideNow+12345,StatusTimers=[]};
+  var sidePmc=new PmcData{Quests=[waiting,priorQuest,mainWait,unknownWait],Variables=new(){{new MongoId(),73}},TarCoinBalance=17};
+  string beforeSide=nativeJson.Serialize(sidePmc)!,mainBefore=nativeJson.Serialize(mainWait)!,unknownBefore=nativeJson.Serialize(unknownWait)!;
+  StoryRules.SkipWaits(sidePmc,sideTables,questConfig,sideNow,storyQuests:false);
+  if(waiting.AvailableAfter>=sideNow||priorQuest.StatusTimers[currentState]+condition.AvailableAfter>=sideNow||nativeJson.Serialize(mainWait)!=mainBefore||nativeJson.Serialize(unknownWait)!=unknownBefore)throw new Exception("Side wait failed to expire or altered main/unknown quest");
+  var originalSide=nativeJson.Deserialize<PmcData>(beforeSide)!;var strippedSide=nativeJson.Deserialize<PmcData>(nativeJson.Serialize(sidePmc))!;
+  foreach(var savedQuest in strippedSide.Quests!){var originalQuest=originalSide.Quests!.Single(q=>q.QId==savedQuest.QId);savedQuest.AvailableAfter=originalQuest.AvailableAfter;savedQuest.StatusTimers=originalQuest.StatusTimers;}
+  if(nativeJson.Serialize(strippedSide)!=beforeSide)throw new Exception("Side skip changed data beyond wait timestamps");
+  string once=nativeJson.Serialize(sidePmc)!;if(StoryRules.SkipWaits(sidePmc,sideTables,questConfig,sideNow,storyQuests:false)!=0||nativeJson.Serialize(sidePmc)!=once)throw new Exception("Repeated side skip is not idempotent");
+  ordinaryWaitCases++;
+ }
+}
+if(ordinaryWaitCases==0)throw new Exception("No native side quest wait cases tested");
+Console.WriteLine($"PASS {ordinaryWaitCases} native side quest delays: explicit and prerequisite timer expiration, main/unknown quest isolation, other profile fields preserved and repeat idempotency");
+
+int hiddenWaitCases=0;
+foreach(var entry in questConfig.HiddenVariableGates.Where(p=>!mainIds.Contains(p.Key)&&p.Value.Delay>0&&p.Value.Quests?.Count>0&&sideTables.Quests.ContainsKey(p.Key))){
+ var hiddenPmc=new PmcData{Quests=[]};
+ foreach(var priorId in entry.Value.Quests!){StoryRules.Set(hiddenPmc,priorId,QuestStatusEnum.Success,sideNow-1);}
+ StoryRules.SkipWaits(hiddenPmc,sideTables,questConfig,sideNow,storyQuests:false);
+ foreach(var priorQuest in hiddenPmc.Quests)if(priorQuest.Status!=QuestStatusEnum.Success||priorQuest.StatusTimers[QuestStatusEnum.Success]+entry.Value.Delay>=sideNow)throw new Exception("Hidden side delay unchanged or prerequisite state altered");
+ string once=nativeJson.Serialize(hiddenPmc)!;if(StoryRules.SkipWaits(hiddenPmc,sideTables,questConfig,sideNow,storyQuests:false)!=0||nativeJson.Serialize(hiddenPmc)!=once)throw new Exception("Hidden side wait repeated mutation");
+ foreach(var priorQuest in hiddenPmc.Quests){priorQuest.Status=QuestStatusEnum.Locked;priorQuest.StatusTimers[QuestStatusEnum.Success]=sideNow-1;}
+ string unmetBefore=nativeJson.Serialize(hiddenPmc)!;StoryRules.SkipWaits(hiddenPmc,sideTables,questConfig,sideNow,storyQuests:false);
+ if(nativeJson.Serialize(hiddenPmc)!=unmetBefore)throw new Exception("Hidden wait changed an unmet prerequisite or historical timer");
+ hiddenWaitCases++;
+}
+if(hiddenWaitCases!=7)throw new Exception("Expected all seven native hidden side delays");
+Console.WriteLine($"PASS all {hiddenWaitCases} native hidden side waits including Gunsmith/Lightkeeper; completion prerequisites retained and repeated skips unchanged");
+
+var unmetCondition=sideTables.Quests.Where(p=>!mainIds.Contains(p.Key)).SelectMany(p=>p.Value.Conditions?.AvailableForStart??[]).First(c=>c.ConditionType=="Quest"&&c.AvailableAfter>0&&c.Status?.Contains(QuestStatusEnum.Success)==true&&StoryRules.Targets(c).Any());
+var unmetId=new MongoId(StoryRules.Targets(unmetCondition).First());var unmetPmc=new PmcData{Quests=[new(){QId=unmetId,StartTime=11,Status=QuestStatusEnum.Locked,StatusTimers=new(){{QuestStatusEnum.Success,sideNow-1}}}]};
+string lockedBefore=nativeJson.Serialize(unmetPmc)!;StoryRules.SkipWaits(unmetPmc,sideTables,questConfig,sideNow,storyQuests:false);
+if(nativeJson.Serialize(unmetPmc)!=lockedBefore)throw new Exception("Unmet side prerequisite's old success timer was altered");
+var emptyPmc=new PmcData{Quests=[]};if(StoryRules.SkipWaits(emptyPmc,sideTables,questConfig,sideNow,storyQuests:false)!=0||emptyPmc.Quests.Count!=0)throw new Exception("Skip created missing quests");
+var sideId=sideTables.Quests.Keys.First(id=>!mainIds.Contains(id));var scopedPmc=new PmcData{Quests=[new(){QId=sideId,StartTime=0,Status=QuestStatusEnum.AvailableAfter,AvailableAfter=sideNow+100,StatusTimers=[]},new(){QId=mainId,StartTime=0,Status=QuestStatusEnum.AvailableAfter,AvailableAfter=sideNow+100,StatusTimers=[]}]};
+StoryRules.SkipWaits(scopedPmc,sideTables,questConfig,sideNow);
+if(scopedPmc.Quests[0].AvailableAfter!=sideNow+100||scopedPmc.Quests[1].AvailableAfter>=sideNow)throw new Exception("Default main story action changed side wait scope");
+if(nativeJson.Serialize(sideTables.Quests)!=nativeQuestsBefore||nativeJson.Serialize(questConfig)!=nativeConfigBefore||!File.ReadAllBytes(profilePath).SequenceEqual(diskBefore))throw new Exception("Wait skip altered native templates, configuration or live profile bytes");
+Console.WriteLine("PASS unmet/missing prerequisite isolation, original main story scope, native template/configuration immutability and live save bytes unchanged");

@@ -48,13 +48,14 @@ public static class StoryRules {
   }
   variables.SyncAll(pmc);
  }
- public static int SkipWaits(PmcData pmc,TemplateTable templates,QuestConfig config,long now){
-  var story=StoryTasks(templates);int count=0;foreach(var saved in pmc.Quests??[])if(story.Contains(saved.QId)&&saved.Status==QuestStatusEnum.AvailableAfter&&saved.AvailableAfter>now){saved.AvailableAfter=now-1;count++;}
-  foreach(var pair in templates.Quests.Where(pair=>story.Contains(pair.Key)))foreach(var condition in pair.Value.Conditions?.AvailableForStart??[]){
+ public static int SkipWaits(PmcData pmc,TemplateTable templates,QuestConfig config,long now,bool storyQuests=true){
+  var story=StoryTasks(templates);var selected=templates.Quests.Keys.Where(id=>story.Contains(id)==storyQuests).ToHashSet();
+  int count=0;foreach(var saved in pmc.Quests??[])if(selected.Contains(saved.QId)&&saved.Status==QuestStatusEnum.AvailableAfter&&saved.AvailableAfter>now){saved.AvailableAfter=now-1;count++;}
+  foreach(var pair in templates.Quests.Where(pair=>selected.Contains(pair.Key)))foreach(var condition in pair.Value.Conditions?.AvailableForStart??[]){
    if(condition.ConditionType!="Quest"||condition.AvailableAfter is not >0)continue;
-   foreach(string target in Targets(condition)){var saved=pmc.Quests?.SingleOrDefault(q=>q.QId.ToString()==target);if(saved?.StatusTimers==null||condition.Status==null)continue;foreach(var state in condition.Status)if(saved.StatusTimers.TryGetValue(state,out double time)&&time+condition.AvailableAfter>now){saved.StatusTimers[state]=now-condition.AvailableAfter.Value-1;count++;}}
+   foreach(string target in Targets(condition)){var saved=pmc.Quests?.SingleOrDefault(q=>q.QId.ToString()==target);if(saved?.StatusTimers==null||condition.Status?.Contains(saved.Status)!=true)continue;if(saved.StatusTimers.TryGetValue(saved.Status,out double time)&&time+condition.AvailableAfter>now){saved.StatusTimers[saved.Status]=now-condition.AvailableAfter.Value-1;count++;}}
   }
-  foreach(var pair in config.HiddenVariableGates??[]){if(!story.Contains(pair.Key)||pair.Value.Delay is not >0)continue;
+  foreach(var pair in config.HiddenVariableGates??[]){if(!selected.Contains(pair.Key)||pair.Value.Delay is not >0)continue;
    foreach(var id in pair.Value.Quests??[]){var saved=pmc.Quests?.SingleOrDefault(q=>q.QId==id);if(saved?.Status==QuestStatusEnum.Success&&saved.StatusTimers?.TryGetValue(QuestStatusEnum.Success,out double time)==true&&time+pair.Value.Delay>now){saved.StatusTimers[QuestStatusEnum.Success]=now-pair.Value.Delay.Value-1;count++;}}
   }return count;
  }

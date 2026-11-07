@@ -45,6 +45,11 @@ internal static class StoryPanel {
   if(InterfaceMenu.Button(new Rect(r.x,r.yMax-42,(r.width-12)/2,34),"应用修改",true))Begin(action,selected,state);
   if(InterfaceMenu.Button(new Rect(r.x+(r.width+12)/2,r.yMax-42,(r.width-12)/2,34),"取消"))confirm=false;
  }
- static void Waits(Rect r){InterfaceMenu.Paragraph(new Rect(r.x,r.y,r.width,68),"清除当前主线的接取等待时间。任务目标、等级及其他前置条件仍需满足。",null,14);if(InterfaceMenu.Button(new Rect(r.x,r.y+85,240,36),"跳过主线等待时间",true))Begin("waits");}
+ static void Waits(Rect r){
+  InterfaceMenu.Paragraph(new Rect(r.x,r.y,r.width,68),"分别清除当前主线或支线／商人任务的接取等待时间（含隐藏等待）。任务目标、等级、好感及其他前置条件仍需满足。",null,14);
+  if(InterfaceMenu.Button(new Rect(r.x,r.y+85,240,36),"跳过主线等待时间",true))Begin("waits");
+  if(InterfaceMenu.Button(new Rect(r.x,r.y+135,240,36),"跳过支线等待时间",true))Begin("sidewaits");
+  InterfaceMenu.Paragraph(new Rect(r.x,r.y+190,r.width,68),"仅清除本次已有等待，后续新触发的倒计时需再次跳过。保存后重新登录角色生效。",null,13);
+ }
  static void Endings(Rect r){var rows=data.GetProperty("endings").EnumerateArray().ToArray();scroll=GUI.BeginScrollView(r,scroll,new Rect(0,0,r.width-18,rows.Length*118));for(int i=0;i<rows.Length;i++){var row=rows[i];string id=row.GetProperty("id").GetString()!,key=row.GetProperty("name").GetString()!;string name=CharacterDataPanel.Name(key+" name",key);float y=i*118;InterfaceMenu.Paragraph(new Rect(0,y,r.width-180,65),name,InterfaceMenu.Accent,14);if(InterfaceMenu.Button(new Rect(r.width-165,y,140,32),row.GetProperty("current").GetBoolean()?"当前结局":"切换至此结局")){selected=id;selectedName=name;action="ending";confirm=true;using var doc=JsonDocument.Parse("{\"affected\":[]}");preview=doc.RootElement.Clone();}InterfaceMenu.Label(new Rect(0,y+72,r.width-25,28),"切换结局不重复发放奖励。",null,12);}GUI.EndScrollView();}
 }
