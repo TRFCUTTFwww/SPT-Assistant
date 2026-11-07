@@ -19,6 +19,6 @@ public static class HideoutCraftService {
    if(!ReferenceEquals(previous,hideout.Production)||json.Serialize(previous)!=before)throw new ArgumentException("制作状态已更新，请重试。");
    hideout.Production=copy;try{await saves.SaveProfileAsync(session);}catch{hideout.Production=previous;throw;}
   }
-  return http.GetBody(new{ok=true,completed=count,productions=selected.Where(pair=>HideoutCraftRules.Eligible(pair.Value)).Select(pair=>new{id=pair.Key.ToString(),progress=pair.Value!.Progress??0,productionTime=pair.Value.ProductionTime??0})});
+  return http.GetBody(new{ok=true,profileId=profile.CharacterData!.PmcData!.Id.ToString(),completed=count,productions=selected.Where(pair=>HideoutCraftRules.Eligible(pair.Value)).Select(pair=>new{id=pair.Key.ToString(),progress=pair.Value!.Progress??0,productionTime=pair.Value.ProductionTime??0,startTimestamp=pair.Value.StartTimestamp??0,availableForFinish=pair.Value.AvailableForFinish==true})});
  }
 }

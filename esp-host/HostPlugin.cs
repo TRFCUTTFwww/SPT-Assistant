@@ -6,7 +6,7 @@ using BepInEx;
 using BepInEx.Unity.IL2CPP;
 using UnityEngine;
 namespace LocalSpt5Esp.HotReload;
-[BepInPlugin("local.spt5.esp","SPT5 中文辅助","1.4.11")]
+[BepInPlugin("local.spt5.esp","SPT5 中文辅助","1.5.0")]
 public sealed class HostPlugin:BasePlugin {
  internal static HostPlugin? Instance;
  internal RuntimeReloader? Runtime;

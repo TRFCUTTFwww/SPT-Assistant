@@ -10,6 +10,10 @@ using LocalRaidShared;
 var sourceRoot=Path.GetFullPath(Environment.GetEnvironmentVariable("SPT_SOURCE_ROOT")??"_spt5_esp_fix");
 var gameRoot=Environment.GetEnvironmentVariable("SPT_GAME_ROOT");if(!string.IsNullOrWhiteSpace(gameRoot))Directory.SetCurrentDirectory(gameRoot);
 try{
+Assert(HideoutCraftSyncRules.CanApply("a","a",false,true,false,12,12,3600,3600,3600),"completed profile progress still permits live producer refresh");
+Assert(!HideoutCraftSyncRules.CanApply("a","b",false,true,false,12,12,3600,3600,3600)&&!HideoutCraftSyncRules.CanApply("a","a",true,true,false,12,12,3600,3600,3600)&&!HideoutCraftSyncRules.CanApply("a","a",false,true,false,13,12,3600,3600,3600),"old craft responses cannot change another profile, raid or a newly restarted craft");
+Assert(!HideoutCraftSyncRules.CanApply("a","a",false,false,false,12,12,3600,3600,3600)&&!HideoutCraftSyncRules.CanApply("a","a",false,true,true,12,12,3600,3600,3600)&&!HideoutCraftSyncRules.CanApply("a","a",false,true,false,12,12,3601,3600,3600)&&!HideoutCraftSyncRules.CanApply("a","a",false,true,false,12,12,3600,3600,double.NaN),"stopped, interrupted, mismatching duration and invalid craft data remain unchanged");
+Console.WriteLine("PASS hideout live-producer resynchronization and profile/raid/restarted-craft isolation");
 float[] stableProjection={1.2f,0,0,0,0,1.8f,0,0,.13f,-.04f,-1,-1,0,0,-.2f,0};
 foreach(float sample in new[]{-.00072f,.00031f,.00039f}){var jittered=(float[])stableProjection.Clone();jittered[8]+=sample;jittered[9]-=sample;Assert(OverlayProjectionRules.CanUseStable(jittered,stableProjection,false),"TAA samples accept the original asymmetric lens projection without changing camera motion");}
 var zoomProjection=(float[])stableProjection.Clone();zoomProjection[0]*=2;Assert(!OverlayProjectionRules.CanUseStable(zoomProjection,stableProjection,false),"a previous zoom projection cannot override a new FOV");

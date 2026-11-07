@@ -27,7 +27,10 @@ internal class Plugin {
  internal ConfigEntry<KeyCode> PeopleKey=null!,LootKey=null!,GodKey=null!;
  internal ConfigEntry<KeyCode> IgnoreAIKey=null!;
  internal Harmony Patches=null!;
- public void Load(){
+ public void Load(){foreach(var step in LoadSteps())step();}
+ public IEnumerable<Action> LoadSteps(){
+  yield return ()=>{
+
   Self=this;
   People=CnConfig.Bind(Config,"1. ESP","People",true,"Show living characters through walls. F6 toggles.");
   ShowHealth=CnConfig.Bind(Config,"1. ESP","Show health",true,"Show current / maximum total body health and a colored health bar above each character.");
@@ -45,20 +48,89 @@ internal class Plugin {
   IgnoreAI=CnConfig.Bind(Config,"4. AI ignore","Enabled",true,"AI ignores the local player: suppresses hostility, visual targeting and existing enemy memory. F9 toggles. Does not hide your model from human players.");
   IgnoreAIKey=CnConfig.Bind(Config,"3. Keys","AI ignore toggle",KeyCode.F9);
   Patches=new Harmony("local.spt5.esp");
-  Patch("ApplyDamage",nameof(BlockDamage));
-  Patch("Kill",nameof(BlockDeath));
-  PatchAI(typeof(BotsGroup),"IsEnemy",nameof(IgnoreTarget));
-  PatchAI(typeof(BotEnemiesController),"IsEnemy",nameof(IgnoreTarget));
-  PatchAI(typeof(BotMemory),"AddEnemyInfo",nameof(SkipTarget));
-  PatchAI(typeof(BotMemory),"SetUnderFire",nameof(SkipTarget));
-  PatchAI(typeof(BotsGroup),"ReportAboutEnemy",nameof(SkipTarget));
-  // The getter shares its native IL2CPP body with unrelated methods.
-  // Decision and vision hooks below still suppress local-player targeting.
-  PatchAI(typeof(EnemyInfo),"ShallKnowEnemy",nameof(IgnoreEnemyInfo));
-  PatchAI(typeof(EnemyInfo),"CheckLookEnemy",nameof(SkipVision));
-  LootDisplay.Initialize(this);ForceLoot.Initialize(this);RaidStash.Initialize(this);ArmorCare.Initialize(this);NativeEventControl.Initialize(this);BodyTint.Initialize(this);ScopeBoxes.Initialize();GraphicsRepair.Initialize();OverlayProjection.Initialize();MuzzleLine.Initialize();CombatAssist.Initialize(this);RecoilAssist.Initialize(this);HitSounds.Initialize();GlobalKillFeed.Initialize();AutoTrigger.Initialize(this);MenuIdleControl.Initialize(this);AiSpawnPresets.Initialize();HitDisplay.Initialize(this);CorpseDisplay.Initialize(this);RaidPopulation.Initialize(this);ExfilDisplay.Initialize(this);TransitDisplay.Initialize(this);BtrDisplay.Initialize(this);NightVisionAssist.Initialize(this);DoorAssist.Initialize(this);VitalsDisplay.Initialize(this);MovementAssist.Initialize(this);MagazineDisplay.Initialize(this);ArmorAnalysis.Initialize(this);AggroDisplay.Initialize(this);RaidClock.Initialize(this);RaidLoot.Initialize();TaskNeeds.Initialize();RaidEnvironment.Initialize();WeaponComfort.Initialize(this);SurvivalAssist.Initialize(this);GrenadeAlert.Initialize(this);GrenadeArc.Initialize(this);FloatingStatus.Initialize();ConfigProfiles.Initialize();GroundNavigation.Initialize();AiTestControl.Initialize(this);PlayerDamageControl.Initialize();AiActorControl.Initialize(this);AiHealthAudit.Initialize(this);IncomingDamage.Initialize(this);CharacterBuffs.Initialize(this);BossLabels.Initialize();PlayerWeaponPresets.Initialize();AiLimitCompatibility.Initialize(this);AirdropControl.Initialize(this);RaidSpawnControl.Initialize(this);DamagePreview.Initialize();InteractionPoints.Initialize();BitcoinControl.Initialize(this);HideoutCraftControl.Initialize(this);CommandoConsole.Initialize();NoclipControl.Initialize(this);TeleportControl.InitializeMarkers(this);DirectorStage.Initialize(this);AiSceneDirector.Initialize(this);AiSceneEquipment.Initialize();SceneTemplates.Initialize();ToyDeveloper.Initialize(this);BtrControl.Initialize(this);CorpseCleanup.Initialize();EntertainmentControl.Initialize(this);TripwireHighlight.Initialize();EventCabinetDisplay.Initialize();PasscodeHints.Initialize(this);BulletTrajectories.Initialize(this);ImpactAiSpawner.Initialize(this);
-
-  Log.LogInfo($"SPT5 ESP ready v{RuntimeModule.ReleaseVersion}. Health numbers + bars: {ShowHealth.Value}. AI ignore: {IgnoreAI.Value}. {PeopleKey.Value}: people; {LootKey.Value}: items; {GodKey.Value}: god mode; {IgnoreAIKey.Value}: AI ignore. RightShift: main menu; F12: settings.");
+  };
+  yield return ()=>Patch("ApplyDamage",nameof(BlockDamage));
+  yield return ()=>Patch("Kill",nameof(BlockDeath));
+  yield return ()=>PatchAI(typeof(BotsGroup),"IsEnemy",nameof(IgnoreTarget));
+  yield return ()=>PatchAI(typeof(BotEnemiesController),"IsEnemy",nameof(IgnoreTarget));
+  yield return ()=>PatchAI(typeof(BotMemory),"AddEnemyInfo",nameof(SkipTarget));
+  yield return ()=>PatchAI(typeof(BotMemory),"SetUnderFire",nameof(SkipTarget));
+  yield return ()=>PatchAI(typeof(BotsGroup),"ReportAboutEnemy",nameof(SkipTarget));
+  yield return ()=>PatchAI(typeof(EnemyInfo),"ShallKnowEnemy",nameof(IgnoreEnemyInfo));
+  yield return ()=>PatchAI(typeof(EnemyInfo),"CheckLookEnemy",nameof(SkipVision));
+  yield return ()=>LootDisplay.Initialize(this);
+  yield return ()=>ForceLoot.Initialize(this);
+  yield return ()=>RaidStash.Initialize(this);
+  yield return ()=>ArmorCare.Initialize(this);
+  yield return ()=>NativeEventControl.Initialize(this);
+  yield return ()=>BodyTint.Initialize(this);
+  yield return ()=>ScopeBoxes.Initialize();
+  yield return ()=>GraphicsRepair.Initialize();
+  yield return ()=>OverlayProjection.Initialize();
+  yield return ()=>MuzzleLine.Initialize();
+  yield return ()=>CombatAssist.Initialize(this);
+  yield return ()=>RecoilAssist.Initialize(this);
+  yield return ()=>HitSounds.Initialize();
+  yield return ()=>GlobalKillFeed.Initialize();
+  yield return ()=>AutoTrigger.Initialize(this);
+  yield return ()=>MenuIdleControl.Initialize(this);
+  yield return ()=>AiSpawnPresets.Initialize();
+  yield return ()=>HitDisplay.Initialize(this);
+  yield return ()=>CorpseDisplay.Initialize(this);
+  yield return ()=>RaidPopulation.Initialize(this);
+  yield return ()=>ExfilDisplay.Initialize(this);
+  yield return ()=>TransitDisplay.Initialize(this);
+  yield return ()=>BtrDisplay.Initialize(this);
+  yield return ()=>NightVisionAssist.Initialize(this);
+  yield return ()=>DoorAssist.Initialize(this);
+  yield return ()=>VitalsDisplay.Initialize(this);
+  yield return ()=>MovementAssist.Initialize(this);
+  yield return ()=>MagazineDisplay.Initialize(this);
+  yield return ()=>ArmorAnalysis.Initialize(this);
+  yield return ()=>AggroDisplay.Initialize(this);
+  yield return ()=>RaidClock.Initialize(this);
+  yield return ()=>RaidLoot.Initialize();
+  yield return ()=>TaskNeeds.Initialize();
+  yield return ()=>RaidEnvironment.Initialize();
+  yield return ()=>WeaponComfort.Initialize(this);
+  yield return ()=>SurvivalAssist.Initialize(this);
+  yield return ()=>GrenadeAlert.Initialize(this);
+  yield return ()=>GrenadeArc.Initialize(this);
+  yield return ()=>FloatingStatus.Initialize();
+  yield return ()=>ConfigProfiles.Initialize();
+  yield return ()=>GroundNavigation.Initialize();
+  yield return ()=>AiTestControl.Initialize(this);
+  yield return ()=>PlayerDamageControl.Initialize();
+  yield return ()=>AiActorControl.Initialize(this);
+  yield return ()=>AiHealthAudit.Initialize(this);
+  yield return ()=>IncomingDamage.Initialize(this);
+  yield return ()=>CharacterBuffs.Initialize(this);
+  yield return ()=>BossLabels.Initialize();
+  yield return ()=>PlayerWeaponPresets.Initialize();
+  yield return ()=>AiLimitCompatibility.Initialize(this);
+  yield return ()=>AirdropControl.Initialize(this);
+  yield return ()=>RaidSpawnControl.Initialize(this);
+  yield return ()=>DamagePreview.Initialize();
+  yield return ()=>InteractionPoints.Initialize();
+  yield return ()=>BitcoinControl.Initialize(this);
+  yield return ()=>HideoutCraftControl.Initialize(this);
+  yield return ()=>CommandoConsole.Initialize();
+  yield return ()=>NoclipControl.Initialize(this);
+  yield return ()=>TeleportControl.InitializeMarkers(this);
+  yield return ()=>DirectorStage.Initialize(this);
+  yield return ()=>AiSceneDirector.Initialize(this);
+  yield return ()=>AiSceneEquipment.Initialize();
+  yield return ()=>SceneTemplates.Initialize();
+  yield return ()=>ToyDeveloper.Initialize(this);
+  yield return ()=>BtrControl.Initialize(this);
+  yield return ()=>CorpseCleanup.Initialize();
+  yield return ()=>EntertainmentControl.Initialize(this);
+  yield return ()=>TripwireHighlight.Initialize();
+  yield return ()=>EventCabinetDisplay.Initialize();
+  yield return ()=>PasscodeHints.Initialize(this);
+  yield return ()=>BulletTrajectories.Initialize(this);
+  yield return ()=>ImpactAiSpawner.Initialize(this);
+  yield return ()=>Log.LogInfo($"SPT5 ESP ready v{RuntimeModule.ReleaseVersion}. Health numbers + bars: {ShowHealth.Value}. AI ignore: {IgnoreAI.Value}. {PeopleKey.Value}: people; {LootKey.Value}: items; {GodKey.Value}: god mode; {IgnoreAIKey.Value}: AI ignore. RightShift: main menu; F12: settings.");
  }
  void Patch(string target,string prefix){
   try {var methods=typeof(ActiveHealthController).GetMethods().Where(x=>x.DeclaringType==typeof(ActiveHealthController)&&x.Name==target).ToArray();
@@ -158,7 +230,71 @@ internal class Overlay {
   if(Time.unscaledTime>=nextStatus){nextStatus=Time.unscaledTime+30;Plugin.Self.Log.LogInfo($"ESP status: people={players.Count} loot={items.Count} god={s.God.Value}; {CombatAssist.Diagnostics}; {AutoTrigger.Diagnostics}");}
  }catch(Exception e){Warn(e);}}
  public void LateUpdate(){long costStamp=RuntimePerformance.Start();var active=RaidClock.Active;var current=active?Singleton<GameWorld>.Instance:null;var player=current?.MainPlayer;NextRaidLoot.Tick();RuntimeCosts.Mark(ref costStamp,CostStage.Heartbeat);ForceLoot.Tick(current,player);ArmorCare.Tick();RaidSpawnControl.Tick(current);RuntimeCosts.Mark(ref costStamp,CostStage.General);BitcoinControl.Tick();RuntimeCosts.Mark(ref costStamp,CostStage.Bitcoin);NoclipControl.Tick();TeleportControl.Tick(current);InteractionPoints.Tick(current);TripwireHighlight.Tick(current,player);EventCabinetDisplay.Tick(current,player);AirdropControl.Tick(current);BulletTrajectories.Tick(current);NativeRaidTimer.Tick();RaidEnd.Tick();RaidEnvironment.Tick();RuntimeCosts.Mark(ref costStamp,CostStage.General);RaidLoot.Tick(current,player);TaskNeeds.Tick(player);RuntimeCosts.Mark(ref costStamp,CostStage.Loot);WeaponComfort.Tick(player);WeaponEditor.Tick(current,player);ToyFireControl.Tick(current,player);AiEquipmentEditor.Tick(current);SurvivalAssist.Tick(player);GrenadeAlert.Tick(current,player);RuntimeCosts.Mark(ref costStamp,CostStage.Weapons);IndexContainers();RuntimeCosts.Mark(ref costStamp,CostStage.Containers);RecoilAssist.Tick(me);NightVisionAssist.Tick(me);CombatAssist.Tick(world,me,camera);AutoTrigger.Tick(current,player,camera);HitDisplay.Tick(world);GlobalKillFeed.Tick(current);RuntimeCosts.Mark(ref costStamp,CostStage.Combat);ExfilDisplay.Tick(world,me);RuntimeCosts.Mark(ref costStamp,CostStage.Exits);GroundNavigation.Tick(current,player);RuntimeCosts.Mark(ref costStamp,CostStage.Navigation);AiSpawnService.Tick(current,player);AiTestControl.Tick(current,player);AiSceneDirector.Tick(current);AiSceneEquipment.Tick(current);SceneTemplates.Tick(current);ToyDeveloper.Tick(current);CorpseCleanup.Tick(current);AiActorControl.Tick(current,player);AiLimitCompatibility.Tick(current);RuntimeCosts.Mark(ref costStamp,CostStage.AiTools);IncomingDamage.Tick(current);CharacterBuffs.Tick(current,player);TransitDisplay.Tick(world,me);BtrControl.Tick(current);BtrDisplay.Tick(world);MovementAssist.Tick(me);DirectorStage.Late();scopeBoxes.Tick(players,player);MuzzleLine.Tick(current,player);RuntimeCosts.Mark(ref costStamp,CostStage.World);}
- public void OnDestroy(){scopeBoxes.Dispose();BitcoinControl.Reset();OverlayProjection.Shutdown();MuzzleLine.Dispose();GlobalKillFeed.Reset();SceneTemplates.Reset();AiSceneDirector.Reset();AiSceneEquipment.Reset();ToyDeveloper.Reset();ToyFireControl.Reset();BtrControl.Reset();DirectorStage.Reset();AutoTrigger.Reset();HitSounds.Shutdown();ImpactAiSpawner.Reset();EntertainmentControl.Shutdown();NoclipControl.Reset();RaidSpawnControl.Reset();AiRemoval.Reset();AiEquipmentEditor.Reset();TeleportControl.Reset();InteractionPoints.Reset();TripwireHighlight.Reset();WeaponEditor.Reset();AirdropControl.Reset();PlayerWeaponPresets.Reset();BossLabels.Reset();CharacterBuffs.Reset();AiTestControl.Reset();AiActorControl.Reset();IncomingDamage.Reset();GroundNavigation.Shutdown();NativeRaidTimer.Reset();RaidEnd.CancelConfirmation();RaidLoot.Shutdown();RaidEnvironment.Reset();SurvivalAssist.Reset();GrenadeAlert.Reset();TaskNeeds.Reset();ForceLoot.Reset();NativeEventControl.Reset();ContainerAnchor.Reset();BodyTint.Dispose();LootDisplay.Reset();CombatAssist.Reset();HitDisplay.Reset();RecoilAssist.Reset();NightVisionAssist.Reset();DoorAssist.Reset();CorpseDisplay.Reset();RaidPopulation.Reset();VitalsDisplay.Reset();MovementAssist.Reset();MagazineDisplay.Reset();ArmorAnalysis.Reset();DamagePreview.Reset();BulletTrajectories.Reset();AggroDisplay.Reset();ExfilDisplay.Shutdown();TransitDisplay.Reset();BtrDisplay.Reset();focus.Clear();}
+ public void OnDestroy(){foreach(var step in UnloadSteps())step();}
+ public IEnumerable<Action> UnloadSteps(){
+  yield return ()=>scopeBoxes.Dispose();
+  yield return ()=>BitcoinControl.Reset();
+  yield return ()=>OverlayProjection.Shutdown();
+  yield return ()=>MuzzleLine.Dispose();
+  yield return ()=>GlobalKillFeed.Reset();
+  yield return ()=>SceneTemplates.Reset();
+  yield return ()=>AiSceneDirector.Reset();
+  yield return ()=>AiSceneEquipment.Reset();
+  yield return ()=>ToyDeveloper.Reset();
+  yield return ()=>ToyFireControl.Reset();
+  yield return ()=>BtrControl.Reset();
+  yield return ()=>DirectorStage.Reset();
+  yield return ()=>AutoTrigger.Reset();
+  yield return ()=>HitSounds.Shutdown();
+  yield return ()=>ImpactAiSpawner.Reset();
+  yield return ()=>EntertainmentControl.Shutdown();
+  yield return ()=>NoclipControl.Reset();
+  yield return ()=>RaidSpawnControl.Reset();
+  yield return ()=>AiRemoval.Reset();
+  yield return ()=>AiEquipmentEditor.Reset();
+  yield return ()=>TeleportControl.Reset();
+  yield return ()=>InteractionPoints.Reset();
+  yield return ()=>TripwireHighlight.Reset();
+  yield return ()=>WeaponEditor.Reset();
+  yield return ()=>AirdropControl.Reset();
+  yield return ()=>PlayerWeaponPresets.Reset();
+  yield return ()=>BossLabels.Reset();
+  yield return ()=>CharacterBuffs.Reset();
+  yield return ()=>AiTestControl.Reset();
+  yield return ()=>AiActorControl.Reset();
+  yield return ()=>IncomingDamage.Reset();
+  yield return ()=>GroundNavigation.Shutdown();
+  yield return ()=>NativeRaidTimer.Reset();
+  yield return ()=>RaidEnd.CancelConfirmation();
+  yield return ()=>RaidLoot.Shutdown();
+  yield return ()=>RaidEnvironment.Reset();
+  yield return ()=>SurvivalAssist.Reset();
+  yield return ()=>GrenadeAlert.Reset();
+  yield return ()=>TaskNeeds.Reset();
+  yield return ()=>ForceLoot.Reset();
+  yield return ()=>NativeEventControl.Reset();
+  yield return ()=>ContainerAnchor.Reset();
+  yield return ()=>BodyTint.Dispose();
+  yield return ()=>LootDisplay.Reset();
+  yield return ()=>CombatAssist.Reset();
+  yield return ()=>HitDisplay.Reset();
+  yield return ()=>RecoilAssist.Reset();
+  yield return ()=>NightVisionAssist.Reset();
+  yield return ()=>DoorAssist.Reset();
+  yield return ()=>CorpseDisplay.Reset();
+  yield return ()=>RaidPopulation.Reset();
+  yield return ()=>VitalsDisplay.Reset();
+  yield return ()=>MovementAssist.Reset();
+  yield return ()=>MagazineDisplay.Reset();
+  yield return ()=>ArmorAnalysis.Reset();
+  yield return ()=>DamagePreview.Reset();
+  yield return ()=>BulletTrajectories.Reset();
+  yield return ()=>AggroDisplay.Reset();
+  yield return ()=>ExfilDisplay.Shutdown();
+  yield return ()=>TransitDisplay.Reset();
+  yield return ()=>BtrDisplay.Reset();
+  yield return ()=>focus.Clear();
+ }
  void Warn(Exception e){if(Time.unscaledTime<nextError)return;nextError=Time.unscaledTime+20;Plugin.Self.Error(e);}
  public void OnGUI(){try{
   camera=OverlayProjection.MainCamera;

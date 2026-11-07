@@ -79,5 +79,10 @@ internal static class RaidStash {
    if(ready&&request==null&&Time.unscaledTime>=check&&CommonUI.Instance?.InventoryScreen?.gameObject.activeInHierarchy==true&&CommonUI.Instance.InventoryScreen._lootItem?.Pointer==stash?.Pointer){check=Time.unscaledTime+2;Save();}
  }catch(Exception e){request=null;loading=false;next=Time.unscaledTime+15;Fail(e.Message);}}
  internal static void Reset(){bool wasReady=ready;ready=false;if(wasReady&&stash!=null&&CommonUI.Instance?.InventoryScreen?._lootItem?.Pointer==stash.Pointer)CommonUI.Instance.InventoryScreen.Close();request=null;loading=ready=false;stash=null;actor=IntPtr.Zero;revision=saved=sent="";finishStop=null;next=0;}
- internal static void Shutdown(){if(ready&&request==null)Save();if(request!=null){try{using var document=JsonDocument.Parse(request.GetAwaiter().GetResult());if(document.RootElement.TryGetProperty("err",out var error)&&error.GetInt32()!=0)Plugin.Self.Log.LogError("Raid stash save failed during unload");}catch(Exception e){Plugin.Self.Error(e);}request=null;}Reset();}
+ internal static bool PrepareForReload(){if(Local?.InventoryController?.HasActiveEvents==true||finishStop!=null||request!=null)return false;if(ready)Save();return request==null;}
+ internal static void Shutdown(){
+  if(ready&&request==null)Save();
+  if(request is {} outstanding){var log=Plugin.Self.Log;_ = outstanding.ContinueWith(done=>{try{using var document=JsonDocument.Parse(done.GetAwaiter().GetResult());if(document.RootElement.TryGetProperty("err",out var error)&&error.GetInt32()!=0)log.LogError("Raid stash save failed during unload");}catch(Exception error){log.LogError(error);}},System.Threading.Tasks.TaskScheduler.Default);}
+  Reset();
+ }
 }

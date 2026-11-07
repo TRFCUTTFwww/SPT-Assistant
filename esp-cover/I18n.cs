@@ -8,6 +8,7 @@ internal static class I18n {
  static ConfigEntry<string>? language;
  static readonly Dictionary<CnConfig.ConfigurationManagerAttributes,(string Name,string Category,string Help)> original=new();
  static readonly LocalizationCatalog catalog=new(Read("en.json"),Read("en-formats.json"),ReadVerbatim());
+ internal static void Prepare()=>_ = catalog.Text("搜索");
  static Dictionary<string,string> Read(string name){using var stream=typeof(I18n).Assembly.GetManifestResourceStream("LocalSpt5Esp.Locales."+name)??throw new InvalidOperationException("Missing locale resource: "+name);return JsonSerializer.Deserialize<Dictionary<string,string>>(stream)??throw new InvalidOperationException("Invalid locale resource: "+name);}
  static Dictionary<string,int[]> ReadVerbatim(){using var stream=typeof(I18n).Assembly.GetManifestResourceStream("LocalSpt5Esp.Locales.en-verbatim.json")!;return JsonSerializer.Deserialize<Dictionary<string,int[]>>(stream)!;}
  internal static bool English=>language?.Value.Equals("en",StringComparison.OrdinalIgnoreCase)==true;
