@@ -232,6 +232,16 @@ try{
  if(karmaProfile.KarmaValue!=.8||KarmaRules.Scav(karmaProfile)!=6||karmaProfile.TradersInfo[new MongoId("54cb50c76803fa8b248b4571")].Standing!=2)throw new Exception("Karma edits crossed into unrelated profile values");
  string beforeKarma=nativeJson.Serialize(karmaProfile)!;foreach(var input in new[]{("pmc",double.NaN,.8),("pmc",1.1,.8),("pmc",.1,.5),("scav",16d,6d),("unknown",1d,0d)}){try{KarmaRules.Apply(karmaProfile,input.Item1,input.Item2,input.Item3,-7,15);throw new Exception("Invalid karma accepted");}catch(ArgumentException){}}if(nativeJson.Serialize(karmaProfile)!=beforeKarma)throw new Exception("Rejected karma mutation changed the profile");
  Console.WriteLine("PASS native server settings, multi-file backups, unrelated-field preservation, stale/type/range/path rejection and isolated PMC/Scav karma edits");
+ karmaProfile.RagfairInfo=new(){Rating=12.34,IsRatingGrowing=false,SellSum=123456,NotSellSum=98,Offers=[]};
+ var expectedFlea=nativeJson.Deserialize<PmcData>(nativeJson.Serialize(karmaProfile))!;expectedFlea.RagfairInfo!.Rating=42.125;
+ KarmaRules.ApplyFlea(karmaProfile,42.125,12.34);
+ if(nativeJson.Serialize(karmaProfile)!=nativeJson.Serialize(expectedFlea))throw new Exception("Flea edit changed unrelated profile, turnover, direction or offers");
+ string beforeFlea=nativeJson.Serialize(karmaProfile)!;
+ foreach(var input in new[]{(double.NaN,(double?)42.125),(double.PositiveInfinity,(double?)42.125),(-1d,(double?)42.125),(1000001d,(double?)42.125),(3d,(double?)12.34),(3d,(double?)null)}){try{KarmaRules.ApplyFlea(karmaProfile,input.Item1,input.Item2);throw new Exception("Invalid or stale flea rating accepted");}catch(ArgumentException){}}
+ if(nativeJson.Serialize(karmaProfile)!=beforeFlea)throw new Exception("Rejected flea edit mutated profile");
+ KarmaRules.ApplyFlea(karmaProfile,0,42.125);KarmaRules.ApplyFlea(karmaProfile,KarmaRules.MaxFleaRating,0);
+ var absentFlea=new PmcData();try{KarmaRules.ApplyFlea(absentFlea,5,0);throw new Exception("Missing flea data silently initialized");}catch(ArgumentException){}
+ Console.WriteLine("PASS fractional flea reputation, exact profile-field isolation, stale/nonfinite/range rejection and missing-data protection");
 }finally{if(Directory.Exists(testSettingsRoot))Directory.Delete(testSettingsRoot,true);}
 
 // Reproduce the installed Mechanic story wait on a detached profile.

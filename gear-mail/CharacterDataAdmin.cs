@@ -47,6 +47,7 @@ public class CharacterDataService(SaveServer saves,JsonUtil json,HttpResponseUti
    var directory=System.IO.Path.Combine(AppContext.BaseDirectory,"user","mods","LocalGearMail","backups","character-data");Directory.CreateDirectory(directory);
    await File.WriteAllTextAsync(System.IO.Path.Combine(directory,$"{session}-{DateTime.UtcNow:yyyyMMdd-HHmmssfff}.json"),json.Serialize(profile,true),ct);
    switch(request.Action){
+    case "fleaRating":KarmaRules.ApplyFlea(pmc,request.Value,request.ExpectedValue);break;
     case "karma":var bounds=ServerSettingsService.ScavBounds();KarmaRules.Apply(pmc,request.Id,request.Value,request.ExpectedValue,bounds.Min,bounds.Max);break;
     case "deposit":CharacterDataRules.Deposit(pmc,request.ExpectedCoins,request.ExpectedBalance);break;
     case "wallet":if(!double.IsFinite(request.Value)||request.Value!=Math.Truncate(request.Value)||request.Value<0||request.Value>int.MaxValue)throw new ArgumentException("请输入有效的非负整数余额。");CharacterDataRules.Wallet(pmc,(int)request.Value,request.ExpectedBalance);break;

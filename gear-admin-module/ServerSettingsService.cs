@@ -11,7 +11,7 @@ public static class ServerSettingsService {
   lock(SettingsGate){
   string root=Path.Combine(AppContext.BaseDirectory,"SPT_Data","configs"),directory=Path.Combine(AppContext.BaseDirectory,"user","mods","LocalGearMail","server-settings");
   var store=new ServerSettingsStore(root,directory);if(request.Action=="serverSave")store.Save(request.Settings,request.Revision);
-  var snapshot=store.Read();return http.GetBody(new{ok=true,revision=snapshot.Revision,restartRequired=store.RestartPending(snapshot.Revision),settings=snapshot.Rows.Select(r=>new{id=r.Id,group=r.Group,name=r.Name,help=r.Help,value=r.Value,minimum=r.Minimum,maximum=r.Maximum,integer=r.Integer,boolean=r.Boolean,minusOne=r.MinusOne}),pmcKarma=KarmaRules.Pmc(pmc),scavKarma=KarmaRules.Scav(pmc),minimumScavKarma=store.ScavBounds().Min,maximumScavKarma=store.ScavBounds().Max});
+  var snapshot=store.Read();return http.GetBody(new{ok=true,revision=snapshot.Revision,restartRequired=store.RestartPending(snapshot.Revision),settings=snapshot.Rows.Select(r=>new{id=r.Id,group=r.Group,name=r.Name,help=r.Help,value=r.Value,minimum=r.Minimum,maximum=r.Maximum,integer=r.Integer,boolean=r.Boolean,minusOne=r.MinusOne}),fleaRating=KarmaRules.Flea(pmc),maximumFleaRating=KarmaRules.MaxFleaRating,pmcKarma=KarmaRules.Pmc(pmc),scavKarma=KarmaRules.Scav(pmc),minimumScavKarma=store.ScavBounds().Min,maximumScavKarma=store.ScavBounds().Max});
   }
  }
  public static (double Min,double Max) ScavBounds()=>new ServerSettingsStore(Path.Combine(AppContext.BaseDirectory,"SPT_Data","configs"),"").ScavBounds();

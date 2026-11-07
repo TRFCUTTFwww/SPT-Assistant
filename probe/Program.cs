@@ -10,6 +10,14 @@ using LocalRaidShared;
 var sourceRoot=Path.GetFullPath(Environment.GetEnvironmentVariable("SPT_SOURCE_ROOT")??"_spt5_esp_fix");
 var gameRoot=Environment.GetEnvironmentVariable("SPT_GAME_ROOT");if(!string.IsNullOrWhiteSpace(gameRoot))Directory.SetCurrentDirectory(gameRoot);
 try{
+var chatGate=new ChatSelectionGate();var chatNetwork=new IntPtr(1);string selectedChat="commando";int selectionEvents=0;
+void SelectChat(string requested,Action? onChanged=null){bool entered=chatGate.Enter(chatNetwork);if(!entered)return;try{selectionEvents++;onChanged?.Invoke();selectedChat=requested;}finally{chatGate.Exit(chatNetwork);}}
+SelectChat("ragfair",()=>{SelectChat(selectedChat);Assert(chatGate.Count==1,"suppressed reentrant chat selection cannot release the outer selection scope");});
+Assert(selectedChat=="ragfair"&&selectionEvents==1&&chatGate.Count==0,"native event-before-assignment list rebuild preserves the new conversation instead of reselecting Commando");
+try{SelectChat("fence",()=>throw new InvalidOperationException("detached view"));}catch(InvalidOperationException){}
+SelectChat("fence");Assert(selectedChat=="fence"&&chatGate.Count==0,"a failed chat notification releases the selection scope for the next manual click");
+Assert(chatGate.Enter(chatNetwork)&&chatGate.Enter(new IntPtr(2)),"separate social networks do not block one another");chatGate.Exit(chatNetwork);chatGate.Exit(new IntPtr(2));
+Console.WriteLine("PASS conversation reentry during synchronous list rebuild, selection exception cleanup and independent network isolation");
 Assert(BallisticAdvantageRules.Evaluate(.1f,.2f,true)==1&&BallisticAdvantageRules.Evaluate(.1f,.2f,false)==-1,"low penetration favors local defense but harms local offense");
 Assert(BallisticAdvantageRules.Evaluate(.8f,1,true)==-1&&BallisticAdvantageRules.Evaluate(.8f,1,false)==1,"high penetration harms local defense but favors local offense");
 Assert(BallisticAdvantageRules.Evaluate(.1f,1,true)==-1&&BallisticAdvantageRules.Evaluate(.1f,1,false)==0,"exposed coverage warns defenders without promising attackers a reliable penetration");
@@ -634,7 +642,7 @@ var catalogRoles=AiSpawnCatalog.Options.Select(o=>o.Role).ToHashSet(StringCompar
 var enumRoles=assembly.MainModule.GetTypes().Single(t=>t.Name=="WildSpawnType").Fields.Where(f=>f.HasConstant).Select(f=>f.Name).ToArray();
 Assert(AiSpawnCatalog.Options.Length==catalogRoles.Count&&enumRoles.All(catalogRoles.Contains),"every native AI role has one catalog entry, including explicitly unsupported aliases");
 foreach(var option in AiSpawnCatalog.Options.Where(o=>!o.Enabled))Assert(option.Unavailable.Length>10,"unavailable AI has an actionable reason: "+option.Role);
-Assert(MenuSections.Pages("服务端").SequenceEqual(new[]{"配置参数","业力"})&&!MenuSections.Pages("AI 工作台").Contains("刷新规则")&&MenuSections.Names.Count(n=>MenuSections.Pages(n).Contains("刷新规则"))==1&&MenuSections.Pages("战局与物资").Contains("刷新规则"),"server settings and karma remain editable; generation has one canonical workspace");
+Assert(MenuSections.Pages("服务端").SequenceEqual(new[]{"配置参数","业力与信誉"})&&!MenuSections.Pages("AI 工作台").Contains("刷新规则")&&MenuSections.Names.Count(n=>MenuSections.Pages(n).Contains("刷新规则"))==1&&MenuSections.Pages("战局与物资").Contains("刷新规则"),"server settings and karma remain editable; generation has one canonical workspace");
 Check("Player","get_Destroyed",0);Check("Player","get_PlayerBones",0);Check("Player","get_MovementContext",0);Check("Player","VisualPass",0);
 Assert(ServerEditRules.Number("0.25",0,1)==.25&&ServerEditRules.Number("2147483647",0,int.MaxValue,true)==int.MaxValue,"server editor retains double precision and exact Int32 time limits");
 foreach(string invalidValue in new[]{"NaN","Infinity","-0.5","2.2"})Reject(()=>ServerEditRules.Number(invalidValue,-1,10,true,true),"invalid server editor number");

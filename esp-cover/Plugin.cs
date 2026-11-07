@@ -115,6 +115,7 @@ internal class Plugin {
   yield return ()=>BitcoinControl.Initialize(this);
   yield return ()=>HideoutCraftControl.Initialize(this);
   yield return ()=>CommandoConsole.Initialize();
+  yield return ()=>ChatSelectionGuard.Initialize(this);
   yield return ()=>NoclipControl.Initialize(this);
   yield return ()=>TeleportControl.InitializeMarkers(this);
   yield return ()=>DirectorStage.Initialize(this);
