@@ -26,6 +26,7 @@ public class CharacterDataRequest:IRequestData {
  [JsonPropertyName("expectedCoins")] public long ExpectedCoins{get;set;}
 }
 public class CharacterDataService(SaveServer saves,JsonUtil json,HttpResponseUtil http,TemplateTable templates,NotificationSendHelper notifications) {
+ readonly bool containerRewardsReady=ArmoredCaseRewards.Install(templates);
  public async ValueTask<string> Handle(CharacterDataRequest request,MongoId session,CancellationToken ct){
   var gate=GearMailService.SessionLock(session);await gate.WaitAsync(ct);SptProfile? snapshot=null;bool committed=false;
   try{

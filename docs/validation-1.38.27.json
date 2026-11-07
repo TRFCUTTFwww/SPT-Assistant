@@ -1,0 +1,43 @@
+{
+    "version":  "1.38.27",
+    "updatedUtc":  "2026-11-07T08:51:26.6986272Z",
+    "builds":  {
+                   "serverAdmin":  {
+                                       "errors":  0,
+                                       "warnings":  0
+                                   },
+                   "client48558":  {
+                                       "errors":  0,
+                                       "existingWarnings":  2
+                                   },
+                   "client47888":  {
+                                       "errors":  0,
+                                       "existingWarnings":  2
+                                   }
+               },
+    "tests":  {
+                  "nativeRewardRuns":  20,
+                  "gameUiVerified":  false,
+                  "probeGroups":  94,
+                  "coverage":  [
+                                   "Live item/process identity, profile and raid guards; duration/progress validation",
+                                   "Native armored-case reward query and generator; exactly one card/manual, unique IDs",
+                                   "Configured and unrelated rewards preserved; repeated patch installation",
+                                   "Real save remains untouched during offline tests"
+                               ],
+                  "serverGroups":  17
+              },
+    "deployment":  {
+                       "clientGeneration":  8,
+                       "clientError":  null,
+                       "clientVersion":  "1.38.27",
+                       "clientSha256":  "227D55016751B22F2716A631CAC1309717CF67A33E9F954EF5C249BA0664CB9E",
+                       "serverError":  "",
+                       "serverSha256":  "342254CB86C26716BD3A168646C3FB88D38D581707F4C6CADCB1FB49B636D8D7",
+                       "clientReady":  true,
+                       "serverReady":  true,
+                       "serverGeneration":  5
+                   },
+    "runtimeEvidence":  "Client logged serverReady=1, applied=1, stale=0; ordinary craft then left native active-production list.",
+    "acceptance":  "Item collection, real armored-case opening and story progression require user in-game verification."
+}

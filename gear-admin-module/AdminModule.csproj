@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
  <PropertyGroup><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><AssemblyName>LocalGearAdmin</AssemblyName></PropertyGroup>
  <ItemGroup>
+  <Reference Include="$(GameRoot)/SPT_Runtime/0Harmony.dll"><Private>false</Private></Reference>
   <Compile Include="../shared/RaidStashJson.cs" Link="RaidStashJson.cs"/><Compile Include="../gear-mail/HideoutCraftRules.cs" Link="HideoutCraftRules.cs"/><Compile Include="../gear-mail/HideoutCraftService.cs" Link="HideoutCraftService.cs"/><Compile Include="../gear-mail/RaidStashService.cs" Link="RaidStashService.cs"/>
   <Compile Include="../gear-mail/RaidStashRules.cs" Link="RaidStashRules.cs"/>
   <Compile Include="../gear-mail/CharacterDataAdmin.cs" Link="CharacterDataAdmin.cs"/>

@@ -22,6 +22,7 @@ internal static class EventRaidDiagnostics {
   if(Time.unscaledTime<nextPoll)return;nextPoll=Time.unscaledTime+.5f;string file=Path.Combine(Home,"launch-diagnostics-request.json");if(!File.Exists(file))return;var stamp=File.GetLastWriteTimeUtc(file);if(stamp==observed)return;observed=stamp;
   using var doc=JsonDocument.Parse(File.ReadAllText(file));string action=doc.RootElement.GetProperty("action").GetString()??"";var app=App();
   if(action=="inspect")Write("application-state",new{screen=EFT.UI.Screens.EftScreenManager.Instance?.CurrentScreenController?.ScreenType.ToString(),world=Singleton<GameWorld>.Instantiated,menuOperation=app._menuOperation!=null,matchmakerOperation=app._localMatchmakerOperation!=null,raidSettings=app._raidSettings!=null,weather=app._raidSettings?.TimeAndWeatherSettings!=null,localSettings=app._localRaidSettings!=null,location=app._raidSettings?.SelectedLocation?.Id,mode=app._raidSettings?.RaidMode.ToString(),profile=app.GetProfileForLocalGame()!=null,aiTestStatus=AiSpawnService.Status});
+  else if(action=="hideout-craft-state")Write("hideout-craft-state",HideoutCraftControl.Diagnostics());
   else if(action=="coordinates-state")Write("coordinates-state",CoordinateReader.Diagnostics());
   else if(action=="passcode-override-check")Write("passcode-override-check",PasscodeHints.CheckOverrideScopes());
   else if(action=="passcode-hint-state")Write("passcode-hint-state",PasscodeHints.Diagnostics());

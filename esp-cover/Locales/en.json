@@ -3032,5 +3032,9 @@
   "替换开启：原玩具枪子弹": "Replacement on: Original toy gun ammunition",
   "替换关闭，已选：原玩具枪子弹": "Replacement off; selected: Original toy gun ammunition",
   "子弹替换已开启 · 原玩具枪弹丸": "Ammunition replacement enabled · Original toy gun projectile",
-  "子弹替换已关闭 · 原玩具枪弹丸": "Ammunition replacement disabled · Original toy gun projectile"
+  "子弹替换已关闭 · 原玩具枪弹丸": "Ammunition replacement disabled · Original toy gun projectile",
+  "正在完成并同步制作…": "Completing and synchronizing crafts…",
+  "已有 {0} 项制作可领取。": "{0} completed crafts are ready to collect.",
+  "制作已重新开始，已忽略旧结果，请重试。": "The craft restarted. Its old result was ignored; try again.",
+  "服务端已有 {0} 项完成；本地没有匹配的进行中制作，请重新打开藏身处。": "The server has {0} completed crafts, but no matching local craft is active. Reopen the hideout."
 }
