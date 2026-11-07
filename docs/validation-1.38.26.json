@@ -1,0 +1,29 @@
+{
+    "version":  "1.38.26",
+    "updatedUtc":  "2026-11-07T07:56:27.3720568Z",
+    "builds":  {
+                   "client47888":  {
+                                       "errors":  0,
+                                       "existingWarnings":  2
+                                   },
+                   "client48558":  {
+                                       "errors":  0,
+                                       "existingWarnings":  2
+                                   }
+               },
+    "tests":  {
+                  "newCoverage":  "Player-relative offensive and defensive color reversal, exposed coverage, nonfinite and invalid ranges, intermediate neutral results",
+                  "gameVisualsVerified":  false,
+                  "probeGroups":  93
+              },
+    "deployment":  {
+                       "loadedVersion":  "1.38.26",
+                       "error":  null,
+                       "installedSha256":  "E99A4EF8CF97340360061A9AFAAD3166A7D24428AB3FF29F6117ABCF09AEDFA3",
+                       "backup":  "D:/SPT-5.0.0-48558/mod-backups/assistant-before-1.38.26-20261107-155522",
+                       "requestedVersionReady":  true,
+                       "generation":  3,
+                       "hostVersion":  "1.5.0"
+                   },
+    "acceptance":  "Text readability at 0% panel opacity and player-relative colors require in-game user verification. Deployment alone does not prove the current client loaded this version."
+}

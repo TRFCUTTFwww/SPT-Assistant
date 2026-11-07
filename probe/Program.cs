@@ -10,6 +10,11 @@ using LocalRaidShared;
 var sourceRoot=Path.GetFullPath(Environment.GetEnvironmentVariable("SPT_SOURCE_ROOT")??"_spt5_esp_fix");
 var gameRoot=Environment.GetEnvironmentVariable("SPT_GAME_ROOT");if(!string.IsNullOrWhiteSpace(gameRoot))Directory.SetCurrentDirectory(gameRoot);
 try{
+Assert(BallisticAdvantageRules.Evaluate(.1f,.2f,true)==1&&BallisticAdvantageRules.Evaluate(.1f,.2f,false)==-1,"low penetration favors local defense but harms local offense");
+Assert(BallisticAdvantageRules.Evaluate(.8f,1,true)==-1&&BallisticAdvantageRules.Evaluate(.8f,1,false)==1,"high penetration harms local defense but favors local offense");
+Assert(BallisticAdvantageRules.Evaluate(.1f,1,true)==-1&&BallisticAdvantageRules.Evaluate(.1f,1,false)==0,"exposed coverage warns defenders without promising attackers a reliable penetration");
+Assert(BallisticAdvantageRules.Evaluate(float.NaN,1,true)==0&&BallisticAdvantageRules.Evaluate(.8f,.2f,false)==0&&BallisticAdvantageRules.Evaluate(0,1.1f,true)==0&&BallisticAdvantageRules.Evaluate(.4f,.6f,false)==0,"unknown, invalid and intermediate penetration remain neutral");
+Console.WriteLine("PASS player-relative offensive/defensive color semantics, coverage gaps and unknown-data isolation");
 Assert(HideoutCraftSyncRules.CanApply("a","a",false,true,false,12,12,3600,3600,3600),"completed profile progress still permits live producer refresh");
 Assert(!HideoutCraftSyncRules.CanApply("a","b",false,true,false,12,12,3600,3600,3600)&&!HideoutCraftSyncRules.CanApply("a","a",true,true,false,12,12,3600,3600,3600)&&!HideoutCraftSyncRules.CanApply("a","a",false,true,false,13,12,3600,3600,3600),"old craft responses cannot change another profile, raid or a newly restarted craft");
 Assert(!HideoutCraftSyncRules.CanApply("a","a",false,false,false,12,12,3600,3600,3600)&&!HideoutCraftSyncRules.CanApply("a","a",false,true,true,12,12,3600,3600,3600)&&!HideoutCraftSyncRules.CanApply("a","a",false,true,false,12,12,3601,3600,3600)&&!HideoutCraftSyncRules.CanApply("a","a",false,true,false,12,12,3600,3600,double.NaN),"stopped, interrupted, mismatching duration and invalid craft data remain unchanged");

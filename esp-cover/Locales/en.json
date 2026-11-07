@@ -1,4 +1,6 @@
 {
+  "仅调整底板与装饰；0% 底板透明，文字始终清晰可见。": "Affects panels and decorations only; at 0% the background is transparent, while text remains readable.",
+  "绿色：对你有利 · 红色：对你不利 · 中性色：未知或覆盖差异大": "Green: favors you · Red: against you · Neutral: unknown or mixed coverage",
   "分析窗自适应大小": "Automatically size the analysis window",
   "各悬浮窗不透明度": "Individual HUD window opacity",
   "0% 隐藏，100% 正常显示；背景、文字与图标一起调整。": "0% hides the window; 100% displays it normally. Affects background, text and icons together.",

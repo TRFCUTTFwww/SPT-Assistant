@@ -119,13 +119,12 @@ internal static class InterfaceMenu {
   if(semantic.g>.7f&&semantic.b>.7f&&semantic.r<.6f)return Accent;
   return semantic;
  }
- internal static bool WindowVisible(string id)=>!slots.TryGetValue(id,out var slot)||slot.Opacity.Value>0;
  internal static WindowOpacity BeginWindow(string id)=>new(slots.TryGetValue(id,out var slot)?slot.Opacity.Value:1);
  internal readonly struct WindowOpacity:IDisposable {
-  readonly Color previousContent,previousBackground;
+  readonly Color previousBackground;
   readonly float previousAlpha;
-  internal WindowOpacity(float alpha){alpha=Math.Clamp(alpha,0,1);previousContent=GUI.contentColor;previousBackground=GUI.backgroundColor;previousAlpha=windowAlpha;windowAlpha*=alpha;var content=previousContent;content.a*=alpha;GUI.contentColor=content;var backdrop=previousBackground;backdrop.a*=alpha;GUI.backgroundColor=backdrop;}
-  public void Dispose(){GUI.contentColor=previousContent;GUI.backgroundColor=previousBackground;windowAlpha=previousAlpha;}
+  internal WindowOpacity(float alpha){alpha=Math.Clamp(alpha,0,1);previousBackground=GUI.backgroundColor;previousAlpha=windowAlpha;windowAlpha*=alpha;var backdrop=previousBackground;backdrop.a*=alpha;GUI.backgroundColor=backdrop;}
+  public void Dispose(){GUI.backgroundColor=previousBackground;windowAlpha=previousAlpha;}
  }
  internal static Color WindowTint(Color color){color.a*=windowAlpha;return color;}
  internal static void Surface(Rect rect,Color color,float radius=8){if(Event.current.type!=EventType.Repaint)return;var old=GUI.color;GUI.color=Color.white;GUI.DrawTexture(rect,Texture2D.whiteTexture,ScaleMode.StretchToFill,true,0,WindowTint(color),0,radius);GUI.color=old;}
@@ -281,7 +280,7 @@ internal static class InterfaceMenu {
   DrawEntry(menuKey,new Rect(rect.x,rect.y+540,rect.width,92));
   FloatingStatus.DrawSettings(new Rect(rect.x,rect.y+658,rect.width,160));
   float top=rect.y+840;Label(new Rect(rect.x,top,rect.width,28),"各悬浮窗不透明度",Accent,17);
-  Label(new Rect(rect.x,top+30,rect.width,24),"0% 隐藏，100% 正常显示；背景、文字与图标一起调整。",Text,12);
+  Label(new Rect(rect.x,top+30,rect.width,24),"仅调整底板与装饰；0% 底板透明，文字始终清晰可见。",Text,12);
   top+=65;
   if(slots.TryGetValue("armor",out var analysis)&&analysis.AutoSize!=null){if(Button(new Rect(rect.x,top,Math.Min(390,rect.width),32),analysis.AutoSize.Value?"分析窗大小 · 自适应":"分析窗大小 · 手动",analysis.AutoSize.Value))analysis.AutoSize.Value=!analysis.AutoSize.Value;top+=48;}
   foreach(var slot in slots.Values){Label(new Rect(rect.x,top,rect.width,26),$"{slot.Name} · 不透明度 {slot.Opacity.Value:P0}");float chosen=Slider(new Rect(rect.x,top+32,Math.Max(60,rect.width-140),20),slot.Opacity.Value,0,1);if(Math.Abs(chosen-slot.Opacity.Value)>.001f)slot.Opacity.Value=chosen;if(Button(new Rect(rect.xMax-128,top+23,128,30),"恢复 100%"))slot.Opacity.Value=1;top+=65;}

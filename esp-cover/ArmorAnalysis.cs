@@ -12,6 +12,7 @@ internal static class ArmorAnalysis {
  static float nextRead,nextError;
  static IntPtr worldPointer;
  static string[] lines=Array.Empty<string>();
+ static int[] advantages=Array.Empty<int>();
  static GUIStyle? style;
  static Vector2 scroll;
  internal static void Initialize(Plugin plugin){Enabled=CnConfig.Bind(plugin.Config,"22. Armor analysis","Enabled",true);}
@@ -33,22 +34,25 @@ internal static class ArmorAnalysis {
    }
    if(target==null)return;
    string name=target.Profile?.Nickname??"目标";if(name.Length>15)name=name[..15]+"…";
-   var result=new List<string>{"弹道与防护分析 · "+name};
+   var result=new List<string>{"弹道与防护分析 · "+name};var ratings=new Dictionary<int,int>();
    var weapon=target.HandsController?.TryCast<Player.FirearmController>()?.Item;
    result.Add("对方枪械："+(weapon!=null?LootDisplay.ItemName(weapon):"当前未持枪"));
    var opponent=BallisticReadout.Current(target);
    result.Add("对方膛内／下一发："+(opponent is {} round?round.Name:"弹药未知／空膛"));
    if(opponent is {} threat)result.Add(threat.Stats);
-   result.Add("自身头面："+Armor(local,true));result.Add("自身躯干："+Armor(local,false));
+   int localArmor=result.Count;result.Add("自身头面："+Armor(local,true));result.Add("自身躯干："+Armor(local,false));
    if(opponent is {} incoming){
-    result.Add("对方弹药 → 自身头部："+BallisticReadout.Protection(local,EBodyPart.Head,incoming.Penetration));
-    result.Add("对方弹药 → 自身胸部："+BallisticReadout.Protection(local,EBodyPart.Chest,incoming.Penetration));
+    var head=BallisticReadout.Protection(local,EBodyPart.Head,incoming.Penetration);var chest=BallisticReadout.Protection(local,EBodyPart.Chest,incoming.Penetration);
+    ratings[localArmor]=head.Advantage(true);ratings[localArmor+1]=chest.Advantage(true);
+    ratings[result.Count]=head.Advantage(true);result.Add("对方弹药 → 自身头部："+head.Text);
+    ratings[result.Count]=chest.Advantage(true);result.Add("对方弹药 → 自身胸部："+chest.Text);
    }
-   result.Add("对方头面："+Armor(target,true));
+   int opponentArmor=result.Count;result.Add("对方头面："+Armor(target,true));
    var ammo=BallisticReadout.Current(local);
    result.Add("自身弹药："+(ammo is {} own?own.Name:"弹药未知／空膛"));
-   if(ammo is {} outgoing){result.Add(outgoing.Stats);result.Add("自身弹药 → 对方头部："+BallisticReadout.Protection(target,EBodyPart.Head,outgoing.Penetration));}
-   result.Add("基伤为弹药参数；实际损血受距离、命中区域与护甲影响。");lines=result.ToArray();
+   if(ammo is {} outgoing){var head=BallisticReadout.Protection(target,EBodyPart.Head,outgoing.Penetration);ratings[opponentArmor]=head.Advantage(false);result.Add(outgoing.Stats);ratings[result.Count]=head.Advantage(false);result.Add("自身弹药 → 对方头部："+head.Text);}
+   result.Add("绿色：对你有利 · 红色：对你不利 · 中性色：未知或覆盖差异大");
+   result.Add("基伤为弹药参数；实际损血受距离、命中区域与护甲影响。");lines=result.ToArray();advantages=new int[lines.Length];foreach(var pair in ratings)advantages[pair.Key]=pair.Value;
   }catch(Exception error){Warn(error);}
  }
  static string Armor(Player player,bool head){
@@ -69,7 +73,7 @@ internal static class ArmorAnalysis {
   if(slots!=null)foreach(var slot in slots)Inspect(slot?.ContainedItem,ref bestClass,ref durability,ref maximum,depth+1);
  }
  internal static void Draw(GameWorld world,Player local,Camera camera,GUIStyle source){
-  if(!Enabled.Value||InterfaceMenu.Open||!InterfaceMenu.WindowVisible("armor"))return;
+  if(!Enabled.Value||InterfaceMenu.Open)return;
   Read(world,local,camera);if(lines.Length==0)return;
   if(style==null)style=new GUIStyle(source){alignment=TextAnchor.UpperLeft,wordWrap=true,richText=false,clipping=TextClipping.Clip};
   style.fontSize=Math.Min(source.fontSize,14);
@@ -87,7 +91,7 @@ internal static class ArmorAnalysis {
    InterfaceMenu.Panel(panel);
    var viewport=new Rect(x+8,y+5,Math.Max(1,panel.width-16),Math.Max(1,panel.height-10));
    scroll=GUI.BeginScrollView(viewport,overflow?scroll:Vector2.zero,new Rect(0,0,textWidth,total),false,overflow,GUIStyle.none,GUI.skin.verticalScrollbar);
-   try{float top=0;for(int i=0;i<content.Length;i++){GUI.color=i==0?InterfaceMenu.Accent:InterfaceMenu.Text;GUI.Label(new Rect(0,top,textWidth,heights[i]),content[i],style);top+=heights[i];}}finally{GUI.EndScrollView();}
+   try{float top=0;for(int i=0;i<content.Length;i++){int advantage=i<advantages.Length?advantages[i]:0;GUI.color=i==0?InterfaceMenu.Accent:advantage>0?new Color(.3f,1,.45f):advantage<0?new Color(1,.3f,.25f):InterfaceMenu.Text;GUI.Label(new Rect(0,top,textWidth,heights[i]),content[i],style);top+=heights[i];}}finally{GUI.EndScrollView();}
   }finally{GUI.color=old;}
  }
  static void Warn(Exception error){if(Time.unscaledTime<nextError)return;nextError=Time.unscaledTime+20;Plugin.Self.Error(error);}

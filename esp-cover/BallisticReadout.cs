@@ -17,10 +17,13 @@ internal static class BallisticReadout {
   if(templates==null||!templates.TryGetValue(new MongoID(id),out var template)||template?.TryCast<AmmoTemplate>() is not {} ammo)return null;
   return new(id,LootDisplay.TemplateName(id),ammo.Damage,ammo.PenetrationPower,ammo.ArmorDamage,ammo.ProjectileCount);
  }
- internal static string Protection(Player player,EBodyPart part,float penetration){
-  if(!float.IsFinite(penetration)||penetration<0)return "弹药数据未知";
+ internal readonly record struct ProtectionInfo(string Text,float Minimum=float.NaN,float Maximum=float.NaN){
+  internal int Advantage(bool defending)=>BallisticAdvantageRules.Evaluate(Minimum,Maximum,defending);
+ }
+ internal static ProtectionInfo Protection(Player player,EBodyPart part,float penetration){
+  if(!float.IsFinite(penetration)||penetration<0)return new("弹药数据未知");
   int count=0;float minimum=1,maximum=0;bool covered=false;
-  var colliders=player._hitColliders;if(colliders==null)return "防护数据未知";
+  var colliders=player._hitColliders;if(colliders==null)return new("防护数据未知");
   foreach(var body in colliders){
    if(body==null||body.BodyPartType!=part)continue;
    bool armor=player.TryGetArmorResistData(body,penetration,out var resistance);
@@ -29,8 +32,8 @@ internal static class BallisticReadout {
    if(!float.IsFinite(chance))continue;
    chance=Math.Clamp(chance,0,1);minimum=Math.Min(minimum,chance);maximum=Math.Max(maximum,chance);count++;covered|=armor;
   }
-  if(count==0)return "防护数据未知";
-  if(!covered)return "无有效覆盖 · 穿透 100%";
-  return Math.Abs(maximum-minimum)<.005f?$"估算穿透 {maximum*100:F0}%":$"估算穿透 {minimum*100:F0}–{maximum*100:F0}%（覆盖区域不同）";
+  if(count==0)return new("防护数据未知");
+  if(!covered)return new("无有效覆盖 · 穿透 100%",1,1);
+  return new(Math.Abs(maximum-minimum)<.005f?$"估算穿透 {maximum*100:F0}%":$"估算穿透 {minimum*100:F0}–{maximum*100:F0}%（覆盖区域不同）",minimum,maximum);
  }
 }

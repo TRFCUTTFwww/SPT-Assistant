@@ -9,11 +9,11 @@ internal static class FloatingStatus {
  static readonly MenuInputGate gate=new();
  static bool dragging;static Vector2 offset;
  static Rect lastBounds;
- internal static bool Capturing=>gate.Blocked||(show!=null&&show.Value&&InterfaceMenu.WindowVisible("status")&&RaidClock.Active&&!InterfaceMenu.Open&&Cursor.visible&&Input.GetMouseButton(0)&&lastBounds.Contains(new Vector2(Input.mousePosition.x,Screen.height-Input.mousePosition.y)));
+ internal static bool Capturing=>gate.Blocked||(show!=null&&show.Value&&RaidClock.Active&&!InterfaceMenu.Open&&Cursor.visible&&Input.GetMouseButton(0)&&lastBounds.Contains(new Vector2(Input.mousePosition.x,Screen.height-Input.mousePosition.y)));
  internal static void Initialize(){show=FeatureConfig.Bind("32. 状态悬浮窗","Show","显示功能状态悬浮窗",true);collapsed=FeatureConfig.Bind("32. 状态悬浮窗","Collapsed","收起状态悬浮窗",false);opacity=FeatureConfig.Bind("32. 状态悬浮窗","Opacity","状态窗不透明度",.94f,"",new AcceptableValueRange<float>(.2f,1));}
- internal static void Update(){gate.Tick(Time.frameCount,Input.GetMouseButton(0)||Input.GetMouseButton(1));if(!RaidClock.Active||!show.Value||!InterfaceMenu.WindowVisible("status")||InterfaceMenu.Open){dragging=false;if(gate.Open)gate.SetOpen(false,Time.frameCount);}}
+ internal static void Update(){gate.Tick(Time.frameCount,Input.GetMouseButton(0)||Input.GetMouseButton(1));if(!RaidClock.Active||!show.Value||InterfaceMenu.Open){dragging=false;if(gate.Open)gate.SetOpen(false,Time.frameCount);}}
  static bool Flag(string section,string key){return Plugin.Self.Config.TryGetEntry<bool>(section,key,out var entry)&&entry.Value;}
- internal static void Draw(){if(show==null||!show.Value||!InterfaceMenu.WindowVisible("status")||!RaidClock.Active||InterfaceMenu.Editing)return;using var windowOpacity=InterfaceMenu.BeginWindow("status");var rect=InterfaceMenu.Place("status",new Rect(Math.Max(12,Screen.width-622),12,610,collapsed.Value?43:132));
+ internal static void Draw(){if(show==null||!show.Value||!RaidClock.Active||InterfaceMenu.Editing)return;using var windowOpacity=InterfaceMenu.BeginWindow("status");var rect=InterfaceMenu.Place("status",new Rect(Math.Max(12,Screen.width-622),12,610,collapsed.Value?43:132));
   lastBounds=rect;var e=Event.current;bool interactive=Cursor.visible&&!InterfaceMenu.Open;var header=new Rect(rect.x,rect.y,rect.width-80,39);
   if(interactive&&e.type==EventType.MouseDown&&e.button==0&&rect.Contains(e.mousePosition)){gate.SetOpen(true,Time.frameCount);if(header.Contains(e.mousePosition)){dragging=true;offset=e.mousePosition-rect.position;} }
   if(interactive&&e.type==EventType.MouseDrag&&dragging){InterfaceMenu.MoveSlot("status",e.mousePosition-offset,rect);e.Use();}
