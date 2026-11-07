@@ -1,4 +1,10 @@
 {
+  "分析窗自适应大小": "Automatically size the analysis window",
+  "各悬浮窗不透明度": "Individual HUD window opacity",
+  "0% 隐藏，100% 正常显示；背景、文字与图标一起调整。": "0% hides the window; 100% displays it normally. Affects background, text and icons together.",
+  "分析窗大小 · 自适应": "Analysis window size · Automatic",
+  "分析窗大小 · 手动": "Analysis window size · Manual",
+  "恢复 100%": "Reset to 100%",
   "弹道与防护分析": "Ballistics and protection analysis",
   "22. 弹道与防护分析": "22. Ballistics and protection analysis",
   "对方枪械：": "Opponent weapon: ",

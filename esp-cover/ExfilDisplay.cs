@@ -313,7 +313,7 @@ internal static class ExfilDisplay {
   if(Hotkeys.Pressed(KeyCode.PageUp))pageIndex--;
   pageIndex=Math.Clamp(pageIndex,0,pages.Count-1);var page=pages[pageIndex];
   float panelHeight=headerHeight+line+page.Height+12,x=Screen.width-width-12,y=Math.Max(110,Screen.height-panelHeight-12);
-  var panel=InterfaceMenu.Place("exfil",new Rect(x,y,width,panelHeight));x=panel.x;y=panel.y;
+  using var windowOpacity=InterfaceMenu.BeginWindow("exfil");var panel=InterfaceMenu.Place("exfil",new Rect(x,y,width,panelHeight));x=panel.x;y=panel.y;
   var oldColor=GUI.color;
   try{
    InterfaceMenu.Panel(panel);float top=y+6;

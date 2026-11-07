@@ -298,7 +298,8 @@ internal class Overlay {
  void Warn(Exception e){if(Time.unscaledTime<nextError)return;nextError=Time.unscaledTime+20;Plugin.Self.Error(e);}
  public void OnGUI(){try{
   camera=OverlayProjection.MainCamera;
-  if(world==null||me==null||camera==null||Event.current.type!=EventType.Repaint)return;
+  if(world==null||me==null||camera==null)return;
+  if(Event.current.type!=EventType.Repaint){if(style!=null)ArmorAnalysis.Draw(world,me,camera,style);return;}
   OverlayProjection.BeginGui();
   var s=Plugin.Self;
   if(style==null||lastFont!=s.FontSize.Value){lastFont=s.FontSize.Value;style=new GUIStyle(GUI.skin.label);style.fontSize=lastFont;style.alignment=TextAnchor.MiddleCenter;style.richText=false;}

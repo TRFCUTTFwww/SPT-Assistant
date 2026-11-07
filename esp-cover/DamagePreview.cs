@@ -36,7 +36,7 @@ internal static class DamagePreview {
   try{
    Read(current,local,camera);var display=PreviewDisplayRules.Compose(text,detail,actual,Time.unscaledTime<actualUntil);if(display.Text.Length==0)return;
    label??=new GUIStyle(source){alignment=TextAnchor.UpperCenter,wordWrap=false,richText=false};label.fontSize=14;
-   var rect=InterfaceMenu.Place("damagepreview",new Rect(Screen.width*.5f-240,Screen.height*.5f+22,480,48));var previous=GUI.color;
+   using var windowOpacity=InterfaceMenu.BeginWindow("damagepreview");var rect=InterfaceMenu.Place("damagepreview",new Rect(Screen.width*.5f-240,Screen.height*.5f+22,480,48));var previous=GUI.color;
    try{string value=display.Text+"\n"+display.Detail;GUI.color=Color.black;GUI.Label(new Rect(rect.x+1,rect.y+1,rect.width,rect.height),I18n.Text(value),label);GUI.color=lethal&&text.Length>0?new Color(1,.2f,.2f):new Color(1,.92f,.63f);GUI.Label(rect,I18n.Text(value),label);}finally{GUI.color=previous;}
   }catch(Exception error){ClearPrediction();if(Time.unscaledTime>=nextError){nextError=Time.unscaledTime+20;Plugin.Self.Log.LogWarning("Damage preview: "+error.Message);}}
  }

@@ -85,7 +85,7 @@ internal static class IncomingDamage {
  }
  internal static void Draw(Camera camera,Player player){
   if(!ready||!enabled.Value||feed.Entries.Count==0)return;
-  var center=new Vector2(Screen.width*.5f,Screen.height*.5f);
+  using var windowOpacity=InterfaceMenu.BeginWindow("incoming");var center=new Vector2(Screen.width*.5f,Screen.height*.5f);
   foreach(var entry in feed.Entries){float age=Time.unscaledTime-entry.Time,alpha=Math.Clamp((duration.Value-age)/.7f,0,1);if(alpha<=0)continue;
    var direction=entry.Origin.HasValue?U(entry.Origin.Value)-player.Position:entry.Direction.HasValue?U(entry.Direction.Value):Vector3.zero;
    float angle=DamageDirection.Angle(N(direction),N(camera.transform.forward));if(!float.IsFinite(angle))continue;

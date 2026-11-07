@@ -37,7 +37,7 @@ internal static class RaidPopulation {
    float panelWidth=Math.Min(880,Math.Max(350,Screen.width-660));
    if(style.CalcSize(new GUIContent(I18n.Text(text))).x>panelWidth-12)style.fontSize=Math.Max(10,font-2);
    float height=Breakdown.Value?48:27;
-   var panel=InterfaceMenu.Place("population",new Rect(12,12,panelWidth,height));InterfaceMenu.Panel(panel);
+   using var windowOpacity=InterfaceMenu.BeginWindow("population");var panel=InterfaceMenu.Place("population",new Rect(12,12,panelWidth,height));InterfaceMenu.Panel(panel);
    GUI.color=InterfaceMenu.Text;GUI.Label(new Rect(panel.x+6,panel.y,panel.width-12,height),I18n.Text(text),style);
   }finally{style.alignment=alignment;style.fontSize=font;GUI.color=color;}
  }

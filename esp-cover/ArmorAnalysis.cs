@@ -13,8 +13,9 @@ internal static class ArmorAnalysis {
  static IntPtr worldPointer;
  static string[] lines=Array.Empty<string>();
  static GUIStyle? style;
+ static Vector2 scroll;
  internal static void Initialize(Plugin plugin){Enabled=CnConfig.Bind(plugin.Config,"22. Armor analysis","Enabled",true);}
- internal static void Reset(){worldPointer=IntPtr.Zero;nextRead=0;lines=Array.Empty<string>();}
+ internal static void Reset(){worldPointer=IntPtr.Zero;nextRead=0;lines=Array.Empty<string>();scroll=Vector2.zero;}
  static void Read(GameWorld world,Player local,Camera camera){
   if(worldPointer!=world.Pointer){Reset();worldPointer=world.Pointer;}
   if(Time.unscaledTime<nextRead)return;
@@ -68,16 +69,25 @@ internal static class ArmorAnalysis {
   if(slots!=null)foreach(var slot in slots)Inspect(slot?.ContainedItem,ref bestClass,ref durability,ref maximum,depth+1);
  }
  internal static void Draw(GameWorld world,Player local,Camera camera,GUIStyle source){
-  if(!Enabled.Value)return;
+  if(!Enabled.Value||InterfaceMenu.Open||!InterfaceMenu.WindowVisible("armor"))return;
   Read(world,local,camera);if(lines.Length==0)return;
-  if(style==null)style=new GUIStyle(source){alignment=TextAnchor.MiddleLeft,wordWrap=false,richText=false,clipping=TextClipping.Clip};
+  if(style==null)style=new GUIStyle(source){alignment=TextAnchor.UpperLeft,wordWrap=true,richText=false,clipping=TextClipping.Clip};
   style.fontSize=Math.Min(source.fontSize,14);
-  float line=Math.Max(21,style.fontSize+7),width=Math.Min(620,Screen.width-24),height=lines.Length*line+10,x=Screen.width-width-12,y=165;
-  var panel=InterfaceMenu.Place("armor",new Rect(x,y,width,height));x=panel.x;y=panel.y;
+  var content=new GUIContent[lines.Length];float widest=0;
+  for(int i=0;i<lines.Length;i++){content[i]=new GUIContent(I18n.Text(lines[i]));widest=Math.Max(widest,style.CalcSize(content[i]).x);}
+  float line=Math.Max(21,style.fontSize+7),width=Math.Min(Math.Max(320,widest+24),Math.Max(60,Screen.width-24));
+  float height=10;foreach(var value in content)height+=Math.Max(line,style.CalcHeight(value,Math.Max(1,width-16))+4);
+  height=Math.Min(height,Math.Max(24,Screen.height-24));float x=Screen.width-width-12,y=Math.Min(165,Math.Max(12,Screen.height-height-12));
+  using var windowOpacity=InterfaceMenu.BeginWindow("armor");var panel=InterfaceMenu.Place("armor",new Rect(x,y,width,height));x=panel.x;y=panel.y;
+  float textWidth=Math.Max(1,panel.width-16),total=0;var heights=new float[content.Length];
+  void Measure(){total=0;for(int i=0;i<content.Length;i++){heights[i]=Math.Max(line,style!.CalcHeight(content[i],textWidth)+4);total+=heights[i];}}
+  Measure();bool overflow=total>panel.height-10;if(overflow){textWidth=Math.Max(1,textWidth-18);Measure();}
   var old=GUI.color;
   try{
    InterfaceMenu.Panel(panel);
-   for(int i=0;i<lines.Length;i++){GUI.color=i==0?InterfaceMenu.Accent:InterfaceMenu.Text;GUI.Label(new Rect(x+8,y+5+i*line,panel.width-16,line),I18n.Text(lines[i]),style);}
+   var viewport=new Rect(x+8,y+5,Math.Max(1,panel.width-16),Math.Max(1,panel.height-10));
+   scroll=GUI.BeginScrollView(viewport,overflow?scroll:Vector2.zero,new Rect(0,0,textWidth,total),false,overflow,GUIStyle.none,GUI.skin.verticalScrollbar);
+   try{float top=0;for(int i=0;i<content.Length;i++){GUI.color=i==0?InterfaceMenu.Accent:InterfaceMenu.Text;GUI.Label(new Rect(0,top,textWidth,heights[i]),content[i],style);top+=heights[i];}}finally{GUI.EndScrollView();}
   }finally{GUI.color=old;}
  }
  static void Warn(Exception error){if(Time.unscaledTime<nextError)return;nextError=Time.unscaledTime+20;Plugin.Self.Error(error);}

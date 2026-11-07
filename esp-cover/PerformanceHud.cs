@@ -29,7 +29,7 @@ internal static class PerformanceHud {
  }
  internal static void Draw(){
   if(enabled==null||!enabled.Value||InterfaceMenu.Editing||Event.current.type!=EventType.Repaint)return;
-  var r=InterfaceMenu.Place("performance",new Rect(12,Math.Max(12,Screen.height-240),354,165));var background=InterfaceMenu.Background;background.a=opacity.Value;
+  using var windowOpacity=InterfaceMenu.BeginWindow("performance");var r=InterfaceMenu.Place("performance",new Rect(12,Math.Max(12,Screen.height-240),354,165));var background=InterfaceMenu.Background;background.a=opacity.Value;
   InterfaceMenu.Surface(r,background,10);MenuIcons.Draw(new Rect(r.x+12,r.y+12,18,18),"界面",InterfaceMenu.Accent);
   InterfaceMenu.Label(new Rect(r.x+39,r.y+6,r.width-48,26),"性能监测 · 最近约 5 秒",InterfaceMenu.Text,12);
   InterfaceMenu.Label(new Rect(r.x+12,r.y+33,r.width-24,28),headline,state,18);

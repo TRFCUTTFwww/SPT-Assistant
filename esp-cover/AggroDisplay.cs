@@ -49,7 +49,7 @@ internal static class AggroDisplay {
   int shown=Math.Min(MaximumLines.Value,threats.Count);
   float line=Math.Max(21,style.fontSize+7),width=Math.Min(340,Screen.width-24),height=(shown+1)*line+10;
   float x=12,y=Math.Clamp((Screen.height-height)*0.5f,12f,Math.Max(12f,Screen.height-height-12));
-  var panel=InterfaceMenu.Place("aggro",new Rect(x,y,width,height));x=panel.x;y=panel.y;
+  using var windowOpacity=InterfaceMenu.BeginWindow("aggro");var panel=InterfaceMenu.Place("aggro",new Rect(x,y,width,height));x=panel.x;y=panel.y;
   var old=GUI.color;
   try{
    InterfaceMenu.Panel(panel);

@@ -53,7 +53,7 @@ internal static class VitalsDisplay {
   int width=Math.Min(382,Screen.width-24);
   if(width<200)return;
   var oldColor=GUI.color;
-  var panel=InterfaceMenu.Place("vitals",new Rect(12,110,width,28));
+  using var windowOpacity=InterfaceMenu.BeginWindow("vitals");var panel=InterfaceMenu.Place("vitals",new Rect(12,110,width,28));
   try{
    InterfaceMenu.Panel(panel);
    float unit=(width-12)/3f;

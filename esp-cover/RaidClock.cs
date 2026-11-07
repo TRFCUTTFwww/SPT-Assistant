@@ -59,7 +59,7 @@ internal static class RaidClock {
  internal static void Resize(float width,float height){var size=RaidRules.HudSize(width,height);hudWidth.Value=size.Width;hudHeight.Value=size.Height;}
  internal static void DrawHud(){
   if(!ShowClock.Value||!Active)return;
-  var rect=InterfaceMenu.Place("raidclock",DefaultBounds());InterfaceMenu.Panel(rect);
+  using var windowOpacity=InterfaceMenu.BeginWindow("raidclock");var rect=InterfaceMenu.Place("raidclock",DefaultBounds());InterfaceMenu.Panel(rect);
   float row=(rect.height-10)/3;int font=Math.Clamp(Math.Min(hudFont.Value,(int)row-3),10,24);
   InterfaceMenu.Label(new Rect(rect.x+10,rect.y+4,rect.width-20,row),"现实  "+DateTime.Now.ToString("HH:mm:ss"),InterfaceMenu.Text,font);
   InterfaceMenu.Label(new Rect(rect.x+10,rect.y+4+row,rect.width-20,row),"游戏  "+GameTime,InterfaceMenu.Text,font);

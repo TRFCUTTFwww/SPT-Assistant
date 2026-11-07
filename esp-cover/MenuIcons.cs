@@ -6,7 +6,7 @@ internal static class MenuIcons {
   if(Event.current.type!=EventType.Repaint)return;
   var matrix=GUI.matrix;var previous=GUI.color;
   try{
-   GUI.color=color;
+   GUI.color=InterfaceMenu.WindowTint(color);
    float sx=rect.width/32f,sy=rect.height/32f,stroke=Math.Max(1.4f,rect.width*.065f);
    foreach(var line in MenuIconGeometry.For(name)){
     float x=rect.x+line.X1*sx,y=rect.y+line.Y1*sy,dx=(line.X2-line.X1)*sx,dy=(line.Y2-line.Y1)*sy;

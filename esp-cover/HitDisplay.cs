@@ -129,7 +129,7 @@ internal static class HitDisplay {
   if(style==null){style=new GUIStyle(GUI.skin.label);style.alignment=TextAnchor.MiddleLeft;style.richText=false;style.wordWrap=false;}
   style.fontSize=Font.Value;
   float row=Font.Value+12,width=Math.Min(660,Screen.width-24),x=Screen.width-width-12,y=Math.Max(70,Screen.height*0.26f);
-  var panel=InterfaceMenu.Place("hits",new Rect(x,y,width,Math.Min(feed.Entries.Count,Lines.Value)*row));x=panel.x;y=panel.y;
+  using var windowOpacity=InterfaceMenu.BeginWindow("hits");var panel=InterfaceMenu.Place("hits",new Rect(x,y,width,Math.Min(feed.Entries.Count,Lines.Value)*row));x=panel.x;y=panel.y;
   var oldColor=GUI.color;
   try{
    for(int i=feed.Entries.Count-1,visible=0;i>=0;i--,visible++){

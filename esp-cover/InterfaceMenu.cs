@@ -14,6 +14,7 @@ internal static class InterfaceMenu {
  static ConfigFile config=null!;
  static ConfigEntry<string> background=null!,text=null!,accent=null!;
  static ConfigEntry<float> opacity=null!;
+ static float windowAlpha=1;
  static ConfigEntry<KeyCode> menuKey=null!;
  static readonly Dictionary<string,Slot> slots=new();
  static readonly Dictionary<ConfigEntryBase,string> drafts=new();
@@ -39,7 +40,8 @@ internal static class InterfaceMenu {
  internal static bool Editing=>Open&&editing;
  sealed class Slot {
   internal string Name="";
-  internal ConfigEntry<float> X=null!,Y=null!,Width=null!,Height=null!;
+  internal ConfigEntry<float> X=null!,Y=null!,Width=null!,Height=null!,Opacity=null!;
+  internal ConfigEntry<bool>? AutoSize;
   internal Rect Bounds;
   internal Rect Initial;
  }
@@ -81,7 +83,7 @@ internal static class InterfaceMenu {
   }catch(Exception error){plugin.Log.LogError("Main menu input hooks unavailable: "+error);}
   plugin.Log.LogInfo("Main menu initialized: key="+menuKey.Value+", layout slots="+slots.Count);
  }
- static void AddSlot(string id,string name,Rect bounds){slots[id]=new Slot{Name=name,Bounds=bounds,Initial=bounds,Width=Bind(id+" width",name+"宽度",-1f,new AcceptableValueRange<float>(-1,10000)),Height=Bind(id+" height",name+"高度",-1f,new AcceptableValueRange<float>(-1,10000)),X=Bind(id+" position x",name+"横向位置",-1f,new AcceptableValueRange<float>(-1,1)),Y=Bind(id+" position y",name+"纵向位置",-1f,new AcceptableValueRange<float>(-1,1))};}
+ static void AddSlot(string id,string name,Rect bounds){slots[id]=new Slot{Name=name,Bounds=bounds,Initial=bounds,Width=Bind(id+" width",name+"宽度",-1f,new AcceptableValueRange<float>(-1,10000)),Height=Bind(id+" height",name+"高度",-1f,new AcceptableValueRange<float>(-1,10000)),X=Bind(id+" position x",name+"横向位置",-1f,new AcceptableValueRange<float>(-1,1)),Y=Bind(id+" position y",name+"纵向位置",-1f,new AcceptableValueRange<float>(-1,1)),Opacity=Bind(id+" opacity",name+"窗口不透明度",1f,new AcceptableValueRange<float>(0,1)),AutoSize=id=="armor"?Bind(id+" auto size","分析窗自适应大小",true):null};}
  static bool IsLocal(PlayerOwner owner)=>owner!=null&&owner.Player!=null&&owner.Player.IsYourPlayer;
  static bool BlockAxes(GamePlayerOwner __instance)=>(!InputBlocked&&!DirectorStage.FreeActive)||!IsLocal(__instance);
  static bool BlockCommand(GamePlayerOwner __instance,ref InputNode.ETranslateResult __result){if((!InputBlocked&&!DirectorStage.FreeActive)||!IsLocal(__instance))return true;__result=InputNode.ETranslateResult.BlockAll;return false;}
@@ -105,7 +107,7 @@ internal static class InterfaceMenu {
  internal static void Shutdown(){SetOpen(false);inputGate.Reset();MenuIcons.Shutdown();slots.Clear();drafts.Clear();}
  internal static Rect Place(string id,Rect initial){
   if(!slots.TryGetValue(id,out var slot))return initial;
-  slot.Initial=initial;if(slot.Width.Value>0)initial.width=Math.Clamp(slot.Width.Value,60,Math.Max(60,Screen.width));if(slot.Height.Value>0)initial.height=Math.Clamp(slot.Height.Value,24,Math.Max(24,Screen.height));
+  slot.Initial=initial;if(slot.AutoSize?.Value!=true){if(slot.Width.Value>0)initial.width=Math.Clamp(slot.Width.Value,60,Math.Max(60,Screen.width));if(slot.Height.Value>0)initial.height=Math.Clamp(slot.Height.Value,24,Math.Max(24,Screen.height));}
   if(id=="raidclock"){initial.width=Math.Max(180,initial.width);initial.height=Math.Max(70,initial.height);}
   var position=new Vector2(slot.X.Value,slot.Y.Value);
   if(position.x>=0&&position.y>=0){initial.x=position.x*Math.Max(0,Screen.width-initial.width);initial.y=position.y*Math.Max(0,Screen.height-initial.height);}
@@ -117,7 +119,16 @@ internal static class InterfaceMenu {
   if(semantic.g>.7f&&semantic.b>.7f&&semantic.r<.6f)return Accent;
   return semantic;
  }
- internal static void Surface(Rect rect,Color color,float radius=8){if(Event.current.type!=EventType.Repaint)return;var old=GUI.color;GUI.color=Color.white;GUI.DrawTexture(rect,Texture2D.whiteTexture,ScaleMode.StretchToFill,true,0,color,0,radius);GUI.color=old;}
+ internal static bool WindowVisible(string id)=>!slots.TryGetValue(id,out var slot)||slot.Opacity.Value>0;
+ internal static WindowOpacity BeginWindow(string id)=>new(slots.TryGetValue(id,out var slot)?slot.Opacity.Value:1);
+ internal readonly struct WindowOpacity:IDisposable {
+  readonly Color previousContent,previousBackground;
+  readonly float previousAlpha;
+  internal WindowOpacity(float alpha){alpha=Math.Clamp(alpha,0,1);previousContent=GUI.contentColor;previousBackground=GUI.backgroundColor;previousAlpha=windowAlpha;windowAlpha*=alpha;var content=previousContent;content.a*=alpha;GUI.contentColor=content;var backdrop=previousBackground;backdrop.a*=alpha;GUI.backgroundColor=backdrop;}
+  public void Dispose(){GUI.contentColor=previousContent;GUI.backgroundColor=previousBackground;windowAlpha=previousAlpha;}
+ }
+ internal static Color WindowTint(Color color){color.a*=windowAlpha;return color;}
+ internal static void Surface(Rect rect,Color color,float radius=8){if(Event.current.type!=EventType.Repaint)return;var old=GUI.color;GUI.color=Color.white;GUI.DrawTexture(rect,Texture2D.whiteTexture,ScaleMode.StretchToFill,true,0,WindowTint(color),0,radius);GUI.color=old;}
  internal static void Panel(Rect rect,float alpha=1){var shadow=new Rect(rect.x+2,rect.y+5,rect.width,rect.height);Surface(shadow,new Color(0,0,0,.2f*alpha),12);var border=Color.Lerp(Background,Text,.14f);border.a=opacity.Value*alpha;Surface(rect,border,12);var color=Background;color.a=opacity.Value*alpha;Surface(new Rect(rect.x+1,rect.y+1,rect.width-2,rect.height-2),color,11);}
  internal static void MoveSlot(string id,Vector2 position,Rect bounds){if(!slots.TryGetValue(id,out var slot))return;slot.X.Value=Math.Clamp(position.x/Math.Max(1,Screen.width-bounds.width),0,1);slot.Y.Value=Math.Clamp(position.y/Math.Max(1,Screen.height-bounds.height),0,1);}
  internal static void Close()=>SetOpen(false);
@@ -208,7 +219,7 @@ internal static class InterfaceMenu {
    }
   }catch(Exception error){if(Time.unscaledTime>=nextError){nextError=Time.unscaledTime+10;Plugin.Self.Error(error);}}finally{var e=Event.current;if(InputBlocked&&e!=null&&(e.isMouse||e.type==EventType.ScrollWheel))e.Use();}
  }
- static void DrawAppearance(Rect content){scroll=GUI.BeginScrollView(content,scroll,new Rect(0,0,content.width-20,850));Appearance(new Rect(0,0,content.width-26,850));GUI.EndScrollView();}
+ static void DrawAppearance(Rect content){float height=960+slots.Count*65;scroll=GUI.BeginScrollView(content,scroll,new Rect(0,0,content.width-20,height));Appearance(new Rect(0,0,content.width-26,height));GUI.EndScrollView();}
  static void DrawSettings(Rect content){
   filter=Field(new Rect(content.x,content.y,content.width,30),filter);if(filter.Length==0)Label(new Rect(content.x+12,content.y,content.width-24,30),"搜索本页功能名称…",Color.Lerp(Text,Background,.55f),12);
   visibleEntries??=config.Select(pair=>pair.Value).Where(e=>e.Definition.Section!="24. Interface"&&e.Definition.Section!="25. Aim exclusions"&&e.Definition.Section!="32. 状态悬浮窗").ToArray();
@@ -269,6 +280,11 @@ internal static class InterfaceMenu {
   Label(new Rect(rect.x,rect.y+500,rect.width,22),"设置自动保存 · 右 Shift / Esc 关闭",Text,12);
   DrawEntry(menuKey,new Rect(rect.x,rect.y+540,rect.width,92));
   FloatingStatus.DrawSettings(new Rect(rect.x,rect.y+658,rect.width,160));
+  float top=rect.y+840;Label(new Rect(rect.x,top,rect.width,28),"各悬浮窗不透明度",Accent,17);
+  Label(new Rect(rect.x,top+30,rect.width,24),"0% 隐藏，100% 正常显示；背景、文字与图标一起调整。",Text,12);
+  top+=65;
+  if(slots.TryGetValue("armor",out var analysis)&&analysis.AutoSize!=null){if(Button(new Rect(rect.x,top,Math.Min(390,rect.width),32),analysis.AutoSize.Value?"分析窗大小 · 自适应":"分析窗大小 · 手动",analysis.AutoSize.Value))analysis.AutoSize.Value=!analysis.AutoSize.Value;top+=48;}
+  foreach(var slot in slots.Values){Label(new Rect(rect.x,top,rect.width,26),$"{slot.Name} · 不透明度 {slot.Opacity.Value:P0}");float chosen=Slider(new Rect(rect.x,top+32,Math.Max(60,rect.width-140),20),slot.Opacity.Value,0,1);if(Math.Abs(chosen-slot.Opacity.Value)>.001f)slot.Opacity.Value=chosen;if(Button(new Rect(rect.xMax-128,top+23,128,30),"恢复 100%"))slot.Opacity.Value=1;top+=65;}
  }
  static void DrawLayout(){
   var e=Event.current;
@@ -280,12 +296,12 @@ internal static class InterfaceMenu {
     var grip=new Rect(bounds.xMax-21,bounds.yMax-21,21,21);for(int i=0;i<3;i++)RaidLoot.Line(new Vector2(grip.x+7+i*4,grip.yMax-3),new Vector2(grip.xMax-3,grip.y+7+i*4),Accent,1.5f);
     Label(new Rect(bounds.x+8,bounds.y+25,Math.Max(30,bounds.width-34),22),$"{bounds.width:F0} × {bounds.height:F0}",Text,11);
     if(e.type==EventType.MouseDown&&e.button==0&&grip.Contains(e.mousePosition)&&!toolbar.Contains(e.mousePosition)){drag="resize:"+pair.Key;resizeOrigin=bounds.position;dragOffset=bounds.size-(e.mousePosition-bounds.position);e.Use();}
-    if(e.type==EventType.MouseDrag&&drag=="resize:"+pair.Key){var size=e.mousePosition-resizeOrigin+dragOffset;slot.Width.Value=Math.Clamp(size.x,60,Math.Max(60,Screen.width));slot.Height.Value=Math.Clamp(size.y,24,Math.Max(24,Screen.height));MoveSlot(pair.Key,resizeOrigin,new Rect(resizeOrigin,new Vector2(slot.Width.Value,slot.Height.Value)));e.Use();}
+    if(e.type==EventType.MouseDrag&&drag=="resize:"+pair.Key){if(slot.AutoSize!=null)slot.AutoSize.Value=false;var size=e.mousePosition-resizeOrigin+dragOffset;slot.Width.Value=Math.Clamp(size.x,60,Math.Max(60,Screen.width));slot.Height.Value=Math.Clamp(size.y,24,Math.Max(24,Screen.height));MoveSlot(pair.Key,resizeOrigin,new Rect(resizeOrigin,new Vector2(slot.Width.Value,slot.Height.Value)));e.Use();}
    }
    if(e.type==EventType.MouseDown&&e.button==0&&bounds.Contains(e.mousePosition)&&!toolbar.Contains(e.mousePosition)){drag=pair.Key;dragOffset=e.mousePosition-bounds.position;e.Use();}
    if(e.type==EventType.MouseDrag&&drag==pair.Key){MoveSlot(pair.Key,e.mousePosition-dragOffset,bounds);e.Use();}
   }
   if(e.type==EventType.MouseUp){drag="";config.Save();}
  }
- static void ResetPositions(){foreach(var slot in slots.Values){slot.X.Value=-1;slot.Y.Value=-1;slot.Width.Value=-1;slot.Height.Value=-1;}}
+ static void ResetPositions(){foreach(var slot in slots.Values){slot.X.Value=-1;slot.Y.Value=-1;slot.Width.Value=-1;slot.Height.Value=-1;if(slot.AutoSize!=null)slot.AutoSize.Value=true;}}
 }

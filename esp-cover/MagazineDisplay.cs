@@ -74,7 +74,7 @@ internal static class MagazineDisplay {
   style.fontSize=Math.Min(source.fontSize,14);
   float line=Math.Max(21,style.fontSize+7),width=Math.Min(Width.Value,Screen.width-24);
   float height=lines.Count*line+10,x=12,y=Math.Min(145,Math.Max(8,Screen.height-height-12));
-  var panel=InterfaceMenu.Place("magazine",new Rect(x,y,width,height));x=panel.x;y=panel.y;
+  using var windowOpacity=InterfaceMenu.BeginWindow("magazine");var panel=InterfaceMenu.Place("magazine",new Rect(x,y,width,height));x=panel.x;y=panel.y;
   var old=GUI.color;
   try{
    InterfaceMenu.Panel(panel);
