@@ -6,24 +6,24 @@ using System.Threading.Tasks;
 using UnityEngine;
 namespace LocalSpt5Esp;
 internal static class StoryPanel {
- static Task<string>? request;static JsonElement data,preview;static bool requested,ready,confirm;
- static string status="",search="",selected="",selectedName="",action="",lastPage="";static int state=2;static Vector2 scroll;
+ static Task<string>? request;static JsonElement data,preview;static bool requested,ready,confirm,showWaitSync;
+ static string status="",search="",selected="",selectedName="",action="",lastPage="",requestAction="";static int state=2;static Vector2 scroll;
  static readonly string[] stateNames={"未开启","可接取","进行中","可交付","已完成","已失败","可重试","失败","已过期","等待中","自动接取"};
  static string State(int value)=>value>=0&&value<stateNames.Length?stateNames[value]:"未知";
- static void Begin(string name,string id="",int target=2){if(request!=null)return;request=CharacterDataPanel.Call("/local/gear/story","storyManagement",new(){{"action",name},{"id",id},{"state",target},{"revision",ready?data.GetProperty("revision").GetString():""}});status="处理中…";}
+ static void Begin(string name,string id="",int target=2){if(request!=null)return;showWaitSync=false;requestAction=name;request=CharacterDataPanel.Call("/local/gear/story","storyManagement",new(){{"action",name},{"id",id},{"state",target},{"revision",ready?data.GetProperty("revision").GetString():""}});status="处理中…";}
  internal static void Draw(Rect rect,string page){
   if(ItemSpawner.InRaid()){InterfaceMenu.Label(rect,"请退出战局后再管理剧情。",InterfaceMenu.Accent);return;}
   if(!requested){requested=true;Begin("status");}
   if(lastPage!=page){lastPage=page;scroll=Vector2.zero;search="";confirm=false;}
   if(request?.IsCompleted==true){try{using var doc=JsonDocument.Parse(request.GetAwaiter().GetResult());var root=doc.RootElement;
    if(root.TryGetProperty("err",out var err)&&err.TryGetInt32(out int code)&&code!=0)status=root.TryGetProperty("errmsg",out var message)?message.GetString()??"操作失败":"操作失败";
-   else{var result=CharacterDataPanel.Data(root);if(result.TryGetProperty("preview",out _)){preview=result.Clone();confirm=true;status="请查看受影响的任务。";}else{data=result.Clone();ready=true;confirm=false;status="已读取剧情进度；保存后重新登录角色生效。";}}
+   else{var result=CharacterDataPanel.Data(root);if(result.TryGetProperty("preview",out _)){preview=result.Clone();confirm=true;status="请查看受影响的任务。";}else{data=result.Clone();ready=true;confirm=false;status="已读取剧情进度；保存后重新登录角色生效。";if(requestAction is "status" or "wait" or "waits" or "sidewaits"){showWaitSync=true;QuestWaitSync.Queue(result);}}}
   }catch{status="服务响应无法读取，请刷新。";}request=null;}
   InterfaceMenu.Label(new Rect(rect.x,rect.y,rect.width-90,30),page,InterfaceMenu.Accent,18);bool previous=GUI.enabled;GUI.enabled=previous&&request==null;
   if(InterfaceMenu.Button(new Rect(rect.xMax-80,rect.y,80,30),"刷新")){confirm=false;Begin("status");}
   var body=new Rect(rect.x,rect.y+48,rect.width,Math.Max(40,rect.height-104));
   if(ready){if(confirm)Confirm(body);else if(page=="等待时间")Waits(body);else if(page=="结局")Endings(body);else Quests(body,page);}
-  GUI.enabled=previous;InterfaceMenu.Paragraph(new Rect(rect.x,rect.yMax-46,rect.width,46),status,null,12);
+  GUI.enabled=previous;InterfaceMenu.Paragraph(new Rect(rect.x,rect.yMax-46,rect.width,46),(page=="等待时间"&&request==null&&showWaitSync&&QuestWaitSync.Notice.Length>0?QuestWaitSync.Notice:status),null,12);
  }
  static void Choose(string id,string name,string operation,int target=2){selected=id;selectedName=name;action=operation;state=target;Begin("preview",id);}
  static void Quests(Rect r,string page){
@@ -49,7 +49,7 @@ internal static class StoryPanel {
   InterfaceMenu.Paragraph(new Rect(r.x,r.y,r.width,68),"分别清除当前主线或支线／商人任务的接取等待时间（含隐藏等待）。任务目标、等级、好感及其他前置条件仍需满足。",null,14);
   if(InterfaceMenu.Button(new Rect(r.x,r.y+85,240,36),"跳过主线等待时间",true))Begin("waits");
   if(InterfaceMenu.Button(new Rect(r.x,r.y+135,240,36),"跳过支线等待时间",true))Begin("sidewaits");
-  InterfaceMenu.Paragraph(new Rect(r.x,r.y+190,r.width,68),"仅清除本次已有等待，后续新触发的倒计时需再次跳过。保存后重新登录角色生效。",null,13);
+  InterfaceMenu.Paragraph(new Rect(r.x,r.y+190,r.width,68),"仅清除本次已有等待，后续新触发的倒计时需再次跳过。保存后自动刷新任务，请重新打开商人任务页。",null,13);
  }
  static void Endings(Rect r){var rows=data.GetProperty("endings").EnumerateArray().ToArray();scroll=GUI.BeginScrollView(r,scroll,new Rect(0,0,r.width-18,rows.Length*118));for(int i=0;i<rows.Length;i++){var row=rows[i];string id=row.GetProperty("id").GetString()!,key=row.GetProperty("name").GetString()!;string name=CharacterDataPanel.Name(key+" name",key);float y=i*118;InterfaceMenu.Paragraph(new Rect(0,y,r.width-180,65),name,InterfaceMenu.Accent,14);if(InterfaceMenu.Button(new Rect(r.width-165,y,140,32),row.GetProperty("current").GetBoolean()?"当前结局":"切换至此结局")){selected=id;selectedName=name;action="ending";confirm=true;using var doc=JsonDocument.Parse("{\"affected\":[]}");preview=doc.RootElement.Clone();}InterfaceMenu.Label(new Rect(0,y+72,r.width-25,28),"切换结局不重复发放奖励。",null,12);}GUI.EndScrollView();}
 }

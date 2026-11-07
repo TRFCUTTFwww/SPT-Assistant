@@ -10,6 +10,10 @@ using LocalRaidShared;
 var sourceRoot=Path.GetFullPath(Environment.GetEnvironmentVariable("SPT_SOURCE_ROOT")??"_spt5_esp_fix");
 var gameRoot=Environment.GetEnvironmentVariable("SPT_GAME_ROOT");if(!string.IsNullOrWhiteSpace(gameRoot))Directory.SetCurrentDirectory(gameRoot);
 try{
+Assert(QuestWaitSyncRules.SameQuest("pmc-a","pmc-a",false,9,9,100,100),"matching quest instance permits timestamp synchronization");
+Assert(!QuestWaitSyncRules.SameQuest("pmc-a","pmc-b",false,9,9,100,100)&&!QuestWaitSyncRules.SameQuest("pmc-a","pmc-a",true,9,9,100,100)&&!QuestWaitSyncRules.SameQuest("pmc-a","pmc-a",false,2,9,100,100)&&!QuestWaitSyncRules.SameQuest("pmc-a","pmc-a",false,9,9,101,100),"stale responses cannot change another profile, raid, progressed quest or replay instance");
+Assert(QuestWaitSyncRules.Shortens(200,100)&&!QuestWaitSyncRules.Shortens(100,200)&&!QuestWaitSyncRules.Shortens(100,100)&&!QuestWaitSyncRules.Shortens(100,0)&&!QuestWaitSyncRules.Shortens(100,-1)&&!QuestWaitSyncRules.Shortens(double.NaN,50)&&!QuestWaitSyncRules.Shortens(100,double.PositiveInfinity),"wait synchronization only accepts finite positive earlier timestamps and is idempotent");
+Console.WriteLine("PASS quest wait synchronization profile/raid/state/replay isolation and finite monotonic timestamps");
 var perfWindow=new PerformanceWindow();for(int i=0;i<300;i++)perfWindow.Add(new(1000d/60,1,2,.5,.25));var perf=perfWindow.Read();Assert(Math.Abs(perf.Fps-60)<.0001&&Math.Abs(perf.Frame-1000d/60)<.0001&&Math.Abs(perf.Mod-3.75)<.0001,"FPS uses total frames/elapsed time and nonoverlapping mod phases");
 perfWindow.Clear();for(int i=0;i<99;i++)perfWindow.Add(new(10,0,0,0,0));perfWindow.Add(new(100,0,0,0,0));perf=perfWindow.Read();Assert(perf.Peak==100&&perf.P99==10&&perf.Slow==1&&Math.Abs(perf.Fps-100000d/1090)<.0001,"one hitch counts once and FPS is not average instantaneous FPS");
 perfWindow.Add(new(double.NaN,0,0,0,0));perfWindow.Add(new(0,0,0,0,0));perfWindow.Add(new(10,-1,0,0,0));Assert(perfWindow.Read().Count==100,"nonfinite, zero and negative samples do not contaminate telemetry");
