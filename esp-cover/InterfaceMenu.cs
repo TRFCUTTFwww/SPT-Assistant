@@ -144,8 +144,13 @@ internal static class InterfaceMenu {
   field.normal.background=null;field.focused.background=null;field.hover.background=null;field.active.background=null;
  }
  static void Fill(Rect rect,Color color){if(Event.current.type!=EventType.Repaint)return;var old=GUI.color;GUI.color=color;GUI.DrawTexture(rect,Texture2D.whiteTexture);GUI.color=old;}
- internal static void Label(Rect rect,string value,Color? color=null,int size=14){value=I18n.Text(value);Styles();var old=GUI.color;GUI.color=color??Text;label!.fontSize=size;label.wordWrap=I18n.English&&rect.height>=30;
+ internal static void Label(Rect rect,string value,Color? color=null,int size=14,bool outline=false){value=I18n.Text(value);Styles();var old=GUI.color;GUI.color=color??Text;label!.fontSize=size;label.wordWrap=I18n.English&&rect.height>=30;
   if(I18n.English){var content=new GUIContent(value);while(label.fontSize>10&&(label.wordWrap?label.CalcHeight(content,Math.Max(1,rect.width))>rect.height:label.CalcSize(content).x>rect.width))label.fontSize--;}
+  if(outline&&Event.current.type==EventType.Repaint){
+   // Snap the glyph baseline to physical pixels, including resized HUD rows.
+   float scale=Math.Max(.01f,GUIUtility.pixelsPerPoint);rect.x=(float)Math.Round(rect.x*scale)/scale;rect.y=(float)Math.Round(rect.y*scale)/scale;rect.height=(float)Math.Round(rect.height*scale)/scale;float pixel=1/scale;
+   GUI.color=new Color(0,0,0,.95f);var edge=rect;edge.x-=pixel;GUI.Label(edge,value,label);edge.x+=2*pixel;GUI.Label(edge,value,label);edge=rect;edge.y-=pixel;GUI.Label(edge,value,label);edge.y+=2*pixel;GUI.Label(edge,value,label);GUI.color=color??Text;
+  }
   GUI.Label(rect,value,label);GUI.color=old;}
  internal static bool Button(Rect rect,string value,bool selected=false){value=I18n.Text(value);
   Styles();Surface(rect,selected?new Color(Accent.r,Accent.g,Accent.b,.19f):new Color(1,1,1,rect.Contains(Event.current.mousePosition)?.10f:.055f),7);
