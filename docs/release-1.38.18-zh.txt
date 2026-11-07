@@ -1,0 +1,12 @@
+1.38.18 上游构建更新与临时补丁移除
+
+当前 SPT 包：SPT-BLEEDINGEDGEMODS-5.0.0-48558-048e0aa-20261107.7z，适配 EFT 1.3.0.1.48558。
+包 SHA256：04c7faff96f980d828b1f0b29c913b4b3cee7aa4500c7bba85408f7598dfbf07。
+
+按用户要求删除 1.38.17 新增的 ContainerLoadCompatibility 类及初始化挂钩，客户端和回退模块均重新构建为 1.38.18。新版上游数据已将灯塔 container_Lighthouse_DesignStuff_00525 调整为 probability=1、IsAlwaysSpawn=true，使用上游处理方式。
+
+更新保留原有存档、客户端设置、服务器网络设置、两个自定义服务端模组以及其他辅助功能。包文件先校验完整性和 SHA256，实际变化的文件逐个备份、替换并核对哈希。上游 AddMissingStartVariables500 存档迁移成功；迁移前后角色等级、经验、物品 ID 集合和任务状态核对一致。
+
+验证：48558 和 47888 客户端分别编译通过，保留两条既有警告；自定义服务端组件对新版 API 编译通过；Probe、raid-controls-tests、gear-mail-tests 全部通过。编译产物已确认不存在临时容器修复类。服务端启动日志确认 Commit=048e0aa 并监听原 HTTPS 地址；启动器已在原登录用户会话中重新打开。
+
+本次未代替用户执行游戏画面和战局操作验收。
