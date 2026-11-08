@@ -8,18 +8,19 @@ using UnityEngine.Rendering;
 namespace LocalSpt5Esp;
 
 internal static class LaserEyes {
- static ConfigEntry<bool> enabled=null!,continuous=null!;
+ static ConfigEntry<bool> enabled=null!,continuous=null!,throughWalls=null!;
  static ConfigEntry<KeyCode> holdKey=null!;
  static ConfigEntry<float> range=null!;
  static GameObject? root;static Material? material;
  static readonly LineRenderer?[] beams=new LineRenderer?[4];
  static readonly Vector3[] ends=new Vector3[2];
  static readonly bool[] visible=new bool[2];
- static IntPtr world;static float nextTrace,nextError;static Vector3 lastDirection,lastPosition;static bool firing;
+ static IntPtr world;static float nextTrace,nextError;static Vector3 lastDirection,lastPosition;static bool firing,lastThroughWalls;
  internal static void Initialize(){
   const string section="61. 镭射眼";
-  enabled=FeatureConfig.Bind(section,"Laser eyes","镭射眼（命中秒杀）",false,"双眼发出红色激光，命中 AI 后立即致死；墙体会挡住射线，保留 AI 无敌保护。无需持枪或消耗弹药。");
+  enabled=FeatureConfig.Bind(section,"Laser eyes","镭射眼（命中秒杀）",false,"双眼发出红色激光，命中 AI 后立即致死；是否穿墙由独立开关控制，保留 AI 无敌保护。无需持枪或消耗弹药。");
   continuous=FeatureConfig.Bind(section,"Laser eyes continuous","镭射眼持续发射",false,"开启后持续发射，无需按住快捷键；菜单、背包、自由镜头和切出游戏时暂时停射。");
+  throughWalls=FeatureConfig.Bind(section,"Laser eyes through walls","激光穿墙",false,"开启后忽略墙体、门和地形遮挡，激光可命中后方射线上的 AI；关闭后在首个障碍处停止。仍受最大距离、人物命中区域和 AI 无敌保护限制。");
   holdKey=FeatureConfig.Bind(section,"Laser eyes fire key","镭射眼按住键",KeyCode.F10,"开启功能后按住发射，松开停止。None 表示不发射；菜单、背包和自由镜头中不触发。");
   range=FeatureConfig.Bind(section,"Laser eyes reach","镭射眼最大距离（米）",300f,"",new AcceptableValueRange<float>(1,1000));
  }
@@ -40,11 +41,11 @@ internal static class LaserEyes {
    var head=player.PlayerBones?.Head?.Original;
    var center=first?camera.transform.position:(head!=null?head.position:player.CameraPosition?.position??player.Position+Vector3.up*1.6f)+Vector3.up*.035f+rotation*Vector3.forward*.075f;
    if(first)center-=camera.transform.up*.025f;
-   bool trace=!firing||Time.unscaledTime>=nextTrace||Vector3.Angle(forward,lastDirection)>.15f||Vector3.Distance(center,lastPosition)>.01f;
+   bool trace=!firing||lastThroughWalls!=throughWalls.Value||Time.unscaledTime>=nextTrace||Vector3.Angle(forward,lastDirection)>.15f||Vector3.Distance(center,lastPosition)>.01f;
    if(trace){
-    nextTrace=Time.unscaledTime+.05f;lastDirection=forward;lastPosition=center;
+    nextTrace=Time.unscaledTime+.05f;lastDirection=forward;lastPosition=center;lastThroughWalls=throughWalls.Value;
     var aimRay=camera.ViewportPointToRay(new Vector3(.5f,.5f));
-    var sight=CrosshairProbe.Read(current,player,aimRay,limit);
+    var sight=CrosshairProbe.Read(current,player,aimRay,limit,throughWalls.Value);
     if(sight.State==CrosshairState.Overflow){Hide();return;}
     var aim=sight.State==CrosshairState.Empty?aimRay.GetPoint(limit):sight.Point;
     // Resolve both contacts before damage changes the alive roster or corpse colliders.
@@ -54,6 +55,7 @@ internal static class LaserEyes {
     if(rightHit.Actor!=null&&rightHit.Actor.Pointer!=left.Actor?.Pointer)Kill(player,rightHit);
    }
    if(!Resources()){Hide();return;}
+   material!.SetInt("_ZTest",(int)(throughWalls.Value?CompareFunction.Always:CompareFunction.LessEqual));
    firing=true;
    for(int eye=0;eye<2;eye++){
     var origin=center+right*(eye==0?-.032f:.032f);var delta=ends[eye]-origin;
@@ -65,7 +67,7 @@ internal static class LaserEyes {
  }
  static CrosshairContact Trace(GameWorld current,Player player,Vector3 origin,Vector3 aim,Vector3 forward,float limit,int eye){
   if(!LaserEyeRules.Beam(N(origin),N(aim),N(forward),limit,out var direction,out float length)){visible[eye]=false;return default;}
-  var ray=new Ray(origin,U(direction));var hit=CrosshairProbe.Read(current,player,ray,length);
+  var ray=new Ray(origin,U(direction));var hit=CrosshairProbe.Read(current,player,ray,length,throughWalls.Value);
   visible[eye]=hit.State!=CrosshairState.Overflow;
   ends[eye]=hit.State==CrosshairState.Empty?ray.GetPoint(length):hit.Point;
   return hit;
