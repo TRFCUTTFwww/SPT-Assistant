@@ -11,6 +11,7 @@ internal static class MenuIconGeometry {
   void Circle(float x,float y,float r){for(int i=0;i<32;i++){float a=i*MathF.Tau/32,b=(i+1)*MathF.Tau/32;Line(x+r*MathF.Cos(a),y+r*MathF.Sin(a),x+r*MathF.Cos(b),y+r*MathF.Sin(b));}}
   void Curve(float ax,float ay,float bx,float by,float cx,float cy,float dx,float dy){float px=ax,py=ay;for(int i=1;i<=24;i++){float t=i/24f,u=1-t,x=u*u*u*ax+3*u*u*t*bx+3*u*t*t*cx+t*t*t*dx,y=u*u*u*ay+3*u*u*t*by+3*u*t*t*cy+t*t*t*dy;Line(px,py,x,y);px=x;py=y;}}
   name=name switch{"战斗与枪械"=>"射击","人物与移动"=>"人物","AI 工作台"=>"AI 测试","玩具枪工具"=>"枪械","镜头与画面"=>"视觉","战局与物资"=>"战局","载具与空投"=>"空投","传送与导航"=>"传送","物品与装备"=>"装备与预设","设置与热键"=>"其他",_=>name};switch(name){case "服务端":Line(4,5,28,5);Line(4,16,28,16);Line(4,27,28,27);Circle(8,5,1);Circle(8,16,1);Circle(8,27,1);break;
+   case "主页面":Line(3,15,16,3);Line(16,3,29,15);Line(7,12,7,29);Line(25,12,25,29);Line(7,29,25,29);Line(12,29,12,19);Line(12,19,20,19);Line(20,19,20,29);break;
    case "剧情":Line(3,5,16,8);Line(16,8,29,5);Line(3,5,3,26);Line(29,5,29,26);Line(3,26,16,29);Line(16,29,29,26);Line(16,8,16,29);break;
    case "数据":Line(5,4,27,4);Line(27,4,27,28);Line(27,28,5,28);Line(5,28,5,4);Line(10,22,10,17);Line(16,22,16,10);Line(22,22,22,14);break;
    case "射击":Circle(16,16,9);Line(16,2,16,10);Line(16,22,16,30);Line(2,16,10,16);Line(22,16,30,16);break;

@@ -22,13 +22,14 @@ internal static class InterfaceMenu {
  static Rect window;
  static Vector2 scroll,dragOffset,resizeOrigin;
  static Vector2 sidebarScroll;
- static string category="镜头与画面",otherPage="人物显示",filter="",drag="",hex="";
+ static string category="主页面",otherPage="存档概览",filter="",drag="",hex="";
  static int colorRole;
  static bool oldVisible,editing,windowDrag;
  static CursorLockMode oldLock;
  static float nextError;
  static readonly MenuInputGate inputGate=new();
  internal static bool Open=>inputGate.Open;
+ internal static bool HomePage=>Open&&category=="主页面"&&!contextKeys&&!editing;
  internal static bool QuestLocationsPage=>Open&&category=="传送与导航"&&otherPage=="任务定位";
  internal static bool TeleportPage=>Open&&(category=="传送与导航"&&otherPage=="角色传送"||category=="AI 工作台"&&otherPage=="位置传送");
  internal static bool LootDataPage=>TeleportPage||Open&&(category=="战局与物资"&&otherPage=="本局物资"||category=="传送与导航"&&otherPage=="路面导航");
@@ -145,7 +146,7 @@ internal static class InterfaceMenu {
   field.normal.background=null;field.focused.background=null;field.hover.background=null;field.active.background=null;
  }
  static void Fill(Rect rect,Color color){if(Event.current.type!=EventType.Repaint)return;var old=GUI.color;GUI.color=color;GUI.DrawTexture(rect,Texture2D.whiteTexture);GUI.color=old;}
- internal static void Label(Rect rect,string value,Color? color=null,int size=14,bool outline=false){value=I18n.Text(value);Styles();var old=GUI.color;GUI.color=color??Text;label!.fontSize=size;label.wordWrap=I18n.English&&rect.height>=30;
+ internal static void Label(Rect rect,string value,Color? color=null,int size=14,bool outline=false,bool translate=true){if(translate)value=I18n.Text(value);Styles();var old=GUI.color;GUI.color=color??Text;label!.fontSize=size;label.wordWrap=I18n.English&&rect.height>=30;
   if(I18n.English){var content=new GUIContent(value);while(label.fontSize>10&&(label.wordWrap?label.CalcHeight(content,Math.Max(1,rect.width))>rect.height:label.CalcSize(content).x>rect.width))label.fontSize--;}
   if(outline&&Event.current.type==EventType.Repaint){
    // Snap the glyph baseline to physical pixels, including resized HUD rows.
@@ -187,6 +188,7 @@ internal static class InterfaceMenu {
    foreach(string name in MenuSections.Names){string lane=MenuSections.Lane(name);if(lane!=lastLane){Label(new Rect(8,sideY,sideWidth-16,22),lane,Color.Lerp(Accent,Text,.4f),11);sideY+=28;lastLane=lane;}var row=new Rect(0,sideY,sideWidth-4,41);sideY+=49;if(Button(row,"",category==name))Navigate(name);if(category==name)Surface(new Rect(row.x+1,row.y+10,3,21),Accent,1);MenuIcons.Draw(new Rect(row.x+12,row.y+10,21,21),name,category==name?Accent:Color.Lerp(Text,Background,.35f));Label(new Rect(row.x+43,row.y,row.width-46,row.height),MenuSections.DisplayName(name),category==name?Accent:Text,14);}GUI.EndScrollView();Label(new Rect(window.x+30,window.yMax-82,165,22),RaidClock.Active?"●  战局进行中":"●  待命",RaidClock.Active?Accent:Color.Lerp(Text,Background,.4f),12);Label(new Rect(window.x+30,window.yMax-52,165,22),"右 Shift 开关菜单",Color.Lerp(Text,Background,.5f),11);
    var content=new Rect(window.x+236,window.y+99,window.width-260,window.height-123);
    if(contextKeys){HotkeyPage.Draw(content,category);return;}
+   if(category=="主页面"){HomeDashboard.Draw(content);return;}
    var pages=MenuSections.Pages(category);if(!pages.Contains(otherPage))otherPage=pages[0];string next=Tabs(content,pages,otherPage,out float tabsHeight);if(next!=otherPage)Navigate(category,next);content.y+=tabsHeight;content.height-=tabsHeight;
    if(category=="服务端"){ServerControlPanel.Draw(content,otherPage);return;}if(category=="剧情"){StoryPanel.Draw(content,otherPage);return;}if(category=="数据"&&otherPage!="角色管理"){CharacterDataPanel.Draw(content,otherPage);return;}if(category=="AI 工作台"){AiWorkspace.Draw(content,otherPage);return;}if(category=="玩具枪工具"){ToyDeveloper.DrawWorkspace(content,otherPage);return;}if(category=="战局与物资"&&otherPage=="活动控制"){SeasonalEventControls.Draw(content);return;}
    if(category=="战局与物资"&&otherPage=="地图模式"){EventRaidLauncher.Draw(content);return;}
