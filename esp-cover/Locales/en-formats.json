@@ -1,4 +1,6 @@
 {
+  "编辑内容物 ({0})": "Edit contents ({0})",
+  "安全箱：{0} · 选择箱型": "Secure container: {0} · Choose type",
   "护甲覆盖区：估算穿透 {0}%": "Armored zones: estimated penetration {0}%",
   "护甲覆盖区：估算穿透 {0}–{1}%": "Armored zones: estimated penetration {0}–{1}%",
   "{0} · 存在未覆盖区域": "{0} · Some zones are unprotected",

@@ -29,6 +29,7 @@ public class CharacterDataRequest:IRequestData {
  [JsonPropertyName("expectedCoins")] public long ExpectedCoins{get;set;}
 }
 public class CharacterDataService(SaveServer saves,JsonUtil json,HttpResponseUtil http,TemplateTable templates,NotificationSendHelper notifications) {
+ readonly bool miscReady=MiscService.Install(saves,json,templates);
  readonly bool containerRewardsReady=ArmoredCaseRewards.Install(templates);
  public async ValueTask<string> Handle(CharacterDataRequest request,MongoId session,CancellationToken ct){
   var gate=GearMailService.SessionLock(session);await gate.WaitAsync(ct);SptProfile? snapshot=null;bool committed=false;
@@ -37,6 +38,7 @@ public class CharacterDataService(SaveServer saves,JsonUtil json,HttpResponseUti
    if(!CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(key),Encoding.UTF8.GetBytes(request.ApiKey??"")))throw new ArgumentException("认证失败。");
    var profile=saves.GetProfile(session)??throw new ArgumentException("当前角色不存在。");var pmc=profile.CharacterData?.PmcData??throw new ArgumentException("当前角色尚未创建。");
    if(request.Action is "raidStash" or "saveRaidStash")return await RaidStashService.Handle(request,session,profile,saves,json,http,ct);
+   if(request.Action is "miscStatus" or "miscSave")return await MiscService.Handle(request,session,http,ct);
    if(request.Action=="status")return Status(profile);
    if(request.Action=="serverStatus")return ServerSettingsService.Handle(request,http,pmc);
    var location=profile.InraidData?.Location;if(!string.IsNullOrEmpty(location)&&location!="none"&&location!="hideout")throw new ArgumentException("请先退出战局。");

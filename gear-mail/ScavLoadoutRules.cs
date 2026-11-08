@@ -3,7 +3,7 @@ using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 namespace LocalGearMail;
 public record LoadoutSnapshot(string EquipmentRoot,List<Item> Items);
 public static class ScavLoadoutRules {
- public static readonly HashSet<string> Slots=["FirstPrimaryWeapon","SecondPrimaryWeapon","Holster","Headwear","Earpiece","FaceCover","ArmorVest","TacticalVest","Backpack","Pockets","Eyewear"];
+ public static readonly HashSet<string> Slots=["FirstPrimaryWeapon","SecondPrimaryWeapon","Holster","Scabbard","Headwear","Earpiece","FaceCover","ArmorVest","TacticalVest","Backpack","Pockets","Eyewear"];
  public static LoadoutSnapshot Capture(BotBaseInventory inventory){
   string root=inventory.Equipment?.ToString()??throw new ArgumentException("角色没有装备根节点。");
   var source=inventory.Items??throw new ArgumentException("角色没有库存数据。");
@@ -17,7 +17,7 @@ public static class ScavLoadoutRules {
  public static void Apply(BotBaseInventory destination,LoadoutSnapshot snapshot){
   string root=destination.Equipment?.ToString()??throw new ArgumentException("Scav 没有装备根节点。");
   destination.Items??=[];
-  var remove=destination.Items.Where(item=>item.ParentId==root).Select(item=>item.Id.ToString()).ToHashSet();Expand(destination.Items,remove);
+  var remove=destination.Items.Where(item=>item.ParentId==root&&item.SlotId!=null&&Slots.Contains(item.SlotId)).Select(item=>item.Id.ToString()).ToHashSet();Expand(destination.Items,remove);
   var ids=snapshot.Items.ToDictionary(item=>item.Id.ToString(),_=>new MongoId());
   var copied=snapshot.Items.Select(item=>item with{Id=ids[item.Id.ToString()],ParentId=item.ParentId==snapshot.EquipmentRoot?root:item.ParentId!=null&&ids.TryGetValue(item.ParentId,out var parent)?parent.ToString():throw new ArgumentException("装备树有孤立物品。")}).ToList();
   destination.Items.RemoveAll(item=>remove.Contains(item.Id.ToString()));destination.Items.AddRange(copied);destination.FastPanel=[];

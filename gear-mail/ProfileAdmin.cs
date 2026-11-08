@@ -36,6 +36,8 @@ public class AdminRequest:IRequestData {
  [JsonPropertyName("source")] public string Source{get;set;}="pmc";
  [JsonPropertyName("mode")] public string Mode{get;set;}="once";
  [JsonPropertyName("equipment")] public Dictionary<string,string> Equipment{get;set;}=[];
+ [JsonPropertyName("contents")] public Dictionary<string,List<ScavContentSpec>> Contents{get;set;}=[];
+ [JsonPropertyName("sourceRevision")] public string SourceRevision{get;set;}="";
 }
 public record ScavPreset(string Mode,LoadoutSnapshot Loadout);
 [Injectable]
@@ -88,8 +90,11 @@ public class ProfileAdminService {
      if(request.Mode is not ("once" or "always"))throw new ArgumentException("未知 Scav 预设模式。");
      var source=request.Source=="pmc"?pmc:request.Source=="scav"?profile.CharacterData!.ScavData:throw new ArgumentException("未知装备模板来源。");
      var inventory=source?.Inventory??throw new ArgumentException("该角色装备尚未生成。");
-     var loadout=json.Deserialize<LoadoutSnapshot>(json.Serialize(ScavLoadoutRules.Capture(inventory)))!;
+     var baseLoadout=request.Source=="scav"?Preset(profile)?.Loadout??ScavLoadoutRules.Capture(inventory):ScavLoadoutRules.Capture(inventory);
+     if((request.Contents.Count>0||request.SourceRevision.Length>0)&&request.SourceRevision!=Revision(baseLoadout))throw new ArgumentException("来源装备已变化，请刷新后重新编辑。");
+     var loadout=json.Deserialize<LoadoutSnapshot>(json.Serialize(baseLoadout))!;
      ReplaceEquipment(loadout,inventory,request.Equipment);
+     ScavContentsRules.Apply(loadout,request.Contents,templates,items,presets,json);
      profile.ExtensionData??=[];profile.ExtensionData[PresetKey]=new ScavPreset(request.Mode,loadout);
      if(profile.CharacterData!.ScavData?.Inventory!=null)ScavLoadoutRules.Apply(profile.CharacterData.ScavData.Inventory,json.Deserialize<LoadoutSnapshot>(json.Serialize(loadout))!);break;
     case "scav-clear":profile.ExtensionData?.Remove(PresetKey);break;
@@ -104,7 +109,8 @@ public class ProfileAdminService {
   if(loadout==null&&profile.CharacterData.ScavData?.Inventory!=null)try{loadout=ScavLoadoutRules.Capture(profile.CharacterData.ScavData.Inventory);}catch(ArgumentException){}
   var inventory=pmc.Inventory??throw new ArgumentException("PMC 库存尚未就绪。");var equipment=inventory.Items!.Single(item=>item.Id==inventory.Equipment);
   using var equipmentDefinition=JsonDocument.Parse(json.Serialize(templates.Items[equipment.Template])!);
-  return http.GetBody(new{ok=true,
+  var pmcLoadout=ScavLoadoutRules.Capture(pmc.Inventory!);
+  return http.GetBody(new{ok=true,scavContentsEditing=true,pmcContents=ScavContentsRules.Describe(pmcLoadout),scavContents=loadout==null?null:ScavContentsRules.Describe(loadout),pmcRevision=Revision(pmcLoadout),scavRevision=loadout==null?"":Revision(loadout),
    areas=hideout.Areas.Where(area=>area.IsEnabled&&area.Stages?.Count>0&&pmc.Hideout?.Areas?.Any(saved=>saved.Type==area.Type)==true).Select(area=>new{type=(int)area.Type,name=area.Type.ToString(),level=pmc.Hideout!.Areas!.Single(saved=>saved.Type==area.Type).Level??0,maximum=area.Stages!.Keys.Select(key=>int.TryParse(key,out int value)?value:0).Max()}),
    traders=(pmc.TradersInfo??[]).Select(pair=>new{id=pair.Key.ToString(),name=traders.GetTrader(pair.Key,session)?.Nickname??pair.Key.ToString(),standing=pair.Value.Standing??0,loyalty=pair.Value.LoyaltyLevel??1}),
    scavMode=preset?.Mode??"off",scavItems=loadout?.Items.Where(item=>item.ParentId==loadout.EquipmentRoot).Select(item=>new{slot=item.SlotId,template=item.Template.ToString()}),slots=ScavLoadoutRules.Slots,
@@ -112,6 +118,7 @@ public class ProfileAdminService {
    slotFilters=equipmentDefinition.RootElement.GetProperty("_props").GetProperty("Slots").EnumerateArray().Where(slot=>ScavLoadoutRules.Slots.Contains(slot.GetProperty("_name").GetString()!)).Select(slot=>new{slot=slot.GetProperty("_name").GetString(),filters=slot.GetProperty("_props").GetProperty("filters")}),
    note="已写入当前角色；请重新进入角色以刷新游戏原生界面。"});
  }
+ string Revision(LoadoutSnapshot loadout)=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(json.Serialize(loadout)!)));
  void ReplaceEquipment(LoadoutSnapshot loadout,BotBaseInventory source,Dictionary<string,string> replacements){
   var equipment=(source.Items??throw new ArgumentException("角色没有库存数据。")).Single(item=>item.Id==source.Equipment);
   using var tree=JsonDocument.Parse(json.Serialize(templates.Items[equipment.Template])!);

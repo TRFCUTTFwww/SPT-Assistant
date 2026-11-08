@@ -74,6 +74,44 @@ if(caseRewards==null||caseRewards.RewardCount!=0||caseRewards.GuaranteedItems?.C
 var originalRewards=new SPTarkov.Server.Core.Models.Spt.Config.RewardDetails{RewardCount=3};var preserved=originalRewards;ArmoredCaseRewards.UseMissingRewards(new MongoId(ArmoredCaseRewards.Case),ref preserved);if(!ReferenceEquals(originalRewards,preserved))throw new Exception("Existing upstream case rewards were replaced");
 var baseClasses=new SPTarkov.Server.Core.Services.Items.ItemBaseClassService(null!,tables,null!);
 var rewardHelper=new SPTarkov.Server.Core.Helpers.Items.ItemHelper(null!,tables,null!,null!,baseClasses,null!,null!,null!,null!);
+var contentPresets=new SPTarkov.Server.Core.Helpers.Items.PresetHelper(null!,rewardHelper,null!);
+var editRoot=new MongoId();var editBag=new MongoId();var editRig=new MongoId();var oldStack=new MongoId();var knife=new MongoId();
+var editLoadout=new LoadoutSnapshot(editRoot.ToString(),[
+ new(){Id=editBag,Template=new("544a5cde4bdc2d39388b456b"),ParentId=editRoot.ToString(),SlotId="Backpack"},
+ new(){Id=editRig,Template=new("572b7adb24597762ae139821"),ParentId=editRoot.ToString(),SlotId="TacticalVest"},
+ new(){Id=oldStack,Template=template,ParentId=editBag.ToString(),SlotId="main",Location=new ItemLocation{X=2,Y=2,R=ItemRotation.Horizontal},Upd=new(){StackObjectsCount=1,MedKit=new(){HpResource=123}}},
+ new(){Id=knife,Template=new("54491bb74bdc2d09088b4567"),ParentId=editRoot.ToString(),SlotId="Scabbard"}]);
+var editorBefore=nativeJson.Serialize(editLoadout)!;
+var editBagContents=ScavContentsRules.Describe(editLoadout)["Backpack"].ToList();
+editBagContents.Add(new(){Template="56d59d3ad2720bdb418b4577",Count=30});
+ScavContentsRules.Apply(editLoadout,new(){{"Backpack",editBagContents},{"TacticalVest",[new(){Template=template.ToString()}]}},tables,rewardHelper,contentPresets,nativeJson);
+var savedEditor=nativeJson.Deserialize<LoadoutSnapshot>(nativeJson.Serialize(editLoadout))!;
+if(ScavContentsRules.Describe(savedEditor)["Backpack"].Length!=2||ScavContentsRules.Describe(savedEditor)["TacticalVest"].Length!=1||savedEditor.Items.Single(i=>i.Id==oldStack).Upd?.MedKit?.HpResource!=123||savedEditor.Items.Single(i=>i.Id==knife).SlotId!="Scabbard")throw new Exception("Scav content serialization lost roots, attributes or melee weapon");
+foreach(var parent in new[]{editBag,editRig}){
+ var occupied=new HashSet<(string,int,int)>();
+ foreach(var item in savedEditor.Items.Where(i=>i.ParentId==parent.ToString())){
+  var position=nativeJson.Deserialize<ItemLocation>(nativeJson.Serialize(item.Location))!;var size=rewardHelper.GetItemSize(ScavContentsRules.Tree(savedEditor.Items,item.Id.ToString()),item.Id)!;
+  int width=position.R==ItemRotation.Vertical?size.Height:size.Width,height=position.R==ItemRotation.Vertical?size.Width:size.Height;
+  var grid=tables.Items[savedEditor.Items.Single(i=>i.Id==parent).Template].Properties.Grids!.Single(g=>g.Name==item.SlotId);
+  if(position.X<0||position.Y<0||position.X+width>grid.Properties!.CellsH||position.Y+height>grid.Properties.CellsV)throw new Exception("Content placement exceeds native grid");
+  for(int yy=position.Y??0;yy<(position.Y??0)+height;yy++)for(int xx=position.X??0;xx<(position.X??0)+width;xx++)if(!occupied.Add((item.SlotId!,xx,yy)))throw new Exception("Scav content overlaps");
+ }
+}
+void RejectContents(Dictionary<string,List<ScavContentSpec>> edits){string before=nativeJson.Serialize(editLoadout)!;try{ScavContentsRules.Apply(editLoadout,edits,tables,rewardHelper,contentPresets,nativeJson);throw new Exception("Invalid contents accepted");}catch(ArgumentException){}if(nativeJson.Serialize(editLoadout)!=before)throw new Exception("Rejected content edit partially changed equipment");}
+RejectContents(new(){{"SecuredContainer",[]}});RejectContents(new(){{"Backpack",[new(){Template=template.ToString(),Count=2}]}});RejectContents(new(){{"Backpack",[new(){Id=new MongoId().ToString(),Template=template.ToString()}]}});
+RejectContents(new(){{"Backpack",Enumerable.Range(0,26).Select(_=>new ScavContentSpec{Template=template.ToString()}).ToList()}});
+RejectContents(new(){{"Backpack",[]},{"TacticalVest",Enumerable.Range(0,50).Select(_=>new ScavContentSpec{Template=template.ToString()}).ToList()}});
+ScavContentsRules.Apply(editLoadout,new(){{"Backpack",[]}},tables,rewardHelper,contentPresets,nativeJson);
+if(editLoadout.Items.Any(i=>i.ParentId==editBag.ToString())||!editLoadout.Items.Any(i=>i.ParentId==editRig.ToString()))throw new Exception("Clearing bag changed rig or retained contents");
+var secureInventory=new BotBaseInventory{Equipment=editRoot,Items=[new(){Id=editRoot,Template=template}]};ScavSecureRules.Attach(secureInventory,[]);
+var secureItem=secureInventory.Items.Single(i=>i.SlotId=="SecuredContainer");secureInventory.Items.Add(new(){Id=new MongoId(),Template=template,ParentId=secureItem.Id.ToString(),SlotId="main",Location=new ItemLocation{X=0,Y=0}});
+var protectedBefore=ScavSecureRules.Protected(secureInventory);ScavLoadoutRules.Apply(secureInventory,editLoadout);
+if(!protectedBefore.SetEquals(ScavSecureRules.Protected(secureInventory))||!secureInventory.Items.Any(i=>i.SlotId=="Scabbard"))throw new Exception("Applying Scav equipment removed secure contents or melee");
+if(ScavSecureRules.Sellable(secureInventory,secureInventory.Items).Any(i=>protectedBefore.Contains(i.Id.ToString())))throw new Exception("Sell-all contains protected Scav items");
+string secureBefore=nativeJson.Serialize(secureInventory)!;try{ScavSecureRules.Attach(secureInventory,ScavSecureRules.Capture(secureInventory),"5857a8b324597729ab0a0e7d");throw new Exception("Occupied secure container replaced");}catch(ArgumentException){}if(nativeJson.Serialize(secureInventory)!=secureBefore)throw new Exception("Rejected secure resize changed inventory");
+var emptySecure=ScavSecureRules.Capture(secureInventory).Where(i=>i.SlotId=="SecuredContainer").ToList();ScavSecureRules.Attach(secureInventory,emptySecure,"5857a8b324597729ab0a0e7d");
+if(secureInventory.Items.Single(i=>i.SlotId=="SecuredContainer").Template.ToString()!="5857a8b324597729ab0a0e7d")throw new Exception("Empty secure container selector did not apply");
+Console.WriteLine("PASS Scav melee, bag/rig content editing, native grids, no overlap, round-trip attributes, capacity/stack/stale rejection, atomic two-container edits and independent secure protection/selection");
 var lootGenerator=new SPTarkov.Server.Core.Generators.Loot.LootGenerator(null!,tables,new SPTarkov.Server.Core.Utils.RandomUtil(null!,null!),rewardHelper,new SPTarkov.Server.Core.Helpers.Items.PresetHelper(null!,rewardHelper,null!),null!,null!,null!,null!,null!,null!);
 var rewardIds=new HashSet<MongoId>();
 for(int roll=0;roll<20;roll++){

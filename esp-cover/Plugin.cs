@@ -63,6 +63,7 @@ internal class Plugin {
   yield return ()=>ForceLoot.Initialize(this);
   yield return ()=>RaidStash.Initialize(this);
   yield return ()=>ArmorCare.Initialize(this);
+  yield return ()=>MiscPanel.Initialize(this);
   yield return ()=>NativeEventControl.Initialize(this);
   yield return ()=>BodyTint.Initialize(this);
   yield return ()=>ScopeBoxes.Initialize();
