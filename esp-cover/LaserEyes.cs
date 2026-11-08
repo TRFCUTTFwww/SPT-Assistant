@@ -20,13 +20,16 @@ internal static class LaserEyes {
   const string section="61. 镭射眼";
   enabled=FeatureConfig.Bind(section,"Laser eyes","镭射眼（命中秒杀）",false,"双眼发出红色激光，命中 AI 后立即致死；墙体会挡住射线，保留 AI 无敌保护。无需持枪或消耗弹药。");
   continuous=FeatureConfig.Bind(section,"Laser eyes continuous","镭射眼持续发射",false,"开启后持续发射，无需按住快捷键；菜单、背包、自由镜头和切出游戏时暂时停射。");
-  holdKey=FeatureConfig.Bind(section,"Laser eyes hold key","镭射眼按住键",KeyCode.F6,"开启功能后按住发射，松开停止。None 表示不发射；菜单、背包和自由镜头中不触发。");
+  holdKey=FeatureConfig.Bind(section,"Laser eyes fire key","镭射眼按住键",KeyCode.F10,"开启功能后按住发射，松开停止。None 表示不发射；菜单、背包和自由镜头中不触发。");
   range=FeatureConfig.Bind(section,"Laser eyes reach","镭射眼最大距离（米）",300f,"",new AcceptableValueRange<float>(1,1000));
  }
  internal static void Tick(){
   try{
    var current=Singleton<GameWorld>.Instance;var player=current?.MainPlayer;
-   if(!LaserEyeRules.CanFire(enabled.Value,continuous.Value||holdKey.Value!=KeyCode.None&&Input.GetKey(holdKey.Value),RaidClock.Active,player?.IsYourPlayer==true&&player.HealthController?.IsAlive==true,InterfaceMenu.InputBlocked,DirectorStage.FreeActive,Cursor.visible,Application.isFocused)){Hide();return;}
+   bool held=holdKey.Value!=KeyCode.None&&Input.GetKey(holdKey.Value);
+   // Ctrl+F10 belongs to exit control; holding plain F10 fires the default beam.
+   if(holdKey.Value==KeyCode.F10&&(Input.GetKey(KeyCode.LeftControl)||Input.GetKey(KeyCode.RightControl)))held=false;
+   if(!LaserEyeRules.CanFire(enabled.Value,continuous.Value||held,RaidClock.Active,player?.IsYourPlayer==true&&player.HealthController?.IsAlive==true,InterfaceMenu.InputBlocked,DirectorStage.FreeActive,Cursor.visible,Application.isFocused)){Hide();return;}
    if(current==null||player==null){Hide();return;}
    var camera=OverlayProjection.MainCamera;if(camera==null){Hide();return;}
    if(world!=current.Pointer){Hide();world=current.Pointer;}
