@@ -10,14 +10,21 @@ using LocalRaidShared;
 var sourceRoot=Path.GetFullPath(Environment.GetEnvironmentVariable("SPT_SOURCE_ROOT")??"_spt5_esp_fix");
 var gameRoot=Environment.GetEnvironmentVariable("SPT_GAME_ROOT");if(!string.IsNullOrWhiteSpace(gameRoot))Directory.SetCurrentDirectory(gameRoot);
 try{
-var chatGate=new ChatSelectionGate();var chatNetwork=new IntPtr(1);string selectedChat="commando";int selectionEvents=0;
-void SelectChat(string requested,Action? onChanged=null){bool entered=chatGate.Enter(chatNetwork);if(!entered)return;try{selectionEvents++;onChanged?.Invoke();selectedChat=requested;}finally{chatGate.Exit(chatNetwork);}}
-SelectChat("ragfair",()=>{SelectChat(selectedChat);Assert(chatGate.Count==1,"suppressed reentrant chat selection cannot release the outer selection scope");});
-Assert(selectedChat=="ragfair"&&selectionEvents==1&&chatGate.Count==0,"native event-before-assignment list rebuild preserves the new conversation instead of reselecting Commando");
+var chatGate=new ChatSelectionGate();var chatNetwork=new IntPtr(1);string? selectedChat="commando";int selectionEvents=0;Action? delayedRebuild=null;var chatFlags=new Dictionary<string,bool>{{"commando",true},{"ragfair",false},{"fence",false}};
+void SelectChat(string? requested,Action? onChanged=null){chatGate.Select(chatNetwork,selectedChat,requested,next=>selectedChat=next,(item,value)=>{chatFlags[item]=value;if(!value)Assert(selectedChat==requested,"deselection listeners already observe the new current dialogue");},next=>{selectionEvents++;onChanged?.Invoke();});}
+SelectChat("ragfair",()=>{Assert(selectedChat=="ragfair"&&!chatFlags["commando"],"the native global event observes the committed selection and cleared old row");string? restored=selectedChat;delayedRebuild=()=>SelectChat(restored);SelectChat("commando");Assert(chatGate.Count==1,"nested stale row callback cannot release the outer selection scope");});
+delayedRebuild!();
+Assert(selectedChat=="ragfair"&&selectionEvents==2&&chatGate.Count==0&&!chatFlags["commando"]&&chatFlags["ragfair"],"deferred list rebuild retains the new conversation and cannot restore the stale selection");
 try{SelectChat("fence",()=>throw new InvalidOperationException("detached view"));}catch(InvalidOperationException){}
-SelectChat("fence");Assert(selectedChat=="fence"&&chatGate.Count==0,"a failed chat notification releases the selection scope for the next manual click");
+SelectChat("commando");SelectChat("fence");Assert(selectedChat=="fence"&&chatGate.Count==0,"a failed chat notification releases the selection scope for the next manual click");
+SelectChat(null);Assert(selectedChat==null&&!chatFlags["fence"],"clearing the selected conversation releases the old view");
 Assert(chatGate.Enter(chatNetwork)&&chatGate.Enter(new IntPtr(2)),"separate social networks do not block one another");chatGate.Exit(chatNetwork);chatGate.Exit(new IntPtr(2));
-Console.WriteLine("PASS conversation reentry during synchronous list rebuild, selection exception cleanup and independent network isolation");
+Console.WriteLine("PASS conversation state committed before callbacks, synchronous/deferred rebuilds, exception cleanup and independent networks");
+Assert(QuestLocationRules.Zones("zone","quest-item-template",new[]{"zone-a","","zone-b","zone-a"}).SequenceEqual(new[]{"zone-a","zone-b"}),"plant/beacon conditions resolve zoneIds, never their item-template target");
+Assert(QuestLocationRules.Zones("visit","visit-trigger",new[]{"irrelevant"}).SequenceEqual(new[]{"visit-trigger"})&&QuestLocationRules.Zones("trigger","switch-trigger",null).SequenceEqual(new[]{"switch-trigger"}),"visit and location-trigger conditions resolve their single native trigger ID");
+Assert(QuestLocationRules.Zones("in-zone",null,new[]{"kill-zone"}).SequenceEqual(new[]{"kill-zone"})&&QuestLocationRules.Zones("kill","scav",null).Length==0&&QuestLocationRules.Zones("visit"," ",null).Length==0,"regional kills resolve explicit zone constraints; map-wide kills and empty targets cannot create fabricated coordinates");
+Assert(QuestLocationRules.Eligible(true,false)&&!QuestLocationRules.Eligible(true,true)&&!QuestLocationRules.Eligible(false,false),"quest markers omit completed and unaccepted objectives");
+Console.WriteLine("PASS native quest zone/visit/trigger target mapping, item-template exclusion and active objective filtering");
 Assert(BallisticAdvantageRules.Evaluate(.1f,.2f,true)==1&&BallisticAdvantageRules.Evaluate(.1f,.2f,false)==-1,"low penetration favors local defense but harms local offense");
 Assert(BallisticAdvantageRules.Evaluate(.8f,1,true)==-1&&BallisticAdvantageRules.Evaluate(.8f,1,false)==1,"high penetration harms local defense but favors local offense");
 Assert(BallisticAdvantageRules.Evaluate(.1f,1,true)==-1&&BallisticAdvantageRules.Evaluate(.1f,1,false)==0,"exposed coverage warns defenders without promising attackers a reliable penetration");
@@ -291,6 +298,9 @@ if(args.Contains("--inputs")){
  return;
 }
 void Check(string type,string method,int parameters){var t=assembly.MainModule.Types.SelectMany(t=>new[]{t}.Concat(t.NestedTypes)).Single(t=>t.Name==type);if(t.Methods.Count(m=>m.Name==method&&m.Parameters.Count==parameters)!=1)throw new Exception(type+"."+method+" is ambiguous or missing");}
+Check("SocialNetwork","SetDialogueSelected",2);Check("SocialNetwork","set_SelectedDialogue",1);Check("UpdatableChatDialogue","SelectDialogue",1);Check("TriggerWithId","get_Id",0);Check("PlaceItemTrigger","get_TriggerId",0);
+foreach(var nativeCondition in new[]{"ConditionVisitPlace","ConditionLocationTrigger"})Assert(assembly.MainModule.Types.Single(t=>t.Name==nativeCondition).BaseType.Name=="ConditionOneTarget","single target trigger mapping matches native inheritance: "+nativeCondition);
+Assert(assembly.MainModule.Types.Single(t=>t.Name=="ConditionZone").Properties.Any(p=>p.Name=="zoneIds")&&assembly.MainModule.Types.Single(t=>t.Name=="ConditionInZone").Properties.Any(p=>p.Name=="zoneIds"),"plant and in-zone conditions expose actual native zone IDs");
 Check("ItemFactory","CreateItem",3);Check("Grid","FindLocationForItem",1);Check("ItemManipulator","Add",4);Check("ItemController","AddAndRaiseEvents",2);
 Check("RepairableComponent","set_Durability",1);Check("RepairableComponent","set_MaxDurability",1);Check("MedKitComponent","set_HpResource",1);Check("FoodDrinkComponent","set_HpPercent",1);Check("KeyComponent","set_NumberOfUsages",1);Check("Item","set_SpawnedInSession",1);Check("StackSlot","Add",2);
 Console.WriteLine("PASS native item creation, property setters and magazine loading APIs");
@@ -428,6 +438,8 @@ Assert(ItemSpawnRules.NormalizeSearch("5.56x45毫米 M995").Contains(ItemSpawnRu
 var rows=new MenuRowLayout();rows.Build(Enumerable.Repeat(36f,20));Assert(rows.Tops.Length==20&&rows.Visible(rows.Height-40,40).End==20,"last ammunition remains reachable beyond eight entries");rows.Build(new[]{40f,80f,50f});Assert(rows.Tops.SequenceEqual(new[]{0f,44f,128f})&&rows.Height==178,"variable wrapped row heights");Assert(rows.Visible(44,80)==(1,2),"visible item range respects wrapped height");rows.Build(Enumerable.Repeat(44f,catalog.Count));Assert(rows.Visible(rows.Height-200,200).End==catalog.Count,"full item catalog remains reachable");
 Console.WriteLine("PASS full ammunition list, 5.56 variants, search aliases and scroll access to last item");
 using var core=AssemblyDefinition.ReadAssembly(Path.Combine(sourceRoot,"esp-cover/bin/Release/net10.0/Local.Spt5.ESP.Core.dll"));
+var questLocationCalls=core.MainModule.Types.Single(t=>t.Name=="QuestLocations").Methods.Where(m=>m.HasBody).SelectMany(m=>m.Body.Instructions).Select(i=>i.Operand).OfType<MethodReference>().ToArray();
+Assert(!questLocationCalls.Any(m=>m.Name is "SetId" or "SetStatus" or "TriggerEnter" or "TestConditions" or "CompleteQuest" or "SetConditionValue"),"quest locations do not trigger zones, advance objectives or change quest status");
 var scopeBoxesType=core.MainModule.Types.Single(t=>t.Name=="ScopeBoxes");
 Assert(scopeBoxesType.Methods.Single(m=>m.Name=="Tick").Body.Instructions.Any(i=>i.Operand is MethodReference m&&m.DeclaringType.Name=="OpticCameraManager"&&m.Name=="get_Camera")&&scopeBoxesType.Methods.Single(m=>m.Name=="Detach").Body.Instructions.Any(i=>i.Operand is MethodReference m&&m.Name=="RemoveCommandBuffer"),"optic boxes bind the real camera and detach commands when leaving optics/unloading");
 var opticRenderCalls=scopeBoxesType.Methods.Where(m=>m.HasBody).SelectMany(m=>m.Body.Instructions).Select(i=>i.Operand).OfType<MethodReference>().ToArray();

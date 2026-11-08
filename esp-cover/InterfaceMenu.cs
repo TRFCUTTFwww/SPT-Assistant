@@ -29,6 +29,7 @@ internal static class InterfaceMenu {
  static float nextError;
  static readonly MenuInputGate inputGate=new();
  internal static bool Open=>inputGate.Open;
+ internal static bool QuestLocationsPage=>Open&&category=="传送与导航"&&otherPage=="任务定位";
  internal static bool TeleportPage=>Open&&(category=="传送与导航"&&otherPage=="角色传送"||category=="AI 工作台"&&otherPage=="位置传送");
  internal static bool LootDataPage=>TeleportPage||Open&&(category=="战局与物资"&&otherPage=="本局物资"||category=="传送与导航"&&otherPage=="路面导航");
  internal static void ShowTeleport(){Navigate(category=="AI 工作台"?"AI 工作台":"传送与导航",category=="AI 工作台"?"位置传送":"角色传送");}
@@ -209,6 +210,7 @@ internal static class InterfaceMenu {
     case ("物品与装备","修理与耐久"):ArmorCare.Draw(content);break;
     case ("战局与物资","刷新规则"):NextRaidLoot.Draw(content);break;
     case ("战局与物资","任务物资"):TaskNeeds.Draw(content);break;
+    case ("传送与导航","任务定位"):QuestLocations.Draw(content);break;
     case ("载具与空投","BTR 控制"):BtrControl.Draw(content);break;
     case ("载具与空投","空投控制"):AirdropControl.Draw(content);break;
     case ("传送与导航","角色传送"):TeleportControl.Draw(content);break;
