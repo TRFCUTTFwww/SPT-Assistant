@@ -7,6 +7,7 @@ using Il2CppInterop.Runtime.InteropTypes;
 using UnityEngine;
 namespace LocalSpt5Esp;
 internal static class NoclipControl {
+ internal static bool Active=>enabled?.Value==true;
  static ConfigEntry<KeyCode> toggle=null!;static ConfigEntry<bool> enabled=null!;static ConfigEntry<float> speed=null!;static Player? owner;static IntPtr world;
  internal static void Initialize(Plugin plugin){toggle=FeatureConfig.Bind("20. Movement","Noclip toggle key","穿墙开关热键",KeyCode.None,"在战局中切换穿墙；支持键盘及鼠标侧键，默认不占用按键。");enabled=FeatureConfig.Bind("20. Movement","Noclip","Noclip 穿墙飞行",false,"WASD 移动，空格上升，左 Ctrl 下降，左 Shift 加速。滚轮调速；关闭后停留在当前位置。");speed=FeatureConfig.Bind("20. Movement","Noclip speed","穿墙移动速度",8f,"米／秒",new AcceptableValueRange<float>(.1f,100));foreach(var type in new[]{typeof(SimpleCharacterController),typeof(PlayerCharacterController),typeof(ImpostorCharacterController),typeof(PlayerSpiritCharacterController)})plugin.Patches.Patch(type.GetMethod("Move",new[]{typeof(Vector3),typeof(float)}),prefix:new HarmonyMethod(typeof(NoclipControl),nameof(AllowMove)));}
  static bool AllowMove(Il2CppObjectBase __instance)=>owner==null||!enabled.Value||owner.CharacterController?.Pointer!=__instance.Pointer;

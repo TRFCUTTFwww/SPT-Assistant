@@ -28,7 +28,10 @@ internal static class CrosshairProbe {
   return current.PlayersColliders?.TryGetValue(collider,out var registered)==true&&registered?.ProfileId==local.ProfileId;
  }
  internal static CrosshairContact Read(GameWorld current,Player local,Camera camera,float range){
-  Refresh(current);var ray=camera.ViewportPointToRay(new Vector3(.5f,.5f));
+  return Read(current,local,camera.ViewportPointToRay(new Vector3(.5f,.5f)),range);
+ }
+ internal static CrosshairContact Read(GameWorld current,Player local,Ray ray,float range){
+  Refresh(current);
   int nativeMask=EFTHardSettings.Instance!=null?(int)EFTHardSettings.Instance.GunshotMask:0;int mask=nativeMask|bodyMask;if(mask==0)mask=~0;
   int count=Physics.RaycastNonAlloc(ray.origin,ray.direction,hits,range,mask,QueryTriggerInteraction.Collide);
   if(count>=hits.Length)return new(CrosshairState.Overflow,null,null,default,0);

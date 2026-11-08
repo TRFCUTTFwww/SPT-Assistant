@@ -1,6 +1,11 @@
 {
+  "护甲覆盖区：估算穿透 {0}%": "Armored zones: estimated penetration {0}%",
+  "护甲覆盖区：估算穿透 {0}–{1}%": "Armored zones: estimated penetration {0}–{1}%",
+  "{0} · 存在未覆盖区域": "{0} · Some zones are unprotected",
+  "{0} · 部分防护数据未知": "{0} · Some protection data is unknown",
+
   "待保存 {0} 项 · 无效 {1} 项": "Unsaved: {0} · Invalid: {1}",
-  "游戏（暂停）  {0}": "Game (paused)  {0}",
+  "游戏  {0}  暂停": "Game  {0}  Paused",
   "{0}窗口不透明度": "{0} window opacity",
   "{0} · 不透明度 {1}": "{0} · Opacity {1}",
   "弹道与防护分析 · {0}": "Ballistics and protection analysis · {0}",

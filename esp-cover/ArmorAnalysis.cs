@@ -16,7 +16,7 @@ internal static class ArmorAnalysis {
  static GUIStyle? style;
  static Vector2 scroll;
  internal static void Initialize(Plugin plugin){Enabled=CnConfig.Bind(plugin.Config,"22. Armor analysis","Enabled",true);}
- internal static void Reset(){worldPointer=IntPtr.Zero;nextRead=0;lines=Array.Empty<string>();scroll=Vector2.zero;}
+ internal static void Reset(){worldPointer=IntPtr.Zero;nextRead=0;lines=Array.Empty<string>();advantages=Array.Empty<int>();scroll=Vector2.zero;}
  static void Read(GameWorld world,Player local,Camera camera){
   if(worldPointer!=world.Pointer){Reset();worldPointer=world.Pointer;}
   if(Time.unscaledTime<nextRead)return;
@@ -40,18 +40,17 @@ internal static class ArmorAnalysis {
    var opponent=BallisticReadout.Current(target);
    result.Add("对方膛内／下一发："+(opponent is {} round?round.Name:"弹药未知／空膛"));
    if(opponent is {} threat)result.Add(threat.Stats);
-   int localArmor=result.Count;result.Add("自身头面："+Armor(local,true));result.Add("自身躯干："+Armor(local,false));
+   result.Add("自身头面："+Armor(local,true));result.Add("自身躯干："+Armor(local,false));
    if(opponent is {} incoming){
     var head=BallisticReadout.Protection(local,EBodyPart.Head,incoming.Penetration);var chest=BallisticReadout.Protection(local,EBodyPart.Chest,incoming.Penetration);
-    ratings[localArmor]=head.Advantage(true);ratings[localArmor+1]=chest.Advantage(true);
     ratings[result.Count]=head.Advantage(true);result.Add("对方弹药 → 自身头部："+head.Text);
     ratings[result.Count]=chest.Advantage(true);result.Add("对方弹药 → 自身胸部："+chest.Text);
    }
-   int opponentArmor=result.Count;result.Add("对方头面："+Armor(target,true));
+   result.Add("对方头面："+Armor(target,true));
    var ammo=BallisticReadout.Current(local);
    result.Add("自身弹药："+(ammo is {} own?own.Name:"弹药未知／空膛"));
-   if(ammo is {} outgoing){var head=BallisticReadout.Protection(target,EBodyPart.Head,outgoing.Penetration);ratings[opponentArmor]=head.Advantage(false);result.Add(outgoing.Stats);ratings[result.Count]=head.Advantage(false);result.Add("自身弹药 → 对方头部："+head.Text);}
-   result.Add("绿色：对你有利 · 红色：对你不利 · 中性色：未知或覆盖差异大");
+   if(ammo is {} outgoing){var head=BallisticReadout.Protection(target,EBodyPart.Head,outgoing.Penetration);result.Add(outgoing.Stats);ratings[result.Count]=head.Advantage(false);result.Add("自身弹药 → 对方头部："+head.Text);}
+   result.Add("穿透按弹药基础参数估算；不代表具体命中点的结果。");
    result.Add("基伤为弹药参数；实际损血受距离、命中区域与护甲影响。");lines=result.ToArray();advantages=new int[lines.Length];foreach(var pair in ratings)advantages[pair.Key]=pair.Value;
   }catch(Exception error){Warn(error);}
  }

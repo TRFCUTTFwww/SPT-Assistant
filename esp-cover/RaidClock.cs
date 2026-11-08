@@ -63,7 +63,7 @@ internal static class RaidClock {
   using var windowOpacity=InterfaceMenu.BeginWindow("raidclock");var rect=InterfaceMenu.Place("raidclock",DefaultBounds());InterfaceMenu.Panel(rect);
   float row=(rect.height-10)/3;int font=Math.Clamp(Math.Min(hudFont.Value,(int)row-3),10,24);
   InterfaceMenu.Label(new Rect(rect.x+10,rect.y+4,rect.width-20,row),"现实  "+DateTime.Now.ToString("HH:mm:ss"),InterfaceMenu.Text,font);
-  InterfaceMenu.Label(new Rect(rect.x+10,rect.y+4+row,rect.width-20,row),(RaidEnvironment.TimePaused?"游戏（暂停）  ":"游戏  ")+GameTime,InterfaceMenu.Text,font);
+  InterfaceMenu.Label(new Rect(rect.x+10,rect.y+4+row,rect.width-20,row),"游戏  "+GameTime+(RaidEnvironment.TimePaused?"  暂停":""),InterfaceMenu.Text,font);
   string remaining=Remaining is double s?RaidRules.Clock(s):"未同步";bool overtime=Remaining is <=0&&PreventTimeout.Value;
   InterfaceMenu.Label(new Rect(rect.x+10,rect.y+4+2*row,rect.width-20,row),"剩余  "+remaining+(PauseRemaining.Value?"  暂停":"")+(overtime?"  保护中":""),RemainingColor,font,outline:true);
  }

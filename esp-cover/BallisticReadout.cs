@@ -17,23 +17,25 @@ internal static class BallisticReadout {
   if(templates==null||!templates.TryGetValue(new MongoID(id),out var template)||template?.TryCast<AmmoTemplate>() is not {} ammo)return null;
   return new(id,LootDisplay.TemplateName(id),ammo.Damage,ammo.PenetrationPower,ammo.ArmorDamage,ammo.ProjectileCount);
  }
- internal readonly record struct ProtectionInfo(string Text,float Minimum=float.NaN,float Maximum=float.NaN){
-  internal int Advantage(bool defending)=>BallisticAdvantageRules.Evaluate(Minimum,Maximum,defending);
+ internal readonly record struct ProtectionInfo(string Text,int Defense=0,int Offense=0){
+  internal int Advantage(bool defending)=>defending?Defense:Offense;
  }
  internal static ProtectionInfo Protection(Player player,EBodyPart part,float penetration){
   if(!float.IsFinite(penetration)||penetration<0)return new("弹药数据未知");
-  int count=0;float minimum=1,maximum=0;bool covered=false;
+  var coverage=new BallisticCoverage();
   var colliders=player._hitColliders;if(colliders==null)return new("防护数据未知");
   foreach(var body in colliders){
    if(body==null||body.BodyPartType!=part)continue;
    bool armor=player.TryGetArmorResistData(body,penetration,out var resistance);
    float chance=armor?resistance.GetPenetrationChance(penetration):1;
    if(armor&&ArmorResistanceData.MAX_CHANCE>1)chance/=100;
-   if(!float.IsFinite(chance))continue;
-   chance=Math.Clamp(chance,0,1);minimum=Math.Min(minimum,chance);maximum=Math.Max(maximum,chance);count++;covered|=armor;
+   coverage.Add(armor,chance);
   }
-  if(count==0)return new("防护数据未知");
-  if(!covered)return new("无有效覆盖 · 穿透 100%",1,1);
-  return new(Math.Abs(maximum-minimum)<.005f?$"估算穿透 {maximum*100:F0}%":$"估算穿透 {minimum*100:F0}–{maximum*100:F0}%（覆盖区域不同）",minimum,maximum);
+  if(coverage.Covered==0&&coverage.Uncovered==0)return new("防护数据未知");
+  if(coverage.Covered==0)return coverage.Unknown?new("防护数据不完整"):new("无有效覆盖 · 穿透 100%",coverage.Advantage(true),coverage.Advantage(false));
+  string text=Math.Abs(coverage.Maximum-coverage.Minimum)<.005f?$"护甲覆盖区：估算穿透 {coverage.Maximum*100:F0}%":$"护甲覆盖区：估算穿透 {coverage.Minimum*100:F0}–{coverage.Maximum*100:F0}%";
+  if(coverage.Uncovered>0)text+=" · 存在未覆盖区域";
+  if(coverage.Unknown)text+=" · 部分防护数据未知";
+  return new(text,coverage.Advantage(true),coverage.Advantage(false));
  }
 }
