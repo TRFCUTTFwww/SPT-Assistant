@@ -49,6 +49,16 @@ Console.WriteLine("PASS wallet conservation, duplicate/stale/overflow rejection,
 
 var gameRoot=Environment.GetEnvironmentVariable("SPT_GAME_ROOT")??"D:/SPT-5.0.0-48558";
 var nativeJson=new SPTarkov.Server.Core.Utils.JsonUtil([new SPTarkov.Server.Core.Utils.Json.SptJsonConverterRegistrator()]);
+foreach(string presetMode in new[]{"once","always"}){
+ var savedPreset=new ScavPreset(presetMode,nativeJson.Deserialize<LoadoutSnapshot>(nativeJson.Serialize(snapshot))!);
+ var envelope=new SPTarkov.Server.Core.Models.Eft.Profile.SptProfile{ExtensionData=new(){["localEspScavPreset"]=savedPreset}};
+ var readEnvelope=nativeJson.Deserialize<SPTarkov.Server.Core.Models.Eft.Profile.SptProfile>(nativeJson.Serialize(envelope))!;
+ var readPreset=nativeJson.Deserialize<ScavPreset>(nativeJson.Serialize(readEnvelope.ExtensionData!["localEspScavPreset"]))!;
+ var beforeSource=nativeJson.Serialize(source)!;var detachedTarget=nativeJson.Deserialize<BotBaseInventory>(nativeJson.Serialize(target))!;
+ ScavLoadoutRules.Apply(detachedTarget,readPreset.Loadout);
+ if(readPreset.Mode!=presetMode||detachedTarget.Items!.Single(i=>i.SlotId=="Backpack").Template!=template||!detachedTarget.Items.Any(i=>i.ParentId==detachedTarget.Items.Single(j=>j.SlotId=="Backpack").Id.ToString())||nativeJson.Serialize(source)!=beforeSource)throw new Exception("Persisted Scav preset did not survive native profile serialization and application");
+}
+Console.WriteLine("PASS both Scav preset modes survive native save extension serialization, nested contents and detached inventory application");
 T Read<T>(string name)=>nativeJson.Deserialize<T>(File.ReadAllText(System.IO.Path.Combine(gameRoot,"SPT_Runtime","SPT_Data","database","templates",name)))!;
 var tables=(SPTarkov.Server.Core.Models.Spt.Tables.TemplateTable)Activator.CreateInstance(typeof(SPTarkov.Server.Core.Models.Spt.Tables.TemplateTable))!;typeof(SPTarkov.Server.Core.Models.Spt.Tables.TemplateTable).GetProperty("Quests")!.SetValue(tables,Read<Dictionary<MongoId,Quest>>("quests.json"));typeof(SPTarkov.Server.Core.Models.Spt.Tables.TemplateTable).GetProperty("VariableGroups")!.SetValue(tables,Read<List<SPTarkov.Server.Core.Models.Eft.Quests.VariableGroupData>>("variableGroups.json"));typeof(SPTarkov.Server.Core.Models.Spt.Tables.TemplateTable).GetProperty("QuestVariables")!.SetValue(tables,Read<Dictionary<MongoId,SPTarkov.Server.Core.Models.Eft.Quests.QuestVariableGroup>>("questVariables.json"));
 // Run the installed native reward lookup and generator on detached dependencies.

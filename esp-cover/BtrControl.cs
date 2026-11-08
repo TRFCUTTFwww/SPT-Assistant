@@ -36,8 +36,9 @@ internal static class BtrControl {
  static void Action(Action action){try{action();notice="已提交 BTR 操作。";}catch(Exception e){notice=e.Message;}}
  internal static void Draw(Rect rect){
   var current=Singleton<GameWorld>.Instance;var btr=current?.BtrController;var stops=btr?.MapPathsConfiguration?.PathDestinations;
-  scroll=GUI.BeginScrollView(rect,scroll,new Rect(0,0,rect.width-20,Math.Max(720,410+(stops?.Count??0)*44)));float x=8,y=8,w=rect.width-36,half=(w-12)/2;
+  scroll=GUI.BeginScrollView(rect,scroll,new Rect(0,0,rect.width-20,Math.Max(820,510+(stops?.Count??0)*44)));float x=8,y=8,w=rect.width-36,half=(w-12)/2;
   InterfaceMenu.Label(new Rect(x,y,w,32),"BTR 管理",InterfaceMenu.Accent,21);y+=46;InterfaceMenu.DrawEntry(disabled,new Rect(x,y,half,84));InterfaceMenu.DrawEntry(key,new Rect(x+half+12,y,half,84));y+=96;
+  InterfaceMenu.DrawEntry(BtrDisplay.Esp,new Rect(x,y,w,84));y+=96;
   InterfaceMenu.Paragraph(new Rect(x,y,w,62),BtrDisplay.Status.Length>0?BtrDisplay.Status:"当前地图 BTR 尚未就绪。",InterfaceMenu.Accent,13);y+=74;
   InterfaceMenu.DrawEntry(customWait,new Rect(x,y,half,84));InterfaceMenu.DrawEntry(wait,new Rect(x+half+12,y,half,84));y+=96;
   bool enabled=GUI.enabled;GUI.enabled=enabled&&!Disabled&&btr?.BtrVehicle!=null;

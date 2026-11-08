@@ -9,6 +9,7 @@ using UnityEngine;
 namespace LocalSpt5Esp;
 internal static class BtrDisplay {
  internal static ConfigEntry<bool> Enabled=null!;
+ internal static ConfigEntry<bool> Esp=null!;
  internal static string Status {get;private set;}="";
  internal static int Revision {get;private set;}
  static IntPtr worldPointer;
@@ -16,6 +17,7 @@ internal static class BtrDisplay {
  static string lastStopId="",requestedId="",incomingId="",lastDiagnostic="";
  internal static void Initialize(Plugin plugin){
   Enabled=CnConfig.Bind(plugin.Config,"18. BTR","Enabled",true);
+  Esp=FeatureConfig.Bind("18. BTR","BTR ESP","BTR 透视定位",true,"显示 BTR 的方框、位置、距离和当前路线状态，独立于路线信息窗。");
   Hook(plugin,typeof(BtrController),"MoveToDestination",new[]{typeof(string),typeof(int)},nameof(AfterMove));
   Hook(plugin,typeof(BtrController),"OnIncomingToDestination",new[]{typeof(PathDestination),typeof(bool),typeof(bool),typeof(bool)},nameof(AfterIncoming));
   Hook(plugin,typeof(VehicleBase),"ToNextDestination",Type.EmptyTypes,nameof(AfterVehicleAdvance));
@@ -31,7 +33,7 @@ internal static class BtrDisplay {
  internal static void Tick(GameWorld? world){
   if(world==null){if(worldPointer!=IntPtr.Zero)Reset();return;}Bind(world);
   if(Time.unscaledTime<nextScan)return;nextScan=Time.unscaledTime+1;string updated="";
-  try{if(Enabled.Value&&BtrControl.Disabled)updated="BTR：已关闭";else if(Enabled.Value){var controller=world.BtrController;var view=controller?.BtrView;var vehicle=controller?.BtrVehicle;if(view!=null){
+  try{if((Enabled.Value||Esp.Value)&&BtrControl.Disabled)updated="BTR：已关闭";else if(Enabled.Value||Esp.Value){var controller=world.BtrController;var view=controller?.BtrView;var vehicle=controller?.BtrVehicle;if(view!=null){
    bool stopped=(vehicle!=null?vehicle.BtrState:view.BtrState) is EBtrState.Stop or EBtrState.StopPaid;
    bool depot=(vehicle!=null?vehicle.VehicleRouteState:view.RouteState)==EVehicleRouteState.OnDepot;
    string nativeCurrent=vehicle?._currentPathDestination?.id??"",nativeTarget=vehicle?._targetPathDestination?.id??"";
@@ -47,6 +49,11 @@ internal static class BtrDisplay {
   catch(Exception e){updated="BTR：路线读取失败";Warn(e);}if(updated!=Status){Status=updated;Revision++;}
  }
  static string NearestStop(BtrController controller,Vector3 position){var destinations=controller.MapPathsConfiguration?.PathDestinations;if(destinations==null)return "";float best=70f*70f;string id="";foreach(var destination in destinations){if(destination==null||string.IsNullOrWhiteSpace(destination.id))continue;var delta=destination.transform.position-position;float distance=delta.x*delta.x+delta.z*delta.z;if(distance>=best)continue;best=distance;id=destination.id;}return id;}
+ internal static void DrawMarker(Camera camera,Player player){
+  if(!Esp.Value||BtrControl.Disabled)return;var controller=Singleton<GameWorld>.Instance?.BtrController;var view=controller?.BtrView;if(view==null||!view.gameObject.activeInHierarchy)return;
+  Vector3 position=view.transform.position;
+  VehicleEsp.Draw(camera,position+Vector3.up*1.5f,new Vector3(3.2f,3,7.5f),"BTR · "+Vector3.Distance(player.Position,position).ToString("F0")+" m",Status,new Color(.35f,.85f,1));
+ }
  internal static string StopName(GameWorld world,string id){if(string.IsNullOrWhiteSpace(id))return "站点未识别";string map=world.LocationId?.ToLowerInvariant() switch{"tarkovstreets" or "streets"=>"TarkovStreets","woods"=>"Woods","lighthouse"=>"Lighthouse",_=>""};foreach(var key in new[]{map.Length>0?$"Trading/Dialog/PlayerTaxi/{map}/{id}/Name":"",$"Trading/Dialog/PlayerTaxi/{id}/Name"}){if(key.Length==0)continue;string localized=LocalizationExtensions.Localized(key,EStringCase.None);if(!string.IsNullOrWhiteSpace(localized)&&localized!=key)return localized;}return id;}
  static string PauseClock(int raw){double seconds=raw>300?raw/1000d:raw;if(seconds>600)return "计时未就绪";int rounded=(int)Math.Ceiling(seconds);return $"{rounded/60:00}:{rounded%60:00}";}
  static void Warn(Exception e){if(Time.unscaledTime<nextError)return;nextError=Time.unscaledTime+10;Plugin.Self.Error(e);}

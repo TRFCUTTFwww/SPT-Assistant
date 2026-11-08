@@ -241,8 +241,7 @@ internal static class ItemSpawner {
    if(!InRaid()){mailTask=GearMailClient.Send(MailItems(entry,count,values,attachments),true);status="正在发送邮件…";return;}
    var world=Singleton<GameWorld>.Instance;var player=world?.MainPlayer;
    if(player==null||!player.IsYourPlayer||player.HealthController==null||!player.HealthController.IsAlive){status="需要进入战局后添加。";return;}
-   var backpack=player.Profile?.Inventory?.Equipment?.GetSlot(EquipmentSlot.Backpack)?.ContainedItem?.TryCast<CompoundItem>();
-   if(backpack?.Grids==null){status="请先装备一个有储物空间的背包。";return;}
+   var equipment=player.Profile?.Inventory?.Equipment;
    var controller=player.InventoryController;var factory=Singleton<ItemFactory>.Instance;
    if(controller==null||factory==null){status="库存尚未就绪。";return;}
    int stacks=0;
@@ -253,19 +252,26 @@ internal static class ItemSpawner {
     ApplyProperties(item,values,factory);
     ItemAttachments.Apply(item,factory,attachments,values.Fir==0?null:values.Fir==1);
     ItemAddress? destination=null;
-    foreach(var grid in backpack.Grids){
-     if(grid==null)continue;
-     var candidate=grid.FindLocationForItem(item);if(candidate==null)continue;
-     var check=ItemManipulator.Add(item,candidate,controller,true);
-     if(check.Succeeded){destination=candidate;break;}
+    var backpack=equipment?.GetSlot(EquipmentSlot.Backpack)?.ContainedItem?.TryCast<CompoundItem>();
+    if(backpack?.Grids!=null)foreach(var grid in backpack.Grids){
+      if(grid==null)continue;
+      var candidate=grid.FindLocationForItem(item);if(candidate==null)continue;
+      var check=ItemManipulator.Add(item,candidate,controller,true);
+      if(check.Succeeded){destination=candidate;break;}
+     }
+    if(destination==null&&equipment!=null)foreach(var name in new[]{EquipmentSlot.Backpack,EquipmentSlot.Headwear,EquipmentSlot.ArmorVest,EquipmentSlot.TacticalVest}){
+     var slot=equipment.GetSlot(name);if(slot==null||slot.ContainedItem!=null)continue;
+     var candidate=slot.CreateItemAddress();
+     // Native simulation retains item filters, armor/rig conflicts and slot locks.
+     if(ItemManipulator.Add(item,candidate,controller,true).Succeeded){destination=candidate;break;}
     }
     if(destination==null)break;
     controller.AddAndRaiseEvents(item,destination);
     if(item.CurrentAddress==null)break;
     added+=item.StackObjectsCount;
    }
-   backpack.RaiseRefreshEvent(false,true);
-   status=added==count?$"已添加 {entry.Name} ×{added}":$"已添加 {added}/{count}：背包空间、物品限制或单次数量上限。";
+   equipment?.RaiseRefreshEvent(false,true);
+   status=added==count?$"已添加 {entry.Name} ×{added}":$"已添加 {added}/{count}：背包空间或空装备槽不足、物品限制或单次数量上限。";
    Plugin.Self.Log.LogInfo($"Item spawn: template={entry.Id}, requested={count}, added={added}");
   }catch(ArgumentException error){status=error.Message;}
   catch(Exception error){status=$"已添加 {added}；操作中止：{error.Message}";Plugin.Self.Error(error);}

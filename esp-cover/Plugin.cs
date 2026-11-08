@@ -330,7 +330,7 @@ internal class Overlay {
   }catch(Exception e){Warn(e);}}
   if(s.Loot.Value||s.People.Value)DrawLoot();
   NoclipControl.Draw();RaidClock.DrawHud();GroundNavigation.DrawHud(camera,me);RaidLoot.DrawMarkers(camera,me);GrenadeAlert.Draw(camera,me);
-  HitDisplay.Draw();GlobalKillFeed.Draw();IncomingDamage.Draw(camera,me);AiTestControl.DrawMarker(camera);AirdropControl.DrawMarkers(camera,me);InteractionPoints.DrawMarkers(camera,me);TeleportControl.DrawPlayerMarker(camera,me);TripwireHighlight.Draw(camera);EventCabinetDisplay.Draw(camera);QuestLocations.DrawMarkers(camera,me);
+  HitDisplay.Draw();GlobalKillFeed.Draw();IncomingDamage.Draw(camera,me);AiTestControl.DrawMarker(camera);AirdropControl.DrawMarkers(camera,me);BtrDisplay.DrawMarker(camera,me);InteractionPoints.DrawMarkers(camera,me);TeleportControl.DrawPlayerMarker(camera,me);TripwireHighlight.Draw(camera);EventCabinetDisplay.Draw(camera);QuestLocations.DrawMarkers(camera,me);
   RaidPopulation.Draw(style);
   VitalsDisplay.Draw(me,style);
   MagazineDisplay.Draw(me,style);

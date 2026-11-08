@@ -6,12 +6,12 @@ public sealed class RuntimeModule:IRuntimeModule {
  Plugin? plugin;
  Overlay? overlay;
  public int ApiVersion=>1;
- internal const string ReleaseVersion="1.38.32";
+ internal const string ReleaseVersion="1.38.33";
  public string Version=>ReleaseVersion;
  // Optional methods are discovered by the 1.5 host. API 1 still loads on older
  // hosts, allowing the core to be installed before the one-time host restart.
  public void PrepareInBackground()=>I18n.Prepare();
- public bool PrepareForReload()=>RaidStash.PrepareForReload()&&HideoutCraftControl.PrepareForReload();
+ public bool PrepareForReload()=>RaidStash.PrepareForReload()&&HideoutCraftControl.PrepareForReload()&&ProfileAdminPanel.PrepareForReload();
  public void Initialize(IHostServices host){foreach(var step in InitializeSteps(host))step();}
  public IEnumerable<Action> InitializeSteps(IHostServices host){
   yield return ()=>{FeatureRetirement.Apply(host.Config,host.PluginDirectory,host.Log);plugin=new Plugin(host);};
@@ -24,12 +24,12 @@ public sealed class RuntimeModule:IRuntimeModule {
   yield return ()=>I18n.Initialize(plugin);
   yield return ()=>overlay=new Overlay();
  }
- public void Update(){long stamp=RuntimePerformance.Start();try{RuntimePerformance.Frame();RaidClock.Tick();QuestWaitSync.Tick();HideoutCraftControl.Tick();RaidStash.Tick();GraphicsRepair.Tick();CorpseRevival.Tick(Comfort.Common.Singleton<EFT.GameWorld>.Instance);GrenadeArc.Tick(Comfort.Common.Singleton<EFT.GameWorld>.Instance);KillEffects.Tick(Comfort.Common.Singleton<EFT.GameWorld>.Instance);EventRaidLauncher.Tick();EventRaidDiagnostics.Tick();FloatingStatus.Update();ConfigProfiles.Keys();InterfaceMenu.Update();DirectorStage.Update();EntertainmentControl.Update();HitSounds.Tick();long costStamp=RuntimePerformance.Start();overlay?.Update();RuntimeCosts.Mark(ref costStamp,CostStage.Scan);PasscodeHints.Tick();CoordinateReader.Tick();}finally{RuntimePerformance.UpdateDone(stamp);}}
+ public void Update(){long stamp=RuntimePerformance.Start();try{RuntimePerformance.Frame();RaidClock.Tick();QuestWaitSync.Tick();HideoutCraftControl.Tick();ProfileAdminPanel.Tick();RaidStash.Tick();GraphicsRepair.Tick();CorpseRevival.Tick(Comfort.Common.Singleton<EFT.GameWorld>.Instance);GrenadeArc.Tick(Comfort.Common.Singleton<EFT.GameWorld>.Instance);KillEffects.Tick(Comfort.Common.Singleton<EFT.GameWorld>.Instance);EventRaidLauncher.Tick();EventRaidDiagnostics.Tick();FloatingStatus.Update();ConfigProfiles.Keys();InterfaceMenu.Update();DirectorStage.Update();EntertainmentControl.Update();HitSounds.Tick();long costStamp=RuntimePerformance.Start();overlay?.Update();RuntimeCosts.Mark(ref costStamp,CostStage.Scan);PasscodeHints.Tick();CoordinateReader.Tick();}finally{RuntimePerformance.UpdateDone(stamp);}}
  public void LateUpdate(){long stamp=RuntimePerformance.Start();try{overlay?.LateUpdate();long costStamp=RuntimePerformance.Start();BodyTint.Tick();RuntimeCosts.Mark(ref costStamp,CostStage.Tint);InterfaceMenu.KeepCursor();}finally{RuntimePerformance.LateDone(stamp);}}
  public void OnGUI(){long stamp=RuntimePerformance.Start();try{if(!DirectorStage.HudHidden){overlay?.OnGUI();FloatingStatus.Draw();PerformanceHud.Draw();FeatureToasts.Draw();PasscodeHints.Draw();KillEffects.Draw(EFT.CameraControl.CameraManager.Instance?.Camera);GrenadeArc.Draw(EFT.CameraControl.CameraManager.Instance?.Camera);}InterfaceMenu.Draw();}finally{RuntimePerformance.GuiDone(stamp);}}
  public void Unload(){foreach(var step in UnloadSteps())step();}
  public IEnumerable<Action> UnloadSteps(){
-  var actions=new List<Action>{I18n.Shutdown,QuestWaitSync.Reset,HideoutCraftControl.Shutdown,RaidClock.Reset,RaidStash.Shutdown,GrenadeArc.Reset,KillEffects.Reset,PasscodeHints.Reset,CommandoConsole.Reset,RuntimePerformance.Shutdown,FeatureToasts.Shutdown,FloatingStatus.Shutdown,InterfaceMenu.Shutdown};
+  var actions=new List<Action>{I18n.Shutdown,QuestWaitSync.Reset,HideoutCraftControl.Shutdown,ProfileAdminPanel.Reset,UniversalKeys.Reset,RaidClock.Reset,RaidStash.Shutdown,GrenadeArc.Reset,KillEffects.Reset,PasscodeHints.Reset,CommandoConsole.Reset,RuntimePerformance.Shutdown,FeatureToasts.Shutdown,FloatingStatus.Shutdown,InterfaceMenu.Shutdown};
   if(overlay!=null)actions.AddRange(overlay.UnloadSteps());
   // Unpatch one original at a time; UnpatchSelf can otherwise rebuild every
   // native trampoline in a single frame. Capture the list before unpatching.

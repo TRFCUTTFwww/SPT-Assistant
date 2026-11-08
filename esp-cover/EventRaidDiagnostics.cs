@@ -30,6 +30,9 @@ internal static class EventRaidDiagnostics {
   else if(action=="visual-lifecycle-state")Write("visual-lifecycle-state",PlayerVisualGuard.Diagnostics());
   else if(action=="chat-selection-state")Write("chat-selection-state",ChatSelectionGuard.Diagnostics());
   else if(action=="quest-locations-state")Write("quest-locations-state",QuestLocations.Diagnostics());
+  else if(action=="scav-equipment-state")Write("scav-equipment-state",ScavEquipmentSync.Diagnostics());
+  else if(action=="scav-equipment-check")Write("scav-equipment-check",ScavEquipmentSync.Check());
+  else if(action=="universal-keys-state")Write("universal-keys-state",UniversalKeys.Diagnostics());
   else if(action=="passcode-override-check")Write("passcode-override-check",PasscodeHints.CheckOverrideScopes());
   else if(action=="passcode-hint-state")Write("passcode-hint-state",PasscodeHints.Diagnostics());
 #if EFT_48558

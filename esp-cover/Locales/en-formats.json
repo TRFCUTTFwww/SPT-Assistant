@@ -494,5 +494,7 @@
   "  | PMC {0}（USEC {1} / BEAR {2})\n各阵营：": "  | PMC {0} (USEC {1} / BEAR {2})\nFactions:",
   "来源装备：{0}": "Source equipment: {0}",
   "保存后装备：{0}": "Equipment after saving: {0}",
-  "待保存槽位：{0} · 当前预设：{1}": "Pending slots: {0} · Current preset: {1}"
+  "待保存槽位：{0} · 当前预设：{1}": "Pending slots: {0} · Current preset: {1}",
+  "已保存：{0} · 待保存修改：{1} 个槽位": "Saved: {0} · Unsaved slot changes: {1}",
+  "已添加 {0}/{1}：背包空间或空装备槽不足、物品限制或单次数量上限。": "Added {0}/{1}: insufficient backpack space or empty equipment slots, item restrictions, or the per-action limit."
 }
