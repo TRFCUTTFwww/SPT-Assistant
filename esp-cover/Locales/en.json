@@ -3419,5 +3419,19 @@
   "已恢复原有难度，点击保存后生效。": "Original difficulty restored. Save to apply.",
   "关闭自定义难度并保存，可恢复 AI 原有表现。": "Turn off custom difficulty and save to restore the original AI behavior.",
   "AI 难度设置无法读取，可恢复默认后重新保存。": "Unable to read AI difficulty settings. Reset to defaults and save again.",
-  "部分 AI 暂未应用难度设置。": "Some AI have not received the difficulty settings yet."
+  "部分 AI 暂未应用难度设置。": "Some AI have not received the difficulty settings yet.",
+  "地雷高亮": "Mine highlights",
+  "62. 阔剑地雷": "62. Claymore mines",
+  "高亮阔剑地雷": "Highlight Claymore mines",
+  "隔墙显示阔剑地雷": "Show Claymore mines through walls",
+  "显示地雷名称与距离": "Show mine name and distance",
+  "阔剑地雷高亮距离（米）": "Claymore highlight range (m)",
+  "请选择物品、撤离点或任务地点。": "Select an item, extraction or quest location.",
+  "该任务地点已完成或不在当前战局，请刷新任务地点。": "This objective is complete or unavailable in this raid. Refresh quest locations.",
+  "正在寻找任务地点路线…": "Finding a route to the quest location…",
+  "任务地点已完成、任务已结束或已离开当前地图，导航已停止。": "The objective is complete, the quest has ended or the map has changed. Navigation stopped.",
+  "，请按任务要求完成目标。": ", follow the quest instructions to complete the objective.",
+  "已到达目标附近，请按任务要求完成目标。": "Arrived near the destination. Follow the quest instructions to complete the objective.",
+  "选择任务地点": "Choose a quest location",
+  "撤离点正在加载；可先选择物品或任务地点导航。": "Extractions are loading. You can navigate to an item or quest location first."
 }

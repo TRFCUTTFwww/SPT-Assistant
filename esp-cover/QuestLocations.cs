@@ -36,7 +36,7 @@ internal static class QuestLocations {
  internal static void Tick(GameWorld? current,Player? player){
   if(!RaidClock.Active||current==null||player==null){if(world!=IntPtr.Zero)Reset();return;}
   if(world!=current.Pointer){Reset();world=current.Pointer;}
-  if(!enabled.Value&&!Page)return;
+  if(!enabled.Value&&!Page&&!GroundNavigation.WantsQuestData)return;
   try{
    if(scanner==null&&Time.unscaledTime>=nextIndex){
     nextIndex=Time.unscaledTime+30;indexed=false;anchors.Clear();
@@ -105,6 +105,12 @@ internal static class QuestLocations {
   }
  }
  static bool Overlaps(Rect rect){foreach(var other in occupied)if(other.Overlaps(rect))return true;return false;}
+ internal static bool TryNavigationTarget(string key,out Vector3 position,out string name){
+  position=default;name="";
+  if(!RaidClock.Active||world==IntPtr.Zero||Singleton<GameWorld>.Instance?.Pointer!=world)return false;
+  var row=rows.FirstOrDefault(row=>row.Key==key);if(row==null)return false;
+  position=row.Position;name=row.Quest+" · "+row.Objective;return true;
+ }
  internal static void Draw(Rect rect){
   InterfaceMenu.Label(new Rect(rect.x,rect.y,rect.width,28),"任务地点定位",InterfaceMenu.Accent,18);
   float col=(rect.width-24)/3;
@@ -123,8 +129,10 @@ internal static class QuestLocations {
   var view=new Rect(rect.x,rect.y+180,rect.width,Math.Max(40,rect.height-235));scroll=GUI.BeginScrollView(view,scroll,new Rect(0,0,view.width-18,Math.Max(view.height,visible.Length*86)));
   int first=Math.Max(0,(int)(scroll.y/86)),last=Math.Min(visible.Length,first+(int)(view.height/86)+2);
   for(int i=first;i<last;i++){var row=visible[i];float y=i*86;
-   InterfaceMenu.Label(new Rect(0,y,view.width-24,24),row.Quest+ (local==null?"":" · "+Vector3.Distance(local.Position,row.Position).ToString("F0")+" m"),InterfaceMenu.Accent,14);
-   InterfaceMenu.Paragraph(new Rect(0,y+27,view.width-24,50),row.Objective,null,12);
+   InterfaceMenu.Label(new Rect(0,y,view.width-164,24),row.Quest+ (local==null?"":" · "+Vector3.Distance(local.Position,row.Position).ToString("F0")+" m"),InterfaceMenu.Accent,14);
+   InterfaceMenu.Paragraph(new Rect(0,y+27,view.width-164,50),row.Objective,null,12);
+   bool navigating=GroundNavigation.IsQuestTarget(row.Key);
+   if(InterfaceMenu.Button(new Rect(view.width-145,y+22,117,33),navigating?"当前目标":"导航到这里",navigating))GroundNavigation.ToQuest(row.Key);
   }
   GUI.EndScrollView();InterfaceMenu.Paragraph(new Rect(rect.x,rect.yMax-42,rect.width,40),"仅显示当前地图中能匹配原生坐标的未完成目标；任务物品可在「任务物资」中高亮。",null,12);
  }
