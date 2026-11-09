@@ -80,6 +80,7 @@ internal class Plugin {
   yield return ()=>HitDisplay.Initialize(this);
   yield return ()=>CorpseDisplay.Initialize(this);
   yield return ()=>RaidPopulation.Initialize(this);
+  yield return AiDifficultyControl.Initialize;
   yield return ()=>ExfilDisplay.Initialize(this);
   yield return ()=>TransitDisplay.Initialize(this);
   yield return ()=>BtrDisplay.Initialize(this);
