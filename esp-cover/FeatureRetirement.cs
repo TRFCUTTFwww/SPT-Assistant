@@ -7,7 +7,7 @@ using BepInEx.Logging;
 using HarmonyLib;
 namespace LocalSpt5Esp;
 internal static class FeatureRetirement {
- static bool Retired(ConfigDefinition definition)=>definition.Section=="51. 队友"||definition.Section=="25. Aim exclusions"&&definition.Key=="Exclude teammates";
+ static bool Retired(ConfigDefinition definition)=>definition.Section=="51. 队友"||definition.Section=="25. Aim exclusions"&&definition.Key=="Exclude teammates"||definition.Section=="49. AI 动作导演"&&new[]{"Scene jump","Scene nod","Scene shake","Scene action interval","Scene action amplitude","Scene loop route","Scene relative route","Scene waypoint wait"}.Contains(definition.Key);
  internal static void Apply(ConfigFile config,string directory,ManualLogSource log){try{
   var orphans=AccessTools.Property(typeof(ConfigFile),"OrphanedEntries")?.GetValue(config) as Dictionary<ConfigDefinition,string>;
   var bound=config.Keys.Where(Retired).ToArray();var unused=orphans?.Keys.Where(Retired).ToArray()??Array.Empty<ConfigDefinition>();
@@ -16,6 +16,6 @@ internal static class FeatureRetirement {
   if(File.Exists(config.ConfigFilePath))File.Copy(config.ConfigFilePath,Path.Combine(archive,"settings-before.cfg"));
   if(File.Exists(plans))File.Move(plans,Path.Combine(archive,"companion-plans.json"));
   foreach(var key in bound)config.Remove(key);foreach(var key in unused)orphans!.Remove(key);
-  log.LogInfo("Retired companion settings archived; removed entries="+(bound.Length+unused.Length));
+  log.LogInfo("Retired feature settings archived; removed entries="+(bound.Length+unused.Length));
  }catch(Exception error){log.LogWarning("Could not archive retired settings; existing files were retained: "+error.Message);}}
 }

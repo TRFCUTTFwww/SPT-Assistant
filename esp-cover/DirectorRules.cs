@@ -41,9 +41,11 @@ internal static class DirectorRules {
   if(value.Pitch is <-89 or >89||value.Speed is <.1f or >5||value.FollowDistance is <1 or >30||value.ActionInterval is <.3f or >60||value.ActionAmplitude is <0 or >80||value.Wait is <0 or >600)throw new ArgumentException("动作参数超出范围。");
   if(value.Route==null||value.Route.Length>256||value.Route.Any(p=>p==null||!float.IsFinite(p.X)||!float.IsFinite(p.Y)||!float.IsFinite(p.Z)))throw new ArgumentException("路线点无效或超过 256 个。");
   if(value.StartPoint<0||value.StartPoint>=Math.Max(1,value.Route.Length)||value.ActionPhase is <0 or >60)throw new ArgumentException("路线进度或动作相位无效。");
-  return value with{Yaw=((value.Yaw%360)+360)%360,Route=value.Route.Select(p=>p with{}).ToArray()};
+  // Retain the legacy file shape so existing scenes still load, but discard
+  // retired actions and waypoints before any actor can execute them.
+  return value with{Yaw=((value.Yaw%360)+360)%360,Actions=value.Actions&(SceneActions.LookAtPlayer|SceneActions.FollowPlayer),Route=Array.Empty<ScenePoint>(),StartPoint=0,ActionPhase=0};
  }
  internal static Vector2 Look(Vector3 direction,float previousYaw){if(direction.LengthSquared()<.000001f)return new(previousYaw,0);var d=Vector3.Normalize(direction);return new(MathF.Atan2(d.X,d.Z)*180/MathF.PI,-MathF.Asin(Math.Clamp(d.Y,-1,1))*180/MathF.PI);}
  internal static Vector2 LocalMove(Vector3 direction,float yaw){float a=yaw*MathF.PI/180;var flat=new Vector2(direction.X,direction.Z);if(flat.LengthSquared()<.000001f)return Vector2.Zero;flat=Vector2.Normalize(flat);return new(flat.X*MathF.Cos(a)-flat.Y*MathF.Sin(a),flat.X*MathF.Sin(a)+flat.Y*MathF.Cos(a));}
- internal static bool OwnsLocomotion(ActorScenePreset p)=>p.Enabled&&(p.Actions.HasFlag(SceneActions.FollowPlayer)||p.Actions.HasFlag(SceneActions.Jump)||p.Route.Length>0);
+ internal static bool OwnsLocomotion(ActorScenePreset p)=>p.Enabled&&p.Actions.HasFlag(SceneActions.FollowPlayer);
 }
