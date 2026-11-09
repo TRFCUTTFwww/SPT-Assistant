@@ -32,12 +32,22 @@ var chatGate=new ChatSelectionGate();var chatNetwork=new IntPtr(1);string? selec
 void SelectChat(string? requested,Action? onChanged=null){chatGate.Select(chatNetwork,selectedChat,requested,next=>selectedChat=next,(item,value)=>{chatFlags[item]=value;if(!value)Assert(selectedChat==requested,"deselection listeners already observe the new current dialogue");},next=>{selectionEvents++;onChanged?.Invoke();});}
 SelectChat("ragfair",()=>{Assert(selectedChat=="ragfair"&&!chatFlags["commando"],"the native global event observes the committed selection and cleared old row");string? restored=selectedChat;delayedRebuild=()=>SelectChat(restored);SelectChat("commando");Assert(chatGate.Count==1,"nested stale row callback cannot release the outer selection scope");});
 delayedRebuild!();
-Assert(selectedChat=="ragfair"&&selectionEvents==2&&chatGate.Count==0&&!chatFlags["commando"]&&chatFlags["ragfair"],"deferred list rebuild retains the new conversation and cannot restore the stale selection");
+Assert(selectedChat=="ragfair"&&selectionEvents==1&&chatGate.Count==0&&!chatFlags["commando"]&&chatFlags["ragfair"],"deferred list rebuild retains the new conversation without repeating the global selection event");
+int sameChatAssignments=0,sameChatEvents=0;var originalChat=new string('x',3);var rebuiltChat=new string('x',3);
+chatGate.Select(chatNetwork,originalChat,rebuiltChat,_=>sameChatAssignments++,(_,selected)=>Assert(selected,"reselecting a rebuilt row never deselects the current dialogue"),_=>sameChatEvents++,(left,right)=>left==right);
+Assert(sameChatAssignments==0&&sameChatEvents==0,"native identity comparison suppresses equivalent wrappers without clearing the current reply");
 try{SelectChat("fence",()=>throw new InvalidOperationException("detached view"));}catch(InvalidOperationException){}
 SelectChat("commando");SelectChat("fence");Assert(selectedChat=="fence"&&chatGate.Count==0,"a failed chat notification releases the selection scope for the next manual click");
 SelectChat(null);Assert(selectedChat==null&&!chatFlags["fence"],"clearing the selected conversation releases the old view");
 Assert(chatGate.Enter(chatNetwork)&&chatGate.Enter(new IntPtr(2)),"separate social networks do not block one another");chatGate.Exit(chatNetwork);chatGate.Exit(new IntPtr(2));
 Console.WriteLine("PASS conversation state committed before callbacks, synchronous/deferred rebuilds, exception cleanup and independent networks");
+Assert(ChatPaginationRules.Complete(35,30,true)&&ChatPaginationRules.Complete(35,30,false),"SPT entire-list response terminates immediately even above the native page size");
+Assert(ChatPaginationRules.Complete(30,30,false)&&!ChatPaginationRules.Complete(30,30,true),"a repeated full page terminates while a full page containing a new dialogue continues");
+Assert(ChatPaginationRules.Complete(0,30,false)&&ChatPaginationRules.Complete(12,30,true)&&!ChatPaginationRules.Complete(-1,30,false)&&!ChatPaginationRules.Complete(30,0,false),"empty and partial pages terminate, invalid page metadata does not");
+int simulatedPageRequests=0,knownDialogs=0;bool dialogueListComplete=false;
+while(!dialogueListComplete&&simulatedPageRequests<200){simulatedPageRequests++;dialogueListComplete=ChatPaginationRules.Complete(35,30,knownDialogs==0);knownDialogs=35;}
+Assert(simulatedPageRequests==1&&knownDialogs==35,"the observed backend response loads all 35 conversations once rather than looping for 200 requests");
+Console.WriteLine("PASS dialogue pagination: unpaged SPT lists, repeated full pages, legitimate multi-page continuation and observed 35-dialogue loop regression");
 Assert(QuestLocationRules.Zones("zone","quest-item-template",new[]{"zone-a","","zone-b","zone-a"}).SequenceEqual(new[]{"zone-a","zone-b"}),"plant/beacon conditions resolve zoneIds, never their item-template target");
 Assert(QuestLocationRules.Zones("visit","visit-trigger",new[]{"irrelevant"}).SequenceEqual(new[]{"visit-trigger"})&&QuestLocationRules.Zones("trigger","switch-trigger",null).SequenceEqual(new[]{"switch-trigger"}),"visit and location-trigger conditions resolve their single native trigger ID");
 Assert(QuestLocationRules.Zones("in-zone",null,new[]{"kill-zone"}).SequenceEqual(new[]{"kill-zone"})&&QuestLocationRules.Zones("kill","scav",null).Length==0&&QuestLocationRules.Zones("visit"," ",null).Length==0,"regional kills resolve explicit zone constraints; map-wide kills and empty targets cannot create fabricated coordinates");
