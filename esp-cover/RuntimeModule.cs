@@ -29,7 +29,7 @@ public sealed class RuntimeModule:IRuntimeModule {
  public void OnGUI(){long stamp=RuntimePerformance.Start();try{if(!DirectorStage.HudHidden){overlay?.OnGUI();FloatingStatus.Draw();PerformanceHud.Draw();FeatureToasts.Draw();PasscodeHints.Draw();KillEffects.Draw(EFT.CameraControl.CameraManager.Instance?.Camera);GrenadeArc.Draw(EFT.CameraControl.CameraManager.Instance?.Camera);}InterfaceMenu.Draw();}finally{RuntimePerformance.GuiDone(stamp);}}
  public void Unload(){foreach(var step in UnloadSteps())step();}
  public IEnumerable<Action> UnloadSteps(){
-  var actions=new List<Action>{I18n.Shutdown,QuestWaitSync.Reset,HideoutCraftControl.Shutdown,ProfileAdminPanel.Reset,HomeDashboard.Reset,MiscPanel.Reset,UniversalKeys.Reset,LaserEyes.Reset,FlightControl.Reset,RaidClock.Reset,RaidStash.Shutdown,GrenadeArc.Reset,KillEffects.Reset,PasscodeHints.Reset,CommandoConsole.Reset,RuntimePerformance.Shutdown,FeatureToasts.Shutdown,FloatingStatus.Shutdown,InterfaceMenu.Shutdown};
+  var actions=new List<Action>{I18n.Shutdown,QuestWaitSync.Reset,HideoutCraftControl.Shutdown,ProfileAdminPanel.Reset,HomeDashboard.Reset,MiscPanel.Reset,UniversalKeys.Reset,LaserEyes.Reset,RaidClock.Reset,RaidStash.Shutdown,GrenadeArc.Reset,KillEffects.Reset,PasscodeHints.Reset,CommandoConsole.Reset,RuntimePerformance.Shutdown,FeatureToasts.Shutdown,FloatingStatus.Shutdown,InterfaceMenu.Shutdown};
   if(overlay!=null)actions.AddRange(overlay.UnloadSteps());
   // Unpatch one original at a time; UnpatchSelf can otherwise rebuild every
   // native trampoline in a single frame. Capture the list before unpatching.

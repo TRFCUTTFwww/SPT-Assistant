@@ -30,13 +30,10 @@ internal static class MovementAssist {
   __state=null;
   try{
    AiSceneDirector.FilterMotion(__instance,ref __0);
-   if(!SpeedEnabled.Value&&!CrouchEnabled.Value&&!FlightControl.Active)return;
+   if(!SpeedEnabled.Value&&!CrouchEnabled.Value)return;
    var local=Singleton<GameWorld>.Instance?.MainPlayer;
    var controller=local?.CharacterController;
    if(local==null||!local.IsYourPlayer||local.HealthController==null||!local.HealthController.IsAlive||controller==null||controller.Pointer!=__instance.Pointer)return;
-   if(FlightControl.FilterMotion(local,ref __0,__1)){
-    __state=new MoveState{Controller=controller,Limit=controller.SpeedLimit};controller.SpeedLimit=Math.Max(controller.SpeedLimit,90);return;
-   }
    float factor=EntertainmentRules.MovementFactor(SpeedEnabled.Value,SpeedMultiplier.Value,CrouchEnabled.Value,CrouchMultiplier.Value,local.Pose==EPlayerPose.Duck,local.IsInPronePose);if(factor<=1)return;
    if(!float.IsFinite(__0.x*factor)||!float.IsFinite(__0.z*factor)||!float.IsFinite(controller.SpeedLimit*factor))return;
    __state=new MoveState{Controller=controller,Limit=controller.SpeedLimit};
