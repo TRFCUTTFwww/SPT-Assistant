@@ -39,6 +39,7 @@ public static class MiscService {
   Patch(typeof(InsuranceService),"GetInsuranceReturnTimestamp",postfix:nameof(ReturnTime));
   Patch(typeof(RagfairTaxService),"CalculateTax",postfix:nameof(FleaTax));
   Patch(typeof(PlayerScavGenerator),"Generate",postfix:nameof(Generated));
+  Patch(typeof(PlayerScavGenerator),"SetScavCooldownTimer",postfix:nameof(ScavCooldown));
   Patch(typeof(LocationLifecycleService),"HandlePostRaidPlayerScavAsync",nameof(BeforeScavEnd),nameof(AfterScavEnd));
   Patch(typeof(TradeController),"GetScavItemsToSell",postfix:nameof(SaleItems));
   return true;
@@ -68,6 +69,7 @@ public static class MiscService {
     if(next.ScavSecure)ScavSecureRules.Attach(inventory,retained,next.ScavSecureTemplate);
    }
    if(retained.Count>0)Store(profile,retained);
+   if(next.ScavNoCooldown&&profile.CharacterData?.ScavData?.Info is {} scavInfo)scavInfo.SavageLockTime=0;
    await saves.SaveProfileAsync(session,ct);
    if(oldSettings!=null)File.WriteAllText(FilePath+".bak",oldSettings);
    File.WriteAllText(FilePath+".new",JsonSerializer.Serialize(next));File.Move(FilePath+".new",FilePath,true);settingsWritten=true;Options=next;
@@ -86,6 +88,7 @@ public static class MiscService {
  static void LocationInsurance(ref bool __result){if(Options.GuaranteedInsurance)__result=true;}
  static void ScavAccess(LocationBase __instance,ref bool __result){if(Options.Connections&&MiscSettings.RestrictedMap(__instance.Id))__result=false;}
  static void ReturnTime(ref double __result){if(Options.ExpressInsurance)__result=DateTimeOffset.UtcNow.ToUnixTimeSeconds();}
+ static void ScavCooldown(PmcData __0){if(Options.ScavNoCooldown&&__0.Info is {} info)info.SavageLockTime=0;}
  static List<Item> Stored(SptProfile profile)=>profile.ExtensionData?.TryGetValue(SecureKey,out var value)==true?json.Deserialize<List<Item>>(json.Serialize(value))??[]:[];
  static void Store(SptProfile profile,List<Item> items){profile.ExtensionData??=[];profile.ExtensionData[SecureKey]=json.Deserialize<List<Item>>(json.Serialize(items))!;}
  [HarmonyPriority(Priority.Last)]

@@ -112,6 +112,21 @@ string secureBefore=nativeJson.Serialize(secureInventory)!;try{ScavSecureRules.A
 var emptySecure=ScavSecureRules.Capture(secureInventory).Where(i=>i.SlotId=="SecuredContainer").ToList();ScavSecureRules.Attach(secureInventory,emptySecure,"5857a8b324597729ab0a0e7d");
 if(secureInventory.Items.Single(i=>i.SlotId=="SecuredContainer").Template.ToString()!="5857a8b324597729ab0a0e7d")throw new Exception("Empty secure container selector did not apply");
 Console.WriteLine("PASS Scav melee, bag/rig content editing, native grids, no overlap, round-trip attributes, capacity/stack/stale rejection, atomic two-container edits and independent secure protection/selection");
+var cooldownOptions=typeof(MiscService).GetProperty(nameof(MiscService.Options))!;
+var originalCooldownOptions=MiscService.Options;
+var cooldownHook=typeof(MiscService).GetMethod("ScavCooldown",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Static)!;
+var cooldownScav=new PmcData{Info=new(){SavageLockTime=2000000000,Level=7},Inventory=secureInventory};
+try{
+ cooldownOptions.SetValue(null,new LocalMiscShared.MiscSettings());
+ cooldownHook.Invoke(null,[cooldownScav]);if(cooldownScav.Info.SavageLockTime!=2000000000)throw new Exception("Disabled cooldown hook changed native cooldown");
+ var beforeCooldown=nativeJson.Serialize(cooldownScav)!;
+ cooldownOptions.SetValue(null,new LocalMiscShared.MiscSettings{ScavNoCooldown=true});
+ cooldownHook.Invoke(null,[cooldownScav]);if(cooldownScav.Info.SavageLockTime!=0)throw new Exception("Enabled cooldown hook retained the Scav lock");
+ cooldownScav.Info.SavageLockTime=2000000000;if(nativeJson.Serialize(cooldownScav)!=beforeCooldown)throw new Exception("Scav cooldown hook changed unrelated profile fields");
+ cooldownOptions.SetValue(null,new LocalMiscShared.MiscSettings());cooldownHook.Invoke(null,[cooldownScav]);if(cooldownScav.Info.SavageLockTime!=2000000000)throw new Exception("Disabling did not preserve the next native cooldown");
+ cooldownOptions.SetValue(null,new LocalMiscShared.MiscSettings{ScavNoCooldown=true});cooldownHook.Invoke(null,[new PmcData()]);
+}finally{cooldownOptions.SetValue(null,originalCooldownOptions);}
+Console.WriteLine("PASS native Scav cooldown hook: enabled clears lock, disabled preserves native cooldown, missing info and unrelated profile fields remain intact");
 var lootGenerator=new SPTarkov.Server.Core.Generators.Loot.LootGenerator(null!,tables,new SPTarkov.Server.Core.Utils.RandomUtil(null!,null!),rewardHelper,new SPTarkov.Server.Core.Helpers.Items.PresetHelper(null!,rewardHelper,null!),null!,null!,null!,null!,null!,null!);
 var rewardIds=new HashSet<MongoId>();
 for(int roll=0;roll<20;roll++){

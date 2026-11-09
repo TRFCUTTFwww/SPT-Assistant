@@ -18,6 +18,8 @@
   "Scav 安全箱已保存，正在同步当前角色…": "Scav secure container saved. Synchronizing the current character…",
   "Scav 安全箱已同步；重新打开 Scav 装备页面查看。": "Scav secure container synchronized. Reopen the Scav equipment page to view it.",
   "已启用": "Enabled",
+  "随叫随到 · Scav 无冷却": "Always ready · No Scav cooldown",
+  "开启后立即解除当前 Scav 冷却，后续 Scav 出战无需等待。停用后，新生成的 Scav 恢复正常冷却。": "Immediately clear your current Scav cooldown and remove the wait for subsequent Scav raids. After disabling, newly generated Scavs use the normal cooldown.",
   "已停用": "Disabled",
   "启用此项": "Enable",
   "停用此项": "Disable",

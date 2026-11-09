@@ -72,5 +72,5 @@ internal static class ScavEquipmentSync {
  }
  static void Failed(Exception error){pending=null;status=checkOnly?"Native Scav descriptor check failed: "+error.Message:"Scav 装备已保存；当前预览未同步，请重新登录角色后生效。";Plugin.Self.Log.LogWarning("Scav equipment preview sync: "+error.Message);}
  internal static void Reset(){pending=null;session=null;owner=status="";pet=0;checkOnly=secureOnly=false;expected.Clear();}
- internal static object Diagnostics()=>new{busy=Busy,status,slots=expected.Count,checkOnly,secureOnly,secureTemplate=Session()?.ProfileOfPet?.Inventory?.Equipment?.GetSlot(EFT.InventoryLogic.EquipmentSlot.SecuredContainer)?.ContainedItem?.StringTemplateId,application=App()!=null,session=Session()!=null,pmc=Session()?.Profile!=null,scav=Session()?.ProfileOfPet!=null,matching=Matching};
+ internal static object Diagnostics()=>new{busy=Busy,status,slots=expected.Count,checkOnly,secureOnly,noCooldown=MiscPanel.Options.ScavNoCooldown,scavLockTime=Session()?.ProfileOfPet?.Info?.SavageLockTime,secureTemplate=Session()?.ProfileOfPet?.Inventory?.Equipment?.GetSlot(EFT.InventoryLogic.EquipmentSlot.SecuredContainer)?.ContainedItem?.StringTemplateId,application=App()!=null,session=Session()!=null,pmc=Session()?.Profile!=null,scav=Session()?.ProfileOfPet!=null,matching=Matching};
 }

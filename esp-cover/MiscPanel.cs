@@ -23,6 +23,7 @@ internal static class MiscPanel {
  static readonly (string Key,string Name,string Help)[] rows={
   ("GoodBrother","“好”兄弟","Scav 出战时，攻击或击杀 Scav、BOSS 造成的 Fence 好感扣分改为等额加分。"),
   ("Connections","关系户","允许 Scav 选择实验室、迷宫和破冰船。地图自身的入场物品与开放条件仍需满足；下次准备战局生效。"),
+  ("ScavNoCooldown","随叫随到 · Scav 无冷却","开启后立即解除当前 Scav 冷却，后续 Scav 出战无需等待。停用后，新生成的 Scav 恢复正常冷却。"),
   ("FreeInsurance","人情世故","投保费用为 0。重新打开投保页面后刷新报价。"),
   ("GuaranteedInsurance","客户就是上帝","所有地图的已投保遗失装备 100% 回保，包括实验室、迷宫；不模拟物品被拿走。"),
   ("SniperBlind","我没看到","狙击边界区域不再射击本地玩家，不影响地图内的普通 AI 狙击手。"),
@@ -45,13 +46,19 @@ internal static class MiscPanel {
  static void Begin(Dictionary<string,object?> payload){if(request!=null)return;request=CharacterDataPanel.Call("/local/gear/data","characterData",payload);status="处理中…";}
  internal static void Tick(){
   if(syncSecure){status=ScavEquipmentSync.Status;if(!ScavEquipmentSync.Busy)syncSecure=false;}
-  if(reading?.IsCompleted==true){if(reading.IsCompletedSuccessfully)Options=reading.Result;reading=null;}
+  if(reading?.IsCompleted==true){if(reading.IsCompletedSuccessfully)Options=reading.Result;reading=null;ApplyScavCooldown();}
   if(reading==null&&Time.unscaledTime>=nextRead){nextRead=Time.unscaledTime+2;reading=Task.Run(()=>{try{var path=Path.Combine(BepInEx.Paths.GameRootPath,"SPT_Runtime","user","mods","LocalGearMail","misc-settings.json");return File.Exists(path)?JsonSerializer.Deserialize<MiscSettings>(File.ReadAllText(path))??new():new();}catch{return Options;}});}
   if(request?.IsCompleted!=true)return;
   try{using var doc=JsonDocument.Parse(request.GetAwaiter().GetResult());var root=doc.RootElement;
    if(root.TryGetProperty("err",out var err)&&err.GetInt32()!=0)status=root.TryGetProperty("errmsg",out var message)?message.GetString()??"操作失败":"操作失败";
    else{var data=CharacterDataPanel.Data(root);Options=JsonSerializer.Deserialize<MiscSettings>(data.GetProperty("settings").GetRawText())!;revision=data.GetProperty("revision").GetString()!;if(data.TryGetProperty("secureTemplates",out var list))secureTemplates=list.EnumerateArray().Select(i=>i.GetString()!).ToArray();status="杂项规则已同步；地图与装备变更请重新登录角色。";if(data.TryGetProperty("scavSecureSync",out var template)&&template.ValueKind==JsonValueKind.String){ScavEquipmentSync.BeginSecure(template.GetString()!);syncSecure=true;status=ScavEquipmentSync.Status;}}
-  }catch{status="杂项模块尚未就绪，请重载管理模块后刷新。";}request=null;
+  }catch{status="杂项模块尚未就绪，请重载管理模块后刷新。";}request=null;ApplyScavCooldown();
+ }
+ static void ApplyScavCooldown(){
+  if(!Options.ScavNoCooldown)return;
+  var app=Singleton<TarkovApplication>.Instance??Singleton<AbstractApplication>.Instance?.TryCast<TarkovApplication>();
+  var session=app?.GetClientBackEndSession()?.TryCast<ClientBackendSession>()??app?.Session?.TryCast<ClientBackendSession>();
+  if(session?.ProfileOfPet?.Info is {} info)info.SavageLockTime=0;
  }
  internal static void Reset(){request=null;reading=null;Options=new();requested=syncSecure=false;revision="";secureTemplates=Array.Empty<string>();choosingSecure=false;}
  internal static void Draw(Rect rect){
