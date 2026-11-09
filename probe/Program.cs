@@ -10,6 +10,13 @@ using LocalRaidShared;
 var sourceRoot=Path.GetFullPath(Environment.GetEnvironmentVariable("SPT_SOURCE_ROOT")??"_spt5_esp_fix");
 var gameRoot=Environment.GetEnvironmentVariable("SPT_GAME_ROOT");if(!string.IsNullOrWhiteSpace(gameRoot))Directory.SetCurrentDirectory(gameRoot);
 try{
+Assert(MenuSearchRules.Matches(MenuSearchRules.Terms("  ScAv   背包 "),"Scav 装备 背包 内容物")&&!MenuSearchRules.Matches(MenuSearchRules.Terms("scav 背包"),"PMC 背包"),"global search matches all whitespace-separated words case-insensitively");
+Assert(!MenuSearchRules.Matches(MenuSearchRules.Terms("  "),"anything")&&MenuSearchRules.Matches(MenuSearchRules.Terms("仓库"),"战局仓库 inventory stash"),"empty queries return no search matches and Chinese partial terms work");
+var btrEdges=new[]{("A","B"),("B","C"),("C","A"),("A","D"),("D","C")};
+Assert(BtrRouteRules.Plan("A","C",btrEdges).SequenceEqual(new[]{"B","C"})&&BtrRouteRules.Plan("A","A",btrEdges).Length==0,"BTR chooses connected shortest legs and accepts the current destination");
+Assert(BtrRouteRules.Plan("C","B",btrEdges).SequenceEqual(new[]{"A","B"}),"BTR route planning handles cycles without repeating stops");
+Reject(()=>BtrRouteRules.Plan("A","missing",btrEdges),"unreachable BTR stop");Reject(()=>BtrRouteRules.Plan("","C",btrEdges),"uninitialized BTR stop");
+Console.WriteLine("PASS global multi-term bilingual matching and connected BTR routing, cycles and unreachable stops");
 Assert(UniversalKeyRules.Allowed(false,true,false,40,0,1)&&!UniversalKeyRules.Allowed(true,true,false,40,0,1),"mechanical option accepts only carried mechanical keys");
 Assert(UniversalKeyRules.Allowed(true,false,true,40,0,1)&&!UniversalKeyRules.Allowed(false,false,true,40,0,1),"keycard option operates independently of the mechanical option");
 Assert(!UniversalKeyRules.Allowed(false,false,false,40,0,1)&&!UniversalKeyRules.Allowed(true,false,false,40,0,1)&&!UniversalKeyRules.Allowed(true,true,true,40,40,1)&&!UniversalKeyRules.Allowed(false,true,true,40,41,1)&&!UniversalKeyRules.Allowed(false,true,true,40,0,0)&&UniversalKeyRules.Allowed(true,false,true,0,100,1),"disabled, exhausted and empty keys fail while unlimited cards remain valid");
@@ -659,6 +666,12 @@ Assert(BtrRouteRules.Resolve("a","b","c",false,true,true).Id=="","depot state su
 Assert(BtrRouteRules.Resolve("a","","",false,false,false).Pending=="车辆路线数据不可用","missing route data is distinguished from a pending stop selection");
 Check("VehicleBase","get__targetPathDestination",0);Check("VehicleBase","get__currentPathDestination",0);Check("VehicleBase","ToNextDestination",0);
 var btrClass=core.MainModule.Types.Single(t=>t.Name=="BtrDisplay");var btrTick=btrClass.Methods.Single(m=>m.Name=="Tick");Assert(btrTick.Body.Instructions.Any(i=>i.Operand is MethodReference method&&method.Name=="get__targetPathDestination"),"BTR polling reads the live target instead of depending on past events");
+var btrControl=core.MainModule.Types.Single(t=>t.Name=="BtrControl");var btrAdvanceCalls=btrControl.Methods.Single(m=>m.Name=="AdvanceRoute").Body.Instructions.Select(i=>i.Operand).OfType<MethodReference>().ToArray();
+Assert(btrAdvanceCalls.Any(m=>m.Name=="MoveToDestination"&&m.Parameters.Count==1&&m.DeclaringType.Name=="VehicleBase")&&!btrControl.Methods.Where(m=>m.HasBody).SelectMany(m=>m.Body.Instructions).Any(i=>i.Operand is MethodReference m&&m.Name=="MoveToDestination"&&m.Parameters.Count==2),"BTR admin routes use raw vehicle stops, never the passenger taxi service-ID overload");
+Assert(btrControl.Methods.Single(m=>m.Name=="RouteArrived").Parameters[0].ParameterType.Name=="VehicleBase"&&btrControl.Methods.Single(m=>m.Name=="Initialize").Body.Instructions.Any(i=>Equals(i.Operand,"IncomingToDestination")),"queued BTR legs apply after vehicle arrival finishes");
+var globalSearch=core.MainModule.Types.Single(t=>t.Name=="InterfaceMenu");var searchDrawCalls=globalSearch.Methods.Single(m=>m.Name=="DrawGlobalResults").Body.Instructions.Select(i=>i.Operand).OfType<MethodReference>().ToArray();
+Assert(searchDrawCalls.Any(m=>m.Name=="DrawEntry")&&searchDrawCalls.Any(m=>m.Name=="Navigate")&&globalSearch.Methods.Single(m=>m.Name=="Draw").Body.Instructions.Any(i=>i.Operand is MethodReference m&&m.Name=="DrawGlobalSearchBar"),"global results support direct setting edits, page navigation and a persistent search bar");
+Console.WriteLine("PASS vehicle-level BTR routing and completed-arrival hook, global search editing and navigation integration");
 Console.WriteLine("PASS same-faction exit restriction, removed cross-faction controls, BTR live-route priority, arrival/depot handling and native route getters");
 Assert(MenuSections.Names[0]=="主页面"&&MenuSections.Pages("主页面").SequenceEqual(new[]{"存档概览"}),"home is the first sidebar entry and has an independent overview route");
 Assert(HomeOverviewRules.Currency("5449016a4bdc2d6f028b456f")==0&&HomeOverviewRules.Currency("5696686a4bdc2da3298b456a")==1&&HomeOverviewRules.Currency("569668774bdc2da2298b4568")==2&&HomeOverviewRules.Currency("unknown")==-1,"physical currencies use exact templates and exclude store tokens");

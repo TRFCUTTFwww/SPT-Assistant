@@ -13,6 +13,8 @@ internal static class I18n {
  static Dictionary<string,int[]> ReadVerbatim(){using var stream=typeof(I18n).Assembly.GetManifestResourceStream("LocalSpt5Esp.Locales.en-verbatim.json")!;return JsonSerializer.Deserialize<Dictionary<string,int[]>>(stream)!;}
  internal static bool English=>language?.Value.Equals("en",StringComparison.OrdinalIgnoreCase)==true;
  internal static string Text(string value)=>English?catalog.Text(value):value;
+ internal static string EnglishText(string value)=>catalog.Text(value);
+ internal static (string Name,string Category,string Help) Source(CnConfig.ConfigurationManagerAttributes attributes)=>original.TryGetValue(attributes,out var value)?value:(attributes.DispName,attributes.Category,attributes.Description);
  internal static string[] Texts(string[] values)=>values.Select(Text).ToArray();
  internal static void Initialize(Plugin plugin){
   language=plugin.Config.Bind("24. Interface","Language","zh-CN",new ConfigDescription("界面语言 / Interface language",new AcceptableValueList<string>("zh-CN","en"),new CnConfig.ConfigurationManagerAttributes{DispName="语言 / Language",Category="24. 界面与主题",Description="界面语言 / Interface language"}));

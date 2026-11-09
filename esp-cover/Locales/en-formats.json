@@ -502,5 +502,8 @@
   "保存后装备：{0}": "Equipment after saving: {0}",
   "待保存槽位：{0} · 当前预设：{1}": "Pending slots: {0} · Current preset: {1}",
   "已保存：{0} · 待保存修改：{1} 个槽位": "Saved: {0} · Unsaved slot changes: {1}",
-  "已添加 {0}/{1}：背包空间或空装备槽不足、物品限制或单次数量上限。": "Added {0}/{1}: insufficient backpack space or empty equipment slots, item restrictions, or the per-action limit."
+  "已添加 {0}/{1}：背包空间或空装备槽不足、物品限制或单次数量上限。": "Added {0}/{1}: insufficient backpack space or empty equipment slots, item restrictions, or the per-action limit.",
+  "全局搜索 · {0} 项结果": "Global search · {0} results",
+  "已安排到站后前往：{0}": "Scheduled after the current leg: {0}",
+  "BTR 下一站已设置：{0}": "BTR next stop set: {0}"
 }

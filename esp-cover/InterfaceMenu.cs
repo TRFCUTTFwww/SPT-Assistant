@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace LocalSpt5Esp;
-internal static class InterfaceMenu {
+internal static partial class InterfaceMenu {
  static ConfigFile config=null!;
  static ConfigEntry<string> background=null!,text=null!,accent=null!;
  static ConfigEntry<float> opacity=null!;
@@ -53,7 +53,7 @@ internal static class InterfaceMenu {
  static Color Parse(string value,Color fallback)=>ColorUtility.TryParseHtmlString(value,out var color)?color:fallback;
  static ConfigEntry<T> Bind<T>(string key,string name,T value,AcceptableValueBase? range=null)=>config.Bind("24. Interface",key,value,new ConfigDescription("",range,new CnConfig.ConfigurationManagerAttributes{DispName=name,Category="24. 界面与主题"}));
  internal static void Initialize(Plugin plugin){
-  config=plugin.Config;
+  config=plugin.Config;ResetGlobalSearch();
   menuKey=Bind("Menu key","主菜单按键",KeyCode.RightShift);
   background=Bind("Panel background","面板背景色","#121826");
   text=Bind("Panel text","面板文字色","#E5EDF5");
@@ -106,7 +106,7 @@ internal static class InterfaceMenu {
   else{RaidEnd.CancelConfirmation();inputGate.SetOpen(false,Time.frameCount);editing=false;capture=null;drag="";windowDrag=false;Cursor.lockState=oldLock;Cursor.visible=oldVisible;config.Save();}
   Plugin.Self.Log.LogInfo("Main menu "+(value?"opened":"closed"));
  }
- internal static void Shutdown(){SetOpen(false);inputGate.Reset();MenuIcons.Shutdown();slots.Clear();drafts.Clear();}
+ internal static void Shutdown(){SetOpen(false);inputGate.Reset();MenuIcons.Shutdown();slots.Clear();drafts.Clear();ResetGlobalSearch();}
  internal static Rect Place(string id,Rect initial){
   if(!slots.TryGetValue(id,out var slot))return initial;
   slot.Initial=initial;if(slot.AutoSize?.Value!=true){if(slot.Width.Value>0)initial.width=Math.Clamp(slot.Width.Value,60,Math.Max(60,Screen.width));if(slot.Height.Value>0)initial.height=Math.Clamp(slot.Height.Value,24,Math.Max(24,Screen.height));}
@@ -173,7 +173,7 @@ internal static class InterfaceMenu {
   (section,page)=(section,page) switch{("战斗与枪械","枪械参数")=>("枪械编辑","枪械参数"),("人物与移动","模型与动作")=>("模型与镜头","人物模型"),("人物与移动","动作锁定")=>("模型与镜头","动作锁定"),("人物与移动","角色管理")=>("开发工具","角色管理"),("镜头与画面","镜头控制")=>("模型与镜头","自由镜头"),("设置与热键","命令控制台")=>("开发工具","命令控制台"),("传送与导航","撤离与过图")=>("传送与导航","撤离定位"),_=>(section,page)};
   if(section=="服务端"&&page=="业力")page="业力与信誉";
   if(page=="刷新规则"&&(section=="服务端"||section=="AI 工作台"))section="战局与物资";if(section=="服务端"&&page=="Scav 装备"){ProfileAdminPanel.OpenScav();section="数据";page="角色管理";}
-  pageState[PageKey]=(scroll,filter);rememberedPages[category]=otherPage;if(category=="AI 工作台"&&(section!=category||page!=otherPage))AiWorkspace.CloseEditors();category=section;var choices=MenuSections.Pages(section);otherPage=page??(rememberedPages.TryGetValue(section,out var previous)&&choices.Contains(previous)?previous:choices[0]);if(!choices.Contains(otherPage))otherPage=choices[0];var state=pageState.GetValueOrDefault(PageKey);scroll=state.Scroll;filter=state.Filter??"";contextKeys=false;
+  pageState[PageKey]=(scroll,filter);rememberedPages[category]=otherPage;if(category=="AI 工作台"&&(section!=category||page!=otherPage))AiWorkspace.CloseEditors();category=section;var choices=MenuSections.Pages(section);otherPage=page??(rememberedPages.TryGetValue(section,out var previous)&&choices.Contains(previous)?previous:choices[0]);if(!choices.Contains(otherPage))otherPage=choices[0];var state=pageState.GetValueOrDefault(PageKey);scroll=state.Scroll;filter=state.Filter??"";contextKeys=false;globalQuery="";
  }
  internal static string Tabs(Rect rect,string[] choices,string selected,out float height){int columns=Math.Min(choices.Length,MenuWorkspaceLayout.Columns(rect.width));float width=(rect.width-8*(columns-1))/columns;height=MenuWorkspaceLayout.Height(choices.Length,rect.width)+10;for(int i=0;i<choices.Length;i++)if(Button(new Rect(rect.x+i%columns*(width+8),rect.y+i/columns*40,width,32),choices[i],selected==choices[i]))selected=choices[i];return selected;}
  internal static void Draw(){
@@ -187,6 +187,7 @@ internal static class InterfaceMenu {
    float sideY=0;string lastLane="";
    foreach(string name in MenuSections.Names){string lane=MenuSections.Lane(name);if(lane!=lastLane){Label(new Rect(8,sideY,sideWidth-16,22),lane,Color.Lerp(Accent,Text,.4f),11);sideY+=28;lastLane=lane;}var row=new Rect(0,sideY,sideWidth-4,41);sideY+=49;if(Button(row,"",category==name))Navigate(name);if(category==name)Surface(new Rect(row.x+1,row.y+10,3,21),Accent,1);MenuIcons.Draw(new Rect(row.x+12,row.y+10,21,21),name,category==name?Accent:Color.Lerp(Text,Background,.35f));Label(new Rect(row.x+43,row.y,row.width-46,row.height),MenuSections.DisplayName(name),category==name?Accent:Text,14);}GUI.EndScrollView();Label(new Rect(window.x+30,window.yMax-82,165,22),RaidClock.Active?"●  战局进行中":"●  待命",RaidClock.Active?Accent:Color.Lerp(Text,Background,.4f),12);Label(new Rect(window.x+30,window.yMax-52,165,22),"右 Shift 开关菜单",Color.Lerp(Text,Background,.5f),11);
    var content=new Rect(window.x+236,window.y+99,window.width-260,window.height-123);
+   DrawGlobalSearchBar(ref content);if(!string.IsNullOrWhiteSpace(globalQuery)){DrawGlobalResults(content);return;}
    if(contextKeys){HotkeyPage.Draw(content,category);return;}
    if(category=="主页面"){HomeDashboard.Draw(content);return;}if(category=="杂项"){MiscPanel.Draw(content);return;}
    var pages=MenuSections.Pages(category);if(!pages.Contains(otherPage))otherPage=pages[0];string next=Tabs(content,pages,otherPage,out float tabsHeight);if(next!=otherPage)Navigate(category,next);content.y+=tabsHeight;content.height-=tabsHeight;

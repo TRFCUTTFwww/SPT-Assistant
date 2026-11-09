@@ -3349,5 +3349,19 @@
   "前往投放": "Inbound to drop",
   "已投放，正在离场": "Dropped; departing",
   "空投箱 ESP": "Airdrop crate ESP",
-  "空投飞机 ESP": "Airdrop plane ESP"
+  "空投飞机 ESP": "Airdrop plane ESP",
+  "全局搜索": "Global search",
+  "搜索全部功能、说明或页面…": "Search all features, help or pages…",
+  "没有匹配的功能。试试更短的关键词，或清空搜索返回当前页面。": "No matching features. Try a shorter query, or clear the search to return to this page.",
+  "请在启用 BTR 的战局中设置站点。": "Choose a stop during a raid with BTR enabled.",
+  "BTR 站点尚未就绪。": "BTR stops are not ready.",
+  "BTR 车辆尚未就绪。": "The BTR vehicle is not ready.",
+  "BTR 路线尚未就绪。": "The BTR route is not ready.",
+  "请等待 BTR 驶入地图后再设置站点。": "Wait for the BTR to enter the map before choosing a stop.",
+  "BTR 当前行车站点尚未确定，请稍后重试。": "The current BTR route is not ready. Try again shortly.",
+  "所选站点没有可用的 BTR 行车路线。": "No BTR road route is available to the selected stop.",
+  "BTR 待执行路线已失效，请重新选择。": "The pending BTR route is no longer valid. Choose a stop again.",
+  "BTR 未接受目标站点，请重新选择。": "The BTR did not accept the destination. Choose a stop again.",
+  "BTR 已到达所选站点。": "The BTR has reached the selected stop.",
+  "行驶中先完成当前路段，再按地图道路前往所选站点；停站倒计时保留，可点击立即发车。": "While moving, the BTR finishes the current leg before following map roads to the selected stop. The stop timer is retained; use Depart now to leave sooner."
 }

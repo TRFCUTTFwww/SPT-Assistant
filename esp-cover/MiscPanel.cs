@@ -31,6 +31,7 @@ internal static class MiscPanel {
   ("FreeFlea","诚信经营","跳蚤市场上架手续费为 0；重新打开挂单窗口刷新费用。"),
   ("ExpressInsurance","加急件","新产生的保险无需等待回送；在服务端下一次保险检查时发信，不改变领取期限。")
  };
+ internal static string SearchTerms=>string.Join(" ",rows.Select(row=>row.Key+" "+row.Name+" "+row.Help));
  internal static void Initialize(Plugin plugin){
   plugin.Patches.Patch(AccessTools.Method(typeof(Profile.FenceTraderInfo),"AddStanding"),prefix:new HarmonyMethod(typeof(MiscPanel),nameof(Fence)));
   plugin.Patches.Patch(AccessTools.Method(typeof(SniperFiringZone),"Shoot"),prefix:new HarmonyMethod(typeof(MiscPanel),nameof(Sniper)));
