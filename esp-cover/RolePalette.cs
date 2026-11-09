@@ -10,8 +10,8 @@ internal static class RolePalette {
   if(role.StartsWith("sectant",StringComparison.OrdinalIgnoreCase)||role.StartsWith("sectact",StringComparison.OrdinalIgnoreCase))return CharacterKind.Cultist;
   if(role.Equals("pmcBot",StringComparison.OrdinalIgnoreCase))return CharacterKind.Raider;
   if(role.StartsWith("exUsec",StringComparison.OrdinalIgnoreCase))return CharacterKind.Rogue;
-  if(role.Contains("boss",StringComparison.OrdinalIgnoreCase))return CharacterKind.Boss;
-  if(role.Contains("follower",StringComparison.OrdinalIgnoreCase)||role.Equals("tagillaHelperAgro",StringComparison.OrdinalIgnoreCase))return CharacterKind.Follower;
+  if(LocalRaidShared.RaidSpawnRules.IsFollower(role))return CharacterKind.Follower;
+  if(role.StartsWith("boss",StringComparison.OrdinalIgnoreCase))return CharacterKind.Boss;
   if(role.Equals("pmcUSEC",StringComparison.OrdinalIgnoreCase)||role.Equals("pmcBEAR",StringComparison.OrdinalIgnoreCase)||!savage)return CharacterKind.Pmc;
   return CharacterKind.Scav;
  }

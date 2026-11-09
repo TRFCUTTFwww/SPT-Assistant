@@ -5,6 +5,8 @@ using LocalSpt5Esp;
 void Check(bool valid,string text){if(!valid)throw new Exception(text);}
 void Reject(Action action){try{action();}catch(ArgumentException){return;}throw new Exception("Invalid input accepted");}
 var settings=new AiDifficultySettings();settings.Validate();Check(!settings.Enabled,"Defaults change gameplay");
+var guards=new AiDifficultySettings();guards.Overall.Values["vision"]=1.1f;guards.Groups["follower"]=new(){Values=new(){["vision"]=.5f}};guards.Groups["boss"]=new(){Values=new(){["vision"]=2}};
+Check(AiDifficultyRules.Group("bossBoarSniper")=="follower"&&guards.ForRole("bossBoarSniper").Value("vision")==.5f&&guards.ForRole("bossBoar").Value("vision")==2,"Kaban bodyguard incorrectly uses boss difficulty");
 Check(AiDifficultyRules.Group("marksman")=="sniper"&&AiDifficultyRules.Group("assault")=="scav"&&AiDifficultyRules.Group("pmcUSEC")=="usec"&&AiDifficultyRules.Group("pmcBEAR")=="bear"&&AiDifficultyRules.Group("infectedTagilla")=="infected","Incorrect AI category");
 settings.Overall.Values["vision"]=1.5f;settings.Groups["usec"]=settings.Overall.Clone();settings.Groups["usec"].Values["vision"]=.5f;
 Check(settings.ForRole("pmcUSEC").Value("vision")==.5f&&settings.ForRole("pmcBEAR").Value("vision")==1.5f,"Category isolation failed");

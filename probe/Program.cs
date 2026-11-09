@@ -10,6 +10,16 @@ using LocalRaidShared;
 var sourceRoot=Path.GetFullPath(Environment.GetEnvironmentVariable("SPT_SOURCE_ROOT")??"_spt5_esp_fix");
 var gameRoot=Environment.GetEnvironmentVariable("SPT_GAME_ROOT");if(!string.IsNullOrWhiteSpace(gameRoot))Directory.SetCurrentDirectory(gameRoot);
 try{
+foreach(string guardRole in AiSpawnCatalog.Options.Where(o=>o.Group=="BOSS 保镖").Select(o=>o.Role).Concat(new[]{"followerBigPipe","followerBirdEye","BOSSBOARSNIPER","followerBossTest"}))foreach(bool savage in new[]{true,false}){
+ Assert(RolePalette.Classify(guardRole,savage)==CharacterKind.Follower&&AiTypeRules.Matches(AiTypeFilter.Follower,guardRole,savage)&&!AiTypeRules.Matches(AiTypeFilter.Boss,guardRole,savage)&&RaidSpawnRules.Faction(guardRole)=="follower","bodyguard stays out of boss display, counts, filters and spawn scaling: "+guardRole);
+}
+var guardTally=new PopulationTally();guardTally.Add("guard",RolePalette.Classify("bossBoarSniper",true),"bossBoarSniper","Savage",true,false);guardTally.Add("boss",RolePalette.Classify("bossBoar",true),"bossBoar","Savage",true,false);
+Assert(guardTally.Total==2&&guardTally.Counts[(int)CharacterKind.Follower]==1&&guardTally.Counts[(int)CharacterKind.Boss]==1,"Kaban sniper and Kaban have separate population categories");
+var guardRates=new RaidSettings{AiEnabled=true,FactionMultipliers=new(){["boss"]=2,["follower"]=.5}};
+Assert(guardRates.SpawnMultiplier("bossBoarSniper")==.5&&guardRates.SpawnMultiplier("bossBoar")==2,"bodyguard spawn scaling uses follower settings");
+foreach(string leaderRole in new[]{"bossBoar","bossKnight","bossBully","bossGluhar","bossKolontay","infectedTagilla","ravangeZryachiyEvent"})Assert(RolePalette.Classify(leaderRole,true)==CharacterKind.Boss&&RaidSpawnRules.Faction(leaderRole)=="boss","real boss retains boss category: "+leaderRole);
+foreach(string specialRole in new[]{"bossWedgeLab","followerWedgeLab","followerBullyBlackDiv"})Assert(RolePalette.Classify(specialRole,true)==CharacterKind.BlackFox&&RaidSpawnRules.Faction(specialRole)=="blackDivision","Black Division keeps its own category");
+Console.WriteLine("PASS bodyguard catalog, Kaban sniper exception, case-insensitive classification, boss filters, separate population and spawn rates");
 Assert(MenuSearchRules.Matches(MenuSearchRules.Terms("  ScAv   背包 "),"Scav 装备 背包 内容物")&&!MenuSearchRules.Matches(MenuSearchRules.Terms("scav 背包"),"PMC 背包"),"global search matches all whitespace-separated words case-insensitively");
 Assert(!MenuSearchRules.Matches(MenuSearchRules.Terms("  "),"anything")&&MenuSearchRules.Matches(MenuSearchRules.Terms("仓库"),"战局仓库 inventory stash"),"empty queries return no search matches and Chinese partial terms work");
 var btrEdges=new[]{("A","B"),("B","C"),("C","A"),("A","D"),("D","C")};
