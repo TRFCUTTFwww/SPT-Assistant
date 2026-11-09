@@ -71,7 +71,7 @@ public static class MiscService {
    await saves.SaveProfileAsync(session,ct);
    if(oldSettings!=null)File.WriteAllText(FilePath+".bak",oldSettings);
    File.WriteAllText(FilePath+".new",JsonSerializer.Serialize(next));File.Move(FilePath+".new",FilePath,true);settingsWritten=true;Options=next;
-   return http.GetBody(new{ok=true,settings=Options,revision=Revision(),secureTemplates,ready=true});
+   return http.GetBody(new{ok=true,settings=Options,revision=Revision(),secureTemplates,scavSecureSync=next.ScavSecure?next.ScavSecureTemplate:null,ready=true});
   }catch{
    Options=previous;
    if(settingsWritten){if(oldSettings==null)File.Delete(FilePath);else File.WriteAllText(FilePath,oldSettings);}

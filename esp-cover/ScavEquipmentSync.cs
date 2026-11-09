@@ -13,7 +13,7 @@ internal static class ScavEquipmentSync {
  static string owner="",status="";
  static long pet;
  static float deadline;
- static bool checkOnly;
+ static bool checkOnly,secureOnly;
  internal static bool Busy=>pending!=null;
  internal static string Status=>status;
  static TarkovApplication? application;
@@ -28,6 +28,11 @@ internal static class ScavEquipmentSync {
    Start();
    status="Scav 装备已保存，正在同步当前角色…";
   }catch(Exception error){Failed(error);}
+ }
+ internal static void BeginSecure(string template){
+  if(Busy)throw new InvalidOperationException("Scav synchronization is pending");
+  Reset();secureOnly=true;
+  try{expected["SecuredContainer"]=template;Start();status="Scav 安全箱已保存，正在同步当前角色…";}catch(Exception error){Failed(error);}
  }
  static void Start(){
   session=Session();var current=session?.ProfileOfPet;
@@ -56,16 +61,16 @@ internal static class ScavEquipmentSync {
    // after the native descriptor constructor and equipment verification succeed.
    if(checkOnly){status="Native Scav descriptor check passed; inventory unchanged";return;}
    current!.Inventory=refreshed.Inventory;
-   status="Scav 装备已保存并同步；重新打开 Scav 出击预览查看。";
+   status=secureOnly?"Scav 安全箱已同步；重新打开 Scav 装备页面查看。":"Scav 装备已保存并同步；重新打开 Scav 出击预览查看。";
    Plugin.Self.Log.LogInfo("Scav equipment saved and verified against the native profile response: "+slots.Count+" slots");
   }catch(Exception error){Failed(error);}
  }
  static Dictionary<string,string> Read(Profile profile){
   var result=new Dictionary<string,string>(StringComparer.Ordinal);
-  foreach(var slot in profile.Inventory.Equipment.Slots){string name=slot.Name;if(!ProfileAdminPanel.IsScavSlot(name))continue;var item=slot.ContainedItem;if(item!=null)result[name]=item.StringTemplateId;}
+  foreach(var slot in profile.Inventory.Equipment.Slots){string name=slot.Name;if(secureOnly?name!="SecuredContainer":!ProfileAdminPanel.IsScavSlot(name))continue;var item=slot.ContainedItem;if(item!=null)result[name]=item.StringTemplateId;}
   return result;
  }
  static void Failed(Exception error){pending=null;status=checkOnly?"Native Scav descriptor check failed: "+error.Message:"Scav 装备已保存；当前预览未同步，请重新登录角色后生效。";Plugin.Self.Log.LogWarning("Scav equipment preview sync: "+error.Message);}
- internal static void Reset(){pending=null;session=null;owner=status="";pet=0;checkOnly=false;expected.Clear();}
- internal static object Diagnostics()=>new{busy=Busy,status,slots=expected.Count,checkOnly,application=App()!=null,session=Session()!=null,pmc=Session()?.Profile!=null,scav=Session()?.ProfileOfPet!=null,matching=Matching};
+ internal static void Reset(){pending=null;session=null;owner=status="";pet=0;checkOnly=secureOnly=false;expected.Clear();}
+ internal static object Diagnostics()=>new{busy=Busy,status,slots=expected.Count,checkOnly,secureOnly,secureTemplate=Session()?.ProfileOfPet?.Inventory?.Equipment?.GetSlot(EFT.InventoryLogic.EquipmentSlot.SecuredContainer)?.ContainedItem?.StringTemplateId,application=App()!=null,session=Session()!=null,pmc=Session()?.Profile!=null,scav=Session()?.ProfileOfPet!=null,matching=Matching};
 }
