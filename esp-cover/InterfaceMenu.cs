@@ -237,7 +237,7 @@ internal static class InterfaceMenu {
   var view=new Rect(content.x,content.y+44,content.width,content.height-44);int columns=view.width>=660?2:1;float cardWidth=(view.width-24-12*(columns-1))/columns;float total=groups.Sum(g=>MathF.Ceiling(g.Count()/(float)columns)*102+44)+76;
   scroll=GUI.BeginScrollView(view,scroll,new Rect(0,0,view.width-20,Math.Max(view.height-1,total)));float y=0;foreach(var group in groups){Label(new Rect(4,y,view.width-28,28),MenuSections.Heading(group.Key),Accent,14);y+=38;int n=0;foreach(var entry in group){DrawEntry(entry,new Rect(4+n%columns*(cardWidth+12),y+n/columns*102,cardWidth,92));n++;}y+=MathF.Ceiling(group.Count()/(float)columns)*102+6;}
   if(groups.Length==0)Paragraph(new Rect(8,8,view.width-36,60),"没有匹配的功能。可清空搜索，或用右上角“热键”查看本类快捷键。",null,13);
-  if(category=="镜头与画面"&&otherPage=="战斗信息"&&Button(new Rect(4,y,240,32),"预览受击方向（不损血）")){IncomingDamage.Preview();Close();}if(category=="战斗与枪械")AutoTrigger.DrawStatus(new Rect(4,y,view.width-28,56));if(category=="人物与移动"&&otherPage=="生存防护")SurvivalAssist.DrawActions(new Rect(4,y,view.width-28,56));GUI.EndScrollView();
+  if(category=="镜头与画面"&&otherPage=="战斗信息"&&Button(new Rect(4,y,240,32),"预览受击方向（不损血）")){IncomingDamage.Preview();Close();}if(category=="人物与移动"&&otherPage=="生存防护")SurvivalAssist.DrawActions(new Rect(4,y,view.width-28,56));GUI.EndScrollView();
  }
  static CnConfig.ConfigurationManagerAttributes? Metadata(ConfigEntryBase entry)=>entry.Description.Tags.OfType<CnConfig.ConfigurationManagerAttributes>().FirstOrDefault();
  static string Category(ConfigEntryBase entry)=>Metadata(entry)?.Category??entry.Definition.Section;

@@ -84,7 +84,7 @@ internal static class CombatAssist {
     }else if(Mode.Value==AimModes.Soft&&ValidTarget()){var direction=TargetPoint(target!)-view!.transform.position;var cameraDirection=view.transform.forward;float yaw=Mathf.Atan2(direction.x,direction.z)*Mathf.Rad2Deg,pitch=-Mathf.Atan2(direction.y,new Vector2(direction.x,direction.z).magnitude)*Mathf.Rad2Deg;float cameraYaw=Mathf.Atan2(cameraDirection.x,cameraDirection.z)*Mathf.Rad2Deg,cameraPitch=-Mathf.Asin(Mathf.Clamp(cameraDirection.y,-1,1))*Mathf.Rad2Deg;var context=local!.MovementContext;var current=context.Rotation;var next=SoftAimRules.Step(new(current.x,current.y),new(current.x+Mathf.DeltaAngle(cameraYaw,yaw),current.y+pitch-cameraPitch),SoftAimControl.Speed,Time.unscaledDeltaTime);context.SetRotation(context.ClampRotation(new Vector2(next.X,next.Y)));if(new Vector2(Mathf.DeltaAngle(cameraYaw,yaw),pitch-cameraPitch).sqrMagnitude<.0025f)softWindow.Reset();
     }
    }
-   if(Registered(controller)&&controller.SuitableForHandInput&&!controller.IsInReloadOperation()&&controller.CanPressTrigger()&&(Input.GetMouseButton(0)||AutoTrigger.LauncherRequested(controller))&&Time.unscaledTime>=nextRocket){
+   if(Registered(controller)&&controller.SuitableForHandInput&&!controller.IsInReloadOperation()&&controller.CanPressTrigger()&&Input.GetMouseButton(0)&&Time.unscaledTime>=nextRocket){
     nextRocket=Time.unscaledTime+RocketDelay.Value;
     // Bypass the disposable firing operation; vanilla's missile, sound and effects still run.
     var chambers=controller.Item.Chambers;Rocket? rocket=null;

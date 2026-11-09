@@ -44,6 +44,7 @@ internal static class EntertainmentControl {
   plugin.Patches.Patch(AccessTools.Method(typeof(Player),"VisualPass"),prefix:new HarmonyMethod(typeof(EntertainmentControl),nameof(BeforeVisualPass)),postfix:new HarmonyMethod(typeof(EntertainmentControl),nameof(AfterVisualPass)));
   plugin.Patches.Patch(AccessTools.Method(typeof(Player),"ComplexUpdate"),prefix:new HarmonyMethod(typeof(EntertainmentControl),nameof(BeforeVisual)));
   plugin.Patches.Patch(AccessTools.Method(typeof(Player),"ManualUpdate"),prefix:new HarmonyMethod(typeof(EntertainmentControl),nameof(BeforeVisual)));
+  plugin.Patches.Patch(typeof(Player.FirearmController).GetMethod("ManualUpdate",new[]{typeof(float)}),prefix:new HarmonyMethod(typeof(EntertainmentControl),nameof(BeforeWeaponLogic)));
   renderCallback=DelegateSupport.ConvertDelegate<Camera.CameraCallback>(new Action<Camera>(BeforeRender));Camera.onPreCull+=renderCallback;
   plugin.Log.LogInfo("Entertainment ready: local third-person camera, native POV/render switching and reversible model-only jitter");
  }
@@ -136,6 +137,7 @@ internal static class EntertainmentControl {
   else ApplyWorldBone(head??neck,delta);
  }
  static void ApplyWorldBone(Transform? bone,Quaternion delta){if(bone==null)return;var original=bone.localRotation;bone.rotation=delta*bone.rotation;poses.Add(new(bone,original,bone.localRotation));}
+ [HarmonyPriority(Priority.First)] static void BeforeWeaponLogic(Player.FirearmController __instance){if(__instance._player is {} actor)RestoreForLogic(actor);}
  internal static void RestoreForLogic(Player actor){ModelPoseLock.Restore(actor);if(Local(actor))RestorePose();}
  static void ApplyBone(Transform? bone,Quaternion delta){if(bone==null)return;var original=bone.localRotation;var applied=original*delta;bone.localRotation=applied;poses.Add(new(bone,original,applied));}
  static void RestorePose(){for(int i=poses.Count-1;i>=0;i--)try{var pose=poses[i];if(pose.Bone!=null&&Quaternion.Angle(pose.Bone.localRotation,pose.Applied)<.01f)pose.Bone.localRotation=pose.Original;}catch{}poses.Clear();}

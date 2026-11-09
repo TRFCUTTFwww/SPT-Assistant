@@ -5,7 +5,7 @@ internal static class MenuSections {
  internal static string Lane(string category)=>category is "AI 工作台" or "枪械编辑" or "模型与镜头" or "玩具枪工具" or "开发工具"?"开发工具":category=="设置与热键"?"设置":"常用辅助";
  internal static string DisplayName(string category)=>category switch{"战斗与枪械"=>"射击","人物与移动"=>"人物","镜头与画面"=>"视觉","传送与导航"=>"导航","战局与物资"=>"战局","载具与空投"=>"载具","物品与装备"=>"物品","AI 工作台"=>"AI 开发","玩具枪工具"=>"玩具枪开发","设置与热键"=>"设置与热键",_=>category};
  internal static int Number(string section){int dot=section.IndexOf('.');return dot>=0&&int.TryParse(section.AsSpan(0,dot),out int value)?value:0;}
- internal static string Group(string section)=>Number(section) switch{8 or 9 or 10 or 28 or 39 or 40 or 44 or 53 or 54=>"战斗与枪械",45=>"枪械编辑",2 or 19 or 20 or 29=>"人物与移动",43 or 61=>"模型与镜头",34 or 49=>"AI 工作台",50 or 46=>"玩具枪工具",1 or 6 or 7 or 11 or 12 or 16 or 21 or 22 or 23 or 35 or 48 or 52 or 58=>"镜头与画面",55 or 57 or 59=>"战局与物资",56=>"物品与装备",13 or 26 or 27 or 30 or 31 or 37 or 42=>"战局与物资",18 or 38=>"载具与空投",14 or 15 or 33 or 41 or 60=>"传送与导航",_=>"设置与热键"};
+ internal static string Group(string section)=>Number(section) switch{8 or 9 or 10 or 28 or 39 or 40 or 53 or 54=>"战斗与枪械",45=>"枪械编辑",2 or 19 or 20 or 29=>"人物与移动",43 or 61=>"模型与镜头",34 or 49=>"AI 工作台",50 or 46=>"玩具枪工具",1 or 6 or 7 or 11 or 12 or 16 or 21 or 22 or 23 or 35 or 48 or 52 or 58=>"镜头与画面",55 or 57 or 59=>"战局与物资",56=>"物品与装备",13 or 26 or 27 or 30 or 31 or 37 or 42=>"战局与物资",18 or 38=>"载具与空投",14 or 15 or 33 or 41 or 60=>"传送与导航",_=>"设置与热键"};
  internal static bool ThirdPersonKey(string key)=>key.Contains("Third person",StringComparison.OrdinalIgnoreCase)||key.StartsWith("Camera ",StringComparison.OrdinalIgnoreCase)||key=="First person when aiming";
  internal static string Group(string section,string key)=>Number(section)==43&&ThirdPersonKey(key)?"镜头与画面":Number(section)==43&&key.StartsWith("Selected AI",StringComparison.OrdinalIgnoreCase)?"AI 工作台":Number(section)==43&&key.Contains("Crouch",StringComparison.OrdinalIgnoreCase)?"人物与移动":Group(section);
  internal static string[] Pages(string category)=>category switch{
@@ -35,7 +35,7 @@ internal static class MenuSections {
   ("战局与物资","地图模式")=>n==57,
   ("物品与装备","修理与耐久")=>n==56,
   ("战斗与枪械","击杀特效")=>n==53,
-  ("战斗与枪械","射击辅助")=>n is 8 or 9 or 10 or 28 or 39 or 40 or 44,
+  ("战斗与枪械","射击辅助")=>n is 8 or 9 or 10 or 28 or 39 or 40,
   ("人物与移动","生存防护")=>n is 2 or 19 or 29,
   ("人物与移动","移动与穿墙")=>n==20||n==43&&key.Contains("Crouch",StringComparison.OrdinalIgnoreCase),
   ("模型与镜头","趣味能力")=>n==61,

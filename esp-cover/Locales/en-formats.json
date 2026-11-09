@@ -136,7 +136,6 @@
   "{0} · 伤 {1} / 穿 {2}": "{0} · Damage {1} / Penetration {2}",
   "穿透倾向：{0}（穿甲差 {1}）": "Penetration likelihood: {0} (penetration / armor difference {1})",
   "{0}\n商人按原规则收费，修复前最大耐久保留；修理包保持原规则。头甲保护只作用于你当前穿戴的护甲及其护甲附件。{1}": "{0}\nTraders charge normally and preserve pre-repair maximum durability. Repair kits follow native rules. Armor protection applies only to equipped armor and armor attachments.{1}",
-  "自动扳机：{0}": "Triggerbot: {0}",
   "1 BTC = ₽{0}\n美元参考：${1}\n游戏 BTC 基准价：₽{2}\n获取时间：{3} · {4}": "1 BTC = ₽{0}\nUSD reference: ${1}\nGame BTC base price: ₽{2}\nFetched: {3} · {4}",
   "{0}\n{1}\n每 5 分钟更新；断网时保留最后一次成功行情。商人收购价随行情自动更新。": "{0}\n{1}\nUpdates every 5 minutes. The last successful quote is retained offline. Trader buyout prices update with the quote.",
   "设置下一站：{0}": "Set next stop: {0}",
