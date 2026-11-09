@@ -21,6 +21,7 @@ internal static class ScavEquipmentSync {
  static ClientBackendSession? Session()=>App()?.GetClientBackEndSession()?.TryCast<ClientBackendSession>()??App()?.Session?.TryCast<ClientBackendSession>();
  internal static string Owner=>Session()?.Profile?.Id??"";
  internal static bool Matching=>App()?._localMatchmakerOperation!=null;
+ internal static void ClearCooldown(){if(Session()?.ProfileOfPet?.Info is {} info)info.SavageLockTime=0;}
  internal static void Begin(JsonElement saved){
   Reset();
   try{

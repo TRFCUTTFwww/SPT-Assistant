@@ -56,9 +56,7 @@ internal static class MiscPanel {
  }
  static void ApplyScavCooldown(){
   if(!Options.ScavNoCooldown)return;
-  var app=Singleton<TarkovApplication>.Instance??Singleton<AbstractApplication>.Instance?.TryCast<TarkovApplication>();
-  var session=app?.GetClientBackEndSession()?.TryCast<ClientBackendSession>()??app?.Session?.TryCast<ClientBackendSession>();
-  if(session?.ProfileOfPet?.Info is {} info)info.SavageLockTime=0;
+  ScavEquipmentSync.ClearCooldown();
  }
  internal static void Reset(){request=null;reading=null;Options=new();requested=syncSecure=false;revision="";secureTemplates=Array.Empty<string>();choosingSecure=false;}
  internal static void Draw(Rect rect){
