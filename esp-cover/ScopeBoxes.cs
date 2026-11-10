@@ -22,11 +22,11 @@ internal sealed class ScopeBoxes {
  readonly Dictionary<IntPtr,(float Current,float Maximum,float Expires)> healthCache=new();
  float nextError;bool active;
  internal bool Active=>active&&camera!=null&&camera.isActiveAndEnabled;
- internal static void Initialize()=>Enabled=FeatureConfig.Bind("1. ESP","Optical scope boxes","瞄准镜内自适应方框",true,"开镜后方框跟随倍率，显示镜内人物和血条。红点和机瞄保持普通显示。");
+ internal static void Initialize()=>Enabled=FeatureConfig.Bind("1. ESP","Optical scope boxes","瞄准镜内自适应方框",true,"开镜后方框跟随倍率，显示镜内人物、血条、BTR、空投箱与飞机。红点和机瞄保持普通显示。");
  internal void Tick(IReadOnlyList<Player> actors,Player? local){try{
   this.actors=actors;this.local=local;
   var optic=CameraManager.Instance?.OpticCameraManager;
-  var target=Enabled.Value&&Plugin.Self.People.Value&&RaidClock.Active&&!DirectorStage.HudHidden&&local?.ProceduralWeaponAnimation?.IsAiming==true&&optic?.CurrentOpticSight!=null?optic.Camera:null;
+  var target=Enabled.Value&&(Plugin.Self.People.Value||VehicleEsp.Enabled)&&RaidClock.Active&&!DirectorStage.HudHidden&&local?.ProceduralWeaponAnimation?.IsAiming==true&&optic?.CurrentOpticSight!=null?optic.Camera:null;
   if(target==null||!target.isActiveAndEnabled){Detach();return;}
   if(camera==null||camera.Pointer!=target.Pointer){Detach();camera=target;}
   if(!Resources()){Detach();return;}
@@ -39,7 +39,7 @@ internal sealed class ScopeBoxes {
   if(camera==null||target==null||target.Pointer!=camera.Pointer)return;
   long stamp=RuntimePerformance.Start();
   try{
-   if(!Enabled.Value||!Plugin.Self.People.Value||!RaidClock.Active||DirectorStage.HudHidden||local?.ProceduralWeaponAnimation?.IsAiming!=true){commands?.Clear();active=false;return;}
+   if(!Enabled.Value||!(Plugin.Self.People.Value||VehicleEsp.Enabled)||!RaidClock.Active||DirectorStage.HudHidden||local?.ProceduralWeaponAnimation?.IsAiming!=true){commands?.Clear();active=VehicleEsp.OpticActive=false;return;}
    Build(target);lastRenderFrame=Time.frameCount;
    if(!renderReported){renderReported=true;Plugin.Self.Log.LogInfo("Optic ESP render synchronization active: native camera onPreRender, camera-space anchors, world vertices");}
   }catch(Exception e){Failed(e);}finally{RuntimePerformance.RenderDone(stamp);}
@@ -51,7 +51,7 @@ internal sealed class ScopeBoxes {
   var view=target.worldToCameraMatrix;cameraToWorld=view.inverse;var projection=target.projectionMatrix;
   float px=3f/(Math.Max(.001f,Math.Abs(projection.m00))*Math.Max(64,target.pixelWidth));
   float py=3f/(Math.Max(.001f,Math.Abs(projection.m11))*Math.Max(64,target.pixelHeight));
-  foreach(var actor in actors){
+  if(Plugin.Self.People.Value)foreach(var actor in actors){
    if(vertices.Count>65000)break;
    if(actor==null||actor.HealthController?.IsAlive!=true)continue;
    var feet=actor.Position;if(Vector3.Distance(feet,local!.Position)>Plugin.Self.PeopleRange.Value)continue;
@@ -76,6 +76,8 @@ internal sealed class ScopeBoxes {
     }
    }
   }
+  foreach(var marker in BtrDisplay.Markers(local))Vehicle(marker,view,projection,px,py);
+  foreach(var marker in AirdropControl.Markers(local))Vehicle(marker,view,projection,px,py);
   if(vertices.Count>0){
    if(vertexBuffer==null||vertexBuffer.Length<vertices.Count){int capacity=Math.Max(1024,vertices.Count*2);vertexBuffer=new(capacity);colorBuffer=new(capacity);}
    if(indexBuffer==null||indexBuffer.Length<indices.Count)indexBuffer=new(Math.Max(1536,indices.Count*2));
@@ -86,7 +88,17 @@ internal sealed class ScopeBoxes {
    // Never freeze a LateUpdate camera matrix or force an orthographic overlay.
    commands.DrawMesh(mesh,Matrix4x4.identity,material!,0,0);
   }
-  if(!active)Plugin.Self.Log.LogInfo($"Optic ESP active: camera={target.name}, texture={target.pixelWidth}x{target.pixelHeight}, fov={target.fieldOfView:F2}; scene world geometry, one batch");active=true;
+  if(!active)Plugin.Self.Log.LogInfo($"Optic ESP active: camera={target.name}, texture={target.pixelWidth}x{target.pixelHeight}, fov={target.fieldOfView:F2}; scene world geometry, one batch");active=VehicleEsp.OpticActive=true;
+ }
+ void Vehicle(VehicleEsp.Marker marker,Matrix4x4 view,Matrix4x4 projection,float px,float py){
+  Span<System.Numerics.Vector3> corners=stackalloc System.Numerics.Vector3[8];
+  for(int i=0;i<8;i++){var p=marker.Center+new Vector3((i&1)==0?-marker.Size.x/2:marker.Size.x/2,(i&2)==0?-marker.Size.y/2:marker.Size.y/2,(i&4)==0?-marker.Size.z/2:marker.Size.z/2);var v=Transform(view,p.x,p.y,p.z);corners[i]=new(v.x,v.y,v.z);}
+  if(!VehicleBoxRules.ViewBounds(corners,out var b))return;
+  float left=projection.m00*b.X-projection.m02,right=projection.m00*(b.X+b.Width)-projection.m02,bottom=projection.m11*b.Y-projection.m12,top=projection.m11*(b.Y+b.Height)-projection.m12;
+  if(Math.Min(left,right)>1||Math.Max(left,right)<-1||Math.Min(bottom,top)>1||Math.Max(bottom,top)<-1)return;
+  depth=1;float tx=Math.Min(px,b.Width),ty=Math.Min(py,b.Height);
+  Stripe(new(b.X,b.Y,b.Width,ty),marker.Color);Stripe(new(b.X,b.Y+b.Height-ty,b.Width,ty),marker.Color);
+  Stripe(new(b.X,b.Y,tx,b.Height),marker.Color);Stripe(new(b.X+b.Width-tx,b.Y,tx,b.Height),marker.Color);
  }
  void Failed(Exception e){Detach();if(Time.unscaledTime>=nextError){nextError=Time.unscaledTime+20;Plugin.Self.Log.LogWarning("Optic ESP: "+e);}}
  bool Resources(){
@@ -103,6 +115,6 @@ internal sealed class ScopeBoxes {
   for(int j=0;j<4;j++)colors.Add(color);indices.Add(i);indices.Add(i+1);indices.Add(i+2);indices.Add(i);indices.Add(i+2);indices.Add(i+3);
  }
  static Vector3 Transform(Matrix4x4 m,float x,float y,float z)=>new(m.m00*x+m.m01*y+m.m02*z+m.m03,m.m10*x+m.m11*y+m.m12*z+m.m13,m.m20*x+m.m21*y+m.m22*z+m.m23);
- void Detach(){active=false;lastRenderFrame=-10;healthCache.Clear();if(commands!=null){try{if(camera!=null)camera.RemoveCommandBuffer(CameraEvent.BeforeImageEffects,commands);}finally{commands.Dispose();commands=null;}}camera=null;}
+ void Detach(){active=VehicleEsp.OpticActive=false;lastRenderFrame=-10;healthCache.Clear();if(commands!=null){try{if(camera!=null)camera.RemoveCommandBuffer(CameraEvent.BeforeImageEffects,commands);}finally{commands.Dispose();commands=null;}}camera=null;}
  internal void Dispose(){if(renderCallback!=null){Camera.onPreRender-=renderCallback;renderCallback=null;}Detach();actors=null;local=null;if(mesh!=null)UnityEngine.Object.Destroy(mesh);if(material!=null)UnityEngine.Object.Destroy(material);mesh=null;material=null;vertexBuffer=null;colorBuffer=null;indexBuffer=null;}
 }

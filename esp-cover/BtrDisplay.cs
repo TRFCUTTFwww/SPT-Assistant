@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using BepInEx.Configuration;
 using Comfort.Common;
 using EFT;
@@ -50,9 +51,12 @@ internal static class BtrDisplay {
  }
  static string NearestStop(BtrController controller,Vector3 position){var destinations=controller.MapPathsConfiguration?.PathDestinations;if(destinations==null)return "";float best=70f*70f;string id="";foreach(var destination in destinations){if(destination==null||string.IsNullOrWhiteSpace(destination.id))continue;var delta=destination.transform.position-position;float distance=delta.x*delta.x+delta.z*delta.z;if(distance>=best)continue;best=distance;id=destination.id;}return id;}
  internal static void DrawMarker(Camera camera,Player player){
-  if(!Esp.Value||BtrControl.Disabled)return;var controller=Singleton<GameWorld>.Instance?.BtrController;var view=controller?.BtrView;if(view==null||!view.gameObject.activeInHierarchy)return;
+  foreach(var marker in Markers(player))VehicleEsp.Draw(camera,marker);
+ }
+ internal static IEnumerable<VehicleEsp.Marker> Markers(Player player){
+  if(!Esp.Value||BtrControl.Disabled)yield break;var controller=Singleton<GameWorld>.Instance?.BtrController;var view=controller?.BtrView;if(view==null||!view.gameObject.activeInHierarchy)yield break;
   Vector3 position=view.transform.position;
-  VehicleEsp.Draw(camera,position+Vector3.up*1.5f,new Vector3(3.2f,3,7.5f),"BTR · "+Vector3.Distance(player.Position,position).ToString("F0")+" m",Status,new Color(.35f,.85f,1));
+  yield return new(position+Vector3.up*1.5f,new Vector3(3.2f,3,7.5f),"BTR · "+Vector3.Distance(player.Position,position).ToString("F0")+" m",Status,new Color(.35f,.85f,1));
  }
  internal static string StopName(GameWorld world,string id){if(string.IsNullOrWhiteSpace(id))return "站点未识别";string map=world.LocationId?.ToLowerInvariant() switch{"tarkovstreets" or "streets"=>"TarkovStreets","woods"=>"Woods","lighthouse"=>"Lighthouse",_=>""};foreach(var key in new[]{map.Length>0?$"Trading/Dialog/PlayerTaxi/{map}/{id}/Name":"",$"Trading/Dialog/PlayerTaxi/{id}/Name"}){if(key.Length==0)continue;string localized=LocalizationExtensions.Localized(key,EStringCase.None);if(!string.IsNullOrWhiteSpace(localized)&&localized!=key)return localized;}return id;}
  static string PauseClock(int raw){double seconds=raw>300?raw/1000d:raw;if(seconds>600)return "计时未就绪";int rounded=(int)Math.Ceiling(seconds);return $"{rounded/60:00}:{rounded%60:00}";}

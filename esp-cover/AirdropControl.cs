@@ -37,9 +37,13 @@ internal static partial class AirdropControl {
   InterfaceMenu.Paragraph(new Rect(x,y,w,88),notice+"\n"+NextRaidLoot.ServerStatus,InterfaceMenu.Accent,12);GUI.EndScrollView();
  }
  internal static void DrawMarkers(Camera camera,Player player){
-  if(markers.Value)foreach(var drop in drops){if(!Active(drop))continue;Vector3 position=drop.transform.position;VehicleEsp.Draw(camera,position+Vector3.up*.8f,new Vector3(2,1.6f,2),I18n.Text("空投箱")+" · "+Vector3.Distance(player.Position,position).ToString("F0")+" m",drop.AirdropType+" · "+I18n.Text(DropState(drop)),new Color(.45f,1,.72f));}
+  foreach(var marker in Markers(player))VehicleEsp.Draw(camera,marker);
+ }
+ internal static bool MarkersEnabled=>markers.Value||planeMarkers.Value;
+ internal static IEnumerable<VehicleEsp.Marker> Markers(Player player){
+  if(markers.Value)foreach(var drop in drops){if(!Active(drop))continue;Vector3 position=drop.transform.position;yield return new(position+Vector3.up*.8f,new Vector3(2,1.6f,2),I18n.Text("空投箱")+" · "+Vector3.Distance(player.Position,position).ToString("F0")+" m",drop.AirdropType+" · "+I18n.Text(DropState(drop)),new Color(.45f,1,.72f));}
   if(planeMarkers.Value)foreach(var flight in flights){var plane=flight.Plane;if(plane==null||plane._syncObject==null||!plane._syncObject.IsActive||plane._syncObject.ObjectId!=flight.Id||plane.SyncObjectTransform==null)continue;Vector3 position=plane.SyncObjectTransform.position;
-   VehicleEsp.Draw(camera,position,new Vector3(24,6,24),I18n.Text("空投飞机")+" · "+Vector3.Distance(player.Position,position).ToString("F0")+" m",I18n.Text(plane._flyToAirdrop?"前往投放":"已投放，正在离场"),new Color(1,.8f,.3f));
+   yield return new(position,new Vector3(24,6,24),I18n.Text("空投飞机")+" · "+Vector3.Distance(player.Position,position).ToString("F0")+" m",I18n.Text(plane._flyToAirdrop?"前往投放":"已投放，正在离场"),new Color(1,.8f,.3f));
   }
  }
 }

@@ -13,7 +13,7 @@ using UnityEngine;
 
 namespace LocalSpt5Esp;
 internal static class ItemSpawner {
- sealed record Entry(string Id,string Name,string SearchText,bool IsAmmo,int StackMax,HashSet<string> Allowed,HashSet<string> Excluded);
+ sealed record Entry(string Id,string Name,string SearchText,bool IsAmmo,int StackMax,HashSet<string> Allowed,HashSet<string> Excluded,ItemDetails.Detail[] Details);
  static List<Entry> catalog=new(),matches=new();
  static readonly Dictionary<string,string> parents=new(StringComparer.Ordinal);
  static readonly Dictionary<string,List<AttachmentSlot>> attachmentSlots=new(StringComparer.Ordinal);
@@ -77,7 +77,7 @@ internal static class ItemSpawner {
        if(filter.TryGetProperty("ExcludedFilter",out var blocked))foreach(var id in blocked.EnumerateArray())if(id.GetString() is string value)excluded.Add(value);
       }
     int stackMax=props.TryGetProperty("StackMaxSize",out var stack)?Math.Max(1,(int)stack.GetDouble()):1;
-    catalog.Add(new(item.Name,name,ItemSpawnRules.NormalizeSearch(name)+"|"+item.Name,props.TryGetProperty("PenetrationPower",out _),stackMax,allowed,excluded));
+    catalog.Add(new(item.Name,name,ItemSpawnRules.NormalizeSearch(name)+"|"+item.Name,props.TryGetProperty("PenetrationPower",out _),stackMax,allowed,excluded,ItemDetails.Read(props)));
    }
    catalog=catalog.OrderBy(item=>item.Name,StringComparer.OrdinalIgnoreCase).ToList();Search();
   }catch(Exception error){status="物品目录读取失败："+error.Message;Plugin.Self.Error(error);}
@@ -184,7 +184,10 @@ internal static class ItemSpawner {
   string selectedAmmo="已选："+(catalog.FirstOrDefault(item=>item.Id==ammoId)?.Name??"请选择弹药");
   float selectedHeight=Math.Max(28,InterfaceMenu.ParagraphHeight(selectedAmmo,width,12));
   var ammoHeights=ammoMatches.Select(item=>InterfaceMenu.ButtonHeight(item.Name,width,36)).ToArray();
-  float contentHeight=55;
+  var detailLines=entry.Details.Select(row=>I18n.Text(row.Label)+"："+I18n.Text(row.Value)+(row.Unit.Length>0?" "+row.Unit:"")).ToArray();
+  var detailHeights=detailLines.Select(line=>Math.Max(24,InterfaceMenu.ParagraphHeight(line,width,12))).ToArray();
+  float detailsHeight=64+detailHeights.Sum()+detailHeights.Length*4;
+  float contentHeight=55+detailsHeight;
   if(schema is Schema s){
    contentHeight+=(s.Repairable?43+(changeDurability?78:0):0)+(s.Medical?43+(changeMed?39:0):0)+(s.Food?43+(changeFood?39:0):0)+(s.Key?43+(changeKey?39:0):0);
    if(s.MagazineCapacity>0)contentHeight+=43+(loadMagazine?39+28+36+selectedHeight+8+28+(ammoMatches.Count==0?28:ammoHeights.Sum()+ammoMatches.Count*4):0);
@@ -192,6 +195,9 @@ internal static class ItemSpawner {
   if(extraEditor?.HasOptions==true)contentHeight+=extraEditor.Height;
   propertyScroll=GUI.BeginScrollView(view,propertyScroll,new Rect(0,0,view.width-18,contentHeight));
   float y=0;
+  InterfaceMenu.Label(new Rect(0,y,width,26),"物品详情（模板基础值）",InterfaceMenu.Accent,14);y+=32;
+  for(int i=0;i<detailLines.Length;i++){InterfaceMenu.Paragraph(new Rect(0,y,width,detailHeights[i]),detailLines[i],null,12);y+=detailHeights[i]+4;}
+  InterfaceMenu.Label(new Rect(0,y,width,24),"生成属性",InterfaceMenu.Accent,14);y+=32;
   InterfaceMenu.Label(new Rect(0,y,100,30),"搜刮标记");
   if(InterfaceMenu.Button(new Rect(106,y,Math.Max(60,width-106),30),fir==0?"模板默认":fir==1?"有搜刮标记":"无搜刮标记",fir!=0))fir=(fir+1)%3;
   y+=43;
