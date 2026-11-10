@@ -1,0 +1,46 @@
+{
+  "version": "2.0.5",
+  "date": "2026-11-10",
+  "releaseChannel": "experimental-prerelease",
+  "target": {
+    "spt": "5.0 BE",
+    "eft": "1.3.0.1.48558",
+    "platform": "Windows x64",
+    "runtime": "Unity IL2CPP / .NET 10",
+    "backwardCompatibilityGuaranteed": false
+  },
+  "builds": {
+    "client": "passed; two existing nullable warnings on full build",
+    "mailAndAdministration": "passed",
+    "raidSettings": "passed"
+  },
+  "offlinePassGroups": {
+    "clientProbe": 121,
+    "mailAndAdministration": 23,
+    "raidSettings": 12,
+    "hotReload": 5
+  },
+  "installation": {
+    "readOnlyPreflight": "passed on fixture and target installation",
+    "clientOnly": "passed; no server components or administration key created",
+    "fullInstall": "passed",
+    "localDatabaseCaches": "passed; native case-distinct JSON fields preserved",
+    "randomAdministrationKey": "passed",
+    "updatePreservesKeysAndConfiguration": "passed",
+    "replacedFileBackup": "passed",
+    "tamperedPackageRejection": "passed before target modification"
+  },
+  "clientHotReload": {
+    "coreVersion": "2.0.5",
+    "ready": true,
+    "error": null,
+    "extractionHooksInstalled": true
+  },
+  "broadTestingCompleted": false,
+  "requiresInGameConfirmation": [
+    "Ventilation-exit countdown and extraction with a backpack",
+    "Optic ESP alignment",
+    "Fika AI effect synchronization",
+    "Local teleport to another player and position synchronization"
+  ]
+}

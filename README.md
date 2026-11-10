@@ -1,148 +1,47 @@
 # SPT Assistant
 
-当前版本：**1.38.36**。当前目标环境：EFT 1.3.0.1.48558 / SPT 5.0 BE，IL2CPP，.NET 10；保留 1.2.0.0.47888 的条件编译路径。
+[English](README.md) · [简体中文](README.zh-CN.md)
 
-1.38.36 在侧边栏最顶端新增默认进入的“主页面”，按卡片展示当前 PMC 存档、资金、战绩、任务进度和常用入口；分帧读取，仅主页打开时刷新。110 组 Probe 检查及 48558/47888 编译通过。详见 [1.38.36 使用与验证](docs/release-1.38.36-zh.txt)。
+An in-game control panel for **SPT**, built with C# and Unity. Manage your character, raid, equipment, quests and server settings from one interface.
 
-1.38.35 新增独立“激光穿墙”开关，默认关闭；开启后忽略环境遮挡并透墙显示光束，仍使用原生人物命中区域、射程和无敌保护。详见 [1.38.35 使用与验证](docs/release-1.38.35-zh.txt)。
+**Version 2.0.5** · **Current target: SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
 
-1.38.34 新增双眼红色激光及独立持续发射开关、保留碰撞的飞行；统一时间窗暂停后缀，修正弹道分析把部分裸露区域扩大为整件头甲不利的着色，移除颜色图例。详见 [1.38.34 使用与验证](docs/release-1.38.34-zh.txt)。
+> **EXTREMELY UNSTABLE — EXPERIMENTAL.** This project has not undergone broad testing. Bugs, crashes, multiplayer desynchronization and unexpected profile changes are possible. Back up your profiles and configuration before installing or updating. A successful build or hot reload does not establish that every feature works in a raid.
+>
+> Development follows the latest SPT version. **Backward compatibility is not guaranteed.** The exact supported SPT/EFT build is stated for each release; this release targets the versions above. Fika support is experimental and has not been broadly tested across hosts, clients or mod combinations.
 
-1.38.33 重排 Scav 装备页，固定保存区并在保存后校验、刷新当前 Scav；增加独立的万能钥匙和万能门禁卡开关；战局添加背包、头盔、防弹衣和胸挂时，背包放不下可使用对应空装备槽；新增 BTR 方框定位及空投飞机／箱体 ESP。详见 [1.38.33 使用与验证](docs/release-1.38.33-zh.txt)。
+## Installation
 
-1.38.32 修正消息会话通知前仍保留旧选中状态的问题；新增「导航 → 任务定位」，按当前地图原生区域显示已接未完成任务的位置、目标与距离；日志名称改为 SPT Assistant。详见 [1.38.32 使用与验证](docs/release-1.38.32-zh.txt)。
+1. Install the matching SPT/EFT build listed above and start SPT once so BepInEx interop assemblies are generated. Use a separate SPT installation.
+2. Close that game's client and server. Back up `SPT_Runtime/user/profiles`, `BepInEx/config` and any existing Assistant files.
+3. Download **SPT-Assistant-2.0.5-experimental.zip** from [Releases](https://github.com/TRFCUTTFwww/SPT-Assistant/releases/tag/v2.0.5) and extract it to a separate folder. GitHub's automatic source archives contain source code, not an installed mod.
+4. From the extracted folder, run the following in Windows PowerShell, replacing the example path:
 
-1.38.31 针对消息会话切换时，原生列表重建重新选中旧会话的问题加入重入保护；“服务端 → 业力与信誉”新增独立的跳蚤市场信誉修改，支持小数、存档备份及旧值校验。详见 [1.38.31 使用与验证](docs/release-1.38.31-zh.txt)。
+   ```powershell
+   powershell -NoProfile -ExecutionPolicy Bypass -File .\Install.ps1 -GameRoot "D:\SPT-5.0.0-48558" -Language en
+   ```
 
-1.38.30 修复卸载藏身处后残留人物在无主相机时持续调用外观更新的空引用刷屏；服务端页采用可换行分类、自适应配置卡片和固定保存区，搜索覆盖所有分类。刷新规则统一到战局，Scav 装备统一到角色管理，其他位置保留直达入口。详见 [1.38.30 使用与验证](docs/release-1.38.30-zh.txt)。
+5. Start the SPT server, then start the client through the SPT launcher. Press **Right Shift** to open the panel. The interface language can be changed in the menu.
 
-1.38.29 新增「服务端」侧栏：30 项保险、修理、藏身处、交易和战局配置，独立 PMC/Scav 业力编辑；Scav 装备采用来源、槽位预览、保存三步流程。补齐当前版本 AI 角色目录，并明确标识无法独立生成的角色。修复主线等待过期后仍停留在等待状态的问题；只解锁满足前置条件的任务领取，不自动接取或完成。详见 [1.38.29 使用与验证](docs/release-1.38.29-zh.txt)。
+The installer copies only Assistant components, generates item-name/price caches from your own SPT database, preserves existing settings and API keys, and backs up replaced files under `mod-backups`. First installation of the full package creates a random local administration API key. **Fika clients:** use `-ClientOnly`; connect to the host and do not start a local server. Server administration features require matching server components and the host's key, and should be enabled only for trusted administrators. This package does not install Fika.
 
-1.38.28 修复游戏昼夜暂停：真正停止时钟推进，暂停优先于系统时间同步，恢复及切换流速时保留当前时刻；时间控制区新增独立开关。剩余时间改用较亮的警示红，添加细描边与像素对齐，改善小字号倒计时的清晰度。详见 [1.38.28 使用与验证](docs/release-1.38.28-zh.txt)。
+See [the bilingual installation guide](docs/INSTALL.md) for file locations, updates, source builds and removal, and [2.0.5 release notes](docs/release-2.0.5.md) for tested boundaries and remaining limitations.
 
-1.38.27 修复藏身处秒完成取不到应用实例、当次登录新开制作不在旧角色快照而被跳过的问题；同步当前原生制作对象，并补齐装甲公文箱缺失的固定奖励：克鲁格洛夫的钥匙卡及感应钥匙卡说明书各一件。详见 [1.38.27 修复与验证](docs/release-1.38.27-zh.txt)。
+## Features
 
-1.38.26 将悬浮窗不透明度限制为底板与装饰，文字保持清晰；弹道与防护分析按玩家视角将有利结果标绿、不利结果标红，未知及难以判断的结果保持中性。详见 [1.38.26 使用与验证](docs/release-1.38.26-zh.txt)。
+| Area | What you can do |
+| --- | --- |
+| **Home dashboard** | View the current PMC profile, currencies, combat statistics and quest progress, with shortcuts to frequently used tools. |
+| **Visuals & HUD** | Configure player, loot and vehicle ESP, world markers, floating information panels and a performance monitor. |
+| **Navigation** | Locate quest objectives and extraction points, check distances and use navigation tools. |
+| **Weapons & combat** | Edit weapons, adjust aiming tools and inspect ammunition, ballistics and armor protection. |
+| **Character** | Manage health and movement tools, including noclip and optional laser-eye controls. |
+| **Raid tools** | Control raid time and the day/night clock, pause timers, manage AI spawning and interact with raid loot. |
+| **Items & equipment** | Search for items, send items by mail, manage equipment and configure repair, durability, keys and keycards. |
+| **Quests & story** | Inspect quest progress, replay quests, manage story branches and skip eligible waiting periods. |
+| **Profile data** | Manage skills, achievements, wallets and PMC/Scav character settings. |
+| **Server settings** | Adjust insurance, repair, hideout, trading and raid options, plus karma and flea-market reputation. |
+| **Interface** | Switch instantly between Chinese and English; customize hotkeys, panel layouts, opacity and themes. |
+| **Hot reload** | Reload supported client and server modules from the panel while retaining the host. |
 
-1.38.25 让弹道与防护分析按内容自适应宽高、换行和滚动，并为 15 个可布局悬浮窗加入独立的整体不透明度。入口为“镜头与画面 → 界面布局”下方；手动调整分析窗大小会切换到手动模式。详见 [1.38.25 使用与验证](docs/release-1.38.25-zh.txt)。
-
-1.38.24 将“头甲分析”更名为“弹道与防护分析”，加入对方枪械、弹药伤害参数和自身头部／胸部的防护估算；受击提示记录实际命中弹种，区分混装弹药并保留实际损血。详见 [1.38.24 使用与验证](docs/release-1.38.24-zh.txt)。
-
-1.38.23 升级热更新宿主至 1.5.0：更新前显示暂停窗口，后台准备候选模块，分帧卸载及启用，并在失败时回退；修复藏身处普通制作已满进度却不可领取及客户端制作控制器未同步。宿主升级需要重启客户端一次。详见 [1.38.23 使用与验证](docs/release-1.38.23-zh.txt)。
-
-1.38.22 修正屏幕方框及定位文字被 TAA 采样偏移带动的问题；本局物品列表改为按需分帧扫描，BTC 状态读取移出游戏主线程。详见 [1.38.22 修复与验证](docs/release-1.38.22-zh.txt)。
-
-1.38.21 修复跳过等待后任务未出现在当前客户端：同步角色等待计时，再通过原生接口补充任务模板及检查已到期等待。点击后重新打开商人任务页；主线、支线按钮均适用。详见 [1.38.21 修复与验证](docs/release-1.38.21-zh.txt)。
-
-1.38.20 在「剧情 → 等待时间」新增「跳过支线等待时间」，覆盖普通商人任务及枪匠、灯塔等隐藏延迟；保留前置任务、等级、好感和任务目标要求。点击后重新登录角色生效。详见 [1.38.20 使用与验证](docs/release-1.38.20-zh.txt)。
-
-1.38.19 移除辅助队友、战前编队和玩家加入 AI 队伍功能；旧编队与设置会归档到插件目录的 `retired`。保留原生 AI 分组查询、AI 关系编辑和普通生成工具。
-
-主菜单右上角的 `中文 · English` 按钮可立即切换语言，F12 中也可设置 `24. Interface / Language`（`zh-CN` 或 `en`），重启后保留。英文目录由人工逐条翻译，包含菜单、设置说明、HUD 和动态提示；不调用翻译服务，不更改游戏本身的语言或用户输入。新增语言可参考 `esp-cover/Locales/README.md`。
-
-真实 BTC 启用时，每枚物理 BTC 的商人收购价为实时整枚 BTC 卢布价 × 0.2，不再额外乘商人收购折扣。保留商人的收购资格与币种，美元／欧元使用游戏原汇率；关闭后恢复原生价格。界面单价、卖出篮子总额与提交给服务端的结算总额采用同一报价。
-
-“钥匙与门禁卡不消耗次数”现在覆盖实验室入场门卡；仍检查是否携带有效门卡及剩余次数，仅跳过消耗，不取消入场条件。普通门钥匙的次数保护继续生效。
-
-
-这是当前模组的源码仓库，包含客户端功能、热加载宿主、两个服务端组件、验证工具和安装器源码。
-
-1.38.18 配合 SPT BLEEDINGEDGEMODS 048e0aa 更新，移除临时灯塔容器兼容补丁，改用上游修复。详见 [1.38.18 更新与验证](docs/release-1.38.18-zh.txt)。
-
-1.38.17 修复灯塔地图进入战局时，容器的空物体引用导致原生战利品清理抛出空引用异常。详见 [1.38.17 修复与验证](docs/release-1.38.17-zh.txt)。
-
-1.38.16 新增藏身处普通制作秒完成及战局剩余时间暂停。详见 [1.38.16 使用与验证](docs/release-1.38.16-zh.txt)。
-
-1.38.15 修复战局仓库保存时坐标与物品属性的 JToken 包装，防止撤离后物品进入整理栏，并提供当前存档的字段修复。详见 [1.38.15 使用与验证](docs/release-1.38.15-zh.txt)。
-
-1.38.14 为战局仓库补齐原生容量与角色仓库加成初始化，恢复空余格显示。详见 [1.38.14 使用与验证](docs/release-1.38.14-zh.txt)。
-
-1.38.13 修复战局仓库 parentId 的原生类型转换异常，并将仓库开关合并到“本局物资”顶部，移除独立页面。详见 [1.38.13 使用与验证](docs/release-1.38.13-zh.txt)。
-
-1.38.12 新增战局 Tab 右侧仓库访问及服务端保存、任务物品类别筛选，并按剩余时间显示绿色／黄色／红色。详见 [1.38.12 使用与验证](docs/release-1.38.12-zh.txt)。
-
-1.38.11 在武器编辑中增加读取手持武器、读取该槽武器，并检测装备槽换枪后更新编辑目标。详见 [1.38.11 使用与验证](docs/release-1.38.11-zh.txt)。
-
-1.38.7 新增「数据」侧栏（技能、成就、商城钱包及角色管理）和「剧情」侧栏（主线进度、任务重做、互斥走向、结局及等待时间）。数据与剧情功能通过 LocalGearMail 1.7.0 固定路由加载可替换的 `LocalGearAdmin.module`；安装宿主首次需要重启服务端，以后模块更新可在「数据」页点击「热更新服务端」。详见 [1.38.7 使用与验证](docs/release-1.38.7-zh.txt)。
-
-## 版本与恢复
-
-- [历史版本索引](history/README.md)：65 个可确认版本，按真实保留文件整理。
-- 每个 `v版本` 标签对应本次导入的恢复记录；它们不是原始开发时的 Git 历史。
-- 历史源码保留在 `history/v版本/`；缺少完整源码的版本会明确标注。无法确切对应版本的代码片段位于 `history/recovery/`。
-- Releases 提供历史安装包或仅存模块及校验信息；同版本的不同本地构建单独标为 `archived-builds`。
-- `main` 包含当前开发源码。旧标签的主要用途是访问对应版本与恢复档案；不要将缺失依赖的旧快照视为已验证可重建的项目。
-
-## 源码目录
-
-| 目录 | 内容 |
-|---|---|
-| `esp-cover` | 客户端功能及 AI 管理 |
-| `esp-host` | IL2CPP 热加载宿主 |
-| `gear-mail` | 服务端物品邮件与角色相关功能 |
-| `raid-controls-server` | 战局与服务端设置 |
-| `shared` | 共用规则与数据结构 |
-| `probe` | 离线回归与本地游戏 API 检查 |
-| `gear-mail-tests`、`raid-controls-tests` | 服务端规则检查 |
-| `installer-1.33.0` | 最近打包版本的安装器源码 |
-
-## 构建
-
-需要 .NET 10 SDK，以及本机合法安装的目标游戏、SPT 和 BepInEx/IL2CPP 互操作程序集。仓库不包含这些依赖。
-
-`Directory.Build.props` 默认使用 `D:/SPT-5.0.0-48558` 和 `EftBuild=48558`。可通过 `-p:GameRoot=游戏目录 -p:EftBuild=版本号` 覆盖，所有客户端、服务端及检查工程共用该路径。
-
-将本仓库放在游戏目录中的 `_spt5_esp_fix` 文件夹；从**游戏根目录**运行：
-
-```powershell
-dotnet build _spt5_esp_fix/esp-cover/Esp.csproj -c Release
-dotnet build _spt5_esp_fix/gear-mail/GearMail.csproj -c Release
-dotnet build _spt5_esp_fix/raid-controls-server/RaidControls.csproj -c Release
-dotnet run --project _spt5_esp_fix/probe/Probe.csproj -c Release
-```
-
-源码不在游戏目录下时，为 Probe 设置 `SPT_SOURCE_ROOT`（源码根目录）及 `SPT_GAME_ROOT`（游戏目录）。服务端测试使用 `SPT_GAME_ROOT` 读取对应版本的原生数据库。旧版客户端构建示例：
-
-```powershell
-dotnet build esp-cover/Esp.csproj -c Release '-p:GameRoot=D:/EFT SPT 5.0BE/EFT SPT 5.0BE' -p:EftBuild=47888
-```
-
-`dotnet` 必须指向 SDK，而非仅运行环境。本机已使用的 SDK 位于 `D:/SPT_Mod_Staging_20261027/dotnet-sdk/dotnet.exe`。
-
-## 当前验证状态
-
-1.38.35：108 组 Probe 检查通过，48558/47888 客户端编译通过。新增穿墙可选参数及普通读者遮挡默认值、准星与双眼设置转发检查；实际墙后命中与视觉待用户验收。
-
-1.38.34：107 组 Probe 检查通过，48558/47888 客户端编译通过，保留两条原有 nullable 警告。新增覆盖区与裸露区、未知数据、双眼几何与输入隔离、飞行方向和原生碰撞边界回归。游戏内飞行手感、激光命中及界面视觉待用户验收。
-
-1.38.33：103 组 Probe、21 组服务端检查通过，48558/47888 编译通过；当前 Scav 原生描述只读刷新检查通过，8 个装备槽一致。实际开门、穿戴、ESP 和界面视觉待用户验收。
-
-1.38.32：97 组 Probe 检查通过，48558/47888 客户端编译通过，保留两条原有空引用警告。新增通知顺序、延迟重建和任务地点条件映射回归；实际消息切换、地点标记与页面视觉待用户验收。
-
-1.38.31：96 组 Probe、20 组服务端检查通过，48558/47888 客户端构建通过，保留两条原有空引用警告。会话切换的离线重入与异常恢复用例通过；跳蚤信誉在独立测试角色上验证，仅更改 Rating，保留成交额、挂单与业力。用户关闭游戏后安装，游戏内修复效果与页面视觉待用户验收。
-
-1.38.30：95 组 Probe 检查通过，48558/47888 客户端编译通过，保留两条原有空引用警告。已热加载当前客户端，原生任务模板刷新确认没有缺失模板时不再重复添加；服务端状态接口读取到 30 项配置和唯一编辑页面归属。藏身处切换、战局显示与页面视觉由用户验收。
-
-1.38.29：95 组 Probe、19 组服务端规则和 12 组战局规则检查通过；48558/47888 客户端编译通过，保留两条原有空引用警告。已热加载客户端与服务端管理模块，原生接口读取到 30 项配置、两类业力及 11 类装备槽位过滤器；当前机械师等待任务已通过正常存档保存流程从等待变为可领取。界面视觉与新增 AI 的逐项战局生成待用户验收。
-
-1.38.6 新增默认开启的性能小窗，显示约 5 秒平均 FPS、帧时间/P99/最慢帧、卡顿帧数及辅助更新/界面/镜内回调 CPU 时间；设置在「镜头与画面 → 性能监测」，位置通过原有布局编辑器调整。85 组 Probe、新旧客户端分别构建通过，游戏内显示待用户验收。详见 [1.38.6 说明](docs/release-1.38.6-zh.txt)。
-
-1.38.5 修复光学开镜转动视角时方框漂移：使用世界坐标网格及实际渲染矩阵，原生瞄具渲染前同步刷新。83 组 Probe、新旧客户端分别构建通过，移动视角的视觉效果待用户验收。详见 [1.38.5 说明](docs/release-1.38.5-zh.txt)。
-
-1.38.4 将光学开镜人物方框绘制到原生瞄具纹理，跟随实际倍率及镜片裁切，镜内使用方框与简洁血条；新增沿实际枪口方向的瞄准线，遇到碰撞截止，支持独立开关和距离、宽度、颜色。82 组 Probe 通过，48558/47888 分别编译通过。用户已确认先前 ESP、画质和破门恢复；本次镜内显示、枪口线及帧率变化待游戏内验收。详见 [1.38.4 说明](docs/release-1.38.4-zh.txt)。
-
-
-1.38.2 修复缩放渲染下的世界标记投影及破门字段访问适配，支持分别构建 48558 和 47888；79 组 Probe、12 组服务端、2 组邮件检查通过。已在 48558 热加载并通过原生接口保存画质修复。对齐、上色和破门的游戏内效果待用户验收，详见 [1.38.2 说明](docs/release-1.38.2-zh.txt)。
-
-
-1.38.1 已在 48558 客户端热加载并重新启动成功，钥匙消耗接口及原生活动路径均已挂接。LocalRaidControls 1.5.0 已在服务端重启后加载，36 种箱子模板应用嵌套规则。77 组 Probe 检查、12 组战局服务端检查及 2 组物品邮件检查通过；原生商人修理与原生物品箱模板已离线执行验证。新旧客户端编译均为 0 错误、2 条原有空引用警告，战局服务端编译无警告。新增玩法尚未完成战局实测。详见 [验证记录](docs/validation-1.38.1.json) 和 [使用说明](docs/release-1.38.1-zh.txt)。
-
-- “战局 → 范围拾取”：原生库存事务转移范围内物品，可调整距离并绑定快捷键；默认不绑定快捷键。
-- “物品 → 修理与耐久”：商人修复保留最大耐久、当前穿戴头甲不掉耐久、物品箱嵌套、钥匙不消耗次数。钥匙保留原来的剩余次数显示。商人和箱子规则需要 LocalRaidControls 1.5.0；箱子规则在服务端启动时应用，修改后须重启服务端并重新登录游戏。
-- “战局 → 地图模式”：1.3 使用原生活动及实验室资源；仅 1.2 使用旧移植路径。原生活动开关在服务端和客户端重启后生效；灯光在原生实验室中实时应用。
-
-保留用户选定的原有 IMGUI 菜单、图标与滚动控件。1.37.4 的普通未开镜上色已由用户实测；本次适配不代表所有旧功能均已在 48558 实战验证。
-
-活动开关位于“战局 → 活动控制”，保存后需退出游戏、重启服务端，再重新启动游戏。1.32.8 之后为实际 Git 开发版本；此前 65 个恢复档案的来源说明仍保留。
-
-运行模块与安装包在 Releases；游戏本体、日志、存档和运行时文件不属于版本库。
+[Releases](https://github.com/TRFCUTTFwww/SPT-Assistant/releases) · [Changelog](https://github.com/TRFCUTTFwww/SPT-Assistant/blob/main/CHANGELOG.md)
