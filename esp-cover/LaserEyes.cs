@@ -55,13 +55,16 @@ internal static class LaserEyes {
     if(rightHit.Actor!=null&&rightHit.Actor.Pointer!=left.Actor?.Pointer)Kill(player,rightHit);
    }
    if(!Resources()){Hide();return;}
-   material!.SetInt("_ZTest",(int)(throughWalls.Value?CompareFunction.Always:CompareFunction.LessEqual));
+   // Native beams always respect scene depth. Wall mode uses a separate layer
+   // with character-only depth instead of drawing over every actor with Always.
+   bool masked=throughWalls.Value&&LaserBeamOcclusion.Enable(current,beams,visible);
+   if(!masked)LaserBeamOcclusion.Disable();
    firing=true;
    for(int eye=0;eye<2;eye++){
     var origin=center+right*(eye==0?-.032f:.032f);var delta=ends[eye]-origin;
     // Start visible first-person geometry just beyond the near plane, along the actual eye ray.
     var start=first&&delta.magnitude>camera.nearClipPlane+.03f?origin+delta.normalized*(camera.nearClipPlane+.03f):origin;
-    for(int layer=0;layer<2;layer++){var beam=beams[eye*2+layer]!;beam.enabled=visible[eye];if(!visible[eye])continue;beam.SetPosition(0,start);beam.SetPosition(1,ends[eye]);}
+    for(int layer=0;layer<2;layer++){var beam=beams[eye*2+layer]!;beam.enabled=visible[eye]&&!masked;if(!visible[eye])continue;beam.SetPosition(0,start);beam.SetPosition(1,ends[eye]);}
    }
   }catch(Exception error){Hide();if(Time.unscaledTime>=nextError){nextError=Time.unscaledTime+15;Plugin.Self.Log.LogWarning("Laser eyes: "+error);}}
  }
@@ -99,6 +102,6 @@ internal static class LaserEyes {
   }
   return true;
  }
- static void Hide(){firing=false;nextTrace=0;for(int i=0;i<beams.Length;i++)if(beams[i]!=null)beams[i]!.enabled=false;visible[0]=visible[1]=false;}
- internal static void Reset(){Hide();world=IntPtr.Zero;if(root!=null)UnityEngine.Object.Destroy(root);if(material!=null)UnityEngine.Object.Destroy(material);root=null;material=null;Array.Clear(beams);}
+ static void Hide(){LaserBeamOcclusion.Disable();firing=false;nextTrace=0;for(int i=0;i<beams.Length;i++)if(beams[i]!=null)beams[i]!.enabled=false;visible[0]=visible[1]=false;}
+ internal static void Reset(){Hide();LaserBeamOcclusion.Reset();world=IntPtr.Zero;if(root!=null)UnityEngine.Object.Destroy(root);if(material!=null)UnityEngine.Object.Destroy(material);root=null;material=null;Array.Clear(beams);}
 }
