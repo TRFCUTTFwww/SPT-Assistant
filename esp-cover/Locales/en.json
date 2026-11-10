@@ -1,4 +1,17 @@
 {
+  "准星 AI Buff 信息": "Crosshair AI Buff information",
+  "准星 AI 状态": "Crosshair AI status",
+  "AI 状态尚未就绪": "AI status is not ready",
+  "当前无 Buff 或异常状态": "No current Buffs or adverse effects",
+  "强度": "Intensity",
+  "剩余": "Remaining",
+  "其他玩家": "Other players",
+  "传送本地玩家到该玩家附近": "Teleport your local player near this player",
+  "本局没有其他存活玩家。": "No other living players are present in this raid.",
+  "战局已改变，请重新选择玩家。": "The raid has changed. Select the player again.",
+  "目标玩家已死亡、离开或被替换，请刷新列表。": "The target player has died, left or been replaced. Refresh the list.",
+  "准星指向 AI 时在左侧容器详情区显示当前状态、强度、作用部位和剩余时间。PageUp／PageDown 翻页。": "Point the crosshair at an AI to show current effects, intensity, body part and remaining time in the left container details area. Use PageUp / PageDown to change pages.",
+
   "物品详情（模板基础值）": "Item details (base template values)",
   "生成属性": "Spawn properties",
   "占用尺寸": "Inventory size",

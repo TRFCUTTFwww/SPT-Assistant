@@ -13,7 +13,7 @@ using Effect=EFT.HealthSystem.ActiveHealthController.Effect;
 using Stimulator=EFT.HealthSystem.ActiveHealthController.Stimulator;
 using BuffSettings=EFT.HealthSystem.EffectsSettings.StimulatorSettings.StimulatorBuffSettings;
 namespace LocalSpt5Esp;
-internal static class CharacterBuffs {
+internal static partial class CharacterBuffs {
  sealed record Preset(string Key,string Name);
  sealed record Row(long Pointer,int Id,string Type,string Name,string Part,string State,string Remaining,float Strength,string[] Details,bool Removable);
  static readonly List<Row> rows=new();static readonly List<Preset> presets=new();
@@ -67,19 +67,30 @@ internal static class CharacterBuffs {
  }catch(Exception e){notice="读取状态失败："+e.Message;Warn(e);}}
  static void Scan(ActiveHealthController health){
   LoadNames();rows.Clear();var effects=Effects(health);var alive=effects.ToDictionary(e=>e.Pointer.ToInt64(),e=>e.Id);foreach(var key in added.Keys.ToArray())if(!alive.TryGetValue(key,out var id)||added[key]!=id)added.Remove(key);expanded.IntersectWith(alive.Keys);
+  rows.AddRange(ReadRows(effects));
+  var available=Settings(health)?.Stimulator?.Buffs;presets.Clear();if(available!=null)foreach(var pair in available)presets.Add(new(pair.Key,PresetName(pair.Key)));
+  presets.Sort((a,b)=>string.Compare(a.Name,b.Name,StringComparison.Ordinal));
+ }
+ static Row[] ReadRows(Effect[] effects,bool currentOnly=false){
+  LoadNames();var result=new List<Row>();
   foreach(var effect in effects){try{
    string type=effect.Type?.Name??"Effect",name=BuffRules.Name(type);var details=new List<string>();var stim=effect.TryCast<Stimulator>();
    if(stim!=null){name=PresetName(stim.Name??"");if(string.IsNullOrEmpty(name))name="针剂／食品效果";var buffs=stim._buffs;
     if(buffs!=null)for(int i=0;i<buffs.Length;i++){var b=buffs[i];var settings=b?.Settings;if(b==null||settings==null)continue;float elapsed=stim._curTime;float end=b.WholeTime>0?b.WholeTime:settings.Delay+settings.Duration;
      string state=BuffRules.SubState(b.Active,b.Processed,elapsed,settings.Delay,end);
      float remaining=state=="待生效"?Math.Max(0,settings.Delay-elapsed):BuffRules.SubRemaining(elapsed,end);
+     if(currentOnly){
+      if(state is "已结束" or "未触发")continue;
+      string value=float.IsFinite(b.Value)?b.Value.ToString("+0.###;-0.###;0",CultureInfo.InvariantCulture):I18n.Text("未知");
+      details.Add(I18n.Text(BuffName(settings.BuffType))+(string.IsNullOrEmpty(settings.SkillName)?"":" · "+I18n.Text(SkillName(settings.SkillName)))+" · "+I18n.Text(Part(b.BodyPart))+" · "+I18n.Text("强度")+" "+value+" · "+I18n.Text(state)+" "+I18n.Text(BuffRules.Time(remaining)));
+      continue;
+     }
      details.Add(BuffName(settings.BuffType)+(string.IsNullOrEmpty(settings.SkillName)?"":" · "+SkillName(settings.SkillName))+" · "+b.Value.ToString("+0.###;-0.###;0",CultureInfo.InvariantCulture)+" · "+state+(state=="待生效"?" "+BuffRules.Time(remaining)+"后":state=="生效中"?" "+BuffRules.Time(remaining):""));
     }
    }
-   rows.Add(new(effect.Pointer.ToInt64(),effect.Id,type,name,Part(effect.BodyPart),State(effect),BuffRules.Time(effect.TimeLeft),effect.CurrentStrength,details.ToArray(),BuffRules.CanRemove(type)));
+   result.Add(new(effect.Pointer.ToInt64(),effect.Id,type,name,Part(effect.BodyPart),State(effect),BuffRules.Time(effect.TimeLeft),effect.CurrentStrength,details.ToArray(),BuffRules.CanRemove(type)));
   }catch(Exception e){Warn(e);}}
-  var available=Settings(health)?.Stimulator?.Buffs;presets.Clear();if(available!=null)foreach(var pair in available)presets.Add(new(pair.Key,PresetName(pair.Key)));
-  presets.Sort((a,b)=>string.Compare(a.Name,b.Name,StringComparison.Ordinal));
+  return result.ToArray();
  }
  static string SkillName(string value)=>value switch {"Strength"=>"力量","Endurance"=>"耐力","StressResistance"=>"抗压","Vitality"=>"活力","Health"=>"健康","Metabolism"=>"代谢","Immunity"=>"免疫","Perception"=>"感知","Attention"=>"专注",_=>value};
  static string BuffName(EStimulatorBuffType type)=>type switch {EStimulatorBuffType.HealthRate=>"生命恢复／秒",EStimulatorBuffType.EnergyRate=>"能量变化／秒",EStimulatorBuffType.HydrationRate=>"水分变化／秒",EStimulatorBuffType.SkillRate=>"技能等级",EStimulatorBuffType.MaxStamina=>"最大体力",EStimulatorBuffType.StaminaRate=>"体力恢复",EStimulatorBuffType.DamageModifier=>"伤害倍率",EStimulatorBuffType.WeightLimit=>"负重上限",EStimulatorBuffType.Pain=>"疼痛抑制",EStimulatorBuffType.HandsTremor=>"手部震颤",EStimulatorBuffType.RemoveNegativeEffects=>"清除负面状态",EStimulatorBuffType.RemoveAllBloodLosses=>"清除出血",EStimulatorBuffType.RemoveAllBuffs=>"清除全部增益",EStimulatorBuffType.Antidote=>"解毒",EStimulatorBuffType.BodyTemperature=>"体温变化",EStimulatorBuffType.LightBleeding=>"轻出血",EStimulatorBuffType.HeavyBleeding=>"重出血",EStimulatorBuffType.Fracture=>"骨折",EStimulatorBuffType.Contusion=>"挫伤",EStimulatorBuffType.UnknownToxin=>"未知毒素",EStimulatorBuffType.LethalToxin=>"致命毒素",_=>type.ToString()};

@@ -108,6 +108,7 @@ internal class Plugin {
   yield return ()=>AiHealthAudit.Initialize(this);
   yield return ()=>IncomingDamage.Initialize(this);
   yield return ()=>CharacterBuffs.Initialize(this);
+  yield return ()=>AiBuffHud.Initialize();
   yield return ()=>BossLabels.Initialize();
   yield return ()=>PlayerWeaponPresets.Initialize();
   yield return ()=>AiLimitCompatibility.Initialize(this);
@@ -237,7 +238,7 @@ internal class Overlay {
   }
   if(Time.unscaledTime>=nextStatus){nextStatus=Time.unscaledTime+30;Plugin.Self.Log.LogInfo($"ESP status: people={players.Count} loot={items.Count} god={s.God.Value}; {CombatAssist.Diagnostics}");}
  }catch(Exception e){Warn(e);}}
- public void LateUpdate(){long costStamp=RuntimePerformance.Start();var active=RaidClock.Active;var current=active?Singleton<GameWorld>.Instance:null;var player=current?.MainPlayer;NextRaidLoot.Tick();RuntimeCosts.Mark(ref costStamp,CostStage.Heartbeat);ForceLoot.Tick(current,player);ArmorCare.Tick();RaidSpawnControl.Tick(current);RuntimeCosts.Mark(ref costStamp,CostStage.General);BitcoinControl.Tick();RuntimeCosts.Mark(ref costStamp,CostStage.Bitcoin);NoclipControl.Tick();TeleportControl.Tick(current);InteractionPoints.Tick(current);QuestLocations.Tick(current,player);TripwireHighlight.Tick(current,player);ClaymoreHighlight.Tick(current,player);EventCabinetDisplay.Tick(current,player);AirdropControl.Tick(current);BulletTrajectories.Tick(current);NativeRaidTimer.Tick();RaidEnd.Tick();RaidEnvironment.Tick();RuntimeCosts.Mark(ref costStamp,CostStage.General);RaidLoot.Tick(current,player);TaskNeeds.Tick(player);RuntimeCosts.Mark(ref costStamp,CostStage.Loot);WeaponComfort.Tick(player);WeaponEditor.Tick(current,player);ToyFireControl.Tick(current,player);AiEquipmentEditor.Tick(current);SurvivalAssist.Tick(player);GrenadeAlert.Tick(current,player);RuntimeCosts.Mark(ref costStamp,CostStage.Weapons);IndexContainers();RuntimeCosts.Mark(ref costStamp,CostStage.Containers);RecoilAssist.Tick(me);NightVisionAssist.Tick(me);CombatAssist.Tick(world,me,camera);HitDisplay.Tick(world);GlobalKillFeed.Tick(current);RuntimeCosts.Mark(ref costStamp,CostStage.Combat);ExfilDisplay.Tick(world,me);RuntimeCosts.Mark(ref costStamp,CostStage.Exits);GroundNavigation.Tick(current,player);RuntimeCosts.Mark(ref costStamp,CostStage.Navigation);AiSpawnService.Tick(current,player);AiTestControl.Tick(current,player);AiSceneDirector.Tick(current);AiSceneEquipment.Tick(current);SceneTemplates.Tick(current);ToyDeveloper.Tick(current);CorpseCleanup.Tick(current);AiActorControl.Tick(current,player);AiLimitCompatibility.Tick(current);RuntimeCosts.Mark(ref costStamp,CostStage.AiTools);IncomingDamage.Tick(current);CharacterBuffs.Tick(current,player);TransitDisplay.Tick(world,me);BtrControl.Tick(current);BtrDisplay.Tick(world);MovementAssist.Tick(me);DirectorStage.Late();scopeBoxes.Tick(players,player);MuzzleLine.Tick(current,player);LaserEyes.Tick();RuntimeCosts.Mark(ref costStamp,CostStage.World);}
+ public void LateUpdate(){long costStamp=RuntimePerformance.Start();var active=RaidClock.Active;var current=active?Singleton<GameWorld>.Instance:null;var player=current?.MainPlayer;NextRaidLoot.Tick();RuntimeCosts.Mark(ref costStamp,CostStage.Heartbeat);ForceLoot.Tick(current,player);ArmorCare.Tick();RaidSpawnControl.Tick(current);RuntimeCosts.Mark(ref costStamp,CostStage.General);BitcoinControl.Tick();RuntimeCosts.Mark(ref costStamp,CostStage.Bitcoin);NoclipControl.Tick();TeleportControl.Tick(current);InteractionPoints.Tick(current);QuestLocations.Tick(current,player);TripwireHighlight.Tick(current,player);ClaymoreHighlight.Tick(current,player);EventCabinetDisplay.Tick(current,player);AirdropControl.Tick(current);BulletTrajectories.Tick(current);NativeRaidTimer.Tick();RaidEnd.Tick();RaidEnvironment.Tick();RuntimeCosts.Mark(ref costStamp,CostStage.General);RaidLoot.Tick(current,player);TaskNeeds.Tick(player);RuntimeCosts.Mark(ref costStamp,CostStage.Loot);WeaponComfort.Tick(player);WeaponEditor.Tick(current,player);ToyFireControl.Tick(current,player);AiEquipmentEditor.Tick(current);SurvivalAssist.Tick(player);GrenadeAlert.Tick(current,player);RuntimeCosts.Mark(ref costStamp,CostStage.Weapons);IndexContainers();RuntimeCosts.Mark(ref costStamp,CostStage.Containers);RecoilAssist.Tick(me);NightVisionAssist.Tick(me);CombatAssist.Tick(world,me,camera);HitDisplay.Tick(world);GlobalKillFeed.Tick(current);RuntimeCosts.Mark(ref costStamp,CostStage.Combat);ExfilDisplay.Tick(world,me);RuntimeCosts.Mark(ref costStamp,CostStage.Exits);GroundNavigation.Tick(current,player);RuntimeCosts.Mark(ref costStamp,CostStage.Navigation);AiSpawnService.Tick(current,player);AiTestControl.Tick(current,player);AiSceneDirector.Tick(current);AiSceneEquipment.Tick(current);SceneTemplates.Tick(current);ToyDeveloper.Tick(current);CorpseCleanup.Tick(current);AiActorControl.Tick(current,player);AiLimitCompatibility.Tick(current);RuntimeCosts.Mark(ref costStamp,CostStage.AiTools);IncomingDamage.Tick(current);CharacterBuffs.Tick(current,player);AiBuffHud.Tick(current,player);TransitDisplay.Tick(world,me);BtrControl.Tick(current);BtrDisplay.Tick(world);MovementAssist.Tick(me);DirectorStage.Late();scopeBoxes.Tick(players,player);MuzzleLine.Tick(current,player);LaserEyes.Tick();RuntimeCosts.Mark(ref costStamp,CostStage.World);}
  public void OnDestroy(){foreach(var step in UnloadSteps())step();}
  public IEnumerable<Action> UnloadSteps(){
   yield return ()=>scopeBoxes.Dispose();
@@ -270,6 +271,7 @@ internal class Overlay {
   yield return ()=>PlayerWeaponPresets.Reset();
   yield return ()=>BossLabels.Reset();
   yield return ()=>CharacterBuffs.Reset();
+  yield return ()=>AiBuffHud.Reset();
   yield return ()=>AiTestControl.Reset();
   yield return ()=>AiActorControl.Reset();
   yield return ()=>IncomingDamage.Reset();
@@ -335,6 +337,7 @@ internal class Overlay {
    }
   }catch(Exception e){Warn(e);}}
   if(s.Loot.Value||s.People.Value)DrawLoot();
+  AiBuffHud.Draw(style);
   NoclipControl.Draw();RaidClock.DrawHud();GroundNavigation.DrawHud(camera,me);RaidLoot.DrawMarkers(camera,me);GrenadeAlert.Draw(camera,me);
   HitDisplay.Draw();GlobalKillFeed.Draw();IncomingDamage.Draw(camera,me);AiTestControl.DrawMarker(camera);AirdropControl.DrawMarkers(camera,me);BtrDisplay.DrawMarker(camera,me);InteractionPoints.DrawMarkers(camera,me);TeleportControl.DrawPlayerMarker(camera,me);TripwireHighlight.Draw(camera);ClaymoreHighlight.Draw(camera);EventCabinetDisplay.Draw(camera);QuestLocations.DrawMarkers(camera,me);
   RaidPopulation.Draw(style);
@@ -436,7 +439,7 @@ internal class Overlay {
     occupied.Add(rect);GUI.color=new Color(0,0,0,0.6f*opacity);GUI.DrawTexture(rect,Texture2D.whiteTexture);Text(new Rect(rect.x+4,rect.y,rect.width-8,rect.height),title,color);
    }
    var focused=projected.FirstOrDefault(e=>e.Marker.Key==selected);
-   if(focused.Marker!=null)DrawDetailPanel(focused.Marker,opacity);
+   if(focused.Marker!=null&&!AiBuffHud.Visible)DrawDetailPanel(focused.Marker,opacity);
   }finally{style.alignment=oldAlignment;}
  }
  void DrawDetailPanel(Marker marker,float opacity){

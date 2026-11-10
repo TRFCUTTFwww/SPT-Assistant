@@ -516,6 +516,7 @@ var rows=new MenuRowLayout();rows.Build(Enumerable.Repeat(36f,20));Assert(rows.T
 Console.WriteLine("PASS full ammunition list, 5.56 variants, search aliases and scroll access to last item");
 using var core=AssemblyDefinition.ReadAssembly(Path.Combine(sourceRoot,"esp-cover/bin/Release/net10.0/Local.Spt5.ESP.Core.dll"));
 DisplayRegressionChecks.Run(items.RootElement,core);
+BuffPeerRegressionChecks.Run(core,assembly);
 var scavSyncType=core.MainModule.Types.Single(t=>t.Name=="ScavEquipmentSync");var scavCalls=scavSyncType.Methods.Where(m=>m.HasBody).SelectMany(m=>m.Body.Instructions).Where(i=>i.Operand is MethodReference).Select(i=>(MethodReference)i.Operand).ToArray();
 Assert(scavCalls.Any(m=>m.Name=="LoadProfiles")&&scavCalls.Any(m=>m.Name==".ctor"&&m.DeclaringType.Name=="Profile")&&scavCalls.Any(m=>m.Name=="set_Inventory"),"Scav sync constructs a native profile from refreshed descriptors before updating its inventory");
 Assert(!scavCalls.Any(m=>new[]{"GetProfiles","SetProfiles","set_Profile","set_ProfileOfPet","SendOperationRightNow"}.Contains(m.Name)),"Scav refresh cannot replace the PMC, replace session profiles or issue inventory operations");
