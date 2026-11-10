@@ -19,7 +19,7 @@ internal static class AimTargetFilter {
  static readonly Dictionary<string,string> roleNames=new(StringComparer.OrdinalIgnoreCase){["ravangeZryachiyEvent"]="复仇兹拉奇",["infectedAssault"]="感染 Scav",["infectedPmc"]="感染 PMC",["infectedCivil"]="感染平民",["infectedLaborant"]="感染研究员",["infectedTagilla"]="感染大锤 · 镰刀",["bossBully"]="Reshala",["bossKilla"]="Killa",["bossTagilla"]="Tagilla",["bossKojaniy"]="Shturman",["bossGluhar"]="Glukhar",["bossSanitar"]="Sanitar",["bossZryachiy"]="Zryachiy",["bossKnight"]="Knight",["followerBigPipe"]="Big Pipe",["followerBirdEye"]="Birdeye",["bossBoar"]="Kaban",["bossKolontay"]="Kollontay",["bossPartisan"]="Partisan",["sectantPriest"]="邪教祭司",["sectantWarrior"]="邪教战士",["assault"]="普通 Scav",["marksman"]="狙击 Scav",["pmcBot"]="掠夺者",["exUsec"]="游荡者",["pmcUSEC"]="USEC PMC",["pmcBEAR"]="BEAR PMC",["shooterBTR"]="BTR 射手",["gifter"]="圣诞老人",["civilian"]="平民"};
  internal static void Initialize(Plugin plugin){
   ConfigEntry<T> Bind<T>(string key,string label,T value){var entry=plugin.Config.Bind("25. Aim exclusions",key,value,new ConfigDescription("",null,new CnConfig.ConfigurationManagerAttributes{DispName=label,Category="25. 自瞄排除"}));entry.SettingChanged+=(_,_)=>rules=null;return entry;}
-  foreach(var kind in Enum.GetValues<CharacterKind>())excluded[kind]=Bind("Exclude "+kind,"排除 "+RolePalette.Name(kind),false);
+  foreach(var kind in Enum.GetValues<CharacterKind>())excluded[kind]=Bind("Exclude "+kind,"排除 "+RolePalette.Name(kind),kind==CharacterKind.Teammate);
   excludeUsec=Bind("Exclude USEC","排除 USEC PMC",false);excludeBear=Bind("Exclude BEAR","排除 BEAR PMC",false);
   roleRules=Bind("Excluded roles","排除角色类型","");nameRules=Bind("Excluded names","排除名称","");profileRules=Bind("Excluded profiles","排除个体 ID","");
  }

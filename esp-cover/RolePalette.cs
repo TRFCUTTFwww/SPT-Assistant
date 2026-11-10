@@ -1,6 +1,6 @@
 ﻿using System;
 namespace LocalSpt5Esp;
-internal enum CharacterKind { Boss, Follower, Scav, Raider, Rogue, BlackFox, Pmc, Cultist, Zombie }
+internal enum CharacterKind { Boss, Follower, Scav, Raider, Rogue, BlackFox, Pmc, Cultist, Zombie, Teammate }
 internal static class RolePalette {
  internal static CharacterKind Classify(string role,bool savage){
   if(role.Equals("infectedTagilla",StringComparison.OrdinalIgnoreCase)||role.Equals("ravangeZryachiyEvent",StringComparison.OrdinalIgnoreCase))return CharacterKind.Boss;
@@ -16,11 +16,11 @@ internal static class RolePalette {
   return CharacterKind.Scav;
  }
  internal static string Name(CharacterKind kind)=>kind switch{
-  CharacterKind.Boss=>"BOSS",CharacterKind.Follower=>"保镖",CharacterKind.Scav=>"Scav",CharacterKind.Raider=>"掠夺者",
+  CharacterKind.Teammate=>"队友",CharacterKind.Boss=>"BOSS",CharacterKind.Follower=>"保镖",CharacterKind.Scav=>"Scav",CharacterKind.Raider=>"掠夺者",
   CharacterKind.Rogue=>"游荡者",CharacterKind.BlackFox=>"黑色军团",CharacterKind.Cultist=>"邪教徒",CharacterKind.Zombie=>"僵尸",_=>"PMC"
  };
  internal static string Hex(CharacterKind kind)=>kind switch{
-  CharacterKind.Boss=>"#FF3030",CharacterKind.Follower=>"#B369FF",CharacterKind.Scav=>"#66D94D",CharacterKind.Raider=>"#FF9E26",
+  CharacterKind.Teammate=>"#00FF00",CharacterKind.Boss=>"#FF3030",CharacterKind.Follower=>"#B369FF",CharacterKind.Scav=>"#66D94D",CharacterKind.Raider=>"#FF9E26",
   CharacterKind.Rogue=>"#26D9F2",CharacterKind.BlackFox=>"#FF40C7",CharacterKind.Cultist=>"#E5D442",CharacterKind.Zombie=>"#C6FF00",_=>"#4D80FF"
  };
 }

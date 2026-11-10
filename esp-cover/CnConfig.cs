@@ -68,6 +68,7 @@ internal static class CnConfig {
   ["Rogue color"]=("游荡者颜色","游荡者的人物轮廓与标签颜色，默认青色；填写 #RRGGBB。"),
   ["BlackFox color"]=("黑色军团颜色","黑色军团及黑色军团活动变体的人物轮廓与标签颜色，默认粉色；填写 #RRGGBB。"),
   ["Pmc color"]=("PMC 颜色","PMC 的人物轮廓与标签颜色，默认蓝色；填写 #RRGGBB。"),
+  ["Teammate color"]=("队友颜色","Fika 真人队友的人物轮廓与标签颜色，默认绿色；填写 #RRGGBB。"),
   ["Show breakdown"]=("显示各阵营人数","分别显示 BOSS、保镖、邪教徒、Scav、掠夺者、游荡者、黑色军团、PMC 的存活人数，PMC 进一步区分 USEC 和 BEAR。只统计已生成且仍存活的角色。"),
   ["Show conditional exits"]=("显示特殊撤离状态","显示本地图黑车、绿烟、拉闸点的实际状态，包括未分配给你的点。"),
   ["Panel mode"]=("撤离信息窗口","关闭、按住显示或常开；默认按住 + 键显示。"),

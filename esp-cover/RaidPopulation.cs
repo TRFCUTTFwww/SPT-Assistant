@@ -25,7 +25,7 @@ internal static class RaidPopulation {
  }
  internal static void Draw(GUIStyle style){
   if(!Enabled.Value)return;
-  string text=$"剩余人数：{tally.Total}";
+  string text=I18n.Text($"剩余人数：{tally.Total} · 队友 {tally.Teammates} · 其他 {tally.Others}");
   if(Breakdown.Value){
    var sb=new StringBuilder(text).Append(I18n.Text($"  | PMC {tally.Counts[(int)CharacterKind.Pmc]}（USEC {tally.Usec} / BEAR {tally.Bear}"+(tally.Unknown>0?$" / 未知 {tally.Unknown}":"")+")\n各阵营："));
    foreach(var kind in new[]{CharacterKind.Boss,CharacterKind.Follower,CharacterKind.Cultist,CharacterKind.Zombie,CharacterKind.Scav,CharacterKind.Raider,CharacterKind.Rogue,CharacterKind.BlackFox})sb.Append("  | ").Append(I18n.Text(RolePalette.Name(kind))).Append(' ').Append(tally.Counts[(int)kind]);

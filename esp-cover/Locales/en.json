@@ -1,4 +1,8 @@
 {
+  "队友": "Teammate",
+  "排除 队友": "Exclude teammates",
+  "队友颜色": "Teammate color",
+  "Fika 真人队友的人物轮廓与标签颜色，默认绿色；填写 #RRGGBB。": "Outline and label color for human Fika teammates. Green by default; enter #RRGGBB.",
   "杂项": "Miscellaneous",
   "特殊待遇": "Special treatment",
   "趣味规则与特殊待遇，每项独立开关": "Optional rules and special treatment, with independent toggles",

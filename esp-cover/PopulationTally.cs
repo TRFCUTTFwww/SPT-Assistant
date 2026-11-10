@@ -6,6 +6,8 @@ internal sealed class PopulationTally {
  readonly HashSet<string> seen=new(StringComparer.Ordinal);
  internal readonly int[] Counts=new int[Enum.GetValues<CharacterKind>().Length];
  internal int Total,Usec,Bear,Unknown;
+ internal int Teammates=>Counts[(int)CharacterKind.Teammate];
+ internal int Others=>Total-Teammates;
  internal static PmcFaction Faction(string role,string side){
   if(role.Equals("pmcUSEC",StringComparison.OrdinalIgnoreCase))return PmcFaction.Usec;
   if(role.Equals("pmcBEAR",StringComparison.OrdinalIgnoreCase))return PmcFaction.Bear;

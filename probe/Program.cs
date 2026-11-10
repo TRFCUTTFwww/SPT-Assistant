@@ -10,6 +10,26 @@ using LocalRaidShared;
 var sourceRoot=Path.GetFullPath(Environment.GetEnvironmentVariable("SPT_SOURCE_ROOT")??"_spt5_esp_fix");
 var gameRoot=Environment.GetEnvironmentVariable("SPT_GAME_ROOT");if(!string.IsNullOrWhiteSpace(gameRoot))Directory.SetCurrentDirectory(gameRoot);
 try{
+
+// Human Fika peers must remain distinct from both host and replicated AI.
+Assert(FikaTeamRules.Teammate(false,false,false,false,true,"",""),"observed human peer is a teammate without relying on faction or group");
+Assert(FikaTeamRules.Teammate(false,false,false,null,true,"Fika","Fika"),"matching Fika groups provide a reflection fallback");
+Assert(!FikaTeamRules.Teammate(true,false,false,false,true,"Fika","Fika")&&!FikaTeamRules.Teammate(false,true,false,false,true,"Fika","Fika"),"local player and duplicate local profile are never teammates");
+Assert(!FikaTeamRules.Teammate(false,false,true,false,true,"Fika","Fika")&&!FikaTeamRules.Teammate(false,false,false,true,true,"Fika","Fika"),"native and replicated AI remain AI even with a shared group");
+Assert(!FikaTeamRules.Teammate(false,false,false,false,false,"Fika","Fika")&&!FikaTeamRules.Teammate(false,false,false,null,true,"USEC","USEC")&&!FikaTeamRules.Teammate(false,false,false,null,true,"Fika","other"),"single-player, same-faction and unrelated-group actors are not teammates");
+var teamTally=new PopulationTally();
+teamTally.Add("friend",CharacterKind.Teammate,"pmcUSEC","Usec",true,false);
+teamTally.Add("friend",CharacterKind.Teammate,"pmcUSEC","Usec",true,false);
+teamTally.Add("self",CharacterKind.Teammate,"pmcUSEC","Usec",true,true);
+teamTally.Add("dead",CharacterKind.Teammate,"pmcUSEC","Usec",false,false);
+teamTally.Add("bot",CharacterKind.Pmc,"pmcBEAR","Bear",true,false);
+Assert(teamTally.Total==2&&teamTally.Teammates==1&&teamTally.Others==1&&teamTally.Usec==0&&teamTally.Bear==1,"population deduplicates living peers, excludes self/dead and separates AI PMC totals");
+teamTally.Clear();Assert(teamTally.Total==0&&teamTally.Teammates==0&&teamTally.Others==0,"raid reset clears teammate population");
+var teamExcluded=new AimTargetRules(new[]{CharacterKind.Teammate},false,false,"","","");
+Assert(teamExcluded.Excludes(CharacterKind.Teammate,"Usec","pmcUSEC","friend","peer")&&!teamExcluded.Excludes(CharacterKind.Pmc,"Usec","pmcUSEC","bot","bot"),"teammate exclusion preserves AI targets of the same faction");
+Assert(!new AimTargetRules(Array.Empty<CharacterKind>(),true,true,"","","").Excludes(CharacterKind.Teammate,"Usec","pmcUSEC","friend","peer"),"teammate category can be allowed independently of AI PMC faction exclusions");
+Assert(RolePalette.Name(CharacterKind.Teammate)=="队友"&&RolePalette.Hex(CharacterKind.Teammate)=="#00FF00","teammate label and default ESP color");
+Console.WriteLine("PASS Fika teammate classification, AI and self isolation, population, green palette and configurable aim exclusion");
 foreach(string guardRole in AiSpawnCatalog.Options.Where(o=>o.Group=="BOSS 保镖").Select(o=>o.Role).Concat(new[]{"followerBigPipe","followerBirdEye","BOSSBOARSNIPER","followerBossTest"}))foreach(bool savage in new[]{true,false}){
  Assert(RolePalette.Classify(guardRole,savage)==CharacterKind.Follower&&AiTypeRules.Matches(AiTypeFilter.Follower,guardRole,savage)&&!AiTypeRules.Matches(AiTypeFilter.Boss,guardRole,savage)&&RaidSpawnRules.Faction(guardRole)=="follower","bodyguard stays out of boss display, counts, filters and spawn scaling: "+guardRole);
 }
@@ -709,6 +729,7 @@ Console.WriteLine("PASS native PMC dashboard integration, exact lifetime counter
 var englishText=JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(Path.Combine(sourceRoot,"esp-cover/Locales/en.json")))!;
 var englishFormats=JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(Path.Combine(sourceRoot,"esp-cover/Locales/en-formats.json")))!;
 var englishCatalog=new LocalizationCatalog(englishText,englishFormats,JsonSerializer.Deserialize<Dictionary<string,int[]>>(File.ReadAllText(Path.Combine(sourceRoot,"esp-cover/Locales/en-verbatim.json"))));
+Assert(englishCatalog.Text("剩余人数：12 · 队友 1 · 其他 11")=="Remaining characters: 12 · Teammates 1 · Others 11"&&englishCatalog.Text("队友")=="Teammate","teammate population uses a complete English sentence and localized category");
 Assert(englishCatalog.Text("主页面")=="Home"&&englishCatalog.Text("卢布")=="Roubles"&&englishCatalog.Text("美元")=="US dollars"&&englishCatalog.Text("欧元")=="Euros"&&englishCatalog.Text("待命")=="Standby","home and its currency and standby labels have authored English translations");
 Assert(englishCatalog.Text("弹道与防护分析 · 开启")=="Ballistics and protection analysis · 开启"&&englishCatalog.Text("命中枪弹：搜索 · 取消")=="Impact weapon / ammo: 搜索 · 取消","ballistic display preserves character and item names that match UI labels");
 Assert(englishCatalog.Text("对方弹药 → 自身胸部：估算穿透 10–100%（覆盖区域不同）")=="Opponent ammunition vs your chest: Estimated penetration 10–100% (varies by coverage zone)","protection estimate localizes the coverage-dependent penetration range");

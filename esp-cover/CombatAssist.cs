@@ -109,13 +109,13 @@ internal static class CombatAssist {
   if(best!=null)targetColliders[p.Pointer]=best;return best;
  }
  static Vector3 TargetPoint(Player p){var part=TargetCollider(p);if(part?.Collider!=null)return part.Collider.bounds.center;return SelectedPart()==EBodyPart.Head&&p.PlayerBones?.Head!=null?p.PlayerBones.Head.position:p.Position+Vector3.up*(SelectedPart() switch{EBodyPart.Chest=>1.3f,EBodyPart.Stomach=>1f,EBodyPart.LeftLeg or EBodyPart.RightLeg=>0.5f,_=>1.6f});}
- static bool AliveAI(Player? p)=>p!=null&&!p.IsYourPlayer&&(p.IsAI||p.AIData?.BotOwner!=null)&&p.HealthController!=null&&p.HealthController.IsAlive;
+ static bool AliveTarget(Player? p)=>p!=null&&!p.IsYourPlayer&&(FikaTeams.IsAi(p)||FikaTeams.IsTeammate(p))&&p.HealthController!=null&&p.HealthController.IsAlive;
  static bool Present(GameWorld world,Player? actor){if(actor==null)return false;var all=world.AllAlivePlayersList;if(all==null)return false;for(int i=0;i<all.Count;i++)if(all[i]?.Pointer==actor.Pointer)return true;return false;}
  static float Limit(float distance)=>Mode.Value==AimModes.Soft?SoftAimControl.Angle:AimMath.Limit(distance,Angle.Value,CloseRange.Value,CloseAngle.Value);
  static float EffectiveRange=>ToyRangeControl.Enabled!=null&&ToyRangeControl.Enabled.Value&&local?.HandsController?.Item?.StringTemplateId==ToyDeveloper.Toy?Math.Min(Range.Value,ToyRangeControl.Maximum.Value):Range.Value;
  static bool RequireVisibility=>VisibleOnly.Value&&!(Mode.Value==AimMode.Silent&&ThroughCover.Value);
  static bool ValidTarget(){
-  if(!Ready()||!AliveAI(target)||!AimTargetFilter.Allowed(target!))return false;
+  if(!Ready()||!AliveTarget(target)||!AimTargetFilter.Allowed(target!))return false;
   var point=TargetPoint(target!);var direction=point-view!.transform.position;float distance=direction.magnitude;
   return distance<=EffectiveRange&&Vector3.Angle(view.transform.forward,direction)<=Limit(distance)&&(!RequireVisibility||ClearLine(view.transform.position,point,target!));
  }
@@ -146,7 +146,7 @@ internal static class CombatAssist {
   target=null;float best=float.MaxValue;var all=world.AllAlivePlayersList;if(all==null)return;
   var origin=view!.transform.position;
   for(int i=0;i<all.Count;i++){
-   var candidate=all[i];if(!AliveAI(candidate)||!AimTargetFilter.Allowed(candidate))continue;
+   var candidate=all[i];if(!AliveTarget(candidate)||!AimTargetFilter.Allowed(candidate))continue;
    var point=TargetPoint(candidate);var direction=point-origin;float distance=direction.magnitude;if(distance>EffectiveRange)continue;
    float angle=Vector3.Angle(view.transform.forward,direction),limit=Limit(distance);
    if(angle>limit)continue;
