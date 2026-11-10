@@ -49,6 +49,17 @@ Console.WriteLine("PASS wallet conservation, duplicate/stale/overflow rejection,
 
 var gameRoot=Environment.GetEnvironmentVariable("SPT_GAME_ROOT")??"D:/SPT-5.0.0-48558";
 var nativeJson=new SPTarkov.Server.Core.Utils.JsonUtil([new SPTarkov.Server.Core.Utils.Json.SptJsonConverterRegistrator()]);
+var supplyOffer=new MongoId();var supplyChild=new MongoId();var supplyTemplate=new MongoId();
+var originalSupply=new TraderAssort{Items=[new(){Id=supplyOffer,Template=supplyTemplate,ParentId="hideout",SlotId="hideout",Upd=new(){StackObjectsCount=0,UnlimitedCount=false,BuyRestrictionMax=5,BuyRestrictionCurrent=5}},new(){Id=supplyChild,Template=supplyTemplate,ParentId=supplyOffer.ToString(),SlotId="mod_magazine",Upd=new(){StackObjectsCount=1}}],BarterScheme=new(){{supplyOffer,[[new(){Template="5449016a4bdc2d6f028b456f",Count=12345}]]}},LoyalLevelItems=new(){{supplyOffer,4}}};
+string beforeSupply=nativeJson.Serialize(originalSupply)!;
+var unlimitedSupply=TraderSupplyRules.Copy(originalSupply,nativeJson);var unlimitedOffer=unlimitedSupply.Items!.Single(i=>i.Id==supplyOffer);
+if(unlimitedOffer.Upd?.StackObjectsCount!=int.MaxValue||unlimitedOffer.Upd.UnlimitedCount!=true||unlimitedOffer.Upd.BuyRestrictionMax!=null||unlimitedOffer.Upd.BuyRestrictionCurrent!=null||nativeJson.Serialize(originalSupply)!=beforeSupply)throw new Exception("Unlimited supply mutated native stock or failed to remove exhausted personal limits");
+if(nativeJson.Serialize(unlimitedSupply.BarterScheme)!=nativeJson.Serialize(originalSupply.BarterScheme)||nativeJson.Serialize(unlimitedSupply.LoyalLevelItems)!=nativeJson.Serialize(originalSupply.LoyalLevelItems)||nativeJson.Serialize(unlimitedSupply.Items.Single(i=>i.Id==supplyChild))!=nativeJson.Serialize(originalSupply.Items.Single(i=>i.Id==supplyChild)))throw new Exception("Supply override changed price, loyalty, identity or attachment contents");
+unlimitedOffer.Upd.StackObjectsCount=100;var nextSupply=TraderSupplyRules.Copy(originalSupply,nativeJson);if(nextSupply.Items!.Single(i=>i.Id==supplyOffer).Upd?.StackObjectsCount!=int.MaxValue||nativeJson.Serialize(originalSupply)!=beforeSupply)throw new Exception("A purchase consumed shared stock or poisoned subsequent assortment copies");
+var purchaseToggle=typeof(MiscService).GetProperty(nameof(MiscService.Options))!;var savedPurchaseOptions=MiscService.Options;
+try{foreach(bool unlimited in new[]{false,true,false}){purchaseToggle.SetValue(null,new LocalMiscShared.MiscSettings{UnlimitedTraderPurchases=unlimited});foreach(string hook in new[]{"PurchaseLimit","ConsumeFenceStock"}){bool native=(bool)typeof(MiscService).GetMethod(hook,System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.NonPublic)!.Invoke(null,null)!;if(native==unlimited)throw new Exception("Trader native rules did not follow toggle: "+hook);}}}
+finally{purchaseToggle.SetValue(null,savedPurchaseOptions);}
+Console.WriteLine("PASS unlimited trader supply: exhausted stock/limits, detached repeated purchases, price/loyalty/attachments preserved and native limit/Fence restoration");
 foreach(string presetMode in new[]{"once","always"}){
  var savedPreset=new ScavPreset(presetMode,nativeJson.Deserialize<LoadoutSnapshot>(nativeJson.Serialize(snapshot))!);
  var envelope=new SPTarkov.Server.Core.Models.Eft.Profile.SptProfile{ExtensionData=new(){["localEspScavPreset"]=savedPreset}};

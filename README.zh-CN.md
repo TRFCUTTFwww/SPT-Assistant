@@ -4,7 +4,7 @@
 
 为 **SPT 单机塔科夫**开发的游戏内控制面板，使用 C# 与 Unity 构建。角色、战局、装备、任务与服务端设置，都可以在同一界面中管理。
 
-**版本 2.0.5** · **当前适配：SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
+**版本 2.0.6** · **当前适配：SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
 
 > **不稳定，属于实验版本。** 本项目没有经过广泛测试，可能出现功能失效、崩溃、多人不同步或存档被意外修改。安装及更新前请备份存档和配置。编译通过、热加载成功，不代表每项功能都已在实战中验证。
 >
@@ -14,7 +14,7 @@
 
 1. 安装上方标注的对应版本 SPT/EFT，并启动一次 SPT，让 BepInEx 生成互操作程序集。请使用独立的 SPT 游戏目录。
 2. 关闭该目录的游戏和服务端，备份 `SPT_Runtime/user/profiles`、`BepInEx/config` 和已有辅助文件。
-3. 从 [Releases](https://github.com/TRFCUTTFwww/SPT-Assistant/releases/tag/v2.0.5) 下载 **SPT-Assistant-2.0.5-experimental.zip** 并解压到单独的文件夹。GitHub 自动生成的源码压缩包不是可直接安装的模组。
+3. 从 [Releases](https://github.com/TRFCUTTFwww/SPT-Assistant/releases) 下载对应版本的安装包，并解压到单独的文件夹。2.0.6 源码可能先于安装附件更新，请核对附件版本。GitHub 自动生成的源码压缩包不是可直接安装的模组。
 4. 在解压目录打开 Windows PowerShell，执行下面的命令，把路径改为自己的游戏目录：
 
    ```powershell
@@ -25,7 +25,7 @@
 
 安装脚本只安装辅助组件，从你自己的 SPT 数据库生成物品名称和价格缓存，保留原有配置及 API 密钥，覆盖的文件备份到 `mod-backups`。首次完整安装会生成随机的本地管理 API 密钥。**Fika 成员：**命令增加 `-ClientOnly`，连接房主，不要启动本地服务端；服务端管理功能需要房主安装对应组件并提供密钥，只应给受信任的管理员使用。本包不负责安装 Fika。
 
-文件位置、更新、源码构建和卸载方式见[中英双语安装说明](docs/INSTALL.md)；验证范围和待实测项目见 [2.0.5 发布说明](docs/release-2.0.5.md)。
+文件位置、更新、源码构建和卸载方式见[中英双语安装说明](docs/INSTALL.md)；验证范围和待实测项目见 [2.0.6 发布说明](docs/release-2.0.6.md)。
 
 ## 功能
 

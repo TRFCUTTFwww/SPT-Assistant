@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using EFT;
 using EFT.CameraControl;
 using Il2CppInterop.Runtime;
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using UnityEngine;
 using UnityEngine.Rendering;
 namespace LocalSpt5Esp;
@@ -19,10 +20,10 @@ internal static class LaserBeamOcclusion {
   internal View(Camera camera){
    Camera=camera;Commands=new CommandBuffer{name="SPT Assistant laser character occlusion"};
    for(int i=0;i<Beams.Length;i++)Beams[i]=new Mesh{hideFlags=HideFlags.HideAndDontSave};
-   camera.AddCommandBuffer(CameraEvent.BeforeImageEffects,Commands);
+   camera.AddCommandBuffer(CameraEvent.BeforeForwardAlpha,Commands);
   }
   internal void Dispose(){
-   try{if(Camera!=null)Camera.RemoveCommandBuffer(CameraEvent.BeforeImageEffects,Commands);}finally{
+   try{if(Camera!=null)Camera.RemoveCommandBuffer(CameraEvent.BeforeForwardAlpha,Commands);}finally{
     Commands.Clear();Commands.Dispose();foreach(var mesh in Beams)UnityEngine.Object.Destroy(mesh);
    }
   }
@@ -48,15 +49,16 @@ internal static class LaserBeamOcclusion {
  }
  static bool Materials(){
   if(depth!=null&&beam!=null&&composite!=null)return true;
-  var solid=Shader.Find("Hidden/Internal-Colored");var alpha=Shader.Find("Unlit/Transparent");
-  if(solid==null||!solid.isSupported||alpha==null||!alpha.isSupported){
+  var solid=Shader.Find("Hidden/Internal-Colored");var rgba=Shader.Find("Sprites/Default");var alpha=Shader.Find("Unlit/Transparent");
+  if(solid==null||!solid.isSupported||rgba==null||!rgba.isSupported||alpha==null||!alpha.isSupported){
    if(Time.unscaledTime>=nextError){nextError=Time.unscaledTime+15;Plugin.Self.Log.LogWarning("Laser character occlusion shaders unavailable; keeping ordinary scene depth instead of drawing over actors");}
    return false;
   }
   depth??=Make(solid,true);depth.color=Color.clear;
-  // Write straight RGBA into an otherwise transparent target. Glow and core
-  // overwrite there; alpha blending happens exactly once during composition.
-  beam??=Make(solid,false);beam.color=Color.white;
+  // Internal-Colored has ColorMask RGB: on a transparent target its alpha stays
+  // zero, so a subsequent alpha composite discards the entire beam. Sprites
+  // writes RGBA, respects ordinary LEqual depth and accepts our vertex colors.
+  beam??=new Material(rgba){hideFlags=HideFlags.HideAndDontSave};beam.color=Color.white;beam.mainTexture=Texture2D.whiteTexture;
   composite??=new Material(alpha){hideFlags=HideFlags.HideAndDontSave};
   return true;
  }
@@ -101,17 +103,29 @@ internal static class LaserBeamOcclusion {
    }
    for(int i=0;i<lines.Length;i++){
     var line=lines[i];if(line==null||!visible[i/2])continue;
-    // Bake against this exact camera so billboard width and eye-ray geometry
+    // Build against this exact camera so billboard width and eye-ray geometry
     // remain correct in both the main view and the native optic texture.
-    line.BakeMesh(view.Beams[i],camera,true);
+    BuildBeam(view.Beams[i],line,camera);
     commands.DrawMesh(view.Beams[i],Matrix4x4.identity,beam!,0,0);
    }
    commands.Blit(target,new RenderTargetIdentifier(BuiltinRenderTextureType.CameraTarget),composite!,0);
    commands.ReleaseTemporaryRT(texture);
-   if(!reported){reported=true;Plugin.Self.Log.LogInfo("Laser wall rendering ready: character-only depth, native camera matrices and transparent composition; actors occlude beams");}
+   if(!reported){reported=true;Plugin.Self.Log.LogInfo("Laser wall rendering ready: RGBA sprite beams, explicit colored geometry, native scene fallback and character-only depth; shader="+beam!.shader.name+", vertices="+view.Beams[0].vertexCount);}
   }catch(Exception error){
    view?.Commands.Clear();if(Time.unscaledTime>=nextError){nextError=Time.unscaledTime+15;Plugin.Self.Log.LogWarning("Laser character occlusion: "+error);}
   }
+ }
+ // BakeMesh on a disabled LineRenderer can yield empty or colorless geometry.
+ // Own all four vertices and their colors rather than depending on its internal
+ // renderer state. Native scene beams remain enabled as a visible fallback.
+ static void BuildBeam(Mesh mesh,LineRenderer line,Camera camera){
+  var start=line.GetPosition(0);var end=line.GetPosition(1);var along=end-start;
+  var side=Vector3.Cross(along,(start+end)*.5f-camera.transform.position);
+  if(side.sqrMagnitude<.0000001f)side=camera.transform.right;else side.Normalize();
+  var a=side*(line.startWidth*.5f);var b=side*(line.endWidth*.5f);
+  mesh.Clear();mesh.SetVertices(new Il2CppStructArray<Vector3>(new[]{start-a,start+a,end+b,end-b}));
+  mesh.SetColors(new Il2CppStructArray<Color>(new[]{line.startColor,line.startColor,line.endColor,line.endColor}));
+  mesh.SetTriangles(new Il2CppStructArray<int>(new[]{0,1,2,0,2,3}),0);mesh.RecalculateBounds();
  }
  internal static void Disable(){
   if(callback!=null){Camera.onPreRender-=callback;callback=null;}

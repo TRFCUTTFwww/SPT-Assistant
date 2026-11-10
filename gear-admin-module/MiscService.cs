@@ -5,6 +5,8 @@ using HarmonyLib;
 using LocalMiscShared;
 using SPTarkov.Server.Core.Controllers;
 using SPTarkov.Server.Core.Generators.Bot;
+using SPTarkov.Server.Core.Helpers.Traders;
+using SPTarkov.Server.Core.Helpers.Commerce;
 using SPTarkov.Server.Core.Models.Common;
 using SPTarkov.Server.Core.Models.Eft.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
@@ -42,6 +44,12 @@ public static class MiscService {
   Patch(typeof(PlayerScavGenerator),"SetScavCooldownTimer",postfix:nameof(ScavCooldown));
   Patch(typeof(LocationLifecycleService),"HandlePostRaidPlayerScavAsync",nameof(BeforeScavEnd),nameof(AfterScavEnd));
   Patch(typeof(TradeController),"GetScavItemsToSell",postfix:nameof(SaleItems));
+  Patch(typeof(TraderAssortHelper),"GetAssort",postfix:nameof(TraderSupply));
+  Patch(typeof(TraderHelper),"GetTraderAssortsByTraderId",postfix:nameof(TraderSupply));
+  Patch(typeof(FenceService),"GetFenceAssorts",postfix:nameof(TraderSupply));
+  Patch(typeof(FenceService),"GetRawFenceAssorts",postfix:nameof(TraderSupply));
+  Patch(typeof(FenceService),"AmendOrRemoveFenceOffer",nameof(ConsumeFenceStock));
+  Patch(typeof(TradeHelper),"CheckPurchaseIsWithinTraderItemLimit",nameof(PurchaseLimit));
   return true;
  }
  static string Revision()=>Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(Options)));
@@ -82,6 +90,9 @@ public static class MiscService {
   }finally{Gate.Release();}
  }
  static void Premium(ref double __result){if(Options.FreeInsurance)__result=0;}
+ static void TraderSupply(ref TraderAssort __result){if(Options.UnlimitedTraderPurchases&&__result!=null)__result=TraderSupplyRules.Copy(__result,json);}
+ static bool ConsumeFenceStock()=>!Options.UnlimitedTraderPurchases;
+ static bool PurchaseLimit()=>!Options.UnlimitedTraderPurchases;
  static void FleaTax(ref double __result){if(Options.FreeFlea)__result=0;}
  static bool KeepInsured(ref HashSet<MongoId> __result){if(!Options.GuaranteedInsurance)return true;__result=[];return false;}
  static void MapInsurance(ref bool __result){if(Options.GuaranteedInsurance)__result=false;}

@@ -17,6 +17,7 @@ internal static class ArmorCare {
   nesting=FeatureConfig.Bind(section,"Allow nested storage cases","允许物品箱嵌套",true,"允许物品箱放进其他物品箱，保持真实格数及防循环嵌套检查；修改后需重启服务端并重新登录游戏加载模板。");
   keys=FeatureConfig.Bind(section,"No key usage loss","钥匙与门禁卡不消耗次数",true,"保留已有钥匙的剩余次数，并保护进入实验室所需的门禁卡；仍须携带有效钥匙或门卡，关闭后恢复原本的消耗规则。");
   UniversalKeys.Initialize(plugin);
+  InfiniteInjectors.Initialize(plugin);
   foreach(string name in new[]{"ApplyDurabilityDamage","ApplyExplosionDurabilityDamage"})plugin.Patches.Patch(AccessTools.Method(typeof(ArmorComponent),name),prefix:new HarmonyMethod(typeof(ArmorCare),nameof(BeforeWear)),postfix:new HarmonyMethod(typeof(ArmorCare),nameof(AfterWear)));
   plugin.Patches.Patch(AccessTools.PropertyGetter(typeof(RepairableComponent),"RepairDegradation"),postfix:new HarmonyMethod(typeof(ArmorCare),nameof(RepairPreview)));
   var perkType=AccessTools.TypeByName("EFT.PerkManager");var usage=perkType==null?null:AccessTools.Method(perkType,"GetKeyUsageConsumptionChance",new[]{typeof(KeyComponent)});
@@ -77,9 +78,9 @@ internal static class ArmorCare {
 #endif
  internal static void Tick(){int state=(merchant.Value?1:0)|(nesting.Value?2:0);if(Time.unscaledTime<nextSync||synced==state)return;nextSync=Time.unscaledTime+3;try{var settings=NextRaidLoot.Read();if(settings.TraderRepairNoLoss!=merchant.Value||settings.AllowContainerNesting!=nesting.Value){settings.TraderRepairNoLoss=merchant.Value;settings.AllowContainerNesting=nesting.Value;NextRaidLoot.Save(settings);}synced=state;}catch(Exception error){Warn(error);}}
  static void Warn(Exception error){if(Time.unscaledTime<nextError)return;nextError=Time.unscaledTime+10;Plugin.Self.Error(error);}
- internal static void Draw(Rect rect){scroll=GUI.BeginScrollView(rect,scroll,new Rect(0,0,rect.width-20,810));DrawBody(new Rect(4,4,rect.width-32,794));GUI.EndScrollView();}
+ internal static void Draw(Rect rect){scroll=GUI.BeginScrollView(rect,scroll,new Rect(0,0,rect.width-20,908));DrawBody(new Rect(4,4,rect.width-32,892));GUI.EndScrollView();}
  static void DrawBody(Rect rect){float y=rect.y;InterfaceMenu.Label(new(rect.x,y,rect.width,32),"修理、耐久与箱子",InterfaceMenu.Accent,20);y+=46;
-  foreach(var entry in new ConfigEntryBase[]{noWear,merchant,nesting,keys,UniversalKeys.Keys,UniversalKeys.Cards}){InterfaceMenu.DrawEntry(entry,new(rect.x,y,rect.width,84));y+=98;}
+  foreach(var entry in new ConfigEntryBase[]{noWear,merchant,nesting,keys,UniversalKeys.Keys,UniversalKeys.Cards,InfiniteInjectors.Enabled}){InterfaceMenu.DrawEntry(entry,new(rect.x,y,rect.width,84));y+=98;}
   bool ready=false;try{using var data=System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(NextRaidLoot.Home,"server-status.json")));ready=data.RootElement.GetProperty("version").GetString()=="1.5.0";}catch{}
   InterfaceMenu.Paragraph(new(rect.x,y,rect.width,110),(ready?"商人修复服务端已加载。":"商人修复需要服务端模块 1.5.0；更新后重启服务端生效。")+"\n商人按原规则收费，修复前最大耐久保留；修理包保持原规则。头甲保护只作用于你当前穿戴的护甲及其护甲附件。"+(keyHook?"":"\n当前客户端没有可用的钥匙消耗接口，此版本无法启用钥匙保护。"),null,13);
  }

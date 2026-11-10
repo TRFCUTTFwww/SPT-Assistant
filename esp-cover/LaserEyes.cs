@@ -64,7 +64,9 @@ internal static class LaserEyes {
     var origin=center+right*(eye==0?-.032f:.032f);var delta=ends[eye]-origin;
     // Start visible first-person geometry just beyond the near plane, along the actual eye ray.
     var start=first&&delta.magnitude>camera.nearClipPlane+.03f?origin+delta.normalized*(camera.nearClipPlane+.03f):origin;
-    for(int layer=0;layer<2;layer++){var beam=beams[eye*2+layer]!;beam.enabled=visible[eye]&&!masked;if(!visible[eye])continue;beam.SetPosition(0,start);beam.SetPosition(1,ends[eye]);}
+    // Keep the ordinary scene renderer alive even when the supplemental wall
+    // layer is unavailable, empty or overwritten by a post-processing effect.
+    for(int layer=0;layer<2;layer++){var beam=beams[eye*2+layer]!;beam.enabled=visible[eye];if(!visible[eye])continue;beam.SetPosition(0,start);beam.SetPosition(1,ends[eye]);}
    }
   }catch(Exception error){Hide();if(Time.unscaledTime>=nextError){nextError=Time.unscaledTime+15;Plugin.Self.Log.LogWarning("Laser eyes: "+error);}}
  }

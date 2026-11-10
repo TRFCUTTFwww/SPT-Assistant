@@ -29,7 +29,8 @@ internal static class MiscPanel {
   ("SniperBlind","我没看到","狙击边界区域不再射击本地玩家，不影响地图内的普通 AI 狙击手。"),
   ("ScavSecure","违禁品","Scav 使用独立安全箱，默认 Alpha，可选择箱型；一键售卖、撤离、阵亡和下一名 Scav 保留箱子及其内容，与 PMC 完全分开。更换箱型前须清空。开启后自动同步当前 Scav，重新打开装备页面查看。"),
   ("FreeFlea","诚信经营","跳蚤市场上架手续费为 0；重新打开挂单窗口刷新费用。"),
-  ("ExpressInsurance","加急件","新产生的保险无需等待回送；在服务端下一次保险检查时发信，不改变领取期限。")
+  ("ExpressInsurance","加急件","新产生的保险无需等待回送；在服务端下一次保险检查时发信，不改变领取期限。"),
+  ("UnlimitedTraderPurchases","供大于求","商人购买无上限")
  };
  internal static string SearchTerms=>string.Join(" ",rows.Select(row=>row.Key+" "+row.Name+" "+row.Help));
  internal static void Initialize(Plugin plugin){

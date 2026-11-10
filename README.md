@@ -4,7 +4,7 @@
 
 An in-game control panel for **SPT**, built with C# and Unity. Manage your character, raid, equipment, quests and server settings from one interface.
 
-**Version 2.0.5** · **Current target: SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
+**Version 2.0.6** · **Current target: SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
 
 > **UNSTABLE — EXPERIMENTAL.** This project has not undergone broad testing. Bugs, crashes, multiplayer desynchronization and unexpected profile changes are possible. Back up your profiles and configuration before installing or updating. A successful build or hot reload does not establish that every feature works in a raid.
 >
@@ -14,7 +14,7 @@ An in-game control panel for **SPT**, built with C# and Unity. Manage your chara
 
 1. Install the matching SPT/EFT build listed above and start SPT once so BepInEx interop assemblies are generated. Use a separate SPT installation.
 2. Close that game's client and server. Back up `SPT_Runtime/user/profiles`, `BepInEx/config` and any existing Assistant files.
-3. Download **SPT-Assistant-2.0.5-experimental.zip** from [Releases](https://github.com/TRFCUTTFwww/SPT-Assistant/releases/tag/v2.0.5) and extract it to a separate folder. GitHub's automatic source archives contain source code, not an installed mod.
+3. Download a matching built installation package from [Releases](https://github.com/TRFCUTTFwww/SPT-Assistant/releases) and extract it to a separate folder. Source version 2.0.6 may precede its installation asset; check the asset version before downloading. GitHub's automatic source archives contain source code, not an installed mod.
 4. From the extracted folder, run the following in Windows PowerShell, replacing the example path:
 
    ```powershell
@@ -25,7 +25,7 @@ An in-game control panel for **SPT**, built with C# and Unity. Manage your chara
 
 The installer copies only Assistant components, generates item-name/price caches from your own SPT database, preserves existing settings and API keys, and backs up replaced files under `mod-backups`. First installation of the full package creates a random local administration API key. **Fika clients:** use `-ClientOnly`; connect to the host and do not start a local server. Server administration features require matching server components and the host's key, and should be enabled only for trusted administrators. This package does not install Fika.
 
-See [the bilingual installation guide](docs/INSTALL.md) for file locations, updates, source builds and removal, and [2.0.5 release notes](docs/release-2.0.5.md) for tested boundaries and remaining limitations.
+See [the bilingual installation guide](docs/INSTALL.md) for file locations, updates, source builds and removal, and [2.0.6 release notes](docs/release-2.0.6.md) for tested boundaries and remaining limitations.
 
 ## Features
 

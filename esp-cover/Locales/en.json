@@ -1,4 +1,8 @@
 {
+  "无限注射器": "Infinite injectors",
+  "仅本地玩家使用的注射器不消耗剩余使用量；保留正常注射动画、效果和副作用，不补回已经用完的针剂。": "Preserves the remaining uses of injectors used by the local player. Normal animations, effects and side effects remain; exhausted injectors are not refilled.",
+  "供大于求": "Oversupply",
+  "商人购买无上限": "Unlimited trader purchases",
   "准星 AI Buff 信息": "Crosshair AI Buff information",
   "准星 AI 状态": "Crosshair AI status",
   "AI 状态尚未就绪": "AI status is not ready",

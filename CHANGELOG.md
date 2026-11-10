@@ -1,3 +1,23 @@
+# Changelog
+
+## 2.0.6 — 2026-11-11
+
+### 简体中文
+
+- 修复开启“激光穿墙”后激光消失的渲染回归：光束改为写入 RGBA，显式构建带颜色的网格，并持续保留原生光束作为回退。穿墙补充层保留人物深度遮挡，命中和伤害逻辑不变。
+- 在“物品 → 修理与耐久”新增默认关闭的“无限注射器”：保留本地玩家所持针剂的剩余使用量，继续执行正常动画、效果和副作用，不补回已经耗尽的针剂。
+- 在“杂项”新增默认关闭的“供大于求”，描述为“商人购买无上限”。服务端解除商品库存和个人限购，保留价格、忠诚度与任务解锁要求；关闭后恢复原始库存与限购记录。启用后重新打开商人页面刷新。
+- 同步客户端、安装脚本和文档版本为 2.0.6。新增功能均提供英文翻译。
+- 验证：EFT 48558 客户端与管理组件构建、121 组客户端 Probe 和 24 组邮件/管理回归通过。激光的 GPU 画面、针剂实际使用及 Fika 同步仍需战局实测；不稳定、未经过广泛测试，不保证向后兼容。
+
+### English
+
+- Fix laser beams disappearing with wall penetration enabled by writing RGBA, building explicitly colored geometry and retaining native scene beams as a fallback. The supplemental wall layer preserves character depth; hit selection and damage behavior are unchanged.
+- Add opt-in **Infinite injectors** under **Items → Repair & durability**. Preserve remaining uses of injectors carried by the local player while retaining normal animations, effects and side effects. Exhausted injectors are not refilled.
+- Add opt-in **Oversupply**, described as **Unlimited trader purchases**, under **Miscellaneous**. Remove stock and personal purchase limits while preserving prices, loyalty and quest requirements. Disabling restores original stock and purchase records. Reopen the trader screen after enabling.
+- Align the client, installer and documentation at 2.0.6 and include English translations for the new controls.
+- Validation: EFT 48558 client/admin builds, 121 client Probe groups and 24 mail/admin regression groups passed. Laser GPU output, actual injector use and Fika synchronization still require in-raid verification. Unstable, not broadly tested; backward compatibility is not guaranteed.
+
 # 1.38.7
 
 - 新增「数据」侧栏：逐项修改技能等级与成就、查看/修改商城 TC 余额、将角色库存实体 TC 等额转入商城钱包，并复用既有角色管理。
