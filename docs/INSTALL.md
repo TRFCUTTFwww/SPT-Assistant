@@ -2,7 +2,7 @@
 
 ## English
 
-**Current target:** SPT 5.0 BE, EFT 1.3.0.1.48558, Windows x64, Unity IL2CPP / .NET 10. Development follows the latest SPT version; backward compatibility is not guaranteed. This is an extremely unstable experimental release without broad testing. Back up profiles and settings first.
+**Current target:** SPT 5.0 BE, EFT 1.3.0.1.48558, Windows x64, Unity IL2CPP / .NET 10. Development follows the latest SPT version; backward compatibility is not guaranteed. This is an unstable experimental release without broad testing. Back up profiles and settings first.
 
 Use the `SPT-Assistant-2.0.5-experimental.zip` release asset. Extract it outside the game directory, close the target client and server, and run:
 
@@ -43,7 +43,7 @@ The output directory must be new or empty. Use the resulting ZIP with the instal
 
 ## 简体中文
 
-**当前适配：**SPT 5.0 BE、EFT 1.3.0.1.48558、Windows x64、Unity IL2CPP / .NET 10。后续以 SPT 最新版为适配目标，不保证向后兼容。当前版本极度不稳定，没有经过广泛测试，请先备份存档和设置。
+**当前适配：**SPT 5.0 BE、EFT 1.3.0.1.48558、Windows x64、Unity IL2CPP / .NET 10。后续以 SPT 最新版为适配目标，不保证向后兼容。当前版本不稳定，没有经过广泛测试，请先备份存档和设置。
 
 下载发布附件 `SPT-Assistant-2.0.5-experimental.zip`，解压到游戏目录外，关闭目标目录的客户端和服务端，再执行：
 

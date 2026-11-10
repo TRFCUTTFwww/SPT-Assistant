@@ -6,7 +6,7 @@ An in-game control panel for **SPT**, built with C# and Unity. Manage your chara
 
 **Version 2.0.5** · **Current target: SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
 
-> **EXTREMELY UNSTABLE — EXPERIMENTAL.** This project has not undergone broad testing. Bugs, crashes, multiplayer desynchronization and unexpected profile changes are possible. Back up your profiles and configuration before installing or updating. A successful build or hot reload does not establish that every feature works in a raid.
+> **UNSTABLE — EXPERIMENTAL.** This project has not undergone broad testing. Bugs, crashes, multiplayer desynchronization and unexpected profile changes are possible. Back up your profiles and configuration before installing or updating. A successful build or hot reload does not establish that every feature works in a raid.
 >
 > Development follows the latest SPT version. **Backward compatibility is not guaranteed.** The exact supported SPT/EFT build is stated for each release; this release targets the versions above. Fika support is experimental and has not been broadly tested across hosts, clients or mod combinations.
 

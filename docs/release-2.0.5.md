@@ -1,8 +1,8 @@
-# SPT Assistant 2.0.5 — Experimental / 极度不稳定
+# SPT Assistant 2.0.5 — Unstable / 不稳定
 
 ## English
 
-> **EXTREMELY UNSTABLE. This project has not undergone broad testing.** Bugs, crashes, Fika desynchronization and unexpected profile changes are possible. Back up your profiles and settings. Passing builds and offline checks does not mean all in-raid behavior has been verified.
+> **UNSTABLE. This project has not undergone broad testing.** Bugs, crashes, Fika desynchronization and unexpected profile changes are possible. Back up your profiles and settings. Passing builds and offline checks does not mean all in-raid behavior has been verified.
 
 **Current target:** SPT 5.0 BE / EFT 1.3.0.1.48558, Windows x64, Unity IL2CPP / .NET 10. Development follows the latest SPT version. **Backward compatibility is not guaranteed.** Other builds are not certified by this release. Fika compatibility is experimental and varies with the host, client and mod combination.
 
@@ -20,7 +20,7 @@ Validation passed: client, mail/admin and raid-settings builds; 121 client Probe
 
 ## 简体中文
 
-> **极度不稳定，没有经过广泛测试。** 可能出现功能失效、崩溃、Fika 不同步或存档被意外修改。请先备份存档与设置。编译和离线检查通过，不代表所有战局行为均已实测。
+> **不稳定，没有经过广泛测试。** 可能出现功能失效、崩溃、Fika 不同步或存档被意外修改。请先备份存档与设置。编译和离线检查通过，不代表所有战局行为均已实测。
 
 **当前适配：**SPT 5.0 BE / EFT 1.3.0.1.48558，Windows x64，Unity IL2CPP / .NET 10。后续以 SPT 最新版为适配目标，**不保证向后兼容**。本次发布没有认证其他游戏版本。Fika 支持为实验性质，兼容性受房主、成员及模组组合影响。
 
