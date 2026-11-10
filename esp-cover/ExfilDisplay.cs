@@ -13,7 +13,7 @@ using UnityEngine;
 namespace LocalSpt5Esp;
 internal enum ExfilPanelMode { Off, Hold, Always }
 internal enum ExfilMarkerMode { Off, Nearest, All }
-internal static class ExfilDisplay {
+internal static partial class ExfilDisplay {
  static ConfigEntry<bool> Enabled=null!,ShowSpecial=null!,ShowLeverMarkers=null!,Force=null!,IgnoreRequirements=null!;
  static ConfigEntry<ExfilPanelMode> PanelMode=null!;
  static ConfigEntry<ExfilMarkerMode> MarkerMode=null!;
@@ -77,22 +77,19 @@ internal static class ExfilDisplay {
    hooksReady=true;p.Log.LogInfo("Exfiltration permissions ready: same-faction unassigned-exit hooks");
   }catch(Exception e){hooksReady=false;p.Log.LogError("Exfiltration permission hooks unavailable: "+e);}
   try{
-   // IL2CPP shares several Met native bodies with unrelated methods. Hook the
-   // point-level check to avoid intercepting those unrelated calls.
-   var met=typeof(ExfiltrationPoint).GetMethod("HasMetRequirements",new[]{typeof(string)})??throw new MissingMethodException("HasMetRequirements");
-   p.Patches.Patch(met,postfix:new HarmonyMethod(typeof(ExfilDisplay),nameof(HasMetOverride)));
-   conditionsReady=true;p.Log.LogInfo("Exit requirement hook ready: HasMetRequirements");
+   InitializeRequirementHooks(p);
+   conditionsReady=true;p.Log.LogInfo("Exit requirement hooks ready: local unmet queries, trigger/proceed scopes and native UI");
   }catch(Exception e){conditionsReady=false;p.Log.LogError("Exit requirement hooks unavailable: "+e);}
  }
  internal static void Keys(){if(Hotkeys.Pressed(ForceKey.Value)){Force.Value=!Force.Value;nextScan=0;}if(Hotkeys.Pressed(IgnoreKey.Value)){IgnoreRequirements.Value=!IgnoreRequirements.Value;nextScan=0;}}
- internal static void Reset(){RestoreConditions();rows.Clear();leverMarkers.Clear();linkedSwitches.Clear();originals.Clear();seenPresent.Clear();permissionOverrides.Clear();nextScan=nextSwitchScan=0;worldPointer=IntPtr.Zero;notice="";lastForce=lastIgnore=false;layoutDirty=true;pageIndex=0;}
+ internal static void Reset(){RestoreConditions();resumedRequirements.Clear();rows.Clear();leverMarkers.Clear();linkedSwitches.Clear();originals.Clear();seenPresent.Clear();permissionOverrides.Clear();nextScan=nextSwitchScan=0;worldPointer=IntPtr.Zero;notice="";lastForce=lastIgnore=false;layoutDirty=true;pageIndex=0;}
  static bool ConditionsActive=>conditionsReady&&IgnoreRequirements.Value;
 
  static void HasMetOverride(ExfiltrationPoint __instance,string __0,ref bool __result){
   if(!ConditionsActive||__result)return;
-  try{var player=Singleton<GameWorld>.Instance?.MainPlayer;if(player!=null&&player.IsYourPlayer&&__0==player.ProfileId&&CanBypass(__instance))__result=true;}catch{}
+  try{if(LocalBypass(__instance,__0))__result=true;}catch{}
  }
- static bool CanBypass(ExfiltrationPoint point)=>point.TryCast<EFT.Interactive.SecretExfiltrations.SecretExfiltrationPoint>()==null&&!Lever(point)&&!Train(point)&&point.Status==EExfiltrationStatus.RegularMode;
+ static bool CanBypass(ExfiltrationPoint point)=>ExfilRequirementRules.CanBypass(point.Status.ToString(),point.TryCast<EFT.Interactive.SecretExfiltrations.SecretExfiltrationPoint>()!=null,Lever(point),Train(point));
  static void MatchOverride(ExfiltrationPoint __instance,Player __0,ref bool __result){
   if(hooksReady&&Force.Value&&__0!=null&&__0.IsYourPlayer&&permissionOverrides.Contains(__instance.Pointer))__result=true;
  }
@@ -216,7 +213,7 @@ internal static class ExfilDisplay {
   if(Time.unscaledTime<nextScan&&lastForce==Force.Value&&lastIgnore==IgnoreRequirements.Value)return;nextScan=Time.unscaledTime+1f;
   try{
    if((lastForce!=Force.Value)&&originals.Count>0)Restore();lastForce=Force.Value;
-   if(lastIgnore!=IgnoreRequirements.Value&&!IgnoreRequirements.Value)RestoreConditions();lastIgnore=IgnoreRequirements.Value;
+   if(lastIgnore!=IgnoreRequirements.Value){resumedRequirements.Clear();if(!IgnoreRequirements.Value)RestoreConditions();}lastIgnore=IgnoreRequirements.Value;
    rows.Clear();leverMarkers.Clear();layoutDirty=true;if(!Enabled.Value&&!Force.Value&&!IgnoreRequirements.Value&&!GroundNavigation.WantsExitData&&!TeleportControl.WantsExitData)return;
    var controller=ExfiltrationController.Instance;if(controller==null){notice="撤离点正在加载";return;}
    var assigned=new HashSet<IntPtr>();var eligible=controller.EligiblePoints(player.Profile);
@@ -240,7 +237,8 @@ internal static class ExfilDisplay {
      string name=LocalizationExtensions.Localized(key,EStringCase.None);if(string.IsNullOrWhiteSpace(name))name=key;
      bool car=Money(point),lever=Lever(point),train=Train(point),secret=point.TryCast<EFT.Interactive.SecretExfiltrations.SecretExfiltrationPoint>()!=null;string kind=secret?"暗号":train?"列车":ExfilPolicy.Kind(name+" "+key,car,lever);
      bool inPanel=secret||train||ShowSpecial.Value||isAssigned||kind=="普通";
-     bool bypass=ConditionsActive&&CanBypass(point);
+     bool bypass=LocalBypass(point,player.ProfileId);
+     ResumeEnteredRequirements(point,player,bypass);
      bool met=true;var unmet=new List<string>();var requirements=point.Requirements;
      if(!bypass&&requirements!=null)foreach(var req in requirements){
       if(req==null||req.Met(player,point))continue;met=false;

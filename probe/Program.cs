@@ -11,6 +11,17 @@ var sourceRoot=Path.GetFullPath(Environment.GetEnvironmentVariable("SPT_SOURCE_R
 var gameRoot=Environment.GetEnvironmentVariable("SPT_GAME_ROOT");if(!string.IsNullOrWhiteSpace(gameRoot))Directory.SetCurrentDirectory(gameRoot);
 try{
 
+foreach(string status in new[]{"RegularMode","UncompleteRequirements","Countdown"})
+ Assert(ExfilRequirementRules.CanBypass(status,false,false,false),"backpack-gated exits can proceed before and during countdown: "+status);
+foreach(string status in new[]{"NotPresent","Pending","AwaitsManualActivation","Unknown",""})
+ Assert(!ExfilRequirementRules.CanBypass(status,false,false,false),"closed or unknown exits retain native lifecycle: "+status);
+Assert(!ExfilRequirementRules.CanBypass("RegularMode",true,false,false)&&!ExfilRequirementRules.CanBypass("RegularMode",false,true,false)&&!ExfilRequirementRules.CanBypass("Countdown",false,false,true),"secret, lever and train lifecycle requirements stay native");
+Assert(ExfilRequirementRules.Local(true,true,true,true,"self","self",true,false),"living eligible local player can ignore personal requirements");
+Assert(!ExfilRequirementRules.Local(false,true,true,true,"self","self",true,false)&&!ExfilRequirementRules.Local(true,false,true,true,"self","self",true,false)&&!ExfilRequirementRules.Local(true,true,false,true,"self","self",true,false),"disabled feature, menu and dead player cannot bypass requirements");
+Assert(!ExfilRequirementRules.Local(true,true,true,false,"self","self",true,false)&&!ExfilRequirementRules.Local(true,true,true,true,"peer","self",true,false)&&!ExfilRequirementRules.Local(true,true,true,true,"","",true,false),"remote players, other profiles and empty identities retain their requirements");
+Assert(!ExfilRequirementRules.Local(true,true,true,true,"self","self",false,false)&&!ExfilRequirementRules.Local(true,true,true,true,"self","self",true,true),"faction/assignment mismatch and banned players cannot use the condition override");
+Console.WriteLine("PASS local extraction requirement bypass, backpack-blocked/countdown states, closed/special exit lifecycle, identity and ban boundaries");
+
 // Human Fika peers must remain distinct from both host and replicated AI.
 Assert(FikaTeamRules.Teammate(false,false,false,false,true,"",""),"observed human peer is a teammate without relying on faction or group");
 Assert(FikaTeamRules.Teammate(false,false,false,null,true,"Fika","Fika"),"matching Fika groups provide a reflection fallback");
