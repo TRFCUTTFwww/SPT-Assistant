@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Security.Authentication;
 using System.Text.Json;
 if(args.Length==2&&args[0]=="--http"){await HttpRelayIntegration.Run(args[1]);return;}
+CommandAuthorityChecks.Run();
 CommandInputChecks.Run();
 CommandOptionsChecks.Run();
 NamedArgumentChecks.Run();

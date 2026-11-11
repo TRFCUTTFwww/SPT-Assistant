@@ -1,8 +1,8 @@
 # 详细命令参数 / Detailed command options
 
-当前目标：**SPT 5.0 BE / EFT 1.3.0.1.48558**。不稳定，未经过广泛战局测试；仅适配 main 的本机单人命令。旧 Fika 分支不更新。
+当前目标：**SPT 5.0 BE / EFT 1.3.0.1.48558**。不稳定，未经过广泛战局测试；适配 main 的本机输入命令；FIKA 的可用范围见 [聊天说明](CHAT.md#fika-命令范围--fika-command-scope)。旧 Fika 分支不更新。
 
-Current target: **SPT 5.0 BE / EFT 1.3.0.1.48558**. Unstable and not broadly raid-tested. These additions apply to main's local single-player commands; the old Fika branch is unchanged.
+Current target: **SPT 5.0 BE / EFT 1.3.0.1.48558**. Unstable and not broadly raid-tested. These additions apply to main's locally entered commands; see [FIKA command scope](CHAT.md#fika-命令范围--fika-command-scope). The old Fika branch is unchanged.
 
 日常参数使用 `名称=值`，不用输入 JSON。位置参数写在前面，之后的命名参数可任意排序；字符串有空格时用双引号。Tab 先选择参数名，再选择值；候选显示中文含义。聊天框下方的参数块可以点击修改或移除。
 
@@ -33,9 +33,9 @@ Save an editor preset and reuse `/give @s preset:TrainingAKM 1`, optionally with
 
 Place completion retains exact identifiers while showing names, type, status/details and distance, and can search by readable name. The top-right Close/ESC button is clickable. Place metadata depends on current raid data.
 
-旧末尾 JSON 仍兼容，但不再作为默认交互，也不可与命名参数混用。以下是内部字段和高级结构参考。本地输入上限 16,384 字符，网络文字仍限 2,000；命令仅在本机单人战局执行，Fika 下明确拒绝世界修改。
+旧末尾 JSON 仍兼容，但不再作为默认交互，也不可与命名参数混用。以下是内部字段和高级结构参考。本地输入上限 16,384 字符，网络文字仍限 2,000；FIKA 命令按房主/成员与目标归属检查，未适配同步的写入明确拒绝。
 
-Legacy final JSON remains compatible as an advanced format, cannot be mixed with named arguments, and is no longer the default UI. The following sections describe underlying fields. Local input allows 16,384 characters; network messages remain limited to 2,000. World commands remain local-single-player only and reject Fika worlds.
+Legacy final JSON remains compatible as an advanced format, cannot be mixed with named arguments, and is no longer the default UI. The following sections describe underlying fields. Local input allows 16,384 characters; network messages remain limited to 2,000. FIKA commands check raid role and target ownership; writes without multiplayer integration are explicitly rejected.
 
 ## 物品 / Items
 

@@ -19,7 +19,7 @@ internal static partial class RaidCommands {
  static void Merge(JsonObject target,JsonObject source){foreach(var p in source){if(p.Value is JsonObject child&&target[p.Key] is JsonObject existing)Merge(existing,child);else target[p.Key]=p.Value?.DeepClone();}}
  static bool commandEditor(string command,string[] args){
   if(command!="give"||args.Length<3||!args.Contains("edit"))return false;
-  if(args.Count(a=>a=="edit")!=1)throw new ArgumentException("edit 只能出现一次。");args=args.Where(a=>a!="edit").ToArray();var options=ChatNamedArguments.Take(command,ref args);ChatCommandSyntax.ValidateArguments(command,args);ExpandCommandPreset(command,args,ref options);ChatCommandOptions.Validate(command,args,options);var w=World();
+  if(args.Count(a=>a=="edit")!=1)throw new ArgumentException("edit 只能出现一次。");args=args.Where(a=>a!="edit").ToArray();var options=ChatNamedArguments.Take(command,ref args);ChatCommandSyntax.ValidateArguments(command,args);ExpandCommandPreset(command,args,ref options);ChatCommandOptions.Validate(command,args,options);var w=World();MultiplayerGuard(w,command,args,options);
   string selector=string.Join("\n",Resolve(w,args[0]).Select(p=>"uuid:"+Id(p)));int count=args.Length>2?Integer(args[2],1,100000):1;ChatItemEditor.Open(w.Pointer,selector,Template(args[1]),count,options);return true;
  }
  internal static string[] EditorWeaponFields(Item item)=>item.TryCast<Weapon>() is {} gun?WeaponEditor.CommandFields(gun.Template):Array.Empty<string>();

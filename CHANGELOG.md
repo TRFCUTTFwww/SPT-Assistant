@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.6 — FIKA local command support (2026-11-11)
+
+- 开放 FIKA 本地输入命令：查询/导航、成员自身的传送/治疗/效果、房主控制的 AI 生成与行为；`/permission` 显示战局角色。批量目标在修改前统一检查。
+- Enable locally entered FIKA commands: queries/navigation, member self teleport/heal/effects, and host-owned AI spawning/control. `/permission` shows raid role; target ownership is checked before mutations.
+- 未完成联机同步的库存、编辑器、删除/改名和全局时间写入仍明确拒绝；不执行接收的聊天命令，不合并旧多人分支。
+- Inventory/editor/deletion/rename/global-clock writes remain rejected pending multiplayer integration. Received chat never executes; the old multiplayer branch is unchanged.
+- Validation: Release build, 245 chat/command checks and 127 Probe groups. Host/member live synchronization still needs a two-client raid test.
+
 ## Unreleased — Friendly command input / 易用命令输入
 
 - 日常配置改为 参数=值，支持简短别名、带描述的参数/值补全、可点击修改或移除的参数块；保留旧 JSON 高级格式兼容。

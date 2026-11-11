@@ -38,11 +38,11 @@ internal static partial class RaidChat {
   case "msg":case "tell":case "w":if(args.Length<2)throw new ArgumentException("/msg <玩家> <消息>");Send(string.Join(" ",args.Skip(1)),args[0],"whisper");break;
   case "reply":case "r":if(reply.Length==0||args.Length==0)throw new ArgumentException("没有最近私信，或消息为空。");Send(string.Join(" ",args),reply,"whisper");break;
   case "me":Send(string.Join(" ",args),null,"me");break;
-  case "teammsg":case "tm":throw new ArgumentException("当前单人版没有服务端验证的队伍路由，不能把全服频道冒充队伍频道。");
+  case "teammsg":case "tm":throw new ArgumentException("当前版本没有服务端验证的队伍路由，不能把全服频道冒充队伍频道。");
   case "say":throw new ArgumentException("当前版本没有经过验证的公告签名，普通聊天不能冒充服务器公告。");
   case "clearhistory":lines.Clear();history.Clear();reply="";break;
   case "chat":if(args.Length==1&&args[0]=="reconnect"){client?.Dispose();client=null;retryAt=0;Output("正在使用新会话重新连接。");}else throw new ArgumentException("/chat reconnect");break;
-  case "permission":if(args.Length>1||args.Length==1&&args[0]!="list")throw new ArgumentException("/permission [list] · 当前仅支持只读查询。");Output("本地命令：本机单人战局完全控制；远程操作：禁用。\n聊天中继权限："+string.Join(", ",client?.Permissions??Array.Empty<string>()));break;
+  case "permission":if(args.Length>1||args.Length==1&&args[0]!="list")throw new ArgumentException("/permission [list] · 当前仅支持只读查询。");Output(RaidCommands.CommandPermissions+"\n聊天中继权限："+string.Join(", ",client?.Permissions??Array.Empty<string>()));break;
   default:RaidCommands.Execute(name,args);break;
  }}
  static TextEditor Editor()=>GUIUtility.GetStateObject(Il2CppInterop.Runtime.Il2CppType.Of<TextEditor>(),GUIUtility.keyboardControl).Cast<TextEditor>();

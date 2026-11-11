@@ -46,9 +46,9 @@ The implementation uses platform mutual TLS 1.3, pinned certificates, no resumpt
 
 ## 命令 / Commands
 
-`/help [command]` 是当前实际目录。**只有本机输入的命令可以执行**；解密收到的 `/kill` 等文字始终作为聊天展示。世界命令只在单人战局执行；检测到 Fika 程序集或远程玩家会拒绝修改。旧多人权限系统没有合并进来。
+`/help [command]` 是当前实际目录。**只有本机输入的命令可以执行**；解密收到的 `/kill` 等文字始终作为聊天展示。现在支持 FIKA 战局内的本地输入命令，按战局角色和目标归属检查，范围见下表。旧多人权限系统没有合并进来。
 
-`/help [command]` lists current syntax. **Only locally entered commands execute.** Decrypted messages remain text, including `/kill`. World commands require a single-player raid and reject Fika/remote-player worlds. The old multiplayer permission system is not merged into main.
+`/help [command]` lists current syntax. **Only locally entered commands execute.** Decrypted messages remain text, including `/kill`. Locally entered commands now work in FIKA raids, subject to raid role and target ownership as listed below. The old multiplayer permission system is not merged into main.
 
 | 类别 / Category | 命令 / Commands |
 | --- | --- |
@@ -111,10 +111,28 @@ Coordinates accept absolute, relative `~`, or camera-local `^` values, with posi
 
 See the [detailed command options](COMMAND-OPTIONS.md) for item trees, AI and other fine-grained parameters. Chat now uses consistent dark cards, subtle borders, mint selection and distinct message/error rows, retaining existing controls. JSON checks cover nesting/escaping, duplicate/unknown fields, subcommand restrictions, preservation and long input. Native item-tree behavior, weapon tuning and visual results still require in-game acceptance.
 
+## FIKA 命令范围 / FIKA command scope
+
+主分支支持 **FIKA 5.0 客户端接口 / Fika Server 2.4.1**，仍是不稳定功能，尚未完成双客户端战局测试。每位玩家在自己的聊天框输入命令；不需要开放聊天中继 admin。`/permission` 显示本机是房主或成员。运行 SPT 服务端不等于战局房主；使用 headless 时由 headless 持有 AI，本次没有成员向 headless 转发命令。
+
+Main supports the **FIKA 5.0 client API / Fika Server 2.4.1** experimentally. Two-client raid testing is still required. Each player enters commands locally; relay admin is not required. `/permission` reports raid host/member. Running the SPT backend does not make a client the raid host. Headless owns AI when enabled; member-to-headless command forwarding is not implemented.
+
+| 命令 / Commands | FIKA 行为 / Behavior |
+| --- | --- |
+| `list`, `position`, `inspect`, `data get`, `item inspect`, `clear ... 0`, `time query`, `raid time query`, `btr status` | 查询本机已同步的数据 / Read locally replicated state |
+| `marker`, `navigate`, `tag`, `gamerule showRaidClock` | 本地标记、导航与 HUD / Local markers, navigation and HUD |
+| `tp`, `teleport`, `back`, `spreadplayers`, `heal`, `effect` | 成员仅可修改自己；房主还可修改本机控制的 AI / Members modify self; hosts may also modify locally controlled AI |
+| `summon`, `kill`, `damage`, `ai`（不含 remove/name）, `attribute`, `data modify`（不含 name）, `btr route/stop` | 在战局房主输入，沿用原生 AI/角色流程 / Enter on raid host; use native actor/AI paths |
+| 库存写入、物品树生成、改名、编辑器、删除、天气、昼夜写入、剩余时间写入、强制结算 / Inventory writes, item-tree creation, rename, editor, delete, weather, clock writes and forced extraction | 尚未接入完整联机同步，明确拒绝 / Rejected pending complete multiplayer integration |
+
+例如：`/tp player:朋友名字` 把自己传送到朋友处；`/heal @s` 治疗自己；房主可用 `/summon assault count=2`。`/tp @a ~ ~ ~` 会因包含远程队友而整体拒绝，不会先改自己再报错。不能直接修改观察到的队友对象；请让对方在自己客户端执行。房主 AI 控制的行为结果沿用 FIKA 同步，自定义状态、名字和 UI 数值不保证显示在每个客户端；这不是远程管理协议。
+
+Examples: `/tp player:Friend` moves you to that friend, `/heal @s` heals you, and a host can use `/summon assault count=2`. Mixed selections containing remote humans fail before any mutation. Ask peers to execute self-targeted commands on their own clients. FIKA carries native actor state; custom control state and UI values are not guaranteed to match across peers. This is not a remote administration protocol.
+
 ## 已知限制 / Known limits
 
 - `/experience`、`/xp` 目前只支持 query，战局内写入拒绝，防止与结算冲突。等级修改使用战局外原生命令控制台。
-- `/teammsg`、`/say` 和远程 permission grant/revoke 未启用：单人版没有经过验证的队伍频道、服务器公告签名或远程执行权限。`/permission` 只读展示。中继配置中的 admin 不会赋予修改别人游戏的能力。
+- `/teammsg`、`/say` 和远程 permission grant/revoke 未启用：当前版本没有经过验证的队伍频道、服务器公告签名或远程执行权限。`/permission` 只读展示。中继配置中的 admin 不会赋予修改别人游戏的能力。
 - `item replace` 当前只对空槽工作；已占用槽会明确报错。`reload` 补充已收起枪械的弹匣，空弹匣必须指定兼容弹药；不改变弹膛、原有混装和原生动画。`loot give` 使用已保存的 AI 场景装备，非武器目标槽需先清空，枪械通过现有异步换枪队列处理。
 - 批量操作使用现有原生流程，可能部分完成，不提供跨角色事务回滚。物品最多生成100个堆叠，地面物品最多32个堆叠。清空容器同时移除内容物。
 - `weather thunder` 设置浓云和最大降雨，不承诺原生闪电。`btr stop` 沿用现有停留接口，停留60秒。`ai follow/look` 目标限本地玩家。属性/数据写入仅支持已列出的字段，禁止任意反射执行。
