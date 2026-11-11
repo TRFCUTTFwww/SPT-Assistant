@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — Friendly command input / 易用命令输入
+
+- 日常配置改为 参数=值，支持简短别名、带描述的参数/值补全、可点击修改或移除的参数块；保留旧 JSON 高级格式兼容。
+- /give ... edit 打开逐层物品编辑，配置附件、组件、内容物、弹药组及本局枪械参数，保存命令预设并用 preset:名称复用。
+- 地点候选保留原始标签，同时展示名称、类型、状态/说明和距离，支持名称搜索；角色 UUID 提示显示名字、类型和距离。聊天右上角关闭按钮支持鼠标。
+- Add name=value options with aliases, descriptive completion and editable parameter chips; a visual item-tree editor and reusable command presets; readable destination/entity metadata; and a clickable Close/ESC button. Legacy JSON remains available.
+- Validation: EFT 48558 Release build (zero errors, two existing nullable warnings), 208 chat checks and 127 Probe groups passed. UI/IME, item generation and native behavior still require in-game verification. World commands remain local-single-player only; Fika worlds are rejected and the old multiplayer branch is unchanged.
+
 ## Unreleased — Detailed commands and chat appearance / 详细命令与聊天外观
 
 - 为物品生成增加末尾 JSON 配置：带钩、组件余量、耐久、嵌套附件/弹药/容器内容物、狗牌和本局枪械实例参数；增加物品检查与附件/子物品路径修改。保留旧式命令。

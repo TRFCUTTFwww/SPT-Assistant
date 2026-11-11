@@ -7,9 +7,9 @@ internal static class ChatCommandHints {
  ["help"]="[命令]",["list"]="[entities]",["msg"]="<玩家> <消息>",["tell"]="<玩家> <消息>",["w"]="<玩家> <消息>",["reply"]="<消息>",["r"]="<消息>",["me"]="<动作>",["clearhistory"]="",["identity"]="[verify <玩家或档案 ID> <指纹>]",["chat"]="reconnect",["permission"]="list",
  ["tp"]="[来源] <目标|x y z> [facing <目标|x y z>]",["teleport"]="[来源] <目标|x y z>",["position"]="[目标]",["back"]="",["spreadplayers"]="<x> <z> <最小间距> <范围> <目标>",
  ["inspect"]="<目标> [health|equipment|effects|position]",["kill"]="<目标>",["damage"]="<目标> <数值> [伤害类型] [部位]",["heal"]="[目标] [部位]",["effect"]="give <目标> <效果> [秒] [强度] [部位] | clear <目标> [效果]",
- ["summon"]="<AI 角色|template:场景名> [x y z] [数量] [难度0-3]",["tag"]="<目标> add|remove|list [标签]",["rename"]="<AI> <名称>",["ai"]="pause|resume|follow|look|pose|relation|anchor|remove <AI> [参数] | configure <AI> {配置}",
+ ["summon"]="<AI 角色|template:场景名> [x y z] [数量] [难度0-3]",["tag"]="<目标> add|remove|list [标签]",["rename"]="<AI> <名称>",["ai"]="pause|resume|follow|look|pose|relation|anchor|remove <AI> [参数] | configure <AI> [参数=值 ...]",
  ["edit"]="on|off",["copy"]="[AI|@selected]",["paste"]="[x y z]",["remove"]="<AI|@selected>",["data"]="get entity <目标> [字段] | modify entity <AI> <字段> set value <值>",
- ["give"]="<玩家或AI> <物品名称或item:模板ID> [数量]",["clear"]="<目标> [物品名称或item:模板ID] [最大数量]",["item"]="replace entity <目标> <装备槽> with <物品> [数量] | modify entity <目标> <槽/附件路径> <参数> <值> | inspect entity <目标> <槽/附件路径>",["loot"]="spawn <x y z> <物品> [数量] | give <目标> loadout:<场景名>",["repair"]="<目标> [装备槽]",["reload"]="<目标> [装备槽] [弹药名称或item:模板ID]",
+ ["give"]="<玩家或AI> <物品名称或item:模板ID或preset:预设> [数量] [edit]",["clear"]="<目标> [物品名称或item:模板ID] [最大数量]",["item"]="replace entity <目标> <装备槽> with <物品> [数量] | modify entity <目标> <槽/附件路径> <参数> <值> | inspect entity <目标> <槽/附件路径>",["loot"]="spawn <x y z> <物品> [数量] | give <目标> loadout:<场景名>",["repair"]="<目标> [装备槽]",["reload"]="<目标> [装备槽] [弹药名称或item:模板ID]",
  ["time"]="set day|noon|night|midnight|<ticks> | add <ticks> | query daytime",["weather"]="clear|rain|thunder [持续秒数]",["gamerule"]="[规则] [值]",["raid"]="time query|set|add [时长] | extract @s",["airdrop"]="summon",["btr"]="status|route <站点ID>|stop",["marker"]="set <名称> [x y z] | remove <名称> | list",["navigate"]="<目标标签|x y z>|stop",
  ["experience"]="query <玩家> [points|levels]",["xp"]="query <玩家> [points|levels]",["attribute"]="<目标> <属性> base get|set [数值]"};
  internal sealed record Preview(string Syntax,string Current);
@@ -24,7 +24,8 @@ internal static class ChatCommandHints {
   int at=words.Length-2+(trailing?1:0);var args=words.Skip(1).ToArray();
   var alternatives=Usage[command].Split(" | ",StringSplitOptions.None);
   if(at==0&&alternatives.Length>1&&!alternatives.Any(p=>p.Split(' ')[0].Equals(args.FirstOrDefault(),StringComparison.OrdinalIgnoreCase)))return new("/"+command+" "+Usage[command],"当前参数："+string.Join(" | ",alternatives.Select(p=>p.Split(' ')[0])));
-  var parts=Parts(Pattern(command,args));if(ChatCommandOptions.KeysFor(command,args).Length>0)parts=parts.Append("[JSON配置]").ToArray();
+  var parts=Parts(Pattern(command,args));if(ChatCommandOptions.KeysFor(command,args).Length>0)parts=parts.Append("[参数=值 ...]").ToArray();
+  var current=trailing?"":args.LastOrDefault()??"";if(args.Any(ChatNamedArguments.Assignment)){var positional=args.TakeWhile(a=>!ChatNamedArguments.Assignment(a)).ToArray();var f=ChatNamedArguments.Assignment(current)&&current.IndexOf('=')>0?ChatNamedArguments.Describe(ChatNamedArguments.Pair(current).Key):null;return new("/"+command+" "+Pattern(command,positional)+" <color=#77D9C7><b>[参数=值 ...]</b></color>",f==null?"可继续添加参数；Tab 选择，Enter 执行":f.Label+" · "+f.Description);}
   if(args.LastOrDefault()?.StartsWith('{')==true)return new("/"+command+" "+Pattern(command,args.Take(args.Length-1).ToArray())+" <color=#77D9C7><b>{详细配置}</b></color>","可写字段："+string.Join(", ",ChatCommandOptions.KeysFor(command,args)));
   if(command is "msg" or "tell" or "w" or "reply" or "r" or "me"&&at>=parts.Length)at=parts.Length-1;
   string Highlight(string value)=>"<color=#77D9C7><b>"+value+"</b></color>";

@@ -14,14 +14,16 @@ internal static partial class RaidCommands {
   if(words.Length==0||words.Length==1&&!trailing){string head=words.FirstOrDefault()??"";return Usage.Keys.Where(k=>k.StartsWith(head,StringComparison.OrdinalIgnoreCase)).OrderBy(k=>k).Select(k=>new ChatSuggestion("/"+k,"/"+k,Usage[k])).ToArray();}
   string cmd=words[0].ToLowerInvariant(),token=trailing?"":words[^1];var args=words.Skip(1).ToArray();int at=trailing?args.Length:args.Length-1;
   if(token.StartsWith('{'))return OptionSuggestions(prefix,start,cmd,args,token);
+  var named=ChatNamedArguments.Complete(prefix,start,cmd,args,token);if(ChatNamedArguments.Assignment(token)||args.Take(Math.Max(0,args.Length-(trailing?0:1))).Any(ChatNamedArguments.Assignment))return named;
   if(!ChatCommandHints.HasArgument(cmd,args,at))return Array.Empty<ChatSuggestion>();
   string Arg(int n)=>n<args.Length?args[n]:"";
+  var details=new Dictionary<string,(string Name,string Detail)>(StringComparer.OrdinalIgnoreCase);
   var candidates=new List<string>();void Add(params string[] values)=>candidates.AddRange(values);
   void Peers()=>candidates.AddRange(peers.SelectMany(p=>new[]{p.Name,p.Profile}));
-  void Entities(){Add("@s","@a","@p","@e[type=ai]","@e[type=boss]","@selected");try{var w=Singleton<GameWorld>.Instance;if(w!=null&&RaidClock.Active)candidates.AddRange(All(w).SelectMany(p=>new[]{Name(p),Type(p)+":"+Name(p),"uuid:"+Id(p)}));}catch{}}
-  void Places(){Add("~","^","btr");candidates.AddRange(markers.Keys.Select(k=>"marker:"+k));try{if(RaidClock.Active)candidates.AddRange(TeleportControl.ChatDestinations().Select(d=>d.Key));}catch{}}
+  void Entities(){Add("@s","@a","@p","@e[type=ai]","@e[type=boss]","@selected");try{var w=Singleton<GameWorld>.Instance;if(w!=null&&RaidClock.Active)foreach(var p in All(w)){foreach(string key in new[]{Name(p),Type(p)+":"+Name(p),"uuid:"+Id(p)}){candidates.Add(key);details[key]=(Name(p),Type(p)+" · "+Role(p)+" · "+UnityEngine.Vector3.Distance(w.MainPlayer.Position,p.Position).ToString("F0")+" 米");}}}catch{}}
+  void Places(){Add("~","^","btr");details["~"]=("相对坐标","相对命令执行位置；依次填写 x y z");details["^"]=("镜头局部坐标","相对镜头方向；依次填写 x y z");foreach(var m in markers){string key="marker:"+m.Key;candidates.Add(key);details[key]=(m.Key,"本局标记 · "+m.Value.ToString("F1"));}try{if(RaidClock.Active){var origin=Singleton<GameWorld>.Instance.MainPlayer.Position;foreach(var d in TeleportControl.ChatDestinations()){candidates.Add(d.Key);details[d.Key]=(d.Name,ChatPlaceHints.Kind(d.Key)+" · "+d.Detail+" · "+UnityEngine.Vector3.Distance(origin,d.Position).ToString("F0")+" 米");}}}catch{}}
   ChatSuggestion[]? itemCandidates=null;
-  void Items(bool ammo=false){var catalog=ItemSpawner.CommandItems;itemCandidates=catalog.Search(token,ammo).Take(64).Select(p=>new ChatSuggestion(prefix[..start]+ChatCommandSyntax.Quote(catalog.Insert(p)),p.Title,(p.Name==p.Title?"":p.Name+"  ·  ")+p.Id)).ToArray();}
+  void Items(bool ammo=false){var catalog=ItemSpawner.CommandItems;itemCandidates=catalog.Search(token,ammo).Take(64).Select(p=>new ChatSuggestion(prefix[..start]+ChatCommandSyntax.Quote(catalog.Insert(p)),p.Title,(p.Name==p.Title?"":p.Name+"  ·  ")+p.Id)).ToArray();if(cmd=="give"&&!ammo){try{var presets=CommandPresets().Where(p=>("preset:"+p.Name).Contains(token,StringComparison.OrdinalIgnoreCase)||p.Name.Contains(token,StringComparison.OrdinalIgnoreCase)).Select(p=>new ChatSuggestion(prefix[..start]+ChatCommandSyntax.Quote("preset:"+p.Name),p.Name,"物品预设 · "+ItemSpawner.TemplateName(p.Template)+" · preset:"+p.Name));itemCandidates=presets.Concat(itemCandidates).ToArray();}catch{ /* A broken preset file must not hide ordinary item suggestions. */ } } }
   void Slots()=>candidates.AddRange(Enum.GetNames<EquipmentSlot>());
   switch(cmd){
    case "help":candidates.AddRange(Usage.Keys);break;
@@ -56,7 +58,7 @@ internal static partial class RaidCommands {
    case "experience":case "xp":if(at==0)Add("query");else if(at==1)Add("@s");else Add("points","levels");break;
    case "spreadplayers":if(at==4)Entities();break;
   }
-  if(trailing&&ChatCommandOptions.CanAppend(cmd,args))candidates.Add("{}");
-  return itemCandidates??candidates.Distinct(StringComparer.OrdinalIgnoreCase).Where(c=>c.StartsWith(token,StringComparison.OrdinalIgnoreCase)).OrderBy(c=>c).Take(64).Select(c=>new ChatSuggestion(prefix[..start]+ChatCommandSyntax.Quote(c),c)).ToArray();
+  if(cmd=="give"&&at>=2)candidates.Add("edit");
+  return (itemCandidates??candidates.Distinct(StringComparer.OrdinalIgnoreCase).Where(c=>c.StartsWith(token,StringComparison.OrdinalIgnoreCase)||details.TryGetValue(c,out var d)&&(d.Name+" "+d.Detail).Contains(token,StringComparison.OrdinalIgnoreCase)).OrderBy(c=>c).Take(64).Select(c=>details.TryGetValue(c,out var d)?new ChatSuggestion(prefix[..start]+ChatCommandSyntax.Quote(c),d.Name,d.Detail+" · "+c):new ChatSuggestion(prefix[..start]+ChatCommandSyntax.Quote(c),c,ChatPlaceHints.Description(c))).ToArray()).Concat(named).ToArray();
  }
 }

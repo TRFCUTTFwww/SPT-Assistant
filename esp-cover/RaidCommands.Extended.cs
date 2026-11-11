@@ -23,7 +23,7 @@ internal static partial class RaidCommands {
     plan.Owner.InventoryController.AddAndRaiseEvents(plan.Item,address);if(plan.Item.CurrentAddress==null)throw new ArgumentException("物品放入后回读失败，之前已完成的物品不会自动回滚。");budget.Keep(plan.Item);added++;plan.Owner.Profile.Inventory.Equipment.RaiseRefreshEvent(false,true);
    }RaidChat.Output("已生成 "+added+" 个堆叠（含详细参数）。枪械数值仅本局该实例生效。");return true;
   }
-  if(options is not {} o){if(command=="item"&&a[0]=="modify"&&a.Length==4||command=="ai"&&a[0]=="configure")throw new ArgumentException("请在末尾提供 JSON 配置。");return false;}
+  if(options is not {} o){if(command=="item"&&a[0]=="modify"&&a.Length==4||command=="ai"&&a[0]=="configure")throw new ArgumentException("请在末尾提供 参数=值，例如 paused=true 或 durability=80。");return false;}
   switch(command){
    case "item":ModifySpecified(w,a,o);return true;
    case "summon":SummonSpecified(w,a,o);return true;

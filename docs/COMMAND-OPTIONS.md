@@ -4,13 +4,38 @@
 
 Current target: **SPT 5.0 BE / EFT 1.3.0.1.48558**. Unstable and not broadly raid-tested. These additions apply to main's local single-player commands; the old Fika branch is unchanged.
 
-保留原来的位置参数，在末尾加一个 JSON 对象。字段区分大小写，字符串必须用双引号，布尔值为 `true/false`。未知字段、重复字段和错误类型会拒绝。不要把整个 JSON 再套一层引号。本地输入上限 16,384 字符；网络文字聊天仍为 2,000 字符。
+日常参数使用 `名称=值`，不用输入 JSON。位置参数写在前面，之后的命名参数可任意排序；字符串有空格时用双引号。Tab 先选择参数名，再选择值；候选显示中文含义。聊天框下方的参数块可以点击修改或移除。
 
-Keep the existing positional arguments and append one JSON object. Keys are case-sensitive. Use double-quoted strings and literal booleans. Unknown/duplicate keys and invalid types are rejected. Do not quote the entire object. Local input allows 16,384 characters; network messages remain limited to 2,000.
+Use `name=value` for daily commands without JSON. Keep positional arguments first, then named options in any order. Quote values containing spaces. Tab selects an argument name and then a value; hints explain their meaning. Click parameter chips below the chat to edit or remove a value.
 
-输入 `{` 或完整对象时，Tab 可添加顶层字段示例并保留已有字段。尚未闭合的非空配置不会被候选覆盖。嵌套字段暂不逐层补全；示例中的 `<…>` 须替换成实际名称或 ID。`/help give`、`/help item`、`/help ai` 也提供字段提示。
+```text
+/give @s salewa 1 fir=true medical=400
+/item modify entity @s FirstPrimaryWeapon durability=80 maxDurability=100 ergonomics=80 firerate=750
+/heal @s Chest amount=20 clearEffects=false
+/ai configure @e[type=scav,limit=1] name="Test AI" paused=true healthPercent=50 pose=crouched playerRelation=friendly
+/summon assault count=2 difficulty=hard pos=~,~,~5 health=1000
+/weather rain 120 rain=0.4 fog=0.05 clouds=0.8
+```
 
-Type `{` or a complete object to add top-level example fields with Tab while retaining existing fields. Incomplete nonempty objects are not replaced. Nested completion is not implemented. Replace `<…>` placeholders with actual names/IDs. In-game `/help` also lists supported fields.
+简写：`fir` 带钩、`medical` 医疗余量、`food` 食物余量、`uses` 钥匙次数、`health` 总血量；其余下表的简单字段可直接作为参数名。关系支持 default/friendly/hostile。`pose/follow/look/speed/noHealing/noDoors/noMovement/followDistance/setFacing` 写入 AI 导演设置；`ergonomics/firerate/recoilUp/recoilBack/ignoreAttachments` 写入枪械设置。高级单值路径也支持，例如 `bodyHealth.Chest.maximum=300 bodyHealth.Chest.current=200`、`weapon.values.RecoilForceUp=20`。effect 的类型、时间、强度和部位继续使用原有命令。
+
+Short aliases map to the corresponding fields below. Actor relations accept default/friendly/hostile; scene and weapon shorthands map to existing nested settings. Advanced numeric paths also work, as shown above. Effects retain their existing type/duration/strength/part command syntax.
+
+复杂物品用 `/give @s AKM edit`。打开独立编辑窗口，可以逐层选择附件、编辑组件参数、添加容器内容物、按顺序添加弹药组、设置枪械参数；最后点击生成到命令指定目标。内容物自动安排格子，原生容量和兼容限制继续生效。枪械页修改后需点“保存枪械数值到当前配置”。取消或 Esc 返回聊天，不发放物品。
+
+Use `/give @s AKM edit` for the visual editor. Browse attachment slots, component values, container contents, ordered ammo groups and weapon values, then generate for the original targets. Contents use automatic grid placement and native compatibility/capacity checks. On the weapon tab, save values to the current specification before generation. Cancel/Esc returns to chat without delivery.
+
+窗口中输入预设名并保存，之后用 `/give @s preset:训练AKM 1`；名字带空格可写 `"preset:Training AKM"`。也可用该预设加 `edit` 继续编辑，或追加命名参数覆盖本次生成值。预设存于 `BepInEx/plugins/LocalSpt5ESP/command-item-presets.json`，保存会备份旧文件，与原有物品快捷标签分开。
+
+Save an editor preset and reuse `/give @s preset:TrainingAKM 1`, optionally with `edit` or named overrides. Quote the token for names with spaces. Presets live in `command-item-presets.json` under the Assistant plugin directory, use backup-on-save, and are separate from existing quick item tags.
+
+地点补全保留原标签，显示地点名称、类型、状态/说明和距离，可按名称搜索；确认后仍插入精确 ID。右上角“关闭 · ESC”支持鼠标点击。这里的地点和状态依赖当前战局数据，不伪造未知名称。
+
+Place completion retains exact identifiers while showing names, type, status/details and distance, and can search by readable name. The top-right Close/ESC button is clickable. Place metadata depends on current raid data.
+
+旧末尾 JSON 仍兼容，但不再作为默认交互，也不可与命名参数混用。以下是内部字段和高级结构参考。本地输入上限 16,384 字符，网络文字仍限 2,000；命令仅在本机单人战局执行，Fika 下明确拒绝世界修改。
+
+Legacy final JSON remains compatible as an advanced format, cannot be mixed with named arguments, and is no longer the default UI. The following sections describe underlying fields. Local input allows 16,384 characters; network messages remain limited to 2,000. World commands remain local-single-player only and reject Fika worlds.
 
 ## 物品 / Items
 

@@ -5,15 +5,15 @@ using System.Text.Json;
 namespace LocalSpt5Esp;
 internal static partial class RaidCommands {
  static string OptionHelp(string? command){
-  if(command==null)return "详细参数：命令末尾可加 JSON 对象；/help give、/help ai 查看支持字段。完整示例见 docs/COMMAND-OPTIONS.md。\n";
-  command=command.ToLowerInvariant();var args=command=="ai"?new[]{"configure"}:command=="item"?new[]{"replace"}:command=="loot"?new[]{"spawn"}:Array.Empty<string>();var keys=ChatCommandOptions.KeysFor(command,args);
-  if(keys.Length==0)return "";
-  return "可在末尾添加 JSON 配置（双引号、字段区分大小写）：\n"+string.Join(", ",keys)+"\n"+(command switch{
-   "give"=>"/give @s salewa 1 {\"foundInRaid\":true,\"medicalResource\":400}",
-   "item"=>"/item modify entity @s FirstPrimaryWeapon {\"durability\":80,\"maxDurability\":100}\n/item inspect entity @s FirstPrimaryWeapon\n现有物品修改不接受 attachments / contents / cartridges；item replace 仅限空槽。",
-   "ai"=>"/ai configure @e[type=scav,limit=1] {\"paused\":true,\"healthPercent\":50}",
-   "heal"=>"/heal @s Chest {\"amount\":20,\"clearEffects\":false}",
-   _=>"字段值和嵌套结构见 docs/COMMAND-OPTIONS.md；输入 { 或完整配置后使用 Tab 添加顶层字段。"})+"\n";
+  if(command==null)return "详细参数使用 名称=值；Tab 先选参数，再选值。复杂物品用 /give @s <物品> edit。\n";
+  command=command.ToLowerInvariant();var args=command=="ai"?new[]{"configure"}:command=="item"?new[]{"replace"}:command=="loot"?new[]{"spawn"}:Array.Empty<string>();var fields=ChatNamedArguments.Fields(command,args);
+  if(fields.Length==0)return "";
+  return "命名参数（位置参数写在前面）：\n"+string.Join("\n",fields.Select(f=>f.Key+"=  ·  "+f.Label+" — "+f.Description))+"\n"+(command switch{
+   "give"=>"/give @s salewa 1 fir=true medical=400\n/give @s AKM edit\n/give @s preset:训练AKM 1",
+   "item"=>"/item modify entity @s FirstPrimaryWeapon durability=80 maxDurability=100\n/item inspect entity @s FirstPrimaryWeapon",
+   "ai"=>"/ai configure @e[type=scav,limit=1] paused=true healthPercent=50",
+   "summon"=>"/summon assault count=2 pos=~,~,~5 difficulty=hard health=1000",
+   "heal"=>"/heal @s Chest amount=20 clearEffects=false",_=>"完整说明见 docs/COMMAND-OPTIONS.md。"})+"\n";
  }
  static readonly Dictionary<string,string> optionExamples=new(){
   ["durability"]="80",["maxDurability"]="100",["medicalResource"]="400",["foodResource"]="100",["keyRemaining"]="32767",["poisonUses"]="10",["resource"]="100",["repairKitResource"]="1000",["toggledOn"]="true",["foundInRaid"]="true",

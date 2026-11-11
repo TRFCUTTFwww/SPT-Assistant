@@ -49,12 +49,12 @@ internal static partial class RaidChat {
   finally{GUI.depth=oldDepth;}
  }
  static void DrawOpen(Rect bounds){
-  KeepCursor();Keys();if(!Open)return;
+  KeepCursor();if(ChatItemEditor.Active){var modal=new Rect(Math.Max(8,(Screen.width-920)/2),Math.Max(8,(Screen.height-740)/2),Math.Min(920,Screen.width-16),Math.Min(740,Screen.height-16));ChatItemEditor.Draw(modal);return;}Keys();if(!Open)return;
   Card(bounds,new Color(.043f,.057f,.069f,.97f),10);
   InterfaceMenu.Surface(new Rect(bounds.x+1,bounds.y+1,bounds.width-2,43),new Color(.075f,.095f,.109f,.95f),9);
   Badge(new Rect(bounds.x+13,bounds.y+11,25,23),">_",accent);
   Label(new Rect(bounds.x+48,bounds.y+12,bounds.width-180,23),Text("聊天与命令","Chat & commands"),titleStyle!,ink);
-  Badge(new Rect(bounds.xMax-90,bounds.y+11,76,23),"ESC",muted);
+  var close=new Rect(bounds.xMax-105,bounds.y+9,92,28);bool over=close.Contains(Event.current.mousePosition);InterfaceMenu.Surface(close,over?new Color(.4f,.2f,.2f,.7f):new Color(.2f,.25f,.28f,.5f),5);Label(close,Text("关闭 · ESC","Close · ESC"),badgeStyle!,over?ink:muted);if(GUI.Button(close,GUIContent.none,GUIStyle.none)){SetOpen(false);return;}
   InterfaceMenu.Surface(new Rect(bounds.x+1,bounds.y+44,bounds.width-2,1),panelBorder,0);
   var inputBox=new Rect(bounds.x+12,bounds.yMax-67,bounds.width-24,39);
   InterfaceMenu.Surface(inputBox,new Color(accent.r,accent.g,accent.b,.45f),6);
@@ -73,13 +73,14 @@ internal static partial class RaidChat {
   completion.Refresh(input,position,Complete);
   string prefix=input[..position];if(prefix!=hintPrefix){hintPrefix=prefix;hint=ChatCommandHints.For(input,position);}
   var body=new Rect(bounds.x+12,bounds.y+48,bounds.width-24,Math.Max(1,inputBox.y-bounds.y-56));
+  float chipHeight=DrawParameterChips(body);body.height=Math.Max(1,body.height-chipHeight);
   float hintHeight=DrawHints(body,position);
   var viewport=new Rect(body.x,body.y,body.width,Math.Max(1,body.height-hintHeight));
   DrawMessages(viewport);
   string help=completion.Candidates.Length>0?Text("↑↓ 选择   Tab 填入   Enter 执行   Ctrl+↑↓ 历史","↑↓ Select   Tab Fill   Enter Run   Ctrl+↑↓ History"):Text("Enter 发送 / 执行   ↑↓ 历史   Esc 关闭","Enter Send / Run   ↑↓ History   Esc Close");
   if(completion.Pending)help=Text("↑↓ 选择   Tab / Enter 填入   Ctrl+↑↓ 历史","↑↓ Select   Tab / Enter Fill   Ctrl+↑↓ History");
   Label(new Rect(bounds.x+16,bounds.yMax-22,bounds.width-32,17),help,captionStyle!,muted);
-  Input.imeCompositionMode=IMECompositionMode.On;Input.compositionCursorPos=new Vector2(inputRect.x,inputRect.y);
+  DrawParameterPopup(bounds);Input.imeCompositionMode=IMECompositionMode.On;Input.compositionCursorPos=new Vector2(inputRect.x,inputRect.y);
  }
  static void DrawMessages(Rect viewport){
   if(lines.Count==0){Label(new Rect(viewport.x+10,viewport.y+10,viewport.width-20,24),Text("输入 / 开始","Start with /"),titleStyle!,muted);if(viewport.height>80)Label(new Rect(viewport.x+10,viewport.y+40,viewport.width-20,40),Text("按名称查找命令与物品。执行结果会显示在这里。","Find commands and items by name. Results appear here."),style!,muted);}
@@ -111,10 +112,10 @@ internal static partial class RaidChat {
     Label(new Rect(15,rowY+4,panel.width-76,26),option.Label,candidateStyle!,selected?ink:new Color(.77f,.84f,.88f));
     Label(new Rect(15,rowY+31,panel.width-32,17),option.Detail,captionStyle!,selected?accent:muted);
     if(selected)Badge(new Rect(panel.width-57,rowY+7,40,21),"TAB",accent);
-    if(e.type==EventType.MouseDown&&e.button==0&&hovered){completion.Select(candidate);var result=completion.Accept(input,position);ReplaceInput(result.Text,result.Cursor);focus=true;e.Use();}
+    if(editingChip==null&&e.type==EventType.MouseDown&&e.button==0&&hovered){completion.Select(candidate);var result=completion.Accept(input,position);ReplaceInput(result.Text,result.Cursor);focus=true;e.Use();}
     rowY+=ChatPanelLayout.RowHeight;
    }
-   var ev=Event.current;if(ev.type==EventType.ScrollWheel&&new Rect(0,0,panel.width,panel.height).Contains(ev.mousePosition)){completion.MoveSelection(ev.delta.y<0?-1:1);ev.Use();}
+   var ev=Event.current;if(editingChip==null&&ev.type==EventType.ScrollWheel&&new Rect(0,0,panel.width,panel.height).Contains(ev.mousePosition)){completion.MoveSelection(ev.delta.y<0?-1:1);ev.Use();}
   }finally{GUI.EndGroup();}
   return height+8;
  }
