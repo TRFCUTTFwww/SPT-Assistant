@@ -2,6 +2,8 @@
 
 ## 简体中文
 
+进一步修正物品资源加载回调：使用游戏自带的 General 优先级委托，避免自定义回调在 JobYieldPriority.Priority 中触发 NotImplementedException。增加可选运行诊断，验证资源加载、物品注册及临时物品清理。
+
 修复创建物品时因模型资源未加载而无物品生成的问题（日志中黑卡、弹药及瞄具资源未加载）。创建及物品粘贴改为异步加载完整物品树资源后再生成，并确认已注册到战局。创建物品新增参数页，可修改堆叠数量和支持的物品参数，提供“返回列表”；失败显示原因并保留窗口，成功后清空选中。
 
 修正编辑操作后的选中残留，统一清理单选、多选和混合选择；移动放下或取消后、属性/重命名窗口关闭后清空。右键菜单点击外部取消菜单和选中，鼠标移出不自动关闭，鼠标点击只执行实际指向的可用项目。Alt 空白单击清空选中。新增“穿墙选中”开关（默认开启），同时控制 AI、物品和尸体的点选及框选遮挡检查。
@@ -36,6 +38,8 @@ Fika 成员添加 `-ClientOnly`，连接房主，不启动本地服务端。本�
 仍为实验版，未经过广泛测试，不保证向后兼容；安装前备份存档和配置。编译、离线检查和安装包校验不代表游戏内验收。实际按键、界面、战局效果和 Fika 多客户端同步由用户检查。具体执行的检查见[验证记录](validation-2.1.json)。
 
 ## English
+
+Use the game's native General yield delegate for item resource loading. Managed wrapper delegates are rejected by JobYieldPriority.Priority with NotImplementedException. Add an opt-in runtime diagnostic covering resource loading, loot registration and temporary-item cleanup.
 
 Fix world item creation failing when model bundles were not loaded. Creation and item pasting now load resources for the complete item tree asynchronously before native placement and verify loot registration. A new parameter page supports stack count and available item properties, with a Back to list action. Failures retain the window and show a reason; successful creation clears selection.
 
