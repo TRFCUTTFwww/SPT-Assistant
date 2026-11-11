@@ -1,0 +1,31 @@
+{
+  "version": "2.1",
+  "date": "2026-11-11",
+  "releaseChannel": "experimental",
+  "target": {
+    "spt": "5.0 BE",
+    "eft": "1.3.0.1.48558",
+    "platform": "Windows x64",
+    "runtime": "Unity IL2CPP / .NET 10",
+    "backwardCompatibilityGuaranteed": false
+  },
+  "builds": {
+    "client": "passed; zero errors, two existing nullable warnings",
+    "mailAndAdministration": "passed",
+    "raidControls": "passed"
+  },
+  "offlineChecks": {
+    "clientProbe": "129 PASS groups",
+    "chatAndCommands": "passed, including TLS integration and command syntax",
+    "mailAndAdministration": "24 PASS groups; two nullable warnings in test source"
+  },
+  "packageVerification": "passed: full and ClientOnly VerifyOnly modes, checksums, EFT dependencies and local database; no game files changed",
+  "installation": "Full installation not performed; user game files are not changed by VerifyOnly",
+  "clientHotReload": "Not performed for the 2.1 release",
+  "broadTestingCompleted": false,
+  "requiresInGameConfirmation": [
+    "Sidebar subtitle removal and overall UI layout",
+    "Configured hotkeys, text input isolation and world editor actions",
+    "Native raid behavior and multi-client Fika synchronization"
+  ]
+}

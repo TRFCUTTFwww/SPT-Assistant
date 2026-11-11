@@ -73,7 +73,7 @@ foreach($process in Get-Process -Name EscapeFromTarkov,SPT.Server -ErrorAction S
  try{$processPath=$process.Path}catch{}
  if(-not $processPath -or $processPath.StartsWith($prefix,[StringComparison]::OrdinalIgnoreCase)){throw 'Close the target game and SPT server before installation'}
 }
-$backup=Target ('mod-backups/assistant-2.0.6-'+[DateTime]::Now.ToString('yyyyMMdd-HHmmssfff'))
+$backup=Target ('mod-backups/assistant-2.1-'+[DateTime]::Now.ToString('yyyyMMdd-HHmmssfff'))
 $completed=[Collections.Generic.List[object]]::new()
 function Prepare([string]$relative){
  $destination=Target $relative
@@ -103,9 +103,9 @@ try{
   [IO.File]::WriteAllText($destination,[BitConverter]::ToString($random).Replace('-',''),$utf8)
  }
  $destination=Prepare 'BepInEx/plugins/LocalSpt5ESP/install-manifest.json'
- $manifest=@{version='2.0.6';hostVersion='1.5.0';targetSpt='5.0 BE';targetEft='1.3.0.1.48558';clientOnly=[bool]$ClientOnly;experimental=$true;inRaidVerified=$false;installedUtc=[DateTime]::UtcNow.ToString('O');backup=$backup;coreSha256=$checks.'payload/Local.Spt5.ESP.Core.module'}
+ $manifest=@{version='2.1';hostVersion='1.5.0';targetSpt='5.0 BE';targetEft='1.3.0.1.48558';clientOnly=[bool]$ClientOnly;experimental=$true;inRaidVerified=$false;installedUtc=[DateTime]::UtcNow.ToString('O');backup=$backup;coreSha256=$checks.'payload/Local.Spt5.ESP.Core.module'}
  [IO.File]::WriteAllText($destination,($manifest|ConvertTo-Json -Depth 4),$utf8)
- Write-Output ('Installed SPT Assistant 2.0.6 (EXPERIMENTAL). Backup: '+$backup)
+ Write-Output ('Installed SPT Assistant 2.1 (EXPERIMENTAL). Backup: '+$backup)
  Write-Output 'Start the SPT server, then its client. Press Right Shift. Fika members: connect to the host; do not start a local server.'
 }catch{
  $failure=$_

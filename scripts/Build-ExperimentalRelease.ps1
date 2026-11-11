@@ -10,7 +10,7 @@ $OutputDirectory=[IO.Path]::GetFullPath($OutputDirectory)
 if((Test-Path -LiteralPath $OutputDirectory) -and (Get-ChildItem -LiteralPath $OutputDirectory -Force | Select-Object -First 1)){throw 'OutputDirectory must be new or empty'}
 [IO.Directory]::CreateDirectory($OutputDirectory)|Out-Null
 $version=([IO.File]::ReadAllText((Join-Path $repo 'VERSION'))).Trim()
-if($version -ne '2.0.6'){throw 'Review packaging for the new release version'}
+if($version -ne '2.1'){throw 'Review packaging for the new release version'}
 foreach($project in @('esp-cover/Esp.csproj','gear-admin-module/AdminModule.csproj','raid-controls-server/RaidControls.csproj')){
  & $Dotnet build (Join-Path $repo $project) -c Release --nologo ('-p:GameRoot='+$GameRoot) -p:EftBuild=48558
  if($LASTEXITCODE -ne 0){throw ('Build failed: '+$project)}
@@ -31,7 +31,7 @@ foreach($entry in $components.GetEnumerator()){Copy-Item -LiteralPath (Join-Path
 Copy-Item -LiteralPath (Join-Path $repo 'scripts/Install-Experimental.ps1') -Destination (Join-Path $stage 'Install.ps1')
 foreach($name in @('README.md','README.zh-CN.md','LICENSE')){Copy-Item -LiteralPath (Join-Path $repo $name) -Destination $stage}
 [IO.Directory]::CreateDirectory((Join-Path $stage 'docs'))|Out-Null
-foreach($name in @('INSTALL.md','release-2.0.6.md','validation-2.0.6.json')){Copy-Item -LiteralPath (Join-Path $repo ('docs/'+$name)) -Destination (Join-Path $stage 'docs')}
+foreach($name in @('INSTALL.md','release-2.1.md','validation-2.1.json','hotkeys.md')){Copy-Item -LiteralPath (Join-Path $repo ('docs/'+$name)) -Destination (Join-Path $stage 'docs')}
 $checks=[ordered]@{}
 Get-ChildItem -LiteralPath $stage -File -Recurse | Sort-Object FullName | ForEach-Object {
  $relative=$_.FullName.Substring($stage.Length+1).Replace('\','/')
