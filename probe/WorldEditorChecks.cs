@@ -52,7 +52,10 @@ internal static class WorldEditorChecks {
   Check(EditorContextRules.Toggle("copy","copy")==""&&EditorContextRules.Read("").Length==0,"all optional context actions can be hidden");
   Check(EditorContextRules.Move("copy,move","move",-1)=="move,copy"&&EditorContextRules.Move("copy,move","copy",-1)=="copy,move"&&EditorContextRules.Move("copy,move","move",1)=="copy,move","context ordering honors list boundaries");
   Check(EditorContextRules.Read("resume,copy,pause,invincible-off,invincible-on,ab-peace,ab-hostile,player-hostile,player-peace").SequenceEqual(new[]{"pause-toggle","copy","invincible-toggle","ab-toggle","player-toggle"}),"legacy pairs merge once at their first visible position");
-  Check(EditorContextRules.EnableNext(new[]{false,false})&&EditorContextRules.EnableNext(new[]{true,false})&&!EditorContextRules.EnableNext(new[]{true,true})&&!EditorContextRules.EnableNext(Array.Empty<bool>()),"toggles unify mixed selections and reverse uniform selections");
+  foreach(bool split in new[]{false,true}){
+   Check(EditorContextRules.NextActions(new[]{false,false},split).SequenceEqual(new[]{true})&&EditorContextRules.NextActions(new[]{true,true},split).SequenceEqual(new[]{false})&&EditorContextRules.NextActions(Array.Empty<bool>(),split).Length==0,"uniform selections reverse once and empty selections offer no operation");
+   Check(EditorContextRules.NextActions(new[]{true,false},split).SequenceEqual(split?new[]{true,false}:new[]{true})&&EditorContextRules.NextActions(new[]{false,true},split).SequenceEqual(split?new[]{true,false}:new[]{true}),"mixed selections honor one/two-button preference regardless of selection order");
+  }
   Console.WriteLine("PASS configurable context action IDs, filtering, visibility and ordering boundaries");
   foreach(HotkeyModifiers required in Enumerable.Range(0,8).Select(i=>(HotkeyModifiers)i))foreach(HotkeyModifiers held in Enumerable.Range(0,8).Select(i=>(HotkeyModifiers)i)){
    Check(HotkeyRules.Matches(required,held)==(required==held),"hotkey chords require exact modifiers outside editor selection");

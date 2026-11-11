@@ -2,7 +2,7 @@
 
 ## 简体中文
 
-右键菜单的暂停/恢复、无敌开/关、A/B 敌对/停战、对玩家敌对/停战各合并为一个按钮，显示下一次点击的操作。混合状态先统一设为暂停、无敌或停战，再次点击反向切换；旧配置自动迁移并保留首个位置。A/B 标记和恢复默认关系独立保留。
+右键菜单的暂停/恢复、无敌开/关、A/B 敌对/停战、对玩家敌对/停战在状态一致时各显示一个反向操作按钮。在“自定义右键菜单”中可切换“混合状态显示两个按钮”（默认开启）：开启时，状态不一致会同时显示两个明确操作；关闭时只显示一个按钮，先统一暂停、开启无敌或对玩家停战，A/B 则统一敌对，再次点击反向切换。旧配置自动迁移并保留首个位置。A/B 标记和恢复默认关系独立保留。
 
 
 右键菜单末尾的“自定义右键菜单”或“开发工具 → 编辑模式”可勾选显示项目、用 ↑↓ 排序、恢复默认。支持删除所有武器（含近战）、设为 A/B 方、清除队伍标记、暂停和恢复活动；批量作用于所选 AI。A/B 标记不自动更改敌对关系。菜单较长时滚轮或方向键会滚动。
@@ -51,7 +51,7 @@ Editor shortcuts: **Ctrl+C** copies the selected category, **Ctrl+V** pastes at 
 
 Target: SPT 5.0 BE / EFT 1.3.0.1.48558. **Unstable; not broadly tested or visually verified in a raid.** Development follows the latest SPT version; backward compatibility is not guaranteed.
 
-Press Right Shift, open **Development tools → Editor mode**, enable the opt-in setting, then close the main panel. No persistent editor crosshair or instruction text is shown. Aim assistance, automatic toy firing and laser eyes pause during editing. Local firing, aiming and weapon-wheel commands are blocked while camera and movement axes remain available. Holding Alt or opening an editor window captures camera/movement input; releasing Alt and mouse buttons restores it.
+Press Right Shift, open **Development tools → Editor mode**, enable the opt-in setting, then close the main panel. A small center crosshair is shown while persistent instruction text stays hidden. In Customize context menu, **Show both actions for mixed states** defaults to on: mixed selections show both explicit operations. Turn it off to show one action that first applies pause, invincibility or player ceasefire to all (hostility for A/B). Uniform selections always show one reverse operation. Aim assistance, automatic toy firing and laser eyes pause during editing. Local firing, aiming and weapon-wheel commands are blocked while camera and movement axes remain available. Holding Alt or opening an editor window captures camera/movement input; releasing Alt and mouse buttons restores it.
 
 **Keep single selection after editing** is available on the same settings page and defaults to off. Closing properties or rename for one AI/item clears its selection. Enable it to retain the target. Multiple and mixed selections remain selected for continued editing.
 

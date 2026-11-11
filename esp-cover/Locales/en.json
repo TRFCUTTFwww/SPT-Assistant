@@ -1,4 +1,6 @@
 {
+  "混合状态显示两个按钮": "Show both actions for mixed states",
+  "开启：状态不一致时同时显示两个明确操作；关闭：只显示一个按钮，先统一暂停、开启无敌或停战（A/B 则统一敌对）。状态一致时始终只显示反向操作。": "On: mixed states show both explicit actions. Off: show one action to apply pause, invincibility or ceasefire to all (hostility for A/B). Uniform states always show the reverse action.",
   "暂停／恢复活动": "Pause / resume activity",
   "A ↔ B 敌对／停战": "A ↔ B hostility / ceasefire",
   "对玩家敌对／停战": "Player hostility / ceasefire",

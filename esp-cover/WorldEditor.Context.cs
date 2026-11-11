@@ -21,9 +21,9 @@ internal static partial class WorldEditor {
  static void SetContext(ContextAction[] actions){contextActions=actions;contextChoice=EditorMenuRules.Next(Array.ConvertAll(actions,a=>a.Enabled),-1,1);contextTop=0;contextFrame=Time.frameCount;contextPointer=MousePosition;Modal("context");}
  static void OpenEditContext(SelectionKind kind){
   selectionKind=kind;TargetAt(0);categoryMenu=false;contextTitle="场景编辑";bool selected=SelectionCount>0;
-  var available=new System.Collections.Generic.Dictionary<string,ContextAction>();
-  void Add(string id,bool enabled,Action execute,string shortcut="")=>available[id]=new(EditorContextRules.Options.First(o=>o.Id==id).Name,enabled,execute,shortcut);
-  void Toggle(string id,string name,bool enabled,Action execute)=>available[id]=new(name,enabled,execute);
+  var available=new System.Collections.Generic.Dictionary<string,ContextAction[]>();
+  void Add(string id,bool enabled,Action execute,string shortcut="")=>available[id]=new[]{new ContextAction(EditorContextRules.Options.First(o=>o.Id==id).Name,enabled,execute,shortcut)};
+  void Pair(string id,bool[] states,string on,string off,Action<bool> execute)=>available[id]=states.Length==0?new[]{new ContextAction(on,false,()=>{})}:EditorContextRules.NextActions(states,splitMixedContext.Value).Select(value=>new ContextAction(value?on:off,true,()=>execute(value))).ToArray();
   Add("create",true,BeginCreate,ShortcutLabel(EditorShortcut.Create));Add("move",selected,BeginMove,ShortcutLabel(EditorShortcut.Move));Add("copy",selected,Copy,ShortcutLabel(EditorShortcut.Copy));Add("paste",clipboard.Length>0,Paste,ShortcutLabel(EditorShortcut.Paste));Add("duplicate",selected,()=>ApplyShortcut(EditorShortcut.Duplicate,selectionKind),ShortcutLabel(EditorShortcut.Duplicate));
   if(kind==SelectionKind.Ai&&selected){
    Add("rename",true,BeginRename,ShortcutLabel(EditorShortcut.Rename));Add("kill",true,Kill,ShortcutLabel(EditorShortcut.Kill));
@@ -31,15 +31,13 @@ internal static partial class WorldEditor {
    Add("remove-weapons",!AiEquipmentRemoval.Busy&&!AiSceneEquipment.Busy,ContextRemoveWeapons);
    Add("team-a",true,()=>ContextTeam(1));Add("team-b",true,()=>ContextTeam(2));Add("team-clear",true,()=>ContextTeam(0));
    var targets=SelectedActors();
-   bool pause=EditorContextRules.EnableNext(targets.Select(ContextPaused).ToArray()),invincible=EditorContextRules.EnableNext(targets.Select(p=>AiActorControl.EditorState(p).Invincible).ToArray()),peace=EditorContextRules.EnableNext(targets.Select(AiActorControl.EditorPlayerCeasefire).ToArray());
-   bool hostile=!AiActorControl.EditorSidesHostile();
-   Toggle("pause-toggle",pause?"暂停活动":"恢复活动",true,ContextTogglePause);
-   Toggle("ab-toggle",hostile?"A ↔ B 双方敌对":"A ↔ B 双方停战",AiActorControl.EditorSidesReady,ContextToggleSides);
-   Toggle("player-toggle",peace?"对玩家停战":"对玩家敌对",true,ContextTogglePlayerRelation);Add("player-default",true,()=>ContextPlayerRelation(0));
-   Toggle("invincible-toggle",invincible?"开启无敌":"关闭无敌",true,ContextToggleInvincible);Add("clear-effects",true,ContextClearEffects);
+   Pair("pause-toggle",targets.Select(ContextPaused).ToArray(),"暂停活动","恢复活动",ContextPause);
+   Pair("ab-toggle",AiActorControl.EditorSideStates(),"A ↔ B 双方敌对","A ↔ B 双方停战",ContextSides);
+   Pair("player-toggle",targets.Select(AiActorControl.EditorPlayerCeasefire).ToArray(),"对玩家停战","对玩家敌对",value=>ContextPlayerRelation(value?1:2));Add("player-default",true,()=>ContextPlayerRelation(0));
+   Pair("invincible-toggle",targets.Select(p=>AiActorControl.EditorState(p).Invincible).ToArray(),"开启无敌","关闭无敌",ContextInvincible);Add("clear-effects",true,ContextClearEffects);
   }
   Add("delete",selected,Delete,ShortcutLabel(EditorShortcut.Delete));if(kind==SelectionKind.Corpses)Add("revive",selected,ReviveCorpses);else Add("properties",selected,OpenProperties,ShortcutLabel(EditorShortcut.Properties));
-  var actions=EditorContextRules.Read(contextOrder.Value).Where(available.ContainsKey).Select(id=>available[id]).ToList();
+  var actions=EditorContextRules.Read(contextOrder.Value).Where(available.ContainsKey).SelectMany(id=>available[id]).ToList();
   actions.Add(new("自定义右键菜单",true,OpenContextSettings));
   if(SelectionKinds>1)actions.Add(new("返回类别选择",true,OpenContext));SetContext(actions.ToArray());
  }

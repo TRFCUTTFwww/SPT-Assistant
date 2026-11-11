@@ -15,13 +15,13 @@
                    "raidControls":  "passed"
                },
     "offlineChecks":  {
-                          "clientProbe":  "133 PASS groups; includes merged menu migration, mixed-state toggle and visibility/order boundaries and compiled routing checks for temporary movement protection, A/B scope, native search entry point and matrix interop removal",
+                          "clientProbe":  "133 PASS groups; includes merged menu migration, both mixed-state one/two-button preferences, uniform/empty selection boundaries, visibility/order boundaries and compiled routing checks for temporary movement protection, A/B scope, native search entry point and matrix interop removal",
                           "chatAndCommands":  "passed, including TLS integration and command syntax",
                           "mailAndAdministration":  "24 PASS groups; two nullable warnings in test source"
                       },
     "packageVerification":  "passed: full and ClientOnly VerifyOnly modes, checksums, EFT dependencies and local database; no game files changed",
-    "installation":  "Client runtime replacement prepared for the local EFT 48558 installation; full server installation not repeated",
-    "clientHotReload":  "Previous 2.1 module loaded in generations 2 and 3; client later crashed. Latest crosshair/toggle revision built and verified offline; installation waits for running client to exit.",
+    "installation":  "Client-only atomic runtime replacement authorized for local EFT 48558; full server installation not repeated",
+    "clientHotReload":  "This revision is verified offline. Runtime generation, module hash and ready/error status are checked separately when deployed; visual acceptance remains with the user.",
     "broadTestingCompleted":  false,
     "requiresInGameConfirmation":  [
                                        "Version-only sidebar subtitle and overall UI layout",

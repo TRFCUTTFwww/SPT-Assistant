@@ -2,7 +2,7 @@
 
 ## 简体中文
 
-恢复编辑模式的中心小十字准星，继续隐藏常驻操作文字。右键菜单将暂停/恢复、无敌开/关、A/B 敌对/停战、对玩家敌对/停战分别合为一个按钮，名称显示下一次操作；混选先统一开启暂停、无敌或停战，再次点击反向切换。旧配置自动合并，保留最先出现的位置；A/B 标记与恢复默认关系独立保留。
+恢复编辑模式的中心小十字准星，继续隐藏常驻操作文字。右键菜单的暂停/恢复、无敌开/关、A/B 敌对/停战、对玩家敌对/停战在状态一致时只显示反向操作。“自定义右键菜单”新增“混合状态显示两个按钮”（默认开启）：开启时，状态不一致显示两个明确操作；关闭时显示一个按钮，先统一暂停、开启无敌或对玩家停战，A/B 则统一敌对，再次点击反向切换。旧配置自动合并，保留最先出现的位置；A/B 标记与恢复默认关系独立保留。
 
 本次修订新增可勾选、隐藏、排序的右键菜单，含删除全部武器、A/B 标记及双方敌对/停战、暂停/恢复、对玩家关系、无敌开关、清除可移除异常状态。A/B 关系只作用于标记角色，不扩展至原生整队；暂停的角色需手动恢复才行动。菜单较长时支持滚动。
 
@@ -33,7 +33,7 @@ Fika 成员添加 `-ClientOnly`，连接房主，不启动本地服务端。本�
 
 ## English
 
-Restore the editor center crosshair while keeping persistent instructions hidden. Merge pause/resume, invincibility on/off, A/B hostility/ceasefire and player hostility/ceasefire into state-aware actions showing the next operation. Mixed selections first receive pause, invincibility or ceasefire uniformly. Legacy pairs merge at their first configured position; team marks and reset-to-default relations remain independent.
+Restore the editor center crosshair while keeping persistent instructions hidden. Uniform states show one reverse operation for pause/resume, invincibility and A/B or player relations. Customize context menu adds **Show both actions for mixed states**, enabled by default: mixed states show both explicit operations. Turn it off to show one action that first applies pause, invincibility or player ceasefire uniformly (hostility for A/B). Legacy pairs merge at their first configured position; team marks and reset-to-default relations remain independent.
 
 This revision adds configurable context item visibility and ordering, weapon removal, A/B marks and actor-scoped hostility/ceasefire, pause/resume, player relations, invincibility and removable effect cleanup. Long menus scroll. Paused actors must be resumed manually to act.
 
