@@ -13,6 +13,13 @@ internal static class WorldEditorChecks {
   var release=Calls("WorldEditor","ReleasePropertyEditors");Check(release.Any(c=>c.DeclaringType.Name=="CharacterBuffs"&&c.Name=="CloseAi")&&release.Any(c=>c.DeclaringType.Name=="AiEquipmentEditor"&&c.Name=="Close"),"embedded editor ownership is cleaned up without resetting applied effects");
   var combat=Calls("AiActorControl","ApplyEditorState");Check(combat.Any(c=>c.DeclaringType.Name=="LiveActorReference"&&c.Name=="Resolve")&&!combat.Any(c=>c.Name=="Select"||c.Name=="ApplyBirthState"),"combat property writes validate live identity without changing UI selection or relationship rules");
   Check(Type("WorldEditor").Fields.Single(f=>f.Name=="propertyPages").FieldType.FullName=="System.String[]","AI properties retain independent page routing");
+  var drop=Calls("WorldEditor","FinishMove");Check(drop.Any(c=>c.DeclaringType.Name=="AiFreePlacement"&&c.Name=="Place")&&!drop.Any(c=>c.Name=="DirectorMove"||c.Name=="Landing"),"editor drop bypasses navigation landing checks");
+  var free=Calls("TeleportControl","FreeMove");Check(free.Any(c=>c.DeclaringType.Name=="AiFreePlacement"&&c.Name=="Place")&&!free.Any(c=>c.Name=="Landing"||c.Name=="Move"),"toy free placement cannot route into ground-only landing");
+  var toy=Calls("ToyDeveloper","Tick");Check(toy.Any(c=>c.DeclaringType.Name=="TeleportControl"&&c.Name=="FreeMove"),"toy teleport uses exact-coordinate placement");
+  var motion=Calls("MovementAssist","BeforeMove");Check(motion.Any(c=>c.DeclaringType.Name=="AiFreePlacement"&&c.Name=="FilterMotion")&&motion.Any(c=>c.DeclaringType.Name=="WorldEditor"&&c.Name=="FilterMotion"),"air anchors and active batch drags suppress native gravity/motion");
+  var anchor=Calls("AiFreePlacement","Place");Check(anchor.Any(c=>c.DeclaringType.Name=="LiveActorReference"&&c.Name=="Resolve")&&anchor.Any(c=>c.DeclaringType.Name=="Player"&&c.Name=="Teleport")&&!anchor.Any(c=>c.Name=="Landing"||c.Name=="HasNavigation"),"free placement validates live identity and directly teleports without rejecting non-navigation points");
+  var selection=Calls("WorldEditor","SelectBox");Check(selection.Any(c=>c.Name=="Editable")&&selection.Any(c=>c.Name=="InBox"),"marquee uses locally controlled live AI eligibility and screen/depth filtering");
+  Console.WriteLine("PASS editor/ toy airborne placement routing, physics ownership and live selection safeguards");
   Console.WriteLine("PASS editor embedded Buff AI binding, selected-target validation, relationship isolation and dialog ownership cleanup");
  }
  internal static void Run(){
@@ -42,6 +49,16 @@ internal static class WorldEditorChecks {
   Check(EditorMenuRules.Next(Array.Empty<bool>(),0,1)==-1&&EditorMenuRules.Next(new[]{false,false},0,1)==-1&&EditorMenuRules.Next(new[]{false,true,false},1,1)==1,"empty/disabled menus and single enabled action terminate correctly");
   foreach(var size in new[]{(1920f,1080f),(800f,600f),(240f,180f),(12f,10f)})foreach(float anchor in new[]{-100f,0f,5000f}){var popup=EditorMenuRules.Popup(anchor,anchor,252,282,size.Item1,size.Item2);Check(popup.X>=0&&popup.Y>=0&&popup.X+popup.Width<=size.Item1&&popup.Y+popup.Height<=size.Item2,"context popup remains inside narrow or edge-aligned screens");}
   Console.WriteLine("PASS editor wheel navigation, disabled-action skipping, wrapping, invalid selection recovery and popup screen bounds");
+  var box=EditorSelectionRules.Box(500,300,100,80);Check(box.X==100&&box.Y==80&&box.Width==400&&box.Height==220,"reverse-direction drag normalizes its rectangle");
+  Check(EditorSelectionRules.Contains(box,100,80,1,1920,1080)&&EditorSelectionRules.Contains(box,500,300,100,1920,1080),"projected object centers on either selection edge are included");
+  Check(!EditorSelectionRules.Contains(box,200,200,-1,1920,1080)&&!EditorSelectionRules.Contains(box,200,200,0,1920,1080)&&!EditorSelectionRules.Contains(box,float.NaN,200,1,1920,1080)&&!EditorSelectionRules.Contains(box,200,float.PositiveInfinity,1,1920,1080)&&!EditorSelectionRules.Contains(box,200,200,float.NaN,1920,1080),"camera-backside, near-plane and non-finite projections cannot be selected");
+  Check(!EditorSelectionRules.Contains(box,501,200,1,1920,1080)&&!EditorSelectionRules.Contains(EditorSelectionRules.Box(-500,-500,2500,2500),-1,200,1,1920,1080)&&!EditorSelectionRules.Contains(EditorSelectionRules.Box(-500,-500,2500,2500),2000,200,1,1920,1080),"off-screen and out-of-box projections are excluded even by a large drag");
+  var originals=new[]{new System.Numerics.Vector3(1,0,5),new System.Numerics.Vector3(5,4,9)};var goal=new System.Numerics.Vector3(20,100,-30);var placed=EditorSelectionRules.Translate(originals,goal);
+  Check((placed[0]+placed[1])/2==goal&&placed[1]-placed[0]==originals[1]-originals[0]&&originals[0].Y==0,"batch placement preserves relative XYZ spacing, centers on an airborne goal and leaves source untouched");
+  Check(EditorSelectionRules.Translate(new[]{originals[0]},goal).Single()==goal,"single-object placement uses exact target without a landing offset");
+  foreach(var invalid in new[]{Array.Empty<System.Numerics.Vector3>(),new[]{new System.Numerics.Vector3(float.NaN,0,0)}})try{EditorSelectionRules.Translate(invalid,goal);throw new Exception("Invalid selection accepted");}catch(ArgumentException){}
+  try{EditorSelectionRules.Translate(originals,new(float.PositiveInfinity,0,0));throw new Exception("Invalid goal accepted");}catch(ArgumentException){}
+  Console.WriteLine("PASS marquee reverse dragging, screen/depth/finite boundaries, airborne batch centering and relative-spacing preservation");
   Console.WriteLine("PASS editor nested item cloning, fresh identities, detached root, unchanged source, state/grid preservation, corrupt-tree rejection, distance and input-release boundaries");
  }
 }

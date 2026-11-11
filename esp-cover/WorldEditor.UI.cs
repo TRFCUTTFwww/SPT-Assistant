@@ -13,18 +13,19 @@ internal static partial class WorldEditor {
  static (string Id,string Name)[] items=Array.Empty<(string,string)>();
  static readonly Dictionary<string,(string Max,string Current)> health=new();
  static ItemComponentEditor? componentEditor;
- internal static void DrawSettings(Rect rect){InterfaceMenu.DrawEntry(enabled!,new Rect(rect.x,rect.y,rect.width,84));InterfaceMenu.Paragraph(new Rect(rect.x,rect.y+100,rect.width,200),"右键打开场景菜单；移动时左键放下，右键或 Esc 取消，滚轮调整距离。\n创建位于菜单顶层，空地也可右键创建。复制与粘贴使用独立快照。\nAI 只允许编辑本机控制的角色；落点必须有可行走地面。物品支持地面散落物及其完整内容。",null,14);InterfaceMenu.Paragraph(new Rect(rect.x,rect.y+310,rect.width,80),notice,InterfaceMenu.Accent,12);}
+ internal static void DrawSettings(Rect rect){InterfaceMenu.DrawEntry(enabled!,new Rect(rect.x,rect.y,rect.width,84));InterfaceMenu.Paragraph(new Rect(rect.x,rect.y+100,rect.width,200),"按住 Alt 显示鼠标，左键拖框多选，右键编辑；混选时先选择 AI 或物品。\n松开 Alt 恢复镜头；Esc 清空选择。移动时滚轮调距，左键放下，右键或 Esc 取消。\n批量移动保留间距；AI 可固定在空中，菜单可解除固定。属性与重命名逐个编辑，切换对象放弃未应用输入。",null,14);InterfaceMenu.Paragraph(new Rect(rect.x,rect.y+310,rect.width,80),notice,InterfaceMenu.Accent,12);}
  internal static void Draw(){
-  if(!Active||InterfaceMenu.Open)return;int depth=GUI.depth;GUI.depth=-900;
+  if(!Active||InterfaceMenu.Open)return;int depth=GUI.depth;bool oldEnabled=GUI.enabled;GUI.depth=-900;
   try{
-   if(dialog.Length==0){InterfaceMenu.Label(new Rect(Screen.width/2f-12,Screen.height/2f-16,24,32),"+",InterfaceMenu.Accent,24);InterfaceMenu.Label(new Rect(Screen.width/2f-260,Screen.height/2f+35,520,30),moving?"左键放下 · 右键 / Esc 取消 · 滚轮调整距离":"编辑模式 · 右键打开菜单",InterfaceMenu.Accent,14);return;}
+   if(dialog.Length==0){DrawSelection();InterfaceMenu.Label(new Rect(Screen.width/2f-12,Screen.height/2f-16,24,32),"+",InterfaceMenu.Accent,24);InterfaceMenu.Label(new Rect(Screen.width/2f-260,Screen.height/2f+35,520,30),moving?"左键放下 · 右键 / Esc 取消 · 滚轮调整距离":"按住 Alt 框选 · 右键编辑 · Esc 清空",InterfaceMenu.Accent,14);return;}
    if(dialog=="context"){DrawContext();return;}
-   KeepCursor();float w=Math.Min(dialog=="rename"?380:actor!=null&&dialog=="properties"?860:700,Screen.width-24),h=Math.Min(dialog=="rename"?174:760,Screen.height-24);var rect=new Rect((Screen.width-w)/2,(Screen.height-h)/2,w,h);InterfaceMenu.Panel(rect);float x=rect.x+18,y=rect.y+14,width=w-36;
+   KeepCursor();GUI.enabled=oldEnabled&&Time.frameCount>dialogFrame;float w=Math.Min(dialog=="rename"?380:actor!=null&&dialog=="properties"?860:700,Screen.width-24),h=Math.Min(dialog=="rename"?174+(SelectionCount>1?38:0):760,Screen.height-24);var rect=new Rect((Screen.width-w)/2,(Screen.height-h)/2,w,h);InterfaceMenu.Panel(rect);float x=rect.x+18,y=rect.y+14,width=w-36;
    InterfaceMenu.Label(new Rect(x,y,width-90,30),dialog switch{"context"=>"场景编辑","create"=>"创建","rename"=>"重命名",_=>"属性"},InterfaceMenu.Accent,20);
    if(InterfaceMenu.Button(new Rect(rect.xMax-94,y,76,30),"关闭")){CloseDialog();return;}y+=44;
+   if(dialog is "properties" or "rename")DrawTargetNavigation(x,ref y,width);
    switch(dialog){case "create":DrawCreate(new Rect(x,y,width,rect.yMax-y-18));break;case "rename":DrawRename(x,y,width);break;case "properties":DrawProperties(new Rect(x,y,width,rect.yMax-y-18));break;}
    var e=Event.current;if(e.isMouse||e.type==EventType.ScrollWheel)e.Use();
-  }catch(Exception error){notice=error.Message;CloseDialog();FeatureToasts.Show(notice);}finally{GUI.depth=depth;}
+  }catch(Exception error){notice=error.Message;CloseDialog();FeatureToasts.Show(notice);}finally{GUI.depth=depth;GUI.enabled=oldEnabled;}
  }
  static void DrawCreate(Rect rect){
   float half=(rect.width-10)/2;
@@ -40,11 +41,12 @@ internal static partial class WorldEditor {
   }
   InterfaceMenu.Paragraph(new Rect(rect.x,rect.yMax-60,rect.width,60),createAi?AiSpawnService.Status:"显示前 300 项，请输入名称或模板 ID 缩小范围。",InterfaceMenu.Accent,12);
  }
- static void DrawRename(float x,float y,float width){rename=InterfaceMenu.Field(new Rect(x,y,width,32),rename);if(InterfaceMenu.Button(new Rect(x,y+44,width,32),"应用"))Run(()=>{string name=rename.Trim();if(name.Length is <1 or >64)throw new ArgumentException("名称长度须为 1～64 个字符。");Actor().Profile.Info.Nickname=name;CloseDialog();});}
- static void OpenProperties(){
-  health.Clear();componentEditor=null;
+ static void DrawRename(float x,float y,float width){rename=InterfaceMenu.Field(new Rect(x,y,width,32),rename);if(InterfaceMenu.Button(new Rect(x,y+44,width,32),"应用"))Run(()=>{string name=rename.Trim();if(name.Length is <1 or >64)throw new ArgumentException("名称长度须为 1～64 个字符。");Actor().Profile.Info.Nickname=name;if(SelectionCount>1){notice="已应用当前对象。";FeatureToasts.Show(notice);}else CloseDialog();});}
+ static void OpenProperties(){ReadProperties();Modal("properties");}
+ static void ReadProperties(){
+  health.Clear();componentEditor=null;ReleasePropertyEditors();
   if(actor!=null)ReadAiProperties();
-  else{var item=loot!.Resolve().Item;stack=item.StackObjectsCount.ToString(CultureInfo.InvariantCulture);componentEditor=new(item,new ItemComponentParameters());}Modal("properties");
+  else{var item=loot!.Resolve().Item;stack=item.StackObjectsCount.ToString(CultureInfo.InvariantCulture);componentEditor=new(item,new ItemComponentParameters());}
  }
  static void DrawProperties(Rect rect){
   if(actor!=null){DrawAiProperties(rect);return;}
@@ -54,7 +56,7 @@ internal static partial class WorldEditor {
    var item=loot!.Resolve().Item;InterfaceMenu.Paragraph(new Rect(0,y,w,66),ItemSpawner.TemplateName(item.TemplateId.ToString())+"\n"+item.Id+" · "+item.TemplateId,null,12);y+=74;
    foreach(var detail in details){InterfaceMenu.Label(new Rect(0,y,w,24),I18n.Text(detail.Label)+": "+I18n.Text(detail.Value)+" "+detail.Unit,null,12);y+=26;}
    InterfaceMenu.Label(new Rect(0,y,w,24),"堆叠数量");y+=26;stack=InterfaceMenu.Field(new Rect(0,y,w,30),stack);y+=42;GUI.BeginGroup(new Rect(0,y,w,componentEditor!.Height));componentEditor.Draw(w);GUI.EndGroup();y+=componentEditor.Height+16;
-   if(InterfaceMenu.Button(new Rect(0,y,w,34),"应用"))Run(()=>{var value=loot!.Resolve().Item;int count=ItemSpawnRules.Integer(stack,1,Math.Max(1,value.StackMaxSize),"堆叠数量");var parameters=componentEditor.Read();var detached=CloneItem(CaptureItem(value));parameters.Apply(detached);parameters.Apply(value);value.StackObjectsCount=count;CloseDialog();});
+   if(InterfaceMenu.Button(new Rect(0,y,w,34),"应用"))Run(()=>{var value=loot!.Resolve().Item;int count=ItemSpawnRules.Integer(stack,1,Math.Max(1,value.StackMaxSize),"堆叠数量");var parameters=componentEditor.Read();var detached=CloneItem(CaptureItem(value));parameters.Apply(detached);parameters.Apply(value);value.StackObjectsCount=count;if(SelectionCount>1){notice="已应用当前对象。";FeatureToasts.Show(notice);}else CloseDialog();});
   }finally{GUI.EndScrollView();}
  }
 }

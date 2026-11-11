@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — Marquee selection and air placement / 框选与空中放置
+
+- 编辑模式按住 Alt 显示鼠标，左键点选/拖框多选，提供投影标记与数量；混选时右键先选 AI/物品类别，再进入滚轮编辑菜单。
+- 单类批量移动、复制/粘贴、删除与 AI 杀死；移动保留三维间距，取消恢复各对象状态。属性/重命名支持逐个切换，修改只作用于当前对象。
+- 编辑移动及玩具枪传送允许精确坐标，无导航落点时固定 AI 于空中；提供解除固定，放回导航地面恢复原暂停状态。生成仍使用原生异步导航要求。
+- Hold Alt for cursor/marquee selection; mixed selections choose AI or Items before editing. Batch actions preserve spacing, target navigation isolates property/rename edits, and editor/toy teleport supports exact-coordinate air anchors with reversible physics/pause ownership.
+- Validation: EFT 48558 build and 126 Probe groups passed; in-raid selection, movement and Fika synchronization still require manual verification.
+
 ## Unreleased — Compact editor menus / 紧凑编辑菜单
 
 - 右键菜单改为准星旁的系统菜单样式；滚轮循环选择、跳过禁用项，左键进入，支持鼠标指向、方向键与 Enter，右键/Esc 关闭。

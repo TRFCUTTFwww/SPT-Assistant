@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using Comfort.Common;
 using EFT;
@@ -11,9 +12,11 @@ namespace LocalSpt5Esp;
 internal static partial class WorldEditor {
  sealed record ItemCopy(string Json,string Root);
  sealed class LootReference {
+  static readonly Dictionary<IntPtr,LootItem> live=new();static IntPtr cachedWorld;static int cachedFrame=-1,cachedCount;
   readonly IntPtr world,pointer,item;readonly string id;
   internal LootReference(GameWorld current,LootItem loot){world=current.Pointer;pointer=loot.Pointer;item=loot.Item.Pointer;id=loot.Item.Id.ToString();}
-  internal LootItem Resolve(){var current=Singleton<GameWorld>.Instance;if(current==null||current.Pointer!=world)throw new ArgumentException("战局已改变，请重新选择物品。");var all=current.LootItems;for(int i=0;i<all.Count;i++){var loot=all.GetByIndex(i);if(loot?.Pointer==pointer&&loot.Item?.Pointer==item&&loot.Item.Id.ToString()==id)return loot;}throw new ArgumentException("物品已被拾取、移除或替换。");}
+  internal static void ClearCache(){live.Clear();cachedWorld=IntPtr.Zero;cachedFrame=-1;}
+  internal LootItem Resolve(){var current=Singleton<GameWorld>.Instance;if(current==null||!RaidClock.Active||current.Pointer!=world)throw new ArgumentException("战局已改变，请重新选择物品。");var all=current.LootItems;if(cachedWorld!=world||cachedFrame!=Time.frameCount||cachedCount!=all.Count){live.Clear();cachedWorld=world;cachedFrame=Time.frameCount;cachedCount=all.Count;for(int i=0;i<all.Count;i++){var value=all.GetByIndex(i);if(value!=null)live[value.Pointer]=value;}}if(live.TryGetValue(pointer,out var loot)&&loot!=null&&loot.Item?.Pointer==item&&loot.Item.Id.ToString()==id)return loot;throw new ArgumentException("物品已被拾取、移除或替换。");}
  }
  static ItemCopy CaptureItem(Item root){var factory=Singleton<ItemFactory>.Instance;var flat=factory.TreeToFlatItems(new Item[]{root});var json=LocalSpt.Shared.RaidStashJson.Normalize(Newtonsoft.Json.JsonConvert.SerializeObject(new Il2CppSystem.Object(flat.Pointer)),out _,out _);return new(json.ToJsonString(),root.Id.ToString());}
  static Item CloneItem(ItemCopy copy){
@@ -27,5 +30,6 @@ internal static partial class WorldEditor {
   }
   var tree=factory.FlatItemsToTree(flat,false,null);if(tree.DeserializationErrors?.Count>0)throw new ArgumentException("物品副本无法完整读取。");return tree.Items[root];
  }
- static void PlaceItem(Item item){var current=Current();current.ThrowItem(item,current.MainPlayer.Cast<IPlayer>(),point+Vector3.up*.15f,Quaternion.identity,Vector3.zero,Vector3.zero,true,true,0);}
+ static void PlaceItem(Item item)=>PlaceItem(item,point);
+ static void PlaceItem(Item item,Vector3 position){var current=Current();current.ThrowItem(item,current.MainPlayer.Cast<IPlayer>(),position+Vector3.up*.15f,Quaternion.identity,Vector3.zero,Vector3.zero,true,true,0);}
 }

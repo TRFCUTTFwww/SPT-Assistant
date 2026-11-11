@@ -39,7 +39,7 @@ internal static class AiRemoval {
     var key=(current.Pointer,player.Pointer,id);if(!records.TryGetValue(key,out var record))records[key]=record=new(){World=current.Pointer,Pointer=player.Pointer,Profile=id,Name=Read(()=>player.Profile?.Nickname)??id};
     var go=Read(()=>player.gameObject);
     var failures=AiCleanupRules.AllSteps(new (string,Action)[]{
-     ("清理动作控制",()=>{ModelPoseLock.Release(player,false);AiSceneDirector.Remove(player);}),
+     ("清理动作控制",()=>{ModelPoseLock.Release(player,false);AiSceneDirector.Remove(player);AiFreePlacement.Release(player);}),
      ("清理暂停与管理状态",()=>{AiTestControl.ForgetActor(id);AiActorControl.CleanupTracking(player.Pointer,id,owner?.Pointer??IntPtr.Zero);}),
      ("停止 AI",()=>{if(owner!=null&&owner.BotState!=EBotState.Disposed)owner.Deactivate();}),
      ("从生成器移除",()=>{spawner?.DeletePlayer(player);}),

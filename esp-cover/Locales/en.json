@@ -3531,5 +3531,21 @@
   "撤销当前 AI 导演设置": "Remove this AI’s director settings",
   "原始姿势": "Original stance",
   "承受玩家伤害倍率无效。": "Invalid incoming player damage multiplier.",
-  "倍率仅影响本地玩家对该 AI 的伤害；0 免疫，1 正常。全局 AI 无敌仍然生效。": "The multiplier only affects damage from the local player to this AI: 0 is immune and 1 is normal. Global AI invincibility still applies."
+  "倍率仅影响本地玩家对该 AI 的伤害；0 免疫，1 正常。全局 AI 无敌仍然生效。": "The multiplier only affects damage from the local player to this AI: 0 is immune and 1 is normal. Global AI invincibility still applies.",
+  "按住 Alt 显示鼠标，左键拖框多选，右键编辑；移动时左键放下，右键或 Esc 取消，滚轮调整距离。": "Hold Alt for the cursor, left-drag to select, right-click to edit. While moving: left-click to place, right-click/Esc to cancel, scroll to change distance.",
+  "按住 Alt 显示鼠标，左键拖框多选，右键编辑；混选时先选择 AI 或物品。\n松开 Alt 恢复镜头；Esc 清空选择。移动时滚轮调距，左键放下，右键或 Esc 取消。\n批量移动保留间距；AI 可固定在空中，菜单可解除固定。属性与重命名逐个编辑，切换对象放弃未应用输入。": "Hold Alt for the cursor; left-drag to select and right-click to edit. Mixed selections first choose AI or Items.\nRelease Alt for camera control; Esc clears selection. While moving: scroll distance, left-click to place, right-click/Esc to cancel.\nGroups retain spacing; AI can stay anchored in the air. Release anchors from the menu. Properties/rename edit one target at a time; switching discards unapplied input.",
+  "按住 Alt 框选 · 右键编辑 · Esc 清空": "Hold Alt to select · Right-click to edit · Esc to clear",
+  "右键编辑 · Esc 清空": "Right-click to edit · Esc to clear",
+  "选择对象类别": "Choose object category",
+  "返回类别选择": "Back to categories",
+  "解除空中固定": "Release air anchor",
+  "当前对象": "Current target",
+  "已应用当前对象。": "Applied to this target.",
+  "请先选择对象。": "Select an object first.",
+  "剪贴板为空。": "The clipboard is empty.",
+  "已提交": "Submitted",
+  "已选择": "Selected",
+  "；下一枪命中位置传送，可放置在空中。": "; hit the destination next; air placement is allowed.",
+  "传送：先命中 AI 选中，再射击目标位置；允许空中固定，无需导航落点。设置动作、Buff 和血量需要命中 AI；复活需要命中本局 AI 尸体，保留尸体当前剩余物资。": "Teleport: hit AI to select it, then hit the destination. Air anchors are allowed without navigation. Actions, Buffs and health require hitting AI; revival requires an AI corpse from this raid and keeps its remaining loot.",
+  "传送：先击中 AI 选中，再击中目标位置；无需导航落点，可空中固定；也可使用 AI 列表勾选。每枪最多触发一次。": "Teleport: hit AI to select it, then hit a destination. No navigation landing is required; air anchors are allowed. AI-list selection also works. Each shot triggers at most once."
 }

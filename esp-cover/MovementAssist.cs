@@ -29,7 +29,7 @@ internal static class MovementAssist {
  static void BeforeMove(Il2CppObjectBase __instance,ref Vector3 __0,float __1,out MoveState? __state){
   __state=null;
   try{
-   AiSceneDirector.FilterMotion(__instance,ref __0);
+   AiSceneDirector.FilterMotion(__instance,ref __0);AiFreePlacement.FilterMotion(__instance,ref __0);WorldEditor.FilterMotion(__instance,ref __0);
    if(!SpeedEnabled.Value&&!CrouchEnabled.Value)return;
    var local=Singleton<GameWorld>.Instance?.MainPlayer;
    var controller=local?.CharacterController;
