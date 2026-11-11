@@ -334,5 +334,6 @@ internal static class ItemSpawner {
    if(slot.Count!=values.Rounds)throw new InvalidOperationException("装填数量校验失败。");
   }
  }
+ internal static void SetCommandFir(Item item,bool value)=>SetFir(item,value,0);
  static void SetFir(Item item,bool value,int depth){if(depth>12)return;item.SpawnedInSession=value;foreach(var child in LootDisplay.Children(item))SetFir(child,value,depth+1);}
 }

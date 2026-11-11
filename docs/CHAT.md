@@ -107,6 +107,10 @@ Item arguments accept Chinese/English names, short names, substrings and templat
 
 Coordinates accept absolute, relative `~`, or camera-local `^` values, with positive local X pointing left. Local and world coordinates cannot be mixed. Place labels depend on installed map data and current scans. Command teleport no longer automatically anchors or pauses AI at airborne destinations; native movement continues. Use `/ai anchor <AI> on` to request an anchor explicitly.
 
+详细物品、AI、治疗、维修、装填、筛选、朝向和天气配置参见 [详细命令参数 / Detailed options](COMMAND-OPTIONS.md)。聊天外观统一为深色卡片、细边框、青绿色选中状态，消息和错误结果使用独立行背景；操作按键保持原样。新增 JSON 解析与补全检查覆盖嵌套/转义、重复/未知字段拒绝、子命令限制、已有配置保留和长输入。原生物品树、枪械数值和界面效果仍需实机验证。
+
+See the [detailed command options](COMMAND-OPTIONS.md) for item trees, AI and other fine-grained parameters. Chat now uses consistent dark cards, subtle borders, mint selection and distinct message/error rows, retaining existing controls. JSON checks cover nesting/escaping, duplicate/unknown fields, subcommand restrictions, preservation and long input. Native item-tree behavior, weapon tuning and visual results still require in-game acceptance.
+
 ## 已知限制 / Known limits
 
 - `/experience`、`/xp` 目前只支持 query，战局内写入拒绝，防止与结算冲突。等级修改使用战局外原生命令控制台。
@@ -136,9 +140,9 @@ Each entry binds both `profile` and the uppercase full certificate `fingerprint`
 
 ## 验证 / Validation
 
-本次重做通过 EFT 48558 Release 编译（0 错误、两条既有空引用警告）、161 项聊天检查（含本机真实物品数据库）和 127 组 Probe 检查。界面外观、IME 操作和 AI 传送后的原生运动尚待游戏内验收。
+本次重做通过 EFT 48558 Release 编译（0 错误、两条既有空引用警告）、184 项聊天检查（含本机真实物品数据库）和 127 组 Probe 检查。界面外观、IME 操作和 AI 传送后的原生运动尚待游戏内验收。
 
-This redesign passes the EFT 48558 Release build (zero errors, two existing nullable warnings), 161 chat checks including the installed item database, and 127 Probe groups. In-game appearance, IME interaction and native AI movement after teleport remain manual acceptance checks.
+This redesign passes the EFT 48558 Release build (zero errors, two existing nullable warnings), 184 chat checks including the installed item database, and 127 Probe groups. In-game appearance, IME interaction and native AI movement after teleport remain manual acceptance checks.
 
 输入测试覆盖实时预览、Tab 正反向循环、箭头选择后填入、输入修改后清除选择、不同可用高度的候选边界、光标移动、引号/选择器、子命令和坐标提示。物品测试覆盖中英文片段、简称、重名拒绝、弹药筛选及补全与执行一致性；设置 `SPT_GAME_ROOT` 后还会读取本机实际物品和中英文本地化数据库验证。游戏内焦点、IME、绘制、缩放和透明度由用户验收。
 

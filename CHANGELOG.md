@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — Detailed commands and chat appearance / 详细命令与聊天外观
+
+- 为物品生成增加末尾 JSON 配置：带钩、组件余量、耐久、嵌套附件/弹药/容器内容物、狗牌和本局枪械实例参数；增加物品检查与附件/子物品路径修改。保留旧式命令。
+- 增加 summon / ai configure 的部位血量、效果、关系和导演参数，以及治疗、维修、补弹数量、清除筛选、传送朝向和天气细节。拒绝未知/重复配置与不支持的子命令，补全保留已有 JSON。
+- 统一聊天与提示框深色卡片、细边框、青绿色强调、候选悬停/选中与消息错误背景；修正新行间距的滚动高度，保留既有操作方式。
+- Add final JSON specifications for item trees, FiR, condition/resources, dogtags and raid-instance weapon tuning; detailed actor and other command options retain legacy syntax and strict validation. Polish chat cards, selection and message/error styling, with matching scroll measurements.
+- Validation: EFT 48558 Release build (zero errors, two existing nullable warnings), 184 chat checks including JSON preservation/rejection and the installed item catalog, and 127 Probe groups passed. Native item/weapon/actor effects and visual/IME acceptance remain manual. Old multiplayer-fika is unchanged. See [bilingual detailed options](docs/COMMAND-OPTIONS.md).
+
 ## Unreleased — Chat and commands / 聊天与命令
 
 - main 新增 T 聊天框、命令历史、IME 输入和按参数位置的 Tab 补全，复用现有单人功能提供 MC 风格命令、UUID/类型选择器、相对坐标和地点标签。

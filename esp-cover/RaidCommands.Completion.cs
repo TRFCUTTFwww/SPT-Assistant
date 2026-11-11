@@ -13,6 +13,7 @@ internal static partial class RaidCommands {
   int start=ChatCommandSyntax.CompletionStart(prefix);bool trailing=start==prefix.Length;
   if(words.Length==0||words.Length==1&&!trailing){string head=words.FirstOrDefault()??"";return Usage.Keys.Where(k=>k.StartsWith(head,StringComparison.OrdinalIgnoreCase)).OrderBy(k=>k).Select(k=>new ChatSuggestion("/"+k,"/"+k,Usage[k])).ToArray();}
   string cmd=words[0].ToLowerInvariant(),token=trailing?"":words[^1];var args=words.Skip(1).ToArray();int at=trailing?args.Length:args.Length-1;
+  if(token.StartsWith('{'))return OptionSuggestions(prefix,start,cmd,args,token);
   if(!ChatCommandHints.HasArgument(cmd,args,at))return Array.Empty<ChatSuggestion>();
   string Arg(int n)=>n<args.Length?args[n]:"";
   var candidates=new List<string>();void Add(params string[] values)=>candidates.AddRange(values);
@@ -45,16 +46,17 @@ internal static partial class RaidCommands {
    case "effect":if(at==0)Add("give","clear");else if(at==1)Entities();else if(at==2)candidates.AddRange(BuffRules.Common.Select(b=>b.Type));else if(at==5)candidates.AddRange(Enum.GetNames<EBodyPart>());break;
    case "summon":if(at==0)candidates.AddRange(AiSpawnCatalog.Options.Where(p=>p.Enabled).Select(p=>p.Role));else if(at<4)Add("~","^");break;
    case "tag":if(at==0)Entities();else if(at==1)Add("add","remove","list");else candidates.AddRange(tags.Values.SelectMany(t=>t));break;
-   case "ai":if(at==0)Add("pause","resume","follow","look","pose","relation","anchor","remove");else if(at==1)Entities();else switch(Arg(0)){case "follow":case "look":Add("@s");break;case "pose":Add("standing","crouched","prone","original");break;case "relation":Add("neutral","hostile","default");break;case "anchor":Add("on","off");break;}break;
+   case "ai":if(at==0)Add("pause","resume","follow","look","pose","relation","anchor","remove","configure");else if(at==1)Entities();else switch(Arg(0)){case "follow":case "look":Add("@s");break;case "pose":Add("standing","crouched","prone","original");break;case "relation":Add("neutral","hostile","default");break;case "anchor":Add("on","off");break;}break;
    case "give":case "clear":if(at==0)Entities();else if(at==1)Items();break;
    case "repair":case "reload":if(at==0)Entities();else if(at==1)Slots();else if(cmd=="reload")Items(true);break;
-   case "item":if(at==0)Add("replace","modify");else if(at==1)Add("entity");else if(at==2)Entities();else if(at==3)Slots();else if(at==4){if(Arg(0)=="replace")Add("with");else Add("durability","maxDurability","medicalResource","foodResource","keyRemaining","poisonUses","resource","repairKitResource","toggledOn","foundInRaid");}else if(at==5){if(Arg(0)=="replace")Items();else if(Arg(4) is "toggledOn" or "foundInRaid")Add("true","false");}break;
+   case "item":if(at==0)Add("replace","modify","inspect");else if(at==1)Add("entity");else if(at==2)Entities();else if(at==3)Slots();else if(at==4){if(Arg(0)=="replace")Add("with");else Add("durability","maxDurability","medicalResource","foodResource","keyRemaining","poisonUses","resource","repairKitResource","toggledOn","foundInRaid");}else if(at==5){if(Arg(0)=="replace")Items();else if(Arg(4) is "toggledOn" or "foundInRaid")Add("true","false");}break;
    case "loot":if(at==0)Add("spawn","give");else if(Arg(0)=="give"){if(at==1)Entities();else Add("loadout:");}else if(at==4)Items();else if(at<4)Add("~","^");break;
    case "attribute":if(at==0)Entities();else if(at==1)Add("invincible","damageMultiplier");else if(at==2)Add("base");else if(at==3)Add("get","set");else if(Arg(1)=="invincible")Add("true","false");break;
    case "data":if(at==0)Add("get","modify");else if(at==1)Add("entity");else if(at==2)Entities();else if(at==3){if(Arg(0)=="get")Add("health","equipment","effects","position");else Add("name","invincible","damageMultiplier");}else if(at==4)Add("set");else if(at==5)Add("value");else if(Arg(3)=="invincible")Add("true","false");break;
    case "experience":case "xp":if(at==0)Add("query");else if(at==1)Add("@s");else Add("points","levels");break;
    case "spreadplayers":if(at==4)Entities();break;
   }
+  if(trailing&&ChatCommandOptions.CanAppend(cmd,args))candidates.Add("{}");
   return itemCandidates??candidates.Distinct(StringComparer.OrdinalIgnoreCase).Where(c=>c.StartsWith(token,StringComparison.OrdinalIgnoreCase)).OrderBy(c=>c).Take(64).Select(c=>new ChatSuggestion(prefix[..start]+ChatCommandSyntax.Quote(c),c)).ToArray();
  }
 }

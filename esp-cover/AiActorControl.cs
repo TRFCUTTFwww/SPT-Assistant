@@ -47,6 +47,13 @@ internal static partial class AiActorControl {
   if(aiRelation!=0)foreach(var other in LiveBots(current))if(other.Pointer!=actor.Pointer)relations.ActorPair(actor.ProfileId,other.ProfileId,aiRelation==2);
   nextTick=0;
  }
+ internal static void CommandRelations(GameWorld current,Player actor,int? playerRelation,int? aiRelation){
+  var state=EditorState(actor);ApplyEditorState(current,actor,state.Invincible,state.Damage);var owner=actor.AIData.BotOwner;
+  void Set(Player target,int mode){if(mode==0){relations.Actors.Remove((actor.ProfileId,target.ProfileId));relations.Actors.Remove((target.ProfileId,actor.ProfileId));}else relations.ActorPair(actor.ProfileId,target.ProfileId,mode==2);if(mode!=2)Forget(owner,target);}
+  if(playerRelation is {} human&&local!=null){For(actor).IgnorePlayer=false;neutralOwners.Remove(owner.Pointer);Set(local,human);}
+  if(aiRelation is {} bots)foreach(var other in LiveBots(current))if(other.Pointer!=actor.Pointer)Set(other,bots);
+  nextTick=0;
+ }
  internal static bool ForcedCombatActive(Player actor)=>forcedActive.Contains(actor.Pointer);
  internal static void RestoreSceneRelations(IEnumerable<(Player First,Player Second,bool Hostile)> pairs){foreach(var pair in pairs)relations.ActorPair(pair.First.ProfileId,pair.Second.ProfileId,pair.Hostile);nextTick=0;}
  static bool? GroupRelation(BotsGroup group,IPlayer target){if(evaluating?.BotsGroup?.Pointer==group.Pointer)return Relation(evaluating,target);var other=NativeAiGroups.Group(target);return other!=null&&relations.Teams.TryGetValue((group.Id,other.Id),out bool value)?value:NativeAiGroups.Same(group,target)?false:null;}

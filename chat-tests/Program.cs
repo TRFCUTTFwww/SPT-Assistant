@@ -6,6 +6,7 @@ using System.Security.Authentication;
 using System.Text.Json;
 if(args.Length==2&&args[0]=="--http"){await HttpRelayIntegration.Run(args[1]);return;}
 CommandInputChecks.Run();
+CommandOptionsChecks.Run();
 ItemSearchChecks.Run();
 static void Check(bool value,string message){if(!value)throw new Exception(message);Console.WriteLine("PASS "+message);}
 using var a=ChatCertificates.Create();using var b=ChatCertificates.Create();

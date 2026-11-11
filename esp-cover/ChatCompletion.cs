@@ -22,7 +22,7 @@ internal sealed class ChatCompletion {
  internal void Select(int index){if(index>=0&&index<Candidates.Length){Selected=index;Pending=true;}}
  internal (string Text,int Cursor) Accept(string value,int position){
   if(Selected<0||Selected>=Candidates.Length)return(value,position);
-  string head=Candidates[Selected].Text;if(head.Length+suffix.Length>2048)return(value,position);
+  string head=Candidates[Selected].Text;if(head.Length+suffix.Length>ChatCommandOptions.MaximumInput)return(value,position);
   text=head+suffix;cursor=head.Length;Pending=false;return(text,cursor);
  }
  internal (string Text,int Cursor) Cycle(string value,int position,bool reverse,Func<string,ChatSuggestion[]> complete){
