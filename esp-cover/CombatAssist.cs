@@ -64,7 +64,7 @@ internal static class CombatAssist {
  static bool TriggerActive=>!InterfaceMenu.Open&&(AlwaysOn.Value||Input.GetKey(HoldKey.Value));
  internal static string Status=>Mode.Value==AimModes.Soft?"微自瞄 · 开枪后缓慢修正":"自瞄："+CnConfig.AimName(Mode.Value)+" · 常开："+CnConfig.OnOff(AlwaysOn.Value);
  internal static void Reset(){softWindow.Reset();local=target=null;view=null;game=null;targetColliders.Clear();nextTarget=nextRocket=0;}
- static bool Ready()=>local!=null&&local.IsYourPlayer&&local.HealthController!=null&&local.HealthController.IsAlive&&view!=null&&!Cursor.visible;
+ static bool Ready()=>!WorldEditor.Active&&local!=null&&local.IsYourPlayer&&local.HealthController!=null&&local.HealthController.IsAlive&&view!=null&&!Cursor.visible;
  internal static void Tick(GameWorld? world,Player? player,Camera? camera){if(DirectorStage.FreeActive)return;if(ToyDeveloper.Uses(player?.HandsController?.Item)){softWindow.Reset();return;}
   if(game?.Pointer!=world?.Pointer){softWindow.Reset();target=null;targetColliders.Clear();nextTarget=0;}local=player;view=camera;game=world;
   if(!Ready()||world==null){target=null;return;}

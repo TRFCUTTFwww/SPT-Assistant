@@ -29,6 +29,8 @@ See [the bilingual installation guide](docs/INSTALL.md) for file locations, upda
 
 ## Features
 
+The opt-in [world editor](docs/world-editor.md) adds a crosshair context menu for creating, moving, copying and editing locally controlled AI and loose loot. It is unstable and still needs in-raid verification.
+
 | Area | What you can do |
 | --- | --- |
 | **Home dashboard** | View the current PMC profile, currencies, combat statistics and quest progress, with shortcuts to frequently used tools. |

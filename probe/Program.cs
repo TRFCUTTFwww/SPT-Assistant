@@ -10,6 +10,7 @@ using LocalRaidShared;
 var sourceRoot=Path.GetFullPath(Environment.GetEnvironmentVariable("SPT_SOURCE_ROOT")??"_spt5_esp_fix");
 var gameRoot=Environment.GetEnvironmentVariable("SPT_GAME_ROOT");if(!string.IsNullOrWhiteSpace(gameRoot))Directory.SetCurrentDirectory(gameRoot);
 try{
+WorldEditorChecks.Run();
 
 foreach(string status in new[]{"RegularMode","UncompleteRequirements","Countdown"})
  Assert(ExfilRequirementRules.CanBypass(status,false,false,false),"backpack-gated exits can proceed before and during countdown: "+status);

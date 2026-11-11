@@ -16,7 +16,7 @@ internal static class ToyFireControl {
  [HarmonyPriority(Priority.High)] static void BeforeWeaponUpdate(Player.FirearmController __instance){if(Local(__instance))Drive(__instance);}
  [HarmonyPriority(Priority.First)] static void BeforeTrigger(Player.FirearmController __instance,ref bool __0){if(Local(__instance))MergeInput(__instance,ref __0);}
  static void Restore(){try{if(gun!=null&&copy!=null&&gun.Template?.Pointer==copy.Pointer)gun._Template_k__BackingField=original!;}catch(Exception e){Plugin.Self.Log.LogWarning("Restore toy firing: "+e.Message);}finally{gun=null;original=copy=null;appliedRate=-1;}}
- static bool InputAllowed=>!DirectorStage.FreeActive&&!InterfaceMenu.InputBlocked&&!Cursor.visible;
+ static bool InputAllowed=>!WorldEditor.Active&&!DirectorStage.FreeActive&&!InterfaceMenu.InputBlocked&&!Cursor.visible;
  static bool Handles(Player.FirearmController controller)=>Automatic.Value&&controller.Item?.StringTemplateId==ToyDeveloper.Toy&&InputAllowed;
  static void Release(){var previous=driven;driven=null;repeat.Reset();drivenFrame=-1;if(previous==null)return;try{driving=true;previous.SetTriggerPressed(false);}catch{}finally{driving=false;}}
  internal static bool MergeInput(Player.FirearmController controller,ref bool pressed){if(driving||!Handles(controller)||!Input.GetMouseButton(0)||controller._isInventoryOpened||controller.IsInReloadOperation())return false;pressed=driven?.Pointer==controller.Pointer&&repeat.IsDown(Time.frameCount);return true;}

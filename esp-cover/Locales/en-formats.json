@@ -507,5 +507,6 @@
   "全局搜索 · {0} 项结果": "Global search · {0} results",
   "已安排到站后前往：{0}": "Scheduled after the current leg: {0}",
   "BTR 下一站已设置：{0}": "BTR next stop set: {0}",
-  "阔剑地雷 · {0} 米": "Claymore mine · {0} m"
+  "阔剑地雷 · {0} 米": "Claymore mine · {0} m",
+  "难度：{0}": "Difficulty: {0}"
 }

@@ -30,7 +30,7 @@ internal static class LaserEyes {
    bool held=holdKey.Value!=KeyCode.None&&Input.GetKey(holdKey.Value);
    // Ctrl+F10 belongs to exit control; holding plain F10 fires the default beam.
    if(holdKey.Value==KeyCode.F10&&(Input.GetKey(KeyCode.LeftControl)||Input.GetKey(KeyCode.RightControl)))held=false;
-   if(!LaserEyeRules.CanFire(enabled.Value,continuous.Value||held,RaidClock.Active,player?.IsYourPlayer==true&&player.HealthController?.IsAlive==true,InterfaceMenu.InputBlocked,DirectorStage.FreeActive,Cursor.visible,Application.isFocused)){Hide();return;}
+   if(!LaserEyeRules.CanFire(enabled.Value,continuous.Value||held,RaidClock.Active,player?.IsYourPlayer==true&&player.HealthController?.IsAlive==true,InterfaceMenu.InputBlocked||WorldEditor.Active,DirectorStage.FreeActive,Cursor.visible,Application.isFocused)){Hide();return;}
    if(current==null||player==null){Hide();return;}
    var camera=OverlayProjection.MainCamera;if(camera==null){Hide();return;}
    if(world!=current.Pointer){Hide();world=current.Pointer;}

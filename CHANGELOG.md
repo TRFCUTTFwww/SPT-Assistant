@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — World editor / 场景编辑
+
+- 新增默认关闭的“开发工具 → 编辑模式”：准星右键菜单，创建为顶层第一项，支持 AI/散落物创建、移动、复制、粘贴、删除、属性，以及 AI 重命名和原生死亡操作。
+- 移动临时暂停 AI，滚轮调整距离，取消恢复原位和原暂停状态；物品副本保留完整内容树并分配新 ID。编辑时暂停自动瞄准、玩具枪自动开火和激光。
+- 修复布局保存栏被悬浮窗覆盖：工具栏最后绘制，预览框点击排除工具栏区域。新增中英双语操作说明。
+- Add an opt-in crosshair editor with top-level Create, move/copy/paste/delete/properties for loose loot and locally controlled AI, plus AI rename and native kill. Preserve temporary pause state and clone complete loose-item trees with fresh IDs.
+- Keep layout save/reset controls above overlapping previews and prevent those previews from consuming toolbar clicks. Include Chinese and English instructions.
+- Validation: EFT 48558 build and 122 client Probe groups passed. Two pre-existing nullable warnings remain. In-raid behavior, visuals, loot pickup persistence and Fika synchronization remain unverified. See [world editor documentation](docs/world-editor.md).
+
 ## 2.0.6 — 2026-11-11
 
 ### 简体中文

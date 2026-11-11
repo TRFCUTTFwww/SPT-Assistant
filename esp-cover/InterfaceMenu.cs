@@ -38,7 +38,7 @@ internal static partial class InterfaceMenu {
  internal static bool AiPage=>Open&&category=="AI 工作台";
  internal static bool AirdropPage=>Open&&category=="载具与空投"&&otherPage=="空投控制";
  internal static bool BuffPage=>Open&&category=="人物与移动"&&otherPage=="Buff 状态";
- internal static bool InputBlocked=>inputGate.Blocked||FloatingStatus.Capturing;
+ internal static bool InputBlocked=>inputGate.Blocked||FloatingStatus.Capturing||WorldEditor.InputBlocked;
  internal static bool Editing=>Open&&editing;
  sealed class Slot {
   internal string Name="";
@@ -88,10 +88,10 @@ internal static partial class InterfaceMenu {
  static void AddSlot(string id,string name,Rect bounds){slots[id]=new Slot{Name=name,Bounds=bounds,Initial=bounds,Width=Bind(id+" width",name+"宽度",-1f,new AcceptableValueRange<float>(-1,10000)),Height=Bind(id+" height",name+"高度",-1f,new AcceptableValueRange<float>(-1,10000)),X=Bind(id+" position x",name+"横向位置",-1f,new AcceptableValueRange<float>(-1,1)),Y=Bind(id+" position y",name+"纵向位置",-1f,new AcceptableValueRange<float>(-1,1)),Opacity=Bind(id+" opacity",name+"窗口不透明度",1f,new AcceptableValueRange<float>(0,1)),AutoSize=id=="armor"?Bind(id+" auto size","分析窗自适应大小",true):null};}
  static bool IsLocal(PlayerOwner owner)=>owner!=null&&owner.Player!=null&&owner.Player.IsYourPlayer;
  static bool BlockAxes(GamePlayerOwner __instance)=>(!InputBlocked&&!DirectorStage.FreeActive)||!IsLocal(__instance);
- static bool BlockCommand(GamePlayerOwner __instance,ref InputNode.ETranslateResult __result){if((!InputBlocked&&!DirectorStage.FreeActive)||!IsLocal(__instance))return true;__result=InputNode.ETranslateResult.BlockAll;return false;}
- static bool AllowGameInput()=>!InputBlocked;
- static bool AllowTrigger(Player.FirearmController __instance,bool __0)=>(!InputBlocked&&!DirectorStage.FreeActive)||!__0||__instance._player==null||!__instance._player.IsYourPlayer;
- internal static void KeepCursor(){if(Open){Cursor.lockState=CursorLockMode.None;Cursor.visible=true;}}
+ static bool BlockCommand(GamePlayerOwner __instance,ECommand __0,ref InputNode.ETranslateResult __result){if(!IsLocal(__instance))return true;if(!InputBlocked&&!DirectorStage.FreeActive&&(!WorldEditor.Active||WorldEditor.MovementCommand(__0)))return true;__result=InputNode.ETranslateResult.BlockAll;return false;}
+ static bool AllowGameInput(){WorldEditor.CaptureInput();return !InputBlocked;}
+ static bool AllowTrigger(Player.FirearmController __instance,bool __0)=>(!InputBlocked&&!DirectorStage.FreeActive&&!WorldEditor.Active)||!__0||__instance._player==null||!__instance._player.IsYourPlayer;
+ internal static void KeepCursor(){WorldEditor.KeepCursor();if(Open){Cursor.lockState=CursorLockMode.None;Cursor.visible=true;}}
  internal static void Update(){
   if(capture==null&&Input.GetKeyDown(menuKey.Value))SetOpen(!Open);
   else if(Open&&Input.GetKeyDown(KeyCode.Escape))SetOpen(false);
@@ -100,7 +100,7 @@ internal static partial class InterfaceMenu {
  }
  static void SetOpen(bool value){
   if(Open==value)return;
-  if(value){oldLock=Cursor.lockState;oldVisible=Cursor.visible;inputGate.SetOpen(true,Time.frameCount);
+  if(value){WorldEditor.Suspend();oldLock=Cursor.lockState;oldVisible=Cursor.visible;inputGate.SetOpen(true,Time.frameCount);
    try{Comfort.Common.Singleton<GameWorld>.Instance?.MainPlayer?.HandsController?.TryCast<Player.FirearmController>()?.SetTriggerPressed(false);}catch(Exception error){Plugin.Self.Log.LogWarning("Unable to release trigger for menu: "+error.Message);}
   }
   else{RaidEnd.CancelConfirmation();inputGate.SetOpen(false,Time.frameCount);editing=false;capture=null;drag="";windowDrag=false;Cursor.lockState=oldLock;Cursor.visible=oldVisible;config.Save();}
@@ -178,7 +178,7 @@ internal static partial class InterfaceMenu {
  internal static string Tabs(Rect rect,string[] choices,string selected,out float height){int columns=Math.Min(choices.Length,MenuWorkspaceLayout.Columns(rect.width));float width=(rect.width-8*(columns-1))/columns;height=MenuWorkspaceLayout.Height(choices.Length,rect.width)+10;for(int i=0;i<choices.Length;i++)if(Button(new Rect(rect.x+i%columns*(width+8),rect.y+i/columns*40,width,32),choices[i],selected==choices[i]))selected=choices[i];return selected;}
  internal static void Draw(){
   if(!Open)return;KeepCursor();try{
-   if(editing){DrawLayout();return;}float width=Math.Min(1320,Screen.width-32),height=Math.Min(900,Screen.height-32);if(window.width!=width||window.height!=height)window=new Rect((Screen.width-width)/2,(Screen.height-height)/2,width,height);
+   if(editing){int previousDepth=GUI.depth;try{GUI.depth=-10000;DrawLayout();}finally{GUI.depth=previousDepth;}return;}float width=Math.Min(1320,Screen.width-32),height=Math.Min(900,Screen.height-32);if(window.width!=width||window.height!=height)window=new Rect((Screen.width-width)/2,(Screen.height-height)/2,width,height);
    var e=Event.current;var header=new Rect(window.x,window.y,window.width-250,74);if(e.type==EventType.MouseDown&&e.button==0&&header.Contains(e.mousePosition)){windowDrag=true;dragOffset=e.mousePosition-window.position;e.Use();}if(e.type==EventType.MouseDrag&&windowDrag){window.position=e.mousePosition-dragOffset;window.x=Math.Clamp(window.x,0,Math.Max(0,Screen.width-window.width));window.y=Math.Clamp(window.y,0,Math.Max(0,Screen.height-window.height));e.Use();}if(e.type==EventType.MouseUp)windowDrag=false;
    Panel(window);Surface(new Rect(window.x+10,window.y+10,202,window.height-20),Color.Lerp(Background,Color.black,.18f),10);Surface(new Rect(window.x+28,window.y+28,34,34),new Color(Accent.r,Accent.g,Accent.b,.14f),9);MenuIcons.Draw(new Rect(window.x+34,window.y+34,22,22),"战局",Accent);Label(new Rect(window.x+68,window.y+22,132,28),"SPT Assistant",Text,15);Label(new Rect(window.x+73,window.y+49,122,19),"控制中心  /  "+RuntimeModule.ReleaseVersion,Color.Lerp(Text,Background,.5f),11);
    if(Button(new Rect(window.xMax-224,window.y+55,202,27),I18n.English?"English · 中文":"中文 · English"))I18n.Toggle();if(Button(new Rect(window.xMax-70,window.y+20,48,30),"关闭")){SetOpen(false);return;}if(Button(new Rect(window.xMax-224,window.y+20,68,30),"布局")){editing=true;drag="";}if(Button(new Rect(window.xMax-148,window.y+20,68,30),contextKeys?"返回":"热键"))contextKeys=!contextKeys;
@@ -202,6 +202,7 @@ internal static partial class InterfaceMenu {
     case ("人物与移动","Buff 状态"):CharacterBuffs.Draw(content);break;
     case ("模型与镜头","动作锁定"):ModelPoseLock.Draw(content);break;
     case ("人物与移动","死亡保留"):DeathInventory.Draw(content);break;
+    case ("开发工具","编辑模式"):WorldEditor.DrawSettings(content);break;
     case ("开发工具","坐标读取"):CoordinateReader.Draw(content);break;
     case ("数据","角色管理"):
     case ("开发工具","角色管理"):ProfileAdminPanel.Draw(content);break;
@@ -299,10 +300,8 @@ internal static partial class InterfaceMenu {
   foreach(var slot in slots.Values){Label(new Rect(rect.x,top,rect.width,26),$"{slot.Name} · 不透明度 {slot.Opacity.Value:P0}");float chosen=Slider(new Rect(rect.x,top+32,Math.Max(60,rect.width-140),20),slot.Opacity.Value,0,1);if(Math.Abs(chosen-slot.Opacity.Value)>.001f)slot.Opacity.Value=chosen;if(Button(new Rect(rect.xMax-128,top+23,128,30),"恢复 100%"))slot.Opacity.Value=1;top+=65;}
  }
  static void DrawLayout(){
-  var e=Event.current;
-  var toolbar=new Rect(Math.Max(12,Screen.width-392),12,380,112);Panel(toolbar);Label(new Rect(toolbar.x+14,toolbar.y+5,350,26),"布局编辑 · 拖动信息框",Accent,17);
-  if(Button(new Rect(toolbar.x+14,toolbar.y+42,160,30),"完成并返回")){editing=false;drag="";config.Save();return;}
-  if(Button(new Rect(toolbar.x+186,toolbar.y+42,178,30),"恢复默认位置"))ResetPositions();Label(new Rect(toolbar.x+14,toolbar.y+78,350,24),"各信息框：拖动右下角调整大小",Text,12);
+  var e=Event.current;bool released=e.type==EventType.MouseUp;
+  var toolbar=new Rect(Math.Max(12,Screen.width-392),12,380,112);
   foreach(var pair in slots){var slot=pair.Value;var initial=pair.Key=="raidclock"?RaidClock.DefaultBounds():slot.Initial;var bounds=Place(pair.Key,initial);Panel(bounds,.7f);Label(new Rect(bounds.x+8,bounds.y,Math.Max(40,bounds.width-16),26),slot.Name+" · 拖动",Accent);
    {
     var grip=new Rect(bounds.xMax-21,bounds.yMax-21,21,21);for(int i=0;i<3;i++)RaidLoot.Line(new Vector2(grip.x+7+i*4,grip.yMax-3),new Vector2(grip.xMax-3,grip.y+7+i*4),Accent,1.5f);
@@ -313,7 +312,18 @@ internal static partial class InterfaceMenu {
    if(e.type==EventType.MouseDown&&e.button==0&&bounds.Contains(e.mousePosition)&&!toolbar.Contains(e.mousePosition)){drag=pair.Key;dragOffset=e.mousePosition-bounds.position;e.Use();}
    if(e.type==EventType.MouseDrag&&drag==pair.Key){MoveSlot(pair.Key,e.mousePosition-dragOffset,bounds);e.Use();}
   }
-  if(e.type==EventType.MouseUp){drag="";config.Save();}
+  // The slot hit tests exclude toolbar bounds, so drawing its controls last
+  // keeps both control IDs and visual stacking consistent on every GUI event.
+  DrawLayoutToolbar(toolbar);
+  if(released){drag="";config.Save();}
+ }
+ static bool DrawLayoutToolbar(Rect toolbar){
+  Panel(toolbar);Label(new Rect(toolbar.x+14,toolbar.y+5,350,26),"布局编辑 · 拖动信息框",Accent,17);
+  if(Button(new Rect(toolbar.x+14,toolbar.y+42,160,30),"完成并返回")){editing=false;drag="";config.Save();return true;}
+  if(Button(new Rect(toolbar.x+186,toolbar.y+42,178,30),"恢复默认位置"))ResetPositions();
+  Label(new Rect(toolbar.x+14,toolbar.y+78,350,24),"各信息框：拖动右下角调整大小",Text,12);
+  var e=Event.current;if(toolbar.Contains(e.mousePosition)&&(e.isMouse||e.type==EventType.ScrollWheel))e.Use();
+  return false;
  }
  static void ResetPositions(){foreach(var slot in slots.Values){slot.X.Value=-1;slot.Y.Value=-1;slot.Width.Value=-1;slot.Height.Value=-1;if(slot.AutoSize!=null)slot.AutoSize.Value=true;}}
 }
