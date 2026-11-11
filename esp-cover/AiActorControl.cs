@@ -10,7 +10,7 @@ using HarmonyLib;
 using UnityEngine;
 using Object=UnityEngine.Object;
 namespace LocalSpt5Esp;
-internal static class AiActorControl {
+internal static partial class AiActorControl {
  sealed class Settings {internal Player Actor=null!;internal IntPtr Health;internal bool IgnorePlayer,Invincible;internal float Damage=1;}
  static readonly Dictionary<IntPtr,Settings> actors=new();static readonly Dictionary<IntPtr,Settings> healths=new();static readonly HashSet<IntPtr> neutralOwners=new();static readonly AiRelationTable relations=new();
  static readonly Dictionary<IntPtr,string> identities=new();

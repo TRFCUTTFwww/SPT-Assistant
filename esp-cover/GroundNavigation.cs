@@ -12,8 +12,8 @@ using UnityEngine.Rendering;
 using NVector=System.Numerics.Vector3;
 using Object=UnityEngine.Object;
 namespace LocalSpt5Esp;
-internal static class GroundNavigation {
- enum Destination { None,Loot,Exit,Quest }
+internal static partial class GroundNavigation {
+ enum Destination { None,Loot,Exit,Quest,Chat }
  static ConfigEntry<bool> enabled=null!,showHud=null!;
  static ConfigEntry<float> horizon=null!,spacing=null!,width=null!;
  static ConfigEntry<KeyCode> toggleKey=null!;
@@ -47,7 +47,7 @@ internal static class GroundNavigation {
  static void ToExit(string key,string name){if(!RaidClock.Active){message="请进入战局后选择目标。";return;}Clear();kind=Destination.Exit;targetKey=key;targetName=name;worldPointer=Singleton<GameWorld>.Instance.Pointer;enabled.Value=true;message="正在寻找撤离路线…";}
  internal static void Clear(){kind=Destination.None;targetKey=targetName="";route=Array.Empty<NVector>();nextPlan=nextVisual=0;remaining=distanceFromPath=0;forcePlan=true;arrived=partial=false;problem="";message="导航已停止。";Hide();}
  static void Hide(){if(visual!=null)visual.SetActive(false);}
- static bool Target(out Vector3 position,out string state){position=default;state="";if(kind==Destination.Quest)return QuestLocations.TryNavigationTarget(targetKey,out position,out _);if(kind==Destination.Loot)return RaidLoot.TryNavigationTarget(targetKey,out position,out _);if(kind==Destination.Exit){if(ExfilDisplay.TryNavigationExit(targetKey,out var exit)&&exit!=null){position=exit.Position;state=exit.Available?"":exit.State;return true;}}return false;}
+ static bool Target(out Vector3 position,out string state){position=default;state="";if(kind==Destination.Chat){position=chatGoal;return true;}if(kind==Destination.Quest)return QuestLocations.TryNavigationTarget(targetKey,out position,out _);if(kind==Destination.Loot)return RaidLoot.TryNavigationTarget(targetKey,out position,out _);if(kind==Destination.Exit){if(ExfilDisplay.TryNavigationExit(targetKey,out var exit)&&exit!=null){position=exit.Position;state=exit.Available?"":exit.State;return true;}}return false;}
  internal static void Tick(GameWorld? world,Player? player){try{
   if(!RaidClock.Active||world==null||player==null){if(worldPointer!=IntPtr.Zero||kind!=Destination.None){Clear();worldPointer=IntPtr.Zero;DestroyVisual();}return;}
   if(worldPointer!=IntPtr.Zero&&worldPointer!=world.Pointer){Clear();worldPointer=IntPtr.Zero;DestroyVisual();return;}

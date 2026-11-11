@@ -1,0 +1,23 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Comfort.Common;
+using EFT;
+using UnityEngine;
+namespace LocalSpt5Esp;
+internal static partial class RaidCommands {
+ static void TimeCommand(string[] a){Require(a,1);if(a[0]=="query"){RaidChat.Output("daytime "+ChatEnvironment.Daytime()+" ticks · "+RaidClock.GameTime);return;}Require(a,2);int ticks=a[1].ToLowerInvariant() switch{"day"=>1000,"noon"=>6000,"night"=>13000,"midnight"=>18000,_=>(int)ChatCommandSyntax.Number(a[1],-1000000000,1000000000)};if(a[0]=="add")ticks+=ChatEnvironment.Daytime();else if(a[0]!="set")throw new ArgumentException("/time set|add|query ...");ChatEnvironment.SetTime(ticks);RaidChat.Output("昼夜时刻已设置；MC 0 ticks = 游戏 06:00，不修改战局剩余时间。");}
+ static float weatherUntil;static string priorWeather="";
+ static void Weather(string[] a){Require(a,1);if(a[0] is not ("clear" or "rain" or "thunder"))throw new ArgumentException("/weather clear|rain|thunder [持续秒数]");float duration=a.Length>1?(float)ChatCommandSyntax.Number(a[1],1,86400):0;priorWeather=ChatWeather.Set(a[0]);weatherUntil=duration==0?0:Time.unscaledTime+duration;RaidChat.Output("已设置天气："+a[0]+(a[0]=="thunder"?"（最大降雨和浓云；不保证触发原生雷电）":""));}
+ internal static void Tick(){if(weatherUntil>0&&(!RaidClock.Active||Time.unscaledTime>=weatherUntil)){weatherUntil=0;ChatWeather.Restore(priorWeather);}if(world!=IntPtr.Zero&&(!RaidClock.Active||Singleton<GameWorld>.Instance?.Pointer!=world))Reset();}
+ static void Raid(GameWorld w,string[] a){Require(a,1);if(a[0]=="extract"){if(a.Length!=2||One(w,a[1]).Pointer!=w.MainPlayer.Pointer)throw new ArgumentException("只支持 /raid extract @s");RaidEnd.ChatExtract();return;}if(a[0]!="time"||a.Length<2)throw new ArgumentException("/raid time query|set|add [时长]");if(a[1]=="query"){RaidChat.Output(RaidClock.RemainingText);return;}Require(a,3);double duration=ChatCommandSyntax.Duration(a[2]);if(a[1]=="add")duration+=(RaidClock.Remaining??throw new ArgumentException("计时未就绪。"));else if(a[1]!="set")throw new ArgumentException("/raid time query|set|add [时长]");RaidClock.SetRemaining(duration);RaidChat.Output(RaidClock.RemainingText);}
+ static Dictionary<string,(Func<bool> Get,Action<bool> Set)> Rules()=>new(){["preventTimeout"]=(()=>RaidClock.PreventTimeout.Value,v=>RaidClock.PreventTimeout.Value=v),["pauseRaidTime"]=(()=>RaidClock.PauseRemaining.Value,v=>RaidClock.PauseRemaining.Value=v),["showRaidClock"]=(()=>RaidClock.ShowClock.Value,v=>RaidClock.ShowClock.Value=v),["pauseDaylight"]=(()=>RaidEnvironment.TimePaused,v=>{if(RaidEnvironment.TimePaused!=v)RaidEnvironment.ToggleTimePause();})};
+ static void GameRule(string[] a){var rules=Rules();if(a.Length==0){foreach(var pair in rules)RaidChat.Output(pair.Key+" = "+pair.Value.Get());return;}if(!rules.TryGetValue(a[0],out var rule))throw new ArgumentException("未知规则："+string.Join(", ",rules.Keys));if(a.Length>1)rule.Set(Boolean(a[1]));RaidChat.Output(a[0]+" = "+rule.Get());}
+ static void Marker(GameWorld w,string[] a){Require(a,1);if(a[0]=="list"){foreach(var m in markers)RaidChat.Output("marker:"+m.Key+" "+m.Value.ToString("F2"));return;}Require(a,2);if(a[1].Length is <1 or >64)throw new ArgumentException("标记名须为1～64字符。");if(a[0]=="remove"){markers.Remove(a[1]);return;}if(a[0]!="set")throw new ArgumentException("/marker set|remove|list");if(markers.Count>=128&&!markers.ContainsKey(a[1]))throw new ArgumentException("本局标记最多128个。");markers[a[1]]=a.Length==2?w.MainPlayer.Position:Coordinates(w,a[2..]);RaidChat.Output("已保存本局标记 marker:"+a[1]);}
+ static void Experience(GameWorld w,string[] a){Require(a,2);var player=One(w,a[1]);if(!player.IsYourPlayer)throw new ArgumentException("经验命令仅允许本地玩家。");if(a[0]=="query"){RaidChat.Output("档案等级 "+player.Profile.Info.Level+" · 档案经验 "+player.Profile.Info.Experience+"。本局获得经验由结算单独统计。");return;}throw new ArgumentException("战局内修改档案经验会与结算冲突，当前不支持写入。请退出战局后使用 SPT 原生命令控制台的 spt profile level。");}
+}
+internal static class ChatWeather {
+ static BepInEx.Configuration.ConfigEntryBase Entry(string key)=>Plugin.Self.Config.First(p=>p.Key.Section=="31. 环境控制"&&p.Key.Key==key).Value;
+ internal static string Set(string kind){string snapshot=string.Join("|",new[]{"Override weather","Rain","Fog","Clouds"}.Select(k=>Entry(k).GetSerializedValue()));Entry("Override weather").SetSerializedValue("true");Entry("Rain").SetSerializedValue(kind=="clear"?"0":kind=="rain"?"0.5":"1");Entry("Fog").SetSerializedValue(kind=="thunder"?"0.1":"0");Entry("Clouds").SetSerializedValue(kind=="clear"?"-1":"1");return snapshot;}
+ internal static void Restore(string snapshot){string[] keys={"Override weather","Rain","Fog","Clouds"};var values=snapshot.Split('|');if(values.Length==keys.Length)for(int i=0;i<keys.Length;i++)Entry(keys[i]).SetSerializedValue(values[i]);}
+}

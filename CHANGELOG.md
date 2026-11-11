@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — Chat and commands / 聊天与命令
+
+- main 新增 T 聊天框、命令历史、IME 输入和按参数位置的 Tab 补全，复用现有单人功能提供 MC 风格命令、UUID/类型选择器、相对坐标和地点标签。
+- 文字聊天使用双方核验指纹的 TLS 1.3、禁用会话恢复、DPAPI 身份密钥、签名中继与确认游标；仅提供会话级前向保密。收到的文字不执行命令。
+- 世界命令限本机单人战局；旧 multiplayer-fika 分支未更新。经验只读、装备替换限空槽及其他未实现范围见 [双语说明](docs/CHAT.md)。命令反馈目前以中文为主。
+- Add a T chat overlay, history, IME and contextual Tab completion with local MC-style commands, typed/UUID selectors, relative coordinates and place labels. Text uses mutually pinned TLS 1.3 with fresh sessions, DPAPI identity storage and a signed bounded relay. Received messages never execute commands. The old multiplayer branch is unchanged.
+- Validation: client/server builds, 127 Probe groups, 24 GearMail groups, 47 chat checks and live SPT relay bidirectional encrypted messaging passed. Two existing client nullable warnings remain. UI/IME/input interception and in-raid command effects require manual verification; this remains unstable and is not broadly tested.
+
 ## Unreleased — AI equipment layout / AI 装备排版修复
 
 - 修复 AI 属性内嵌装备编辑页的参数区与底部按钮重叠；装备槽按宽度换行，移除内嵌模式多余标题留白，高度不足时提供整页滚动与边界裁切。

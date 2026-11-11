@@ -8,7 +8,7 @@ using EFT.Vehicle;
 using HarmonyLib;
 using UnityEngine;
 namespace LocalSpt5Esp;
-internal static class BtrControl {
+internal static partial class BtrControl {
  static ConfigEntry<bool> disabled=null!,customWait=null!;static ConfigEntry<float> wait=null!;static ConfigEntry<KeyCode> key=null!;
  static readonly Dictionary<IntPtr,(GameObject Object,bool Active)> hidden=new();static IntPtr world;static string selected="",notice="";static Vector2 scroll;
  static readonly Queue<string> pendingRoute=new();static string requestedStop="";

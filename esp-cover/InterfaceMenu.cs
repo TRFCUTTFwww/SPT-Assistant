@@ -38,7 +38,7 @@ internal static partial class InterfaceMenu {
  internal static bool AiPage=>Open&&category=="AI 工作台";
  internal static bool AirdropPage=>Open&&category=="载具与空投"&&otherPage=="空投控制";
  internal static bool BuffPage=>Open&&category=="人物与移动"&&otherPage=="Buff 状态";
- internal static bool InputBlocked=>inputGate.Blocked||FloatingStatus.Capturing||WorldEditor.InputBlocked;
+ internal static bool InputBlocked=>inputGate.Blocked||RaidChat.InputBlocked||FloatingStatus.Capturing||WorldEditor.InputBlocked;
  internal static bool Editing=>Open&&editing;
  sealed class Slot {
   internal string Name="";
@@ -89,11 +89,11 @@ internal static partial class InterfaceMenu {
  static bool IsLocal(PlayerOwner owner)=>owner!=null&&owner.Player!=null&&owner.Player.IsYourPlayer;
  static bool BlockAxes(GamePlayerOwner __instance)=>(!InputBlocked&&!DirectorStage.FreeActive)||!IsLocal(__instance);
  static bool BlockCommand(GamePlayerOwner __instance,ECommand __0,ref InputNode.ETranslateResult __result){if(!IsLocal(__instance))return true;if(!InputBlocked&&!DirectorStage.FreeActive&&(!WorldEditor.Active||WorldEditor.MovementCommand(__0)))return true;__result=InputNode.ETranslateResult.BlockAll;return false;}
- static bool AllowGameInput(){WorldEditor.CaptureInput();return !InputBlocked;}
+ static bool AllowGameInput(){RaidChat.CaptureInput();WorldEditor.CaptureInput();return !InputBlocked;}
  static bool AllowTrigger(Player.FirearmController __instance,bool __0)=>(!InputBlocked&&!DirectorStage.FreeActive&&!WorldEditor.Active)||!__0||__instance._player==null||!__instance._player.IsYourPlayer;
- internal static void KeepCursor(){WorldEditor.KeepCursor();if(Open){Cursor.lockState=CursorLockMode.None;Cursor.visible=true;}}
+ internal static void KeepCursor(){WorldEditor.KeepCursor();RaidChat.KeepCursor();if(Open){Cursor.lockState=CursorLockMode.None;Cursor.visible=true;}}
  internal static void Update(){
-  if(capture==null&&Input.GetKeyDown(menuKey.Value))SetOpen(!Open);
+  if(!RaidChat.Open&&capture==null&&Input.GetKeyDown(menuKey.Value))SetOpen(!Open);
   else if(Open&&Input.GetKeyDown(KeyCode.Escape))SetOpen(false);
   inputGate.Tick(Time.frameCount,Input.GetMouseButton(0)||Input.GetMouseButton(1)||Input.GetMouseButton(2));
   KeepCursor();
@@ -203,6 +203,7 @@ internal static partial class InterfaceMenu {
     case ("模型与镜头","动作锁定"):ModelPoseLock.Draw(content);break;
     case ("人物与移动","死亡保留"):DeathInventory.Draw(content);break;
     case ("开发工具","编辑模式"):WorldEditor.DrawSettings(content);break;
+    case ("开发工具","聊天与命令"):RaidChat.DrawSettings(content);break;
     case ("开发工具","坐标读取"):CoordinateReader.Draw(content);break;
     case ("数据","角色管理"):
     case ("开发工具","角色管理"):ProfileAdminPanel.Draw(content);break;

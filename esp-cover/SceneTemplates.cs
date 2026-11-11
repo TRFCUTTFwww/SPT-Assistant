@@ -13,7 +13,7 @@ internal sealed record SceneTemplate(string Id,string Name,string Role,string Si
 internal sealed record SceneActor(ScenePoint Position,SceneTemplate Template);
 internal sealed record SceneRelation(int First,int Second,bool Hostile);
 internal sealed record MapScene(string Id,string Name,string Map,SceneActor[] Actors,SceneRelation[]? Relations=null);
-internal static class SceneTemplates {
+internal static partial class SceneTemplates {
  static readonly List<SceneTemplate> templates=new();static readonly List<MapScene> scenes=new();static readonly Queue<SceneActor> restore=new();
  static int wanted,finished,made;
  static MapScene? restoringScene;static readonly Dictionary<string,(LiveActorReference Actor,bool Paused)> staged=new();

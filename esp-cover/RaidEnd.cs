@@ -3,7 +3,7 @@ using Comfort.Common;
 using EFT;
 using UnityEngine;
 namespace LocalSpt5Esp;
-internal static class RaidEnd {
+internal static partial class RaidEnd {
  static RaidEndMode mode;static bool dropdown;
  static RaidEndRequest? request;
  static string notice="";

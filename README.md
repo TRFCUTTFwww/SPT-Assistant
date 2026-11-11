@@ -29,6 +29,8 @@ See [the bilingual installation guide](docs/INSTALL.md) for file locations, upda
 
 ## Features
 
+The [chat and slash-command system](docs/CHAT.md) adds a configurable T chat overlay, command history, Tab completion and local single-player commands. Text chat between users of the same upgraded server uses mutually verified TLS 1.3 channels with session-level forward secrecy. Read the fingerprint-verification steps and limitations before use. The old multiplayer branch is unchanged; remote game commands are disabled in main.
+
 The opt-in [world editor](docs/world-editor.md) adds a crosshair context menu for creating, moving, copying and editing locally controlled AI and loose loot. It is unstable and still needs in-raid verification.
 
 | Area | What you can do |

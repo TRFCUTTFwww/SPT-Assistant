@@ -32,7 +32,7 @@ internal static partial class WorldEditor {
   gate.Tick(frame,Input.GetMouseButton(0)||Input.GetMouseButton(1)||Input.GetMouseButton(2));
   var current=Singleton<GameWorld>.Instance;
   if(!Active||current==null||world!=IntPtr.Zero&&world!=current.Pointer){if(world!=IntPtr.Zero||moving||dialog.Length>0||cursorOwned)Reset();return;}world=current.Pointer;
-  if(InterfaceMenu.Open||!Application.isFocused){Suspend();return;}
+  if(InterfaceMenu.Open||RaidChat.Open||!Application.isFocused){Suspend();return;}
   try{
    if(Input.GetKeyDown(KeyCode.Escape)){if(moving)FinishMove(true);else if(dialog.Length>0)CloseDialog();else ClearSelection();return;}
    if(dialog.Length>0){KeepCursor();if(dialog=="context")ContextInput();return;}
