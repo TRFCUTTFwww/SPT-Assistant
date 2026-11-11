@@ -3612,5 +3612,7 @@
   "已选择": "Selected",
   "；下一枪命中位置传送，可放置在空中。": "; hit the destination next; air placement is allowed.",
   "传送：先命中 AI 选中，再射击目标位置；允许空中固定，无需导航落点。设置动作、Buff 和血量需要命中 AI；复活需要命中本局 AI 尸体，保留尸体当前剩余物资。": "Teleport: hit AI to select it, then hit the destination. Air anchors are allowed without navigation. Actions, Buffs and health require hitting AI; revival requires an AI corpse from this raid and keeps its remaining loot.",
-  "传送：先击中 AI 选中，再击中目标位置；无需导航落点，可空中固定；也可使用 AI 列表勾选。每枪最多触发一次。": "Teleport: hit AI to select it, then hit a destination. No navigation landing is required; air anchors are allowed. AI-list selection also works. Each shot triggers at most once."
+  "传送：先击中 AI 选中，再击中目标位置；无需导航落点，可空中固定；也可使用 AI 列表勾选。每枪最多触发一次。": "Teleport: hit AI to select it, then hit a destination. No navigation landing is required; air anchors are allowed. AI-list selection also works. Each shot triggers at most once.",
+  "秒搜索容器": "Instant container search",
+  "本地玩家主动搜索容器、背包或胸挂时使用原生即时搜索流程；不自动打开远处容器，不改变物品或其他玩家的搜索。关闭后新搜索恢复原规则。": "Use native instant search when the local player searches containers, backpacks or rigs. Does not open distant containers, change items or affect other players. New searches follow normal rules after disabling."
 }

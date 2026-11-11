@@ -11,6 +11,18 @@ var sourceRoot=Path.GetFullPath(Environment.GetEnvironmentVariable("SPT_SOURCE_R
 var gameRoot=Environment.GetEnvironmentVariable("SPT_GAME_ROOT");if(!string.IsNullOrWhiteSpace(gameRoot))Directory.SetCurrentDirectory(gameRoot);
 try{
 WorldEditorChecks.Run();
+Assert(InstantSearchRules.Allowed(true,true,true,false,10,10,"local","local"),"active local search can be instant");
+Assert(!InstantSearchRules.Allowed(false,true,true,false,10,10,"local","local")&&!InstantSearchRules.Allowed(true,false,true,false,10,10,"local","local")&&!InstantSearchRules.Allowed(true,true,false,false,10,10,"local","local")&&!InstantSearchRules.Allowed(true,true,true,true,10,10,"local","local"),"disabled, out-of-raid, dead and terminated searches retain native behavior");
+Assert(!InstantSearchRules.Allowed(true,true,true,false,10,20,"local","local")&&!InstantSearchRules.Allowed(true,true,true,false,0,0,"local","local")&&!InstantSearchRules.Allowed(true,true,true,false,10,10,"local","remote")&&!InstantSearchRules.Allowed(true,true,true,false,10,10,"",""),"remote or missing search controller/profile cannot become instant");
+using(var instantCore=AssemblyDefinition.ReadAssembly(Path.Combine(sourceRoot,"esp-cover/bin/Release/net10.0/Local.Spt5.ESP.Core.dll"))){
+ var instant=instantCore.MainModule.Types.Single(t=>t.Name=="InstantContainerSearch");
+ var hook=instant.Methods.Single(m=>m.Name=="AfterInstant");
+ var calls=hook.Body.Instructions.Where(i=>i.Operand is MethodReference).Select(i=>(MethodReference)i.Operand).ToArray();
+ Assert(calls.Any(m=>m.DeclaringType.Name=="InstantSearchRules"&&m.Name=="Allowed")&&calls.Any(m=>m.Name=="get_PlayerSearchController")&&calls.Any(m=>m.Name=="get__searchController"),"native instant-search hook verifies local controller and profile");
+ Assert(!calls.Any(m=>m.Name is "SetItemAsSearched" or "SetItemAsKnown" or "DiscoverItem" or "set_Searchable"),"instant-search hook leaves native discovery, item state and callbacks intact");
+ Assert(instant.Methods.Single(m=>m.Name=="Initialize").Body.Instructions.Any(i=>i.OpCode==Mono.Cecil.Cil.OpCodes.Ldstr&&i.Operand is string name&&name=="Instant"),"patch resolves the native Instant getter");
+}
+Console.WriteLine("PASS instant container search disabled/raid/death/termination boundaries, controller/profile isolation and native discovery preservation");
 
 foreach(string status in new[]{"RegularMode","UncompleteRequirements","Countdown"})
  Assert(ExfilRequirementRules.CanBypass(status,false,false,false),"backpack-gated exits can proceed before and during countdown: "+status);

@@ -4,7 +4,8 @@
 
 **适配：SPT 5.0 BE / EFT 1.3.0.1.48558，Windows x64，Unity IL2CPP / .NET 10。**
 
-- 对外版本统一为 **2.1**；移除侧栏 SPT Assistant 标题下的“控制中心 / 版本号”小字。
+- 对外版本统一为 **2.1**；侧栏 SPT Assistant 标题下只显示 `v2.1`，移除“控制中心”小字。
+- 新增“物品 → 修理与耐久 → 秒搜索容器”，默认关闭。仅本地玩家主动搜索时使用原生即时搜索流程，保留原生物品发现和完成通知；关闭后新搜索恢复原规则。
 - 完善“设置与热键 → 全部热键”：支持搜索、单键和组合键、清除绑定及恢复默认，增加 17 个配置入口。
 - 编辑模式支持 Insert 创建、G 移动、Ctrl+C 复制、Ctrl+V 粘贴、Ctrl+D 复制并粘贴、Del 删除、F2 重命名 AI、F4 属性。杀死 AI、解除空中固定和编辑模式切换可自行绑定。菜单与提示跟随当前绑定。
 - 补齐配置方案切换、详情翻页、撤离翻页和命令输入的改键入口。输入文字、失焦、其他界面占用输入或移动/框选中时抑制编辑快捷键。
@@ -24,7 +25,8 @@ Fika 成员添加 `-ClientOnly`，连接房主，不启动本地服务端。本�
 
 **Target: SPT 5.0 BE / EFT 1.3.0.1.48558, Windows x64, Unity IL2CPP / .NET 10.**
 
-- Set the public version to **2.1** and remove the small “Control center / version” subtitle below SPT Assistant in the sidebar.
+- Set the public version to **2.1** and show only `v2.1` beneath SPT Assistant in the sidebar, removing the “Control center” text.
+- Add opt-in **Items → Repair & durability → Instant container search** for searches initiated by the local player. Retain native discovery and completion callbacks; new searches follow normal rules after disabling.
 - Complete **Settings & hotkeys → All hotkeys** with 17 additional configurable entries, search, combinations, clearing and resetting.
 - Editor defaults: Insert create, G move, Ctrl+C copy, Ctrl+V paste, Ctrl+D duplicate, Del delete, F2 rename AI and F4 properties. Kill AI, release air anchors and editor toggle can be assigned. Menus and hints reflect current bindings.
 - Add configurable profile cycling, detail paging, extraction paging and command input. Editor shortcuts respect text input, focus, other input owners and active movement/marquee selection.

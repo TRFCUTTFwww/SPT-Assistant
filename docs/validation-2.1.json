@@ -15,7 +15,7 @@
     "raidControls": "passed"
   },
   "offlineChecks": {
-    "clientProbe": "129 PASS groups",
+    "clientProbe": "130 PASS groups",
     "chatAndCommands": "passed, including TLS integration and command syntax",
     "mailAndAdministration": "24 PASS groups; two nullable warnings in test source"
   },
@@ -24,8 +24,8 @@
   "clientHotReload": "Not performed for the 2.1 release",
   "broadTestingCompleted": false,
   "requiresInGameConfirmation": [
-    "Sidebar subtitle removal and overall UI layout",
+    "Version-only sidebar subtitle and overall UI layout",
     "Configured hotkeys, text input isolation and world editor actions",
-    "Native raid behavior and multi-client Fika synchronization"
+    "Instant container search in actual containers/backpacks/rigs; native raid behavior and multi-client Fika synchronization"
   ]
 }
