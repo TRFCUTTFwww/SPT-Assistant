@@ -31,7 +31,7 @@ foreach($entry in $components.GetEnumerator()){Copy-Item -LiteralPath (Join-Path
 Copy-Item -LiteralPath (Join-Path $repo 'scripts/Install-Experimental.ps1') -Destination (Join-Path $stage 'Install.ps1')
 foreach($name in @('README.md','README.zh-CN.md','LICENSE')){Copy-Item -LiteralPath (Join-Path $repo $name) -Destination $stage}
 [IO.Directory]::CreateDirectory((Join-Path $stage 'docs'))|Out-Null
-foreach($name in @('INSTALL.md','release-2.1.md','validation-2.1.json','hotkeys.md')){Copy-Item -LiteralPath (Join-Path $repo ('docs/'+$name)) -Destination (Join-Path $stage 'docs')}
+foreach($name in @('INSTALL.md','release-2.1.md','validation-2.1.json','hotkeys.md','world-editor.md')){Copy-Item -LiteralPath (Join-Path $repo ('docs/'+$name)) -Destination (Join-Path $stage 'docs')}
 $checks=[ordered]@{}
 Get-ChildItem -LiteralPath $stage -File -Recurse | Sort-Object FullName | ForEach-Object {
  $relative=$_.FullName.Substring($stage.Length+1).Replace('\','/')

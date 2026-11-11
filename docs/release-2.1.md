@@ -2,6 +2,8 @@
 
 ## 简体中文
 
+本次覆盖更新（仍为 2.1）：隐藏编辑模式的常驻准星及操作文字，保留选择标记和拖框；点选及 Alt 框选支持穿墙选择。AI 属性的“装备”页可向空的第一/第二主武器、手枪及近战槽添加武器，“战斗”页可标记 A 队、B 队或清除标记，供现有双方关系工具使用。尸体右键菜单支持复活、复制/粘贴、移动和删除；复活需要本局原始 AI 资料，复制使用独立物品 ID 和外观/姿态快照。尸体、装备及联机表现仍需游戏内验证。
+
 **适配：SPT 5.0 BE / EFT 1.3.0.1.48558，Windows x64，Unity IL2CPP / .NET 10。**
 
 - 对外版本统一为 **2.1**；侧栏 SPT Assistant 标题下只显示 `v2.1`，移除“控制中心”小字。
@@ -22,6 +24,8 @@ Fika 成员添加 `-ClientOnly`，连接房主，不启动本地服务端。本�
 仍为实验版，未经过广泛测试，不保证向后兼容；安装前备份存档和配置。编译、离线检查和安装包校验不代表游戏内验收。实际按键、界面、战局效果和 Fika 多客户端同步由用户检查。具体执行的检查见[验证记录](validation-2.1.json)。
 
 ## English
+
+This replacement 2.1 build hides the persistent editor crosshair/instruction HUD while retaining selection markers and marquee outlines. Point and marquee selection work through walls. AI Properties → Equipment can add weapons to empty first/second primary, holster and melee slots; Combat can mark team A/B or clear the marker for the existing relationship tools. Corpse context menus support revival, copy/paste, movement and deletion. Revival requires original AI data from this raid; copies use fresh inventory IDs and appearance/pose snapshots. Native corpse/equipment behavior and multiplayer synchronization still require in-game verification.
 
 **Target: SPT 5.0 BE / EFT 1.3.0.1.48558, Windows x64, Unity IL2CPP / .NET 10.**
 

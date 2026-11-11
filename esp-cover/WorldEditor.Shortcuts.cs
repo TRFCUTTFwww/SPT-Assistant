@@ -47,11 +47,11 @@ internal static partial class WorldEditor {
   PruneSelection();
   if(!HasSelection){FeatureToasts.Show("请先选择对象。");return true;}
   if(action==EditorShortcut.Duplicate&&dialog.Length==0)ReadPoint(current,PointerRay(AltDown));
-  if(selectedActors.Count>0&&selectedItems.Count>0&&(dialog!="context"||categoryMenu)){
+  if(SelectionKinds>1&&(dialog!="context"||categoryMenu)){
    contextAnchor=altCursor?MousePosition+new Vector2(14,10):new(Screen.width/2f+14,Screen.height/2f+10);
    categoryMenu=true;contextTitle="选择对象类别";
-   SetContext(new[]{new ContextAction("AI ×"+selectedActors.Count,true,()=>ApplyShortcut(action,SelectionKind.Ai)),new ContextAction(I18n.Text("物品")+" ×"+selectedItems.Count,true,()=>ApplyShortcut(action,SelectionKind.Items))});
-  }else ApplyShortcut(action,selectedActors.Count==0?SelectionKind.Items:selectedItems.Count==0?SelectionKind.Ai:selectionKind);
+   SetContext(CategoryActions(kind=>ApplyShortcut(action,kind)));
+  }else ApplyShortcut(action,SelectionKinds==1?FirstSelectionKind:selectionKind);
   return true;
  }
  static void ApplyShortcut(EditorShortcut action,SelectionKind kind){
@@ -61,7 +61,7 @@ internal static partial class WorldEditor {
    case EditorShortcut.Duplicate:Copy();Paste();break;
    case EditorShortcut.Delete:Delete();break;
    case EditorShortcut.Move:BeginMove();break;
-   case EditorShortcut.Properties:OpenProperties();break;
+   case EditorShortcut.Properties:if(kind!=SelectionKind.Corpses)OpenProperties();break;
    case EditorShortcut.Rename:if(kind==SelectionKind.Ai)BeginRename();else FeatureToasts.Show("仅支持 AI。");break;
    case EditorShortcut.Kill:if(kind==SelectionKind.Ai)Kill();else FeatureToasts.Show("仅支持 AI。");break;
    case EditorShortcut.ReleaseAir:if(kind==SelectionKind.Ai)ReleaseAir();else FeatureToasts.Show("仅支持 AI。");break;

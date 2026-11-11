@@ -17,7 +17,7 @@ internal static partial class WorldEditor {
  internal static void Draw(){
   if(!Active||InterfaceMenu.Open)return;int depth=GUI.depth;bool oldEnabled=GUI.enabled;GUI.depth=-900;
   try{
-   if(dialog.Length==0){float hintWidth=Math.Max(1,Math.Min(740,Screen.width-24));DrawSelection();InterfaceMenu.Label(new Rect(Screen.width/2f-12,Screen.height/2f-16,24,32),"+",InterfaceMenu.Accent,24);InterfaceMenu.Label(new Rect((Screen.width-hintWidth)/2,Screen.height/2f+35,hintWidth,30),moving?"左键放下 · 右键 / Esc 取消 · 滚轮调整距离":(I18n.Text("Alt 框选 · 右键编辑")+" · "+ShortcutHint),InterfaceMenu.Accent,14);return;}
+   if(dialog.Length==0){DrawSelection();return;}
    if(dialog=="context"){DrawContext();return;}
    KeepCursor();GUI.enabled=oldEnabled&&Time.frameCount>dialogFrame;float w=Math.Min(dialog=="rename"?380:actor!=null&&dialog=="properties"?860:700,Screen.width-24),h=Math.Min(dialog=="rename"?174+(SelectionCount>1?38:0):760,Screen.height-24);var rect=new Rect((Screen.width-w)/2,(Screen.height-h)/2,w,h);InterfaceMenu.Panel(rect);float x=rect.x+18,y=rect.y+14,width=w-36;
    InterfaceMenu.Label(new Rect(x,y,width-90,30),dialog switch{"context"=>"场景编辑","create"=>"创建","rename"=>"重命名",_=>"属性"},InterfaceMenu.Accent,20);

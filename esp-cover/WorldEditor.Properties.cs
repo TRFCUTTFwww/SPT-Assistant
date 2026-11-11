@@ -31,7 +31,7 @@ internal static partial class WorldEditor {
    if(AiBackpackEditor.Open)AiBackpackEditor.Draw(content);else if(AiEquipmentEditor.Open)AiEquipmentEditor.Draw(content,true);else if(InterfaceMenu.Button(new Rect(content.x,content.y,content.width,34),"打开装备编辑器"))AiEquipmentEditor.Select(Current(),target);
   }else if(propertyPage==5){if(!ownsBuffs||!CharacterBuffs.IsSelectedAi(target)){CharacterBuffs.SelectAi(Current(),target);ownsBuffs=true;}CharacterBuffs.DrawAi(content,true);}
   else{
-   scroll=GUI.BeginScrollView(content,scroll,new Rect(0,0,content.width-22,propertyPage==2?750:propertyPage==1?385:370));
+   scroll=GUI.BeginScrollView(content,scroll,new Rect(0,0,content.width-22,propertyPage==2?750:propertyPage==1?385:propertyPage==3?460:370));
    try{float y=0,w=content.width-30;switch(propertyPage){case 0:DrawAiBasic(target,w,ref y);break;case 1:DrawAiHealth(w,ref y);break;case 2:DrawAiBehavior(w,ref y);break;case 3:DrawAiCombat(target,w,ref y);break;}}
    finally{GUI.EndScrollView();}
   }
@@ -69,6 +69,8 @@ internal static partial class WorldEditor {
   invincible=PropertyToggle(w,ref y,"AI 无敌",invincible);damageFactor=PropertyField(w,ref y,"承受玩家伤害倍率",damageFactor);
   InterfaceMenu.Paragraph(new Rect(0,y,w,52),"倍率仅影响本地玩家对该 AI 的伤害；0 免疫，1 正常。全局 AI 无敌仍然生效。",null,12);y+=62;
   if(InterfaceMenu.Button(new Rect(0,y,w,34),"应用战斗属性"))Run(()=>{AiActorControl.ApplyEditorState(Current(),Actor(),invincible,ItemSpawnRules.Number(damageFactor,0,float.MaxValue,"承受玩家伤害倍率"));Applied();});y+=46;
-  InterfaceMenu.Label(new Rect(0,y,w,26),AiActorControl.Team(target.AIData.BotOwner),null,12);
+  InterfaceMenu.Label(new Rect(0,y,w,26),AiActorControl.Team(target.AIData.BotOwner)+" · "+I18n.Text(AiActorControl.EditorSide(target)),null,12);y+=34;
+  float third=(w-16)/3;if(InterfaceMenu.Button(new Rect(0,y,third,32),"标记为 A 队"))Run(()=>{AiActorControl.MarkEditorSide(Current(),Actor(),1);Applied();});if(InterfaceMenu.Button(new Rect(third+8,y,third,32),"标记为 B 队"))Run(()=>{AiActorControl.MarkEditorSide(Current(),Actor(),2);Applied();});if(InterfaceMenu.Button(new Rect(2*(third+8),y,third,32),"清除队伍标记"))Run(()=>{AiActorControl.MarkEditorSide(Current(),Actor(),0);Applied();});y+=42;
+  InterfaceMenu.Paragraph(new Rect(0,y,w,54),"A/B 标记用于 AI 关系双方；可在全局控制中设置双方敌对或中立，不改变原生队伍。",null,12);
  }
 }

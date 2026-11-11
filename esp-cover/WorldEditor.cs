@@ -23,7 +23,7 @@ internal static partial class WorldEditor {
  static Player Actor(){var value=actor?.Resolve()??throw new ArgumentException("请先选择 AI。");if(!Editable(value))throw new ArgumentException("只允许编辑本机控制的普通 AI。");return value;}
  static void Run(Action work){try{work();}catch(Exception e){notice=e.Message;FeatureToasts.Show(notice);}}
  static void Modal(string value){dialog=value;dialogFrame=Time.frameCount;scroll=Vector2.zero;SyncCursor();}
- static void CloseDialog(){bool clear=EditorSelectionRules.ClearAfterEditing(dialog,selectedActors.Count+selectedItems.Count,keepSingleSelection?.Value==true);ReleasePropertyEditors();dialog="";if(clear)ClearSelection();altCursor=!moving&&altCursor&&AltDown;SyncCursor();}
+ static void CloseDialog(){bool clear=EditorSelectionRules.ClearAfterEditing(dialog,selectedActors.Count+selectedItems.Count+selectedCorpses.Count,keepSingleSelection?.Value==true);ReleasePropertyEditors();dialog="";if(clear)ClearSelection();altCursor=!moving&&altCursor&&AltDown;SyncCursor();}
  internal static void KeepCursor(){if(cursorOwned){Cursor.lockState=CursorLockMode.None;Cursor.visible=true;}}
  internal static void Suspend(){if(moving)Run(()=>FinishMove(true));altCursor=false;dragging=false;CloseDialog();}
  internal static void Reset(){Suspend();gate.Reset();ClearSelection();LootReference.ClearCache();clipboard=Array.Empty<ClipboardEntry>();world=IntPtr.Zero;frame=shortcutFrame=-1;}

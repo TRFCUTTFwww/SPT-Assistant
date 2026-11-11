@@ -54,6 +54,8 @@ internal static partial class AiActorControl {
   if(aiRelation is {} bots)foreach(var other in LiveBots(current))if(other.Pointer!=actor.Pointer)Set(other,bots);
   nextTick=0;
  }
+  internal static string EditorSide(Player actor)=>world==Singleton<GameWorld>.Instance?.Pointer&&identities.GetValueOrDefault(actor.Pointer)==actor.ProfileId?(sideA.Any(p=>p.Pointer==actor.Pointer&&p.ProfileId==actor.ProfileId)?"A 队":sideB.Any(p=>p.Pointer==actor.Pointer&&p.ProfileId==actor.ProfileId)?"B 队":"未标记"):"未标记";
+ internal static void MarkEditorSide(GameWorld current,Player actor,int side){if(side is <0 or >2)throw new ArgumentException("队伍标记无效。");var state=EditorState(actor);ApplyEditorState(current,actor,state.Invincible,state.Damage);sideA.RemoveAll(p=>p.Pointer==actor.Pointer||p.ProfileId==actor.ProfileId);sideB.RemoveAll(p=>p.Pointer==actor.Pointer||p.ProfileId==actor.ProfileId);if(side==1)sideA.Add(actor);else if(side==2)sideB.Add(actor);}
  internal static bool ForcedCombatActive(Player actor)=>forcedActive.Contains(actor.Pointer);
  internal static void RestoreSceneRelations(IEnumerable<(Player First,Player Second,bool Hostile)> pairs){foreach(var pair in pairs)relations.ActorPair(pair.First.ProfileId,pair.Second.ProfileId,pair.Hostile);nextTick=0;}
  static bool? GroupRelation(BotsGroup group,IPlayer target){if(evaluating?.BotsGroup?.Pointer==group.Pointer)return Relation(evaluating,target);var other=NativeAiGroups.Group(target);return other!=null&&relations.Teams.TryGetValue((group.Id,other.Id),out bool value)?value:NativeAiGroups.Same(group,target)?false:null;}

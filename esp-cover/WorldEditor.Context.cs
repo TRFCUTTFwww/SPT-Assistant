@@ -11,12 +11,12 @@ internal static partial class WorldEditor {
  static Vector2 MousePosition=>new(Input.mousePosition.x,Screen.height-Input.mousePosition.y);
  static void OpenContext(){
   PruneSelection();contextAnchor=altCursor?MousePosition+new Vector2(14,10):new(Screen.width/2f+14,Screen.height/2f+10);
-  if(selectedActors.Count>0&&selectedItems.Count>0){
-   categoryMenu=true;contextTitle="选择对象类别";
-   SetContext(new[]{new ContextAction("AI ×"+selectedActors.Count,true,()=>OpenEditContext(SelectionKind.Ai)),new ContextAction(I18n.Text("物品")+" ×"+selectedItems.Count,true,()=>OpenEditContext(SelectionKind.Items))});return;
-  }
-  OpenEditContext(selectedActors.Count>0?SelectionKind.Ai:SelectionKind.Items);
+  if(SelectionKinds>1){categoryMenu=true;contextTitle="选择对象类别";SetContext(CategoryActions(OpenEditContext));return;}
+  OpenEditContext(FirstSelectionKind);
  }
+ static int SelectionKinds=>(selectedActors.Count>0?1:0)+(selectedItems.Count>0?1:0)+(selectedCorpses.Count>0?1:0);
+ static SelectionKind FirstSelectionKind=>selectedActors.Count>0?SelectionKind.Ai:selectedItems.Count>0?SelectionKind.Items:selectedCorpses.Count>0?SelectionKind.Corpses:SelectionKind.Items;
+ static ContextAction[] CategoryActions(Action<SelectionKind> apply){var result=new System.Collections.Generic.List<ContextAction>();if(selectedActors.Count>0)result.Add(new("AI ×"+selectedActors.Count,true,()=>apply(SelectionKind.Ai)));if(selectedItems.Count>0)result.Add(new(I18n.Text("物品")+" ×"+selectedItems.Count,true,()=>apply(SelectionKind.Items)));if(selectedCorpses.Count>0)result.Add(new(I18n.Text("尸体")+" ×"+selectedCorpses.Count,true,()=>apply(SelectionKind.Corpses)));return result.ToArray();}
  static void SetContext(ContextAction[] actions){contextActions=actions;contextChoice=0;contextFrame=Time.frameCount;contextPointer=MousePosition;Modal("context");}
  static void OpenEditContext(SelectionKind kind){
   selectionKind=kind;TargetAt(0);categoryMenu=false;contextTitle="场景编辑";bool selected=SelectionCount>0;
@@ -26,12 +26,12 @@ internal static partial class WorldEditor {
   };
   if(actor!=null){actions.Add(new("重命名",true,BeginRename,ShortcutLabel(EditorShortcut.Rename)));actions.Add(new("杀死",true,Kill,ShortcutLabel(EditorShortcut.Kill)));}
   if(actor!=null&&SelectedActors().Any(AiFreePlacement.Pinned))actions.Add(new("解除空中固定",true,ReleaseAir,ShortcutLabel(EditorShortcut.ReleaseAir)));
-  actions.Add(new("删除",selected,Delete,ShortcutLabel(EditorShortcut.Delete)));actions.Add(new("属性",selected,OpenProperties,ShortcutLabel(EditorShortcut.Properties)));
-  if(selectedActors.Count>0&&selectedItems.Count>0)actions.Add(new("返回类别选择",true,OpenContext));SetContext(actions.ToArray());
+  actions.Add(new("删除",selected,Delete,ShortcutLabel(EditorShortcut.Delete)));if(kind==SelectionKind.Corpses)actions.Add(new("复活",selected,ReviveCorpses));else actions.Add(new("属性",selected,OpenProperties,ShortcutLabel(EditorShortcut.Properties)));
+  if(SelectionKinds>1)actions.Add(new("返回类别选择",true,OpenContext));SetContext(actions.ToArray());
  }
  static void ContextInput(){
   if(Time.frameCount<=contextFrame)return;
-  if(Input.GetMouseButtonDown(1)){if(!categoryMenu&&selectedActors.Count>0&&selectedItems.Count>0)OpenContext();else CloseDialog();return;}
+  if(Input.GetMouseButtonDown(1)){if(!categoryMenu&&SelectionKinds>1)OpenContext();else CloseDialog();return;}
   var available=Array.ConvertAll(contextActions,a=>a.Enabled);float wheel=Input.mouseScrollDelta.y;
   if(wheel!=0){contextChoice=EditorMenuRules.Next(available,contextChoice,wheel>0?-1:1);contextPointer=MousePosition;}
   else if(Input.GetKeyDown(KeyCode.DownArrow))contextChoice=EditorMenuRules.Next(available,contextChoice,1);
@@ -41,7 +41,7 @@ internal static partial class WorldEditor {
  }
  static void DrawContext(){
   var rect=ContextBounds;InterfaceMenu.Surface(rect,InterfaceMenu.Background,3);InterfaceMenu.Surface(new Rect(rect.x,rect.y,rect.width,25),Color.Lerp(InterfaceMenu.Background,InterfaceMenu.Text,.07f),3);
-  InterfaceMenu.Label(new Rect(rect.x+10,rect.y,rect.width-20,25),categoryMenu?I18n.Text(contextTitle):I18n.Text(contextTitle)+(SelectionCount>0?" · "+(selectionKind==SelectionKind.Ai?"AI":I18n.Text("物品"))+" ×"+SelectionCount:""),InterfaceMenu.Accent,12);
+  InterfaceMenu.Label(new Rect(rect.x+10,rect.y,rect.width-20,25),categoryMenu?I18n.Text(contextTitle):I18n.Text(contextTitle)+(SelectionCount>0?" · "+(selectionKind==SelectionKind.Ai?"AI":I18n.Text(selectionKind==SelectionKind.Items?"物品":"尸体"))+" ×"+SelectionCount:""),InterfaceMenu.Accent,12);
   float keyWidth=ContextKeyWidth;
   for(int i=0;i<contextActions.Length;i++){var action=contextActions[i];var row=new Rect(rect.x+4,rect.y+28+i*28,rect.width-8,26);if(i==contextChoice)InterfaceMenu.Surface(row,Color.Lerp(InterfaceMenu.Background,InterfaceMenu.Accent,.27f),2);var color=action.Enabled?InterfaceMenu.Text:Color.Lerp(InterfaceMenu.Background,InterfaceMenu.Text,.3f);InterfaceMenu.Label(new Rect(row.x+10,row.y,Math.Max(1,row.width-(action.Shortcut.Length>0?keyWidth+38:30)),row.height),action.Name,color,13);if(action.Shortcut.Length>0)InterfaceMenu.Label(new Rect(row.xMax-keyWidth-22,row.y,keyWidth,row.height),action.Shortcut,color,11);if(i==contextChoice)InterfaceMenu.Label(new Rect(row.xMax-20,row.y,18,row.height),"›",InterfaceMenu.Accent,15);}
   InterfaceMenu.Label(new Rect(rect.x+10,rect.yMax-25,rect.width-20,22),"滚轮选择 · 左键进入",Color.Lerp(InterfaceMenu.Background,InterfaceMenu.Text,.65f),11);

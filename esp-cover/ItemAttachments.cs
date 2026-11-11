@@ -25,7 +25,7 @@ internal static class ItemAttachments {
  static readonly MenuRowLayout rows=new();
  static string rowKey="";
  internal static void Reset(string template){root=NewNode(template,0);path.Clear();path.Add(root);parameterEditor=null;activeSlot=search="";page="附件槽位";scroll=Vector2.zero;}
- static ItemAttachmentNode NewNode(string template,int depth){var node=new ItemAttachmentNode{Template=template};if(depth<8)foreach(var slot in ItemSpawner.SlotsFor(template))if(slot.DefaultTemplate is string child&&child!=template)node.Children[slot.Id]=NewNode(child,depth+1);return node;}
+ internal static ItemAttachmentNode NewNode(string template,int depth){var node=new ItemAttachmentNode{Template=template};if(depth<8)foreach(var slot in ItemSpawner.SlotsFor(template))if(slot.DefaultTemplate is string child&&child!=template)node.Children[slot.Id]=NewNode(child,depth+1);return node;}
  internal static ItemAttachmentNode Capture(){Commit();return JsonSerializer.Deserialize<ItemAttachmentNode>(JsonSerializer.Serialize(root))!;}
  internal static void Restore(ItemAttachmentNode value){root=JsonSerializer.Deserialize<ItemAttachmentNode>(JsonSerializer.Serialize(value))!;path.Clear();path.Add(root);parameterEditor=null;activeSlot=search="";page="附件槽位";scroll=Vector2.zero;}
  static void Commit(){if(parameterEditor!=null)path[^1].Parameters=parameterEditor.Read();}

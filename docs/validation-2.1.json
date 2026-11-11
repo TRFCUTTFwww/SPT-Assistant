@@ -15,7 +15,7 @@
     "raidControls": "passed"
   },
   "offlineChecks": {
-    "clientProbe": "130 PASS groups",
+    "clientProbe": "131 PASS groups",
     "chatAndCommands": "passed, including TLS integration and command syntax",
     "mailAndAdministration": "24 PASS groups; two nullable warnings in test source"
   },
@@ -25,7 +25,8 @@
   "broadTestingCompleted": false,
   "requiresInGameConfirmation": [
     "Version-only sidebar subtitle and overall UI layout",
-    "Configured hotkeys, text input isolation and world editor actions",
+    "Configured hotkeys, text input isolation, hidden instruction HUD and through-wall world editor selection",
+    "Corpse native creation/pose, movement cancellation, revival and inventory isolation; AI weapon addition and A/B marking",
     "Instant container search in actual containers/backpacks/rigs; native raid behavior and multi-client Fika synchronization"
   ]
 }
