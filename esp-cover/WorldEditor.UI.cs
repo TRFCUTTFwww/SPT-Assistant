@@ -40,6 +40,7 @@ internal static partial class WorldEditor {
   InterfaceMenu.Surface(new Rect(x,y-6,1,13),Color.white,0);
  }
  static void DrawCreate(Rect rect){
+  if(!createAi&&createItemSample!=null){DrawCreateItem(rect);return;}
   float half=(rect.width-10)/2;
   if(InterfaceMenu.Button(new Rect(rect.x,rect.y,half,32),"AI",createAi)){createAi=true;query="";scroll=Vector2.zero;}
   if(InterfaceMenu.Button(new Rect(rect.x+half+10,rect.y,half,32),"物品",!createAi)){createAi=false;query="";scroll=Vector2.zero;}
@@ -49,9 +50,9 @@ internal static partial class WorldEditor {
    var options=AiSpawnCatalog.Options.Where(o=>o.Enabled&&(query.Length==0||(o.Name+o.Role+o.Group).Contains(query,StringComparison.OrdinalIgnoreCase))).ToArray();var view=new Rect(rect.x,top,rect.width,Math.Max(40,rect.yMax-top-64));scroll=GUI.BeginScrollView(view,scroll,new Rect(0,0,rect.width-22,options.Length*40));for(int i=0;i<options.Length;i++){var option=options[i];if(InterfaceMenu.Button(new Rect(0,i*40,rect.width-28,32),option.Group+" · "+option.Name))Run(()=>{AiSpawnService.Enqueue(Current(),point,option,difficulty,1,new AiBirthPreset(0,100,false,false,false,0,0,Array.Empty<string>(),EBodyPart.LeftLeg,60,1),"场景编辑");CompleteOperation();});}GUI.EndScrollView();
   }else{
    if(items.Length==0||lastQuery!=query){items=ItemSpawner.FindTemplates(query).Take(300).ToArray();lastQuery=query;}
-   var view=new Rect(rect.x,top,rect.width,Math.Max(40,rect.yMax-top-64));scroll=GUI.BeginScrollView(view,scroll,new Rect(0,0,rect.width-22,items.Length*40));for(int i=0;i<items.Length;i++){var option=items[i];if(InterfaceMenu.Button(new Rect(0,i*40,rect.width-28,32),option.Name))Run(()=>{var factory=Singleton<ItemFactory>.Instance;PlaceItem(factory.CreateItem(factory.NextId.ToString(),option.Id,null));CompleteOperation();});}GUI.EndScrollView();
+   var view=new Rect(rect.x,top,rect.width,Math.Max(40,rect.yMax-top-64));scroll=GUI.BeginScrollView(view,scroll,new Rect(0,0,rect.width-22,items.Length*40));for(int i=0;i<items.Length;i++){var option=items[i];if(InterfaceMenu.Button(new Rect(0,i*40,rect.width-28,32),option.Name))Run(()=>BeginCreateItem(option.Id));}GUI.EndScrollView();
   }
-  InterfaceMenu.Paragraph(new Rect(rect.x,rect.yMax-60,rect.width,60),createAi?AiSpawnService.Status:"显示前 300 项，请输入名称或模板 ID 缩小范围。",InterfaceMenu.Accent,12);
+  InterfaceMenu.Paragraph(new Rect(rect.x,rect.yMax-60,rect.width,60),createAi?AiSpawnService.Status:WorldItemPlacement.Status.Length>0?WorldItemPlacement.Status:"显示前 300 项，请输入名称或模板 ID 缩小范围。",InterfaceMenu.Accent,12);
  }
  static void DrawRename(float x,float y,float width){rename=InterfaceMenu.Field(new Rect(x,y,width,32),rename);if(InterfaceMenu.Button(new Rect(x,y+44,width,32),"应用"))Run(()=>{string name=rename.Trim();if(name.Length is <1 or >64)throw new ArgumentException("名称长度须为 1～64 个字符。");Actor().Profile.Info.Nickname=name;if(SelectionCount>1){notice="已应用当前对象。";FeatureToasts.Show(notice);}else CloseDialog();});}
  static void OpenProperties(){ReadProperties();Modal("properties");}

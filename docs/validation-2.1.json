@@ -15,7 +15,7 @@
                    "raidControls":  "passed"
                },
     "offlineChecks":  {
-                          "clientProbe":  "133 PASS groups; includes merged menu migration, desktop menu pointer row boundaries, completed-action selection cleanup, configurable point/marquee occlusion, both mixed-state one/two-button preferences, uniform/empty selection boundaries, visibility/order boundaries and compiled routing checks for temporary movement protection, A/B scope, native search entry point and matrix interop removal",
+                          "clientProbe":  "133 PASS groups; includes merged menu migration, native world-item resource loading and registration checks, editable creation parameter routing and return navigation, desktop menu pointer row boundaries, completed-action selection cleanup, configurable point/marquee occlusion, both mixed-state one/two-button preferences, uniform/empty selection boundaries, visibility/order boundaries and compiled routing checks for temporary movement protection, A/B scope, native search entry point and matrix interop removal",
                           "chatAndCommands":  "passed, including TLS integration and command syntax",
                           "mailAndAdministration":  "24 PASS groups; two nullable warnings in test source"
                       },

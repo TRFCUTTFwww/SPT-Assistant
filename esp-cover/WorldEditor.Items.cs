@@ -31,5 +31,5 @@ internal static partial class WorldEditor {
   var tree=factory.FlatItemsToTree(flat,false,null);if(tree.DeserializationErrors?.Count>0)throw new ArgumentException("物品副本无法完整读取。");return tree.Items[root];
  }
  static void PlaceItem(Item item)=>PlaceItem(item,point);
- static void PlaceItem(Item item,Vector3 position){var current=Current();current.ThrowItem(item,current.MainPlayer.Cast<IPlayer>(),position+Vector3.up*.15f,Quaternion.identity,Vector3.zero,Vector3.zero,true,true,0);}
+ static void PlaceItem(Item item,Vector3 position)=>WorldItemPlacement.Enqueue(Current(),item,position);
 }

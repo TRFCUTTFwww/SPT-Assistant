@@ -28,7 +28,7 @@ internal static partial class WorldEditor {
   if(toggleEditor==null||!RaidClock.Active||InterfaceMenu.Open||RaidChat.InputBlocked||FloatingStatus.Capturing||!Application.isFocused||DirectorStage.FreeActive||dialog is not ("" or "context")||Cursor.visible&&!cursorOwned)return;
   if(ShortcutBindings.Take(toggleEditor)){enabled!.Value=!enabled.Value;shortcutFrame=Time.frameCount;}
  }
- static void BeginCreate(){query=lastQuery="";items=System.Array.Empty<(string,string)>();Modal("create");}
+ static void BeginCreate(){query=lastQuery="";items=System.Array.Empty<(string,string)>();createItemSample=null;createItemEditor=null;Modal("create");}
  static void BeginRename(){rename=Actor().Profile.Nickname;Modal("rename");}
  static bool ShortcutInput(GameWorld current){
   bool external=InterfaceMenu.Open||RaidChat.InputBlocked||FloatingStatus.Capturing||!Application.isFocused||DirectorStage.FreeActive;

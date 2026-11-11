@@ -2,6 +2,8 @@
 
 ## 简体中文
 
+修复创建物品时因模型资源未加载而无物品生成的问题（日志中黑卡、弹药及瞄具资源未加载）。创建及物品粘贴改为异步加载完整物品树资源后再生成，并确认已注册到战局。创建物品新增参数页，可修改堆叠数量和支持的物品参数，提供“返回列表”；失败显示原因并保留窗口，成功后清空选中。
+
 修正编辑操作后的选中残留，统一清理单选、多选和混合选择；移动放下或取消后、属性/重命名窗口关闭后清空。右键菜单点击外部取消菜单和选中，鼠标移出不自动关闭，鼠标点击只执行实际指向的可用项目。Alt 空白单击清空选中。新增“穿墙选中”开关（默认开启），同时控制 AI、物品和尸体的点选及框选遮挡检查。
 
 恢复编辑模式的中心小十字准星，继续隐藏常驻操作文字。右键菜单的暂停/恢复、无敌开/关、A/B 敌对/停战、对玩家敌对/停战在状态一致时只显示反向操作。“自定义右键菜单”新增“混合状态显示两个按钮”（默认开启）：开启时，状态不一致显示两个明确操作；关闭时显示一个按钮，先统一暂停、开启无敌或对玩家停战，A/B 则统一敌对，再次点击反向切换。旧配置自动合并，保留最先出现的位置；A/B 标记与恢复默认关系独立保留。
@@ -34,6 +36,8 @@ Fika 成员添加 `-ClientOnly`，连接房主，不启动本地服务端。本�
 仍为实验版，未经过广泛测试，不保证向后兼容；安装前备份存档和配置。编译、离线检查和安装包校验不代表游戏内验收。实际按键、界面、战局效果和 Fika 多客户端同步由用户检查。具体执行的检查见[验证记录](validation-2.1.json)。
 
 ## English
+
+Fix world item creation failing when model bundles were not loaded. Creation and item pasting now load resources for the complete item tree asynchronously before native placement and verify loot registration. A new parameter page supports stack count and available item properties, with a Back to list action. Failures retain the window and show a reason; successful creation clears selection.
 
 Completed editor operations now clear single, batch and mixed selections, including movement placement/cancellation and closing properties/rename. Clicking outside a context menu cancels the menu and selection; moving outside alone keeps it open. Mouse activation uses only the pointed enabled row. Alt-clicking empty space clears selection. A new **Select through walls** setting, on by default, controls occlusion for both point and marquee selection of AI, items and corpses.
 
