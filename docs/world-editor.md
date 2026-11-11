@@ -2,6 +2,8 @@
 
 ## 简体中文
 
+编辑操作现支持完整的可配置热键与当前绑定提示，默认按键及修改方法见 [热键补全说明](hotkeys.md)。
+
 适配 SPT 5.0 BE / EFT 1.3.0.1.48558。**不稳定，尚未经过战局视觉验收或广泛测试。** 后续以最新版 SPT 为准，不保证向后兼容。
 
 按右 Shift，打开 **开发工具 → 编辑模式**，启用默认关闭的开关，再关闭主面板。屏幕中央出现编辑准星。编辑时暂停自动瞄准、玩具枪自动开火和镭射眼，并拦截本地射击、瞄准及武器滚轮命令；可以移动和转动镜头。按住 Alt 或打开编辑窗口时拦截游戏镜头及移动输入，松开并释放鼠标后恢复。
@@ -31,6 +33,8 @@
 **单选编辑后保留选中**：在 **开发工具 → 编辑模式** 设置，默认关闭。结束单个 AI 或物品的属性／重命名窗口后自动解除选择；打开后沿用保留选择的行为。多选和混合选区保持选择，便于连续编辑。
 
 ## English
+
+Editor actions now have configurable combinations and live binding hints. See [hotkey coverage](hotkeys.md) for defaults, rebinding and fixed controls.
 
 Editor shortcuts: **Ctrl+C** copies the selected category, **Ctrl+V** pastes at the crosshair (or Alt cursor), and **Del** deletes the selected category. They also work in context menus; paste then uses the position recorded when the menu opened. Mixed AI/item selections open a category chooser before copying/deleting. With no selection, Delete never targets a crosshair object automatically. Scene shortcuts are suppressed while moving, marquee dragging, typing in properties/rename/create/chat, or another interface owns input.
 

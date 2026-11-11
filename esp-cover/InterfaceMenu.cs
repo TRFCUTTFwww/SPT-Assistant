@@ -254,9 +254,14 @@ internal static partial class InterfaceMenu {
   rect.y+=34;rect.height=30;
   var value=entry.BoxedValue;
   if(value is bool flag){if(Button(new Rect(rect.x,rect.y,108,28),flag?"●  已开启":"○  已关闭",flag))entry.BoxedValue=!flag;}
+  else if(value is BepInEx.Unity.IL2CPP.Configuration.KeyboardShortcut shortcut){
+   if(Button(rect,ShortcutBindings.Label(shortcut)+"  · 点击后按键",capture==entry))capture=entry;
+   if(capture==entry&&Event.current.type==EventType.KeyDown){var key=Event.current.keyCode;if(key==KeyCode.Escape)capture=null;else if(key!=KeyCode.None&&!ShortcutBindings.IsModifier(key)){entry.BoxedValue=ShortcutBindings.Capture(key);capture=null;}Event.current.Use();}
+   if(capture==entry)for(int button=1;button<=6;button++)if(Input.GetMouseButtonDown(button)){entry.BoxedValue=ShortcutBindings.Capture((KeyCode)((int)KeyCode.Mouse0+button));capture=null;if(Event.current.type is not (EventType.Repaint or EventType.Layout))Event.current.Use();break;}
+  }
   else if(value is KeyCode key){
-   if(Button(rect,key.ToString()+"  · 点击后按键",capture==entry)){capture=entry;}
-   if(capture==entry&&Event.current.type==EventType.KeyDown){if(Event.current.keyCode!=KeyCode.Escape)entry.BoxedValue=Event.current.keyCode;capture=null;Event.current.Use();}
+   if(Button(rect,ShortcutBindings.Label(entry)+"  · 点击后按键",capture==entry)){capture=entry;}
+   if(capture==entry&&Event.current.type==EventType.KeyDown){var pressed=Event.current.keyCode;if(pressed==KeyCode.Escape)capture=null;else if(pressed!=KeyCode.None&&(!ShortcutBindings.LegacyControl(entry)||!ShortcutBindings.IsModifier(pressed))){entry.BoxedValue=pressed;capture=null;}Event.current.Use();}
    if(capture==entry)for(int button=1;button<=6;button++)if(Input.GetMouseButtonDown(button)){entry.BoxedValue=(KeyCode)((int)KeyCode.Mouse0+button);capture=null;if(Event.current.type is not (EventType.Repaint or EventType.Layout))Event.current.Use();break;}
   }
   else if(value.GetType().IsEnum){var values=value is AimMode?(Array)AimModes.All:Enum.GetValues(value.GetType());int current=Array.IndexOf(values.Cast<object>().ToArray(),value);if(Button(rect,EnumName(value)+"   ›"))entry.BoxedValue=values.GetValue((current+1)%values.Length)!;}
@@ -274,6 +279,7 @@ internal static partial class InterfaceMenu {
   else Label(rect,value.ToString()??"");
  }
  static ConfigEntryBase? capture;
+ internal static void SetKeyBinding(ConfigEntryBase entry,object value){if(capture==entry)capture=null;entry.BoxedValue=value;}
  static string EnumName(object value)=>value switch{KillEffectStyle effect=>effect switch{KillEffectStyle.Pulse=>"脉冲环",KillEffectStyle.Sparks=>"碎光",_=>"脉冲环与碎光"},BossNameLanguage language=>language==BossNameLanguage.English?"英文":"俄文",AimMode mode=>CnConfig.AimName(mode),ExfilPanelMode mode=>mode==ExfilPanelMode.Off?"关闭":mode==ExfilPanelMode.Hold?"按住显示":"常开",ExfilMarkerMode mode=>mode==ExfilMarkerMode.Off?"关闭":mode==ExfilMarkerMode.Nearest?"最近":"全部",AimTargetPart part=>new[]{"头部","胸部","腹部","左臂","右臂","左腿","右腿"}[(int)part],_=>value.ToString()??""};
  static void Appearance(Rect rect){
   Label(new Rect(rect.x,rect.y,rect.width,30),"选择主题",Text,18);

@@ -26,9 +26,13 @@ internal static class WorldEditorChecks {
  }
  internal static void Run(){
   void Check(bool value,string reason){if(!value)throw new Exception(reason);}
-  Check(EditorShortcutRules.Read(true,false,true,false,false)==EditorShortcut.Copy&&EditorShortcutRules.Read(true,false,false,true,false)==EditorShortcut.Paste&&EditorShortcutRules.Read(false,false,false,false,true)==EditorShortcut.Delete,"editor supports Ctrl+C, Ctrl+V and unmodified Delete");
-  Check(EditorShortcutRules.Read(false,false,true,false,false)==EditorShortcut.None&&EditorShortcutRules.Read(false,false,false,true,false)==EditorShortcut.None&&EditorShortcutRules.Read(true,false,false,false,true)==EditorShortcut.None,"bare C/V and modified Delete cannot trigger scene edits");
-  Check(EditorShortcutRules.Read(true,true,true,true,true)==EditorShortcut.None&&EditorShortcutRules.Read(false,true,false,false,true)==EditorShortcut.None,"Shift-modified combinations remain available to other tools");
+  foreach(HotkeyModifiers required in Enumerable.Range(0,8).Select(i=>(HotkeyModifiers)i))foreach(HotkeyModifiers held in Enumerable.Range(0,8).Select(i=>(HotkeyModifiers)i)){
+   Check(HotkeyRules.Matches(required,held)==(required==held),"hotkey chords require exact modifiers outside editor selection");
+   Check(HotkeyRules.Matches(required,held,true)==(required==held||(held&~HotkeyModifiers.Alt)==required),"editor selection permits extra Alt while retaining exact Ctrl/Shift requirements");
+  }
+  Check(!HotkeyRules.Matches(HotkeyModifiers.Control,HotkeyModifiers.Control|HotkeyModifiers.Shift,true)&&HotkeyRules.Matches(HotkeyModifiers.Control,HotkeyModifiers.Control|HotkeyModifiers.Alt,true),"Alt selection keeps Ctrl+C usable without accepting Ctrl+Shift+C");
+  Console.WriteLine("PASS configurable hotkey chord modifier boundaries and editor Alt-selection compatibility");
+  Check(HotkeyRules.LegacyControl(3,"People toggle")&&HotkeyRules.LegacyControl(8,"Cycle mode key")&&HotkeyRules.LegacyControl(29,"Heal key")&&!HotkeyRules.LegacyControl(8,"Hold key")&&!HotkeyRules.LegacyControl(14,"Panel hold key")&&!HotkeyRules.LegacyControl(64,"Chat key"),"legacy Ctrl toggles display their actual chord without changing held keys or chat bindings");
   foreach(string mode in new[]{"","context"}){
    Check(EditorShortcutRules.Allowed(mode,false,false,false,true),"shortcuts work in scene selection and context menus");
    Check(!EditorShortcutRules.Allowed(mode,true,false,false,true)&&!EditorShortcutRules.Allowed(mode,false,true,false,true),"active movement and marquee dragging suppress copy/paste/delete");

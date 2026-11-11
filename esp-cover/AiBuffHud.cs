@@ -31,11 +31,10 @@ internal static class AiBuffHud {
   float width=Math.Min(580,Screen.width-24),x=12,y=Math.Max(110,Screen.height*.25f),header=source.fontSize+14;
   float available=Math.Max(header,Screen.height-y-header-35);var heights=new float[lines.Length];
   for(int i=0;i<lines.Length;i++)heights[i]=Math.Max(source.fontSize+6,label.CalcHeight(new GUIContent(lines[i]),width-16)+4);
-  bool ctrl=Input.GetKey(KeyCode.LeftControl)||Input.GetKey(KeyCode.RightControl);
   offset=Math.Clamp(offset,0,lines.Length-1);
   int end=End(offset,heights,available);
-  if(!ctrl&&Input.GetKeyDown(KeyCode.PageDown)&&end<lines.Length)offset=end;
-  if(!ctrl&&Input.GetKeyDown(KeyCode.PageUp)){int previous=offset;while(previous>0&&Sum(heights,previous-1,offset)<=available)previous--;offset=previous==offset?Math.Max(0,offset-1):previous;}
+  if(Hotkeys.Pressed(Hotkeys.DetailNext)&&end<lines.Length)offset=end;
+  if(Hotkeys.Pressed(Hotkeys.DetailPrevious)){int previous=offset;while(previous>0&&Sum(heights,previous-1,offset)<=available)previous--;offset=previous==offset?Math.Max(0,offset-1):previous;}
   end=End(offset,heights,available);float height=header+Math.Min(available,Sum(heights,offset,end))+8;
   var old=GUI.color;try{
    var rect=new Rect(x,y,width,height);GUI.color=new Color(0,0,0,.8f);GUI.DrawTexture(rect,Texture2D.whiteTexture);

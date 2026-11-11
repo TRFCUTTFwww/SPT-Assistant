@@ -17,6 +17,7 @@ public sealed class RuntimeModule:IRuntimeModule {
   yield return ()=>{FeatureRetirement.Apply(host.Config,host.PluginDirectory,host.Log);plugin=new Plugin(host);};
   yield return ()=>PlayerVisualGuard.Initialize(plugin!);
   foreach(var step in plugin!.LoadSteps())yield return step;
+  yield return Hotkeys.Initialize;
   yield return WorldEditor.Initialize;
   yield return RaidChat.Initialize;
   yield return ()=>InterfaceMenu.Initialize(plugin);

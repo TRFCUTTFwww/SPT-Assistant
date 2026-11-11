@@ -448,9 +448,8 @@ internal class Overlay {
   int limit=Math.Max(1,(int)((Screen.height-y-35)/lineHeight)-1);
   if(detailKey!=marker.Key){detailKey=marker.Key;detailOffset=0;}
   int maxOffset=Math.Max(0,lines.Length-limit);
-  bool ctrl=Input.GetKey(KeyCode.LeftControl)||Input.GetKey(KeyCode.RightControl);
-  if(!ctrl&&Input.GetKeyDown(KeyCode.PageDown))detailOffset+=Math.Max(1,limit-1);
-  if(!ctrl&&Input.GetKeyDown(KeyCode.PageUp))detailOffset-=Math.Max(1,limit-1);
+  if(Hotkeys.Pressed(Hotkeys.DetailNext))detailOffset+=Math.Max(1,limit-1);
+  if(Hotkeys.Pressed(Hotkeys.DetailPrevious))detailOffset-=Math.Max(1,limit-1);
   detailOffset=Math.Clamp(detailOffset,0,maxOffset);
   int count=Math.Min(lines.Length-detailOffset,limit);
   var rect=new Rect(x,y,width,(count+1)*lineHeight+12);

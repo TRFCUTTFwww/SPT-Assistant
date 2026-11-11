@@ -17,7 +17,7 @@ internal static partial class ExfilDisplay {
  static ConfigEntry<bool> Enabled=null!,ShowSpecial=null!,ShowLeverMarkers=null!,Force=null!,IgnoreRequirements=null!;
  static ConfigEntry<ExfilPanelMode> PanelMode=null!;
  static ConfigEntry<ExfilMarkerMode> MarkerMode=null!;
- static ConfigEntry<KeyCode> ForceKey=null!,IgnoreKey=null!,PanelKey=null!;
+ static ConfigEntry<KeyCode> ForceKey=null!,IgnoreKey=null!,PanelKey=null!;static ConfigEntry<BepInEx.Unity.IL2CPP.Configuration.KeyboardShortcut> nextPageKey=null!,previousPageKey=null!;
  static ConfigEntry<int> Lines=null!,PanelWidth=null!;
  static readonly List<Row> rows=new();
  static readonly Dictionary<IntPtr,Original> originals=new();
@@ -53,7 +53,7 @@ internal static partial class ExfilDisplay {
   if(InterfaceMenu.Button(new Rect(rect.x+width+8,rect.y,width,40),"标记最近可用撤离点",Enabled.Value&&MarkerMode.Value==ExfilMarkerMode.Nearest)){Enabled.Value=true;MarkerMode.Value=ExfilMarkerMode.Nearest;}
   if(InterfaceMenu.Button(new Rect(rect.x+2*(width+8),rect.y,width,40),"关闭空间标记",MarkerMode.Value==ExfilMarkerMode.Off))MarkerMode.Value=ExfilMarkerMode.Off;
  }
- internal static void Initialize(Plugin p){
+ internal static void Initialize(Plugin p){nextPageKey=FeatureConfig.Bind("14. Exfiltration","Next page shortcut","撤离面板下一页热键",new BepInEx.Unity.IL2CPP.Configuration.KeyboardShortcut(KeyCode.PageDown,KeyCode.LeftControl),"仅在撤离面板可见时生效，支持组合键。");previousPageKey=FeatureConfig.Bind("14. Exfiltration","Previous page shortcut","撤离面板上一页热键",new BepInEx.Unity.IL2CPP.Configuration.KeyboardShortcut(KeyCode.PageUp,KeyCode.LeftControl),"仅在撤离面板可见时生效，支持组合键。");
   Enabled=CnConfig.Bind(p.Config,"14. Exfiltration","Enabled",true);
   PanelMode=CnConfig.Bind(p.Config,"14. Exfiltration","Panel mode",ExfilPanelMode.Hold);
   PanelKey=CnConfig.Bind(p.Config,"14. Exfiltration","Panel hold key",KeyCode.Plus);
@@ -307,8 +307,8 @@ internal static partial class ExfilDisplay {
    foreach(var text in captions)captionHeights.Add(Math.Max(line,panelStyle.CalcHeight(new GUIContent(I18n.Text(text.Text)),width-16)+4));
    pages=PanelPages.Build(captionHeights,Lines.Value,Math.Max(line,Screen.height-122-headerHeight-line-12));
   }
-  if(Hotkeys.Pressed(KeyCode.PageDown))pageIndex++;
-  if(Hotkeys.Pressed(KeyCode.PageUp))pageIndex--;
+  if(Hotkeys.Pressed(nextPageKey))pageIndex++;
+  if(Hotkeys.Pressed(previousPageKey))pageIndex--;
   pageIndex=Math.Clamp(pageIndex,0,pages.Count-1);var page=pages[pageIndex];
   float panelHeight=headerHeight+line+page.Height+12,x=Screen.width-width-12,y=Math.Max(110,Screen.height-panelHeight-12);
   using var windowOpacity=InterfaceMenu.BeginWindow("exfil");var panel=InterfaceMenu.Place("exfil",new Rect(x,y,width,panelHeight));x=panel.x;y=panel.y;
