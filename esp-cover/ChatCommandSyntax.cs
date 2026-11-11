@@ -4,9 +4,15 @@ using System.Linq;
 using System.Text;
 namespace LocalSpt5Esp;
 internal static class ChatCommandSyntax {
+ internal static bool IsCommand(string text)=>text.StartsWith('/')&&!text.StartsWith("//",StringComparison.Ordinal);
  internal static string[] Tokens(string text,bool incomplete=false){var result=new List<string>();var token=new StringBuilder();bool quoted=false,escaped=false,started=false;int brackets=0;foreach(char c in text){if(escaped){if(c is not ('"' or '\\'))throw new ArgumentException("只支持 \\\" 和 \\\\ 转义。");token.Append(c);escaped=false;started=true;continue;}if(c=='\\'&&quoted){escaped=true;continue;}if(c=='"'){quoted=!quoted;started=true;continue;}if(!quoted){if(c=='[')brackets++;if(c==']')brackets--;if(brackets<0)throw new ArgumentException("选择器方括号不匹配。");if(char.IsWhiteSpace(c)&&brackets==0){if(started){result.Add(token.ToString());token.Clear();started=false;}continue;}}token.Append(c);started=true;}if(!incomplete&&(quoted||escaped||brackets!=0))throw new ArgumentException("引号或选择器没有闭合。");if(started)result.Add(token.ToString());return result.ToArray();}
  internal static string Quote(string value)=>value.Any(c=>char.IsWhiteSpace(c)||c=='"'||c=='\\')?"\""+value.Replace("\\","\\\\").Replace("\"","\\\"")+"\"":value;
  internal static int CompletionStart(string prefix){bool quote=false,escape=false;int bracket=0,start=0;for(int i=0;i<prefix.Length;i++){char c=prefix[i];if(escape){escape=false;continue;}if(c=='\\'&&quote){escape=true;continue;}if(c=='"'){quote=!quote;continue;}if(!quote){if(c=='[')bracket++;if(c==']')bracket--;if(char.IsWhiteSpace(c)&&bracket==0)start=i+1;}}return start;}
+ internal static int CompletionEnd(string text,int cursor){
+  cursor=Math.Clamp(cursor,0,text.Length);int start=CompletionStart(text[..cursor]);bool quoted=false,escaped=false;int brackets=0;
+  for(int i=start;i<text.Length;i++){char c=text[i];if(escaped){escaped=false;continue;}if(c=='\\'&&quoted){escaped=true;continue;}if(c=='"'){quoted=!quoted;continue;}if(!quoted){if(c=='[')brackets++;if(c==']')brackets--;if(char.IsWhiteSpace(c)&&brackets==0)return i;}}
+  return text.Length;
+ }
  internal static double Number(string value,double min,double max){if(!double.TryParse(value,System.Globalization.NumberStyles.Float,System.Globalization.CultureInfo.InvariantCulture,out var result)||!double.IsFinite(result)||result<min||result>max)throw new ArgumentException($"数值必须在 {min}～{max} 范围内。");return result;}
  internal static double Duration(string value){if(string.IsNullOrWhiteSpace(value))throw new ArgumentException("时长不能为空。");if(value.Contains(':')){var parts=value.Split(':');if(parts.Length!=3)throw new ArgumentException("时长格式为 hh:mm:ss。");return Number(parts[0],0,1000)*3600+Number(parts[1],0,59)*60+Number(parts[2],0,59);}double multiplier=value.EndsWith('h')?3600:value.EndsWith('m')?60:1;string number=char.IsLetter(value[^1])?value[..^1]:value;if(char.IsLetter(value[^1])&&value[^1] is not ('h' or 'm' or 's'))throw new ArgumentException("时长单位为 h、m 或 s。");return Number(number,0,3600000)*multiplier;}
  // Reject surplus/incomplete arguments before any world mutation.

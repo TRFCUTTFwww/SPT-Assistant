@@ -8,11 +8,12 @@ using EFT.InventoryLogic;
 namespace LocalSpt5Esp;
 internal static partial class RaidCommands {
  internal static string[] Complete(string prefix,ChatPeer[] peers){
-  if(!prefix.StartsWith('/'))return Array.Empty<string>();
+  if(!ChatCommandSyntax.IsCommand(prefix))return Array.Empty<string>();
   string[] words;try{words=ChatCommandSyntax.Tokens(prefix[1..],true);}catch{return Array.Empty<string>();}
-  int start=ChatCommandSyntax.CompletionStart(prefix);bool trailing=prefix.EndsWith(' ')&&start==prefix.Length;
+  int start=ChatCommandSyntax.CompletionStart(prefix);bool trailing=start==prefix.Length;
   if(words.Length==0||words.Length==1&&!trailing){string head=words.FirstOrDefault()??"";return Usage.Keys.Where(k=>k.StartsWith(head,StringComparison.OrdinalIgnoreCase)).Select(k=>"/"+k).OrderBy(k=>k).ToArray();}
   string cmd=words[0].ToLowerInvariant(),token=trailing?"":words[^1];var args=words.Skip(1).ToArray();int at=trailing?args.Length:args.Length-1;
+  if(!ChatCommandHints.HasArgument(cmd,args,at))return Array.Empty<string>();
   string Arg(int n)=>n<args.Length?args[n]:"";
   var candidates=new List<string>();void Add(params string[] values)=>candidates.AddRange(values);
   void Peers()=>candidates.AddRange(peers.SelectMany(p=>new[]{p.Name,p.Profile}));
@@ -32,8 +33,8 @@ internal static partial class RaidCommands {
    case "airdrop":Add("summon");break;
    case "btr":if(at==0)Add("status","route","stop");break;
    case "edit":Add("on","off");break;
-   case "marker":if(at==0)Add("set","remove","list");else if(at==1)candidates.AddRange(markers.Keys);else Add("~","^");break;
-   case "navigate":Places();if(at==0)Add("stop");break;
+   case "marker":if(at==0)Add("set","remove","list");else if(at==1)candidates.AddRange(markers.Keys);else if(Arg(0)=="set")Add("~","^");break;
+   case "navigate":if(at==0){Places();Add("stop");}else Add("~","^");break;
    case "tp":case "teleport":Entities();Places();if(at>0)Add("facing");break;
    case "paste":Add("~","^");break;
    case "inspect":if(at==0)Entities();else Add("health","equipment","effects","position");break;

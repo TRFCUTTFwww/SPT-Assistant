@@ -12,15 +12,7 @@ using EFT.InventoryLogic;
 using UnityEngine;
 namespace LocalSpt5Esp;
 internal static partial class RaidCommands {
- internal static readonly Dictionary<string,string> Usage=new(StringComparer.OrdinalIgnoreCase){
- ["help"]="[命令]",["list"]="[entities]",["msg"]="<玩家> <消息>",["tell"]="<玩家> <消息>",["w"]="<玩家> <消息>",["reply"]="<消息>",["r"]="<消息>",["me"]="<动作>",["clearhistory"]="",["identity"]="[verify <玩家或档案 ID> <指纹>]",["chat"]="reconnect",["permission"]="list",
- ["tp"]="[来源] <目标|x y z> [facing <目标|x y z>]",["teleport"]="[来源] <目标|x y z>",["position"]="[目标]",["back"]="",["spreadplayers"]="<x> <z> <最小间距> <范围> <目标>",
- ["inspect"]="<目标> [health|equipment|effects|position]",["kill"]="<目标>",["damage"]="<目标> <数值> [伤害类型] [部位]",["heal"]="[目标] [部位]",["effect"]="give <目标> <效果> [秒] [强度] [部位] | clear <目标> [效果]",
- ["summon"]="<AI 角色|template:场景名> [x y z] [数量] [难度0-3]",["tag"]="<目标> add|remove|list [标签]",["rename"]="<AI> <名称>",["ai"]="pause|resume|follow|look|pose|relation|anchor|remove <AI> [参数]",
- ["edit"]="on|off",["copy"]="[AI|@selected]",["paste"]="[x y z]",["remove"]="<AI|@selected>",["data"]="get entity <目标> [字段] | modify entity <AI> <字段> set value <值>",
- ["give"]="<玩家或AI> <item:模板ID或唯一名称> [数量]",["clear"]="<目标> [item:模板ID] [最大数量]",["item"]="replace entity <目标> <装备槽> with <物品> [数量] | modify entity <目标> <装备槽> <参数> <值>",["loot"]="spawn <x y z> <物品> [数量] | give <目标> loadout:<场景名>",["repair"]="<目标> [装备槽]",["reload"]="<目标> [装备槽] [item:弹药模板ID]",
- ["time"]="set day|noon|night|midnight|<ticks> | add <ticks> | query daytime",["weather"]="clear|rain|thunder [持续秒数]",["gamerule"]="[规则] [值]",["raid"]="time query|set|add [时长] | extract @s",["airdrop"]="summon",["btr"]="status|route <站点ID>|stop",["marker"]="set <名称> [x y z] | remove <名称> | list",["navigate"]="<目标标签|x y z>|stop",
- ["experience"]="query <玩家> [points|levels]",["xp"]="query <玩家> [points|levels]",["attribute"]="<目标> <属性> base get|set [数值]"};
+ internal static readonly Dictionary<string,string> Usage=ChatCommandHints.Usage;
  static readonly Dictionary<string,HashSet<string>> tags=new();static readonly Dictionary<string,Vector3> markers=new(StringComparer.OrdinalIgnoreCase);static Vector3? back;static IntPtr world;static string raid=Guid.NewGuid().ToString("N");
  internal static void Reset(){tags.Clear();markers.Clear();back=null;world=IntPtr.Zero;raid=Guid.NewGuid().ToString("N");}
  static GameWorld World(){var current=Singleton<GameWorld>.Instance;if(!RaidClock.Active||current?.MainPlayer?.HealthController?.IsAlive!=true)throw new ArgumentException("需要存活的本地角色和当前单人战局。");if(world!=current.Pointer){Reset();world=current.Pointer;}if(AppDomain.CurrentDomain.GetAssemblies().Any(a=>a.GetName().Name?.StartsWith("Fika",StringComparison.OrdinalIgnoreCase)==true)||All(current).Any(p=>!p.IsYourPlayer&&!FikaTeams.IsAi(p)))throw new ArgumentException("当前命令执行端仅适配单人战局；不能直接修改远程玩家或联机世界。");return current;}

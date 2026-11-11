@@ -10,9 +10,14 @@
 2. 客户端模块 `Local.Spt5.ESP.Core.dll` 复制为 `BepInEx/plugins/LocalSpt5ESP/runtime/Local.Spt5.ESP.Core.module`。热加载宿主已安装时可使用既有 reload.request 流程；否则重启客户端。
 3. 关闭服务端，将 `LocalGearMail.dll` 放入 `SPT_Runtime/user/mods/LocalGearMail/`，重启服务端。**本地斜杠命令不依赖聊天中继**；跨客户端文字聊天需要所有人连接到安装此服务端组件的同一 SPT 服务端。
 4. 战局画面中按 **T** 打开聊天，**/** 直接输入命令；Enter 提交，Esc 关闭，↑/↓ 历史，Tab / Shift+Tab 循环候选。T 可在 **开发工具 → 聊天与命令** 修改。原生库存/菜单显示鼠标时不会抢 T 键；菜单里的“打开聊天”可在战局外打开。
-5. 中文通过 Unity 的 IME 文本输入。消息最多 2000 字符，聊天仅在内存保存 200 行；命令历史最多 100 项。关闭后最近消息逐渐淡出。`//hello` 发送以 `/` 开头的普通文字。
+5. Enter 提交后保持聊天框打开、清空输入；空行 Enter 不关闭，Esc 关闭。命令报错时保留输入以便修改。Tab 补全后光标停在补全内容末尾，不自动全选；移动光标后重新按当前参数补全。
+6. 输入 `/` 命令时，输入框上方实时显示用法、当前参数和候选，当前参数使用强调色。带引号的名称、选择器、子命令和坐标均按当前光标位置提示。无需先按 Tab。
+7. 菜单顶部 **布局** 中的 **聊天框** 可拖动位置、拖右下角调整宽高；**视觉 → 界面布局** 或 **设置与热键 → 主题与布局 → 各悬浮窗不透明度 → 聊天框** 可调整背景透明度。文字保持清晰；尺寸、位置和透明度自动保存，关闭后的消息也使用相同布局。
+8. 中文通过 Unity 的 IME 文本输入。消息最多 2000 字符，聊天仅在内存保存 200 行；命令历史最多 100 项。关闭后最近消息逐渐淡出。`//hello` 发送以 `/` 开头的普通文字。
 
 Back up profiles/config first. Build the client and GearMail projects with the matching game references. Install the client DLL as `Local.Spt5.ESP.Core.module` in the existing host's runtime directory. Install `LocalGearMail.dll` under the server's `user/mods/LocalGearMail/` directory while the server is stopped, then restart it. Local commands work without the relay. Chat requires the same upgraded SPT server. Press T or / in the raid view; use Enter, Esc, history arrows and Tab/Shift+Tab. Change the binding or open chat outside raids under **Developer tools → Chat and commands**. Unity IME handles Chinese input. `//` escapes a leading slash.
+
+Enter keeps chat open and clears the input; failed commands retain the input for editing. Esc closes it. Tab leaves a collapsed caret after the completion. Syntax, the active argument and suggestions appear above the input as you type or move the caret. In the top **Layout** editor, drag **Chat window** to move it and drag its bottom-right corner to resize. Its background opacity is under **Visuals → Interface layout** or **Settings & hotkeys → Theme & layout → Window opacity**. Text stays readable, settings persist, and faded messages share the same bounds.
 
 ## 身份核验与加密 / Identity verification and encryption
 
@@ -124,6 +129,10 @@ Experience is query-only during raids. Team chat, server announcements and remot
 Each entry binds both `profile` and the uppercase full certificate `fingerprint`. Blocked identities immediately lose relay permission. Admin entries only expose a role marker; they grant no remote game-control ability. There is no first-user admin and no reuse of the retired multiplayer secret.
 
 ## 验证 / Validation
+
+本次输入与布局更新通过客户端 Release 编译（0 错误、两条既有空引用警告）、119 项聊天检查和 127 组 Probe 检查。新增检查覆盖输入时预览、Tab 正反向循环、移动光标后重新补全、引号/选择器与后续参数保留、子命令分支和坐标参数提示。游戏内焦点、IME、绘制、缩放和透明度由用户验收。
+
+The input/layout update passes the Release client build (zero errors, two existing nullable warnings), 119 chat checks and 127 Probe groups. Added checks cover live suggestions, completion cycling, caret movement, quoted/selector token replacement, preserved following arguments, subcommands and coordinate hints. Focus, IME, rendering, resizing and opacity still require in-game acceptance.
 
 `dotnet run --project chat-tests/Tests.csproj -c Release` 检查签名、防重放、档案绑定、双向核验、游标确认、撤销、队列上限、TLS 指纹失败关闭、加密上下文绑定、重新握手、Unicode 往返和命令语法。可选的 `-- --http <本机档案ID>` 使用 curl 和 EFT 48558 原生帧格式验证本机 `https://127.0.0.1:6969` 的真实中继，不修改档案。端到端消息仍通过固定指纹的双向 TLS；测试的外层 localhost 自签名 HTTPS 使用 `--insecure`。本机实际接口和双向加密消息测试已通过。
 

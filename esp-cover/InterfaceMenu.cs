@@ -75,6 +75,7 @@ internal static partial class InterfaceMenu {
   AddSlot("incoming","受击来源",new Rect(12,Screen.height*.65f,720,288));
   AddSlot("hits","命中提示",new Rect(Screen.width-672,Screen.height*.26f,660,160));
   AddSlot("allkills","全战局击杀",new Rect(Screen.width-652,Screen.height*.49f,640,180));
+  AddSlot("chat","聊天框",RaidChat.DefaultBounds());
   try{
    var type=typeof(GamePlayerOwner);
    plugin.Patches.Patch(type.GetMethod("TranslateAxes"),prefix:new HarmonyMethod(typeof(InterfaceMenu),nameof(BlockAxes)));
@@ -111,6 +112,7 @@ internal static partial class InterfaceMenu {
   if(!slots.TryGetValue(id,out var slot))return initial;
   slot.Initial=initial;if(slot.AutoSize?.Value!=true){if(slot.Width.Value>0)initial.width=Math.Clamp(slot.Width.Value,60,Math.Max(60,Screen.width));if(slot.Height.Value>0)initial.height=Math.Clamp(slot.Height.Value,24,Math.Max(24,Screen.height));}
   if(id=="raidclock"){initial.width=Math.Max(180,initial.width);initial.height=Math.Max(70,initial.height);}
+  if(id=="chat"){initial.width=Math.Clamp(initial.width,Math.Min(360,Screen.width),Screen.width);initial.height=Math.Clamp(initial.height,Math.Min(220,Screen.height),Screen.height);}
   var position=new Vector2(slot.X.Value,slot.Y.Value);
   if(position.x>=0&&position.y>=0){initial.x=position.x*Math.Max(0,Screen.width-initial.width);initial.y=position.y*Math.Max(0,Screen.height-initial.height);}
   initial.x=Math.Clamp(initial.x,0,Math.Max(0,Screen.width-initial.width));initial.y=Math.Clamp(initial.y,0,Math.Max(0,Screen.height-initial.height));
@@ -303,7 +305,7 @@ internal static partial class InterfaceMenu {
  static void DrawLayout(){
   var e=Event.current;bool released=e.type==EventType.MouseUp;
   var toolbar=new Rect(Math.Max(12,Screen.width-392),12,380,112);
-  foreach(var pair in slots){var slot=pair.Value;var initial=pair.Key=="raidclock"?RaidClock.DefaultBounds():slot.Initial;var bounds=Place(pair.Key,initial);Panel(bounds,.7f);Label(new Rect(bounds.x+8,bounds.y,Math.Max(40,bounds.width-16),26),slot.Name+" · 拖动",Accent);
+  foreach(var pair in slots){var slot=pair.Value;var initial=pair.Key=="raidclock"?RaidClock.DefaultBounds():pair.Key=="chat"?RaidChat.DefaultBounds():slot.Initial;var bounds=Place(pair.Key,initial);Panel(bounds,.7f);Label(new Rect(bounds.x+8,bounds.y,Math.Max(40,bounds.width-16),26),slot.Name+" · 拖动",Accent);
    {
     var grip=new Rect(bounds.xMax-21,bounds.yMax-21,21,21);for(int i=0;i<3;i++)RaidLoot.Line(new Vector2(grip.x+7+i*4,grip.yMax-3),new Vector2(grip.xMax-3,grip.y+7+i*4),Accent,1.5f);
     Label(new Rect(bounds.x+8,bounds.y+25,Math.Max(30,bounds.width-34),22),$"{bounds.width:F0} × {bounds.height:F0}",Text,11);
