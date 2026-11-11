@@ -35,6 +35,11 @@ internal static class AiActorControl {
  internal static bool ForcedEnemy(BotOwner owner,IPlayer target)=>Relation(owner,target)==true;
  internal static bool ForcedFrom(object source,IPlayer target)=>source switch{BotEnemiesController enemies=>enemies._owner!=null&&ForcedEnemy(enemies._owner,target),BotMemory memory=>memory._owner!=null&&ForcedEnemy(memory._owner,target),BotsGroup group=>GroupRelation(group,target)==true,_=>false};
  internal static bool IndividuallyProtected(ActiveHealthController health)=>healths.TryGetValue(health.Pointer,out var settings)&&settings.Invincible&&settings.Actor?.ActiveHealthController?.Pointer==health.Pointer&&identities.GetValueOrDefault(settings.Actor.Pointer)==settings.Actor.ProfileId;
+ internal static (bool Invincible,float Damage) EditorState(Player actor){var current=Singleton<GameWorld>.Instance;new LiveActorReference(current,actor).Resolve();return world==current.Pointer&&actors.TryGetValue(actor.Pointer,out var value)&&identities.GetValueOrDefault(actor.Pointer)==actor.ProfileId?(value.Invincible,value.Damage):(false,1);}
+ internal static void ApplyEditorState(GameWorld current,Player actor,bool invincible,float damage){
+  if(!float.IsFinite(damage)||damage<0)throw new ArgumentException("承受玩家伤害倍率无效。");new LiveActorReference(current,actor).Resolve();if(actor.IsYourPlayer||actor.AIData?.BotOwner==null)throw new ArgumentException("请选择 AI。");
+  if(world!=IntPtr.Zero&&world!=current.Pointer)Reset();world=current.Pointer;local=current.MainPlayer;localProfile=local?.ProfileId??"";identities[actor.Pointer]=actor.ProfileId;var value=For(actor);value.Invincible=invincible;value.Damage=damage;
+ }
  internal static void ApplyBirthState(GameWorld current,Player actor,bool invincible,int playerRelation,int aiRelation){
   new LiveActorReference(current,actor).Resolve();if(world!=IntPtr.Zero&&world!=current.Pointer)Reset();world=current.Pointer;local=current.MainPlayer;localProfile=local?.ProfileId??"";identities[actor.Pointer]=actor.ProfileId;
   if(actor.ActiveHealthController==null)throw new ArgumentException("AI 生命控制器尚未就绪。");var settings=For(actor);settings.Invincible=invincible;settings.IgnorePlayer=false;var owner=actor.AIData?.BotOwner??throw new ArgumentException("AI 控制器尚未就绪。");neutralOwners.Remove(owner.Pointer);

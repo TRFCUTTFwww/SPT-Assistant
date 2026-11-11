@@ -27,7 +27,7 @@ internal static partial class WorldEditor {
  static Player Actor(){var value=actor?.Resolve()??throw new ArgumentException("请先选择 AI。");if(value.IsYourPlayer||value.AIData?.BotOwner==null||value.Profile?.Info?.Settings?.Role==WildSpawnType.shooterBTR)throw new ArgumentException("只允许编辑本机控制的普通 AI。");return value;}
  static void Run(Action work){try{work();}catch(Exception e){notice=e.Message;FeatureToasts.Show(notice);}}
  static void Modal(string value){if(!cursorOwned){oldLock=Cursor.lockState;oldVisible=Cursor.visible;cursorOwned=true;}dialog=value;gate.SetOpen(true,Time.frameCount);scroll=Vector2.zero;KeepCursor();}
- static void CloseDialog(){dialog="";gate.SetOpen(false,Time.frameCount);if(cursorOwned){Cursor.lockState=oldLock;Cursor.visible=oldVisible;cursorOwned=false;}}
+ static void CloseDialog(){ReleasePropertyEditors();dialog="";gate.SetOpen(false,Time.frameCount);if(cursorOwned){Cursor.lockState=oldLock;Cursor.visible=oldVisible;cursorOwned=false;}}
  internal static void KeepCursor(){if(cursorOwned){Cursor.lockState=CursorLockMode.None;Cursor.visible=true;}}
  internal static void Suspend(){if(moving)Run(()=>FinishMove(true));if(dialog.Length>0)CloseDialog();}
  internal static void Reset(){Run(()=>FinishMove(true));CloseDialog();gate.Reset();actor=null;loot=null;aiCopy=null;itemCopy=null;world=IntPtr.Zero;frame=-1;}
@@ -40,7 +40,7 @@ internal static partial class WorldEditor {
   if(!Application.isFocused){Suspend();return;}
   try{
    if(Input.GetKeyDown(KeyCode.Escape)){if(moving)FinishMove(true);else if(dialog.Length>0)CloseDialog();return;}
-   if(dialog.Length>0){KeepCursor();return;}
+   if(dialog.Length>0){KeepCursor();if(dialog=="context")ContextInput();return;}
    if(moving){
     if(Input.GetMouseButtonDown(1)){FinishMove(true);return;}
     if(gate.Blocked||Time.frameCount<=moveFrame)return;
@@ -58,7 +58,7 @@ internal static partial class WorldEditor {
   if(contact.Actor!=null&&contact.Actor.AIData?.BotOwner!=null&&contact.Actor.Profile?.Info?.Settings?.Role!=WildSpawnType.shooterBTR)actor=new(current,contact.Actor);
   float nearest=contact.State==CrosshairState.Empty?100:contact.Distance+.06f;
   for(int i=0;i<current.LootItems.Count;i++){var value=current.LootItems.GetByIndex(i);if(value==null||value.Item==null||value.TryCast<Corpse>()!=null)continue;var collider=value.BoundCollider;if(collider==null||!collider.enabled||!collider.Raycast(ray,out var hit,nearest))continue;nearest=hit.distance;loot=new(current,value);actor=null;point=hit.point;distance=hit.distance;}
-  current.MainPlayer.HandsController?.TryCast<Player.FirearmController>()?.SetTriggerPressed(false);Modal("context");
+  current.MainPlayer.HandsController?.TryCast<Player.FirearmController>()?.SetTriggerPressed(false);OpenContext();
  }
  static void BeginMove(){
   if(actor!=null){var target=Actor();if(ModelPoseLock.Locked(target)||SceneTemplates.IsStaging(target))throw new ArgumentException("请先解除动作锁定或等待场景载入完成。");origin=target.Position;rotation=target.transform.rotation;wasPaused=AiTestControl.IsPaused(target);AiTestControl.SetPaused(new[]{target},true);}

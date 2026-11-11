@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — Compact editor menus / 紧凑编辑菜单
+
+- 右键菜单改为准星旁的系统菜单样式；滚轮循环选择、跳过禁用项，左键进入，支持鼠标指向、方向键与 Enter，右键/Esc 关闭。
+- 重命名改用小弹窗。AI 属性拆分基本、生命、行为、战斗、装备、Buff 六页，增加姿势/跟随/行为限制、单个 AI 无敌及承受玩家伤害倍率，嵌入装备与状态编辑器。
+- Use a compact crosshair context menu with wheel selection, disabled-action skipping and left-click activation. Shrink the rename dialog and add six AI property pages with isolated per-page applies, behavior/combat editing and embedded equipment/Buff tools.
+- Validation: EFT 48558 client build and 124 Probe groups passed. Two pre-existing nullable warnings remain. In-raid visual behavior and Fika synchronization require manual verification.
+
 ## Unreleased — World editor / 场景编辑
 
 - 新增默认关闭的“开发工具 → 编辑模式”：准星右键菜单，创建为顶层第一项，支持 AI/散落物创建、移动、复制、粘贴、删除、属性，以及 AI 重命名和原生死亡操作。
