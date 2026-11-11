@@ -18,12 +18,16 @@ internal static class WorldEditorChecks {
   var toy=Calls("ToyDeveloper","Tick");Check(toy.Any(c=>c.DeclaringType.Name=="TeleportControl"&&c.Name=="FreeMove"),"toy teleport uses exact-coordinate placement");
   var motion=Calls("MovementAssist","BeforeMove");Check(motion.Any(c=>c.DeclaringType.Name=="AiFreePlacement"&&c.Name=="FilterMotion")&&motion.Any(c=>c.DeclaringType.Name=="WorldEditor"&&c.Name=="FilterMotion"),"air anchors and active batch drags suppress native gravity/motion");
   var anchor=Calls("AiFreePlacement","Place");Check(anchor.Any(c=>c.DeclaringType.Name=="LiveActorReference"&&c.Name=="Resolve")&&anchor.Any(c=>c.DeclaringType.Name=="Player"&&c.Name=="Teleport")&&!anchor.Any(c=>c.Name=="Landing"||c.Name=="HasNavigation"),"free placement validates live identity and directly teleports without rejecting non-navigation points");
+  var chatPlacement=Type("TeleportControl").Methods.Single(m=>m.Name=="ChatMove").Body.Instructions.Single(i=>i.Operand is MethodReference method&&method.DeclaringType.Name=="AiFreePlacement"&&method.Name=="Place");Check(chatPlacement.Previous.OpCode.Code==Mono.Cecil.Cil.Code.Ldc_I4_0,"chat teleport explicitly disables automatic air anchoring");
+  Check(Calls("WorldEditor","CloseDialog").Any(c=>c.DeclaringType.Name=="EditorSelectionRules"&&c.Name=="ClearAfterEditing"),"editor close applies configured single-selection retention");
   var selection=Calls("WorldEditor","SelectBox");Check(selection.Any(c=>c.Name=="Editable")&&selection.Any(c=>c.Name=="InBox"),"marquee uses locally controlled live AI eligibility and screen/depth filtering");
   Console.WriteLine("PASS editor/ toy airborne placement routing, physics ownership and live selection safeguards");
   Console.WriteLine("PASS editor embedded Buff AI binding, selected-target validation, relationship isolation and dialog ownership cleanup");
  }
  internal static void Run(){
   void Check(bool value,string reason){if(!value)throw new Exception(reason);}
+  Check(EditorSelectionRules.ClearAfterEditing("properties",1,false)&&EditorSelectionRules.ClearAfterEditing("rename",1,false),"single-target property/rename close clears selection by default");
+  Check(!EditorSelectionRules.ClearAfterEditing("properties",1,true)&&!EditorSelectionRules.ClearAfterEditing("properties",2,false)&&!EditorSelectionRules.ClearAfterEditing("context",1,false)&&!EditorSelectionRules.ClearAfterEditing("create",1,false),"retention setting, multiple targets and non-edit dialogs preserve selection");
   foreach(float width in new[]{240f,432f,440f,600f,824f,872f,890f,1280f})foreach(float height in new[]{160f,280f,412f,560f,760f,1080f})foreach(bool embedded in new[]{false,true}){
    var frame=AiEditorLayout.Frame(width,height,"equipment",embedded);float header=AiEditorLayout.EquipmentHeader(frame.Width,embedded);
    // Helmet plus removable attachment strip is the tallest branch before fields.

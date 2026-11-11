@@ -15,6 +15,8 @@ namespace LocalSpt5Esp;
 internal static class ItemSpawner {
  sealed record Entry(string Id,string Name,string SearchText,bool IsAmmo,int StackMax,HashSet<string> Allowed,HashSet<string> Excluded,ItemDetails.Detail[] Details);
  static List<Entry> catalog=new(),matches=new();
+ static ChatItemSearch commandItems=new(Array.Empty<ChatItemSearch.Item>());
+ internal static ChatItemSearch CommandItems { get { Load();return commandItems; } }
  static readonly Dictionary<string,string> parents=new(StringComparer.Ordinal);
  static readonly Dictionary<string,List<AttachmentSlot>> attachmentSlots=new(StringComparer.Ordinal);
  static List<Entry> compatibleAmmo=new();
@@ -52,6 +54,8 @@ internal static class ItemSpawner {
    var names=JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(namesPath))??new();
    string templates=Path.Combine(BepInEx.Paths.GameRootPath,"SPT_Runtime","SPT_Data","database","templates","items.json");
    using var items=JsonDocument.Parse(File.ReadAllText(templates));
+   Dictionary<string,string> Locale(string language){string path=Path.Combine(BepInEx.Paths.GameRootPath,"SPT_Runtime","SPT_Data","database","locales","global",language+".json");return File.Exists(path)?JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(path))??new():new();}
+   commandItems=ChatItemSearch.Read(items.RootElement,names,Locale("en"),Locale("ch"));
    foreach(var item in items.RootElement.EnumerateObject()){
     if(item.Value.TryGetProperty("_parent",out var parent))parents[item.Name]=parent.GetString()??"";
     if(!item.Value.TryGetProperty("_type",out var kind)||kind.GetString()!="Item")continue;

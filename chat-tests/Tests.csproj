@@ -2,4 +2,5 @@
  <PropertyGroup><TargetFramework>net10.0</TargetFramework><OutputType>Exe</OutputType><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
  <ItemGroup><Compile Include="../shared/ChatProtocol.cs" Link="ChatProtocol.cs"/><Compile Include="../shared/ChatSecureChannel.cs" Link="ChatSecureChannel.cs"/><Compile Include="../esp-cover/ChatCommandSyntax.cs" Link="ChatCommandSyntax.cs"/><Compile Include="../shared/ChatRelayBroker.cs" Link="ChatRelayBroker.cs"/><Compile Include="../shared/ChatRelayPolicy.cs" Link="ChatRelayPolicy.cs"/></ItemGroup>
  <ItemGroup><Compile Include="../esp-cover/ChatCompletion.cs" Link="ChatCompletion.cs"/><Compile Include="../esp-cover/ChatCommandHints.cs" Link="ChatCommandHints.cs"/></ItemGroup>
+ <ItemGroup><Compile Include="../esp-cover/ChatItemSearch.cs" Link="ChatItemSearch.cs"/><Compile Include="../esp-cover/ChatPanelLayout.cs" Link="ChatPanelLayout.cs"/></ItemGroup>
 </Project>

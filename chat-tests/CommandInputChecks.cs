@@ -4,7 +4,7 @@ internal static class CommandInputChecks {
  internal static void Run(){
   static void Check(bool value,string label){if(!value)throw new Exception(label);Console.WriteLine("PASS "+label);}
   var completion=new ChatCompletion();int calls=0;
-  string[] Suggest(string prefix){calls++;return prefix switch{"/t"=>new[]{"/tag","/teleport","/time","/tp"},"/time s"=>new[]{"/time set"},"/tp \"boss:Big"=>new[]{"/tp \"boss:Big Pipe\""},_=>Array.Empty<string>()};}
+  ChatSuggestion[] Suggest(string prefix){calls++;return (prefix switch{"/t"=>new[]{"/tag","/teleport","/time","/tp"},"/time s"=>new[]{"/time set"},"/tp \"boss:Big"=>new[]{"/tp \"boss:Big Pipe\""},_=>Array.Empty<string>()}).Select(s=>new ChatSuggestion(s,s)).ToArray();}
   completion.Refresh("/t",2,Suggest);Check(completion.Candidates.Length==4&&completion.Selected==-1,"typing exposes candidates before Tab");
   var result=completion.Cycle("/t",2,false,Suggest);Check(result==("/tag",4),"Tab completes with a collapsed caret at the inserted end");
   result=completion.Cycle(result.Text,result.Cursor,false,Suggest);Check(result==("/teleport",9)&&calls==1,"successive Tab cycles the original prefix without rescanning");
@@ -14,6 +14,12 @@ internal static class CommandInputChecks {
   result=completion.Cycle("/tp \"boss:Big P\" ~ ~1 ~","/tp \"boss:Big".Length,false,Suggest);Check(result==("/tp \"boss:Big Pipe\" ~ ~1 ~","/tp \"boss:Big Pipe\"".Length),"quoted entity completion replaces its complete token and preserves coordinates");
   completion.Refresh("plain text",10,Suggest);Check(completion.Candidates.Length==0,"normal chat clears stale candidates");
   completion.Refresh("//time",6,Suggest);Check(completion.Candidates.Length==0,"escaped slash messages have no command suggestions");
+  completion.Refresh("/t",2,Suggest);Check(completion.MoveSelection(1)&&completion.Selected==0&&completion.Pending,"Down selects the first suggestion without changing input");
+  completion.MoveSelection(1);result=completion.Cycle("/t",2,false,Suggest);Check(result==("/teleport",9)&&!completion.Pending,"Tab accepts the arrow-selected entry without skipping it");
+  completion.MoveSelection(-1);result=completion.Accept(result.Text,result.Cursor);Check(result==("/tag",4)&&!completion.Pending,"Enter acceptance fills one suggestion without submitting a command");
+  completion.Refresh("/t",2,Suggest);completion.MoveSelection(-1);Check(completion.Selected==3,"Up selects the last entry and selection wraps");
+  completion.Refresh("/time",5,Suggest);Check(completion.Selected==-1&&!completion.Pending,"editing clears pending selection before Enter execution");
+  foreach(float available in new[]{0f,60f,197f,317f,500f,1000f})foreach(float syntax in new[]{20f,54f}){var panel=ChatPanelLayout.Fit(available,syntax,64);Check(panel.Height>=0&&panel.Height<=available&&panel.Rows is >=0 and <=5&&(panel.Rows==0||syntax+44+panel.Rows*ChatPanelLayout.RowHeight<=panel.Height),"suggestion rows stay within available height "+available+"/"+syntax);}
   Check(ChatCommandSyntax.CompletionEnd("/tp @e[type=boss,name=Big Pipe] ~ ~ ~",12)=="/tp @e[type=boss,name=Big Pipe]".Length,"selectors with embedded spaces remain one replacement token");
   string Current(string value,int cursor=-1)=>ChatCommandHints.For(value,cursor<0?value.Length:cursor).Current;
   Check(Current("/give @s ").Contains("item:")&&Current("/give @s item:abc ").Contains("数量"),"parameter hints advance through target, item and quantity");

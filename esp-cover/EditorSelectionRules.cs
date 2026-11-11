@@ -3,6 +3,7 @@ using System.Numerics;
 namespace LocalSpt5Esp;
 internal readonly record struct EditorSelectionBox(float X,float Y,float Width,float Height);
 internal static class EditorSelectionRules {
+ internal static bool ClearAfterEditing(string dialog,int count,bool keep)=>!keep&&count==1&&dialog is "properties" or "rename";
  internal static EditorSelectionBox Box(float ax,float ay,float bx,float by)=>new(Math.Min(ax,bx),Math.Min(ay,by),Math.Abs(bx-ax),Math.Abs(by-ay));
  internal static bool Contains(EditorSelectionBox box,float x,float y,float depth,float width,float height)=>float.IsFinite(x)&&float.IsFinite(y)&&float.IsFinite(depth)&&depth>0&&x>=0&&y>=0&&x<=width&&y<=height&&x>=box.X&&y>=box.Y&&x<=box.X+box.Width&&y<=box.Y+box.Height;
  internal static Vector3[] Translate(Vector3[] source,Vector3 goal){

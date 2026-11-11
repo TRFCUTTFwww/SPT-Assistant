@@ -25,11 +25,15 @@
 
 验证：EFT 48558 编译通过，127 组客户端 Probe 通过，新增框选方向/屏幕/深度/有限值边界、空中批量相对坐标、编辑/玩具枪路由与物理拦截检查，并保留物品树复制、ID 冲突/环/孤立节点拒绝、根地址脱离、组件及格位保留、距离限制和鼠标释放检查。游戏内移动、模型、拾取持久性及窗口层级需实测；编译成功不代表视觉已验证。
 
+**单选编辑后保留选中**：在 **开发工具 → 编辑模式** 设置，默认关闭。结束单个 AI 或物品的属性／重命名窗口后自动解除选择；打开后沿用保留选择的行为。多选和混合选区保持选择，便于连续编辑。
+
 ## English
 
 Target: SPT 5.0 BE / EFT 1.3.0.1.48558. **Unstable; not broadly tested or visually verified in a raid.** Development follows the latest SPT version; backward compatibility is not guaranteed.
 
 Press Right Shift, open **Development tools → Editor mode**, enable the opt-in setting, then close the main panel. A crosshair appears. Aim assistance, automatic toy firing and laser eyes pause during editing. Local firing, aiming and weapon-wheel commands are blocked while camera and movement axes remain available. Holding Alt or opening an editor window captures camera/movement input; releasing Alt and mouse buttons restores it.
+
+**Keep single selection after editing** is available on the same settings page and defaults to off. Closing properties or rename for one AI/item clears its selection. Enable it to retain the target. Multiple and mixed selections remain selected for continued editing.
 
 - **Alt + left drag** shows the cursor while either Alt key is held and selects multiple AI/loose items by their projected centers. Behind-camera, off-screen and map-wall-occluded centers are excluded. Selection markers and counts remain visible. Alt + left-click selects a single target; an empty click or Esc clears selection. Releasing Alt restores camera control and retains the selection.
 - **Mixed selection** first offers AI / Items and their counts. Choose a category, then an editing action; actions affect only that category. A single category opens the editing menu directly.

@@ -16,7 +16,7 @@ internal static class AiFreePlacement {
  internal static bool Pinned(Player player)=>Match(player,out _);
  internal static bool PriorPaused(Player player)=>Match(player,out var value)?value.WasPaused:AiTestControl.IsPaused(player);
  internal static void Release(Player player){if(!Match(player,out var value))return;anchors.Remove(player.Pointer);try{value.Reference.Resolve();AiTestControl.SetPaused(new[]{player},value.WasPaused);}catch{}}
- internal static void Place(GameWorld current,Player actor,Vector3 point,bool? previousPause=null){
+ internal static void Place(GameWorld current,Player actor,Vector3 point,bool? previousPause=null,bool anchorInAir=true){
   new LiveActorReference(current,actor).Resolve();if(actor.IsYourPlayer||actor.AIData?.BotOwner==null||actor.Profile?.Info?.Settings?.Role==WildSpawnType.shooterBTR)throw new ArgumentException("只允许编辑本机控制的普通 AI。");
   if(!TeleportRules.Finite(new(point.x,point.y,point.z)))throw new ArgumentException("目标坐标无效。");
   bool paused=previousPause??PriorPaused(actor);var bot=actor.AIData.BotOwner;var origin=actor.Position;bool originalPause=AiTestControl.IsPaused(actor);anchors.TryGetValue(actor.Pointer,out var originalAnchor);
@@ -25,8 +25,9 @@ internal static class AiFreePlacement {
    bot.StopMove();bot.Mover?.AllowTeleport();actor.Teleport(point,true);
    bool ground=NavMesh.SamplePosition(point,out var nav,.4f,NavMesh.AllAreas)&&Vector3.Distance(nav.position,point)<=.35f;
    anchors.Remove(actor.Pointer);
-   if(!ground)anchors[actor.Pointer]=new(new(current,actor),actor,point,paused);
-   AiTestControl.SetPaused(new[]{actor},!ground||paused);
+   bool pin=anchorInAir&&!ground;
+   if(pin)anchors[actor.Pointer]=new(new(current,actor),actor,point,paused);
+   AiTestControl.SetPaused(new[]{actor},pin||paused);
    if(ground)bot.Mover?.RecalcWay();
   }catch{if(originalAnchor!=null)anchors[actor.Pointer]=originalAnchor;else anchors.Remove(actor.Pointer);try{actor.Teleport(origin,true);AiTestControl.SetPaused(new[]{actor},originalPause);}catch{}throw;}
  }

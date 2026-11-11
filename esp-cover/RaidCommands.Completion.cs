@@ -7,19 +7,20 @@ using EFT;
 using EFT.InventoryLogic;
 namespace LocalSpt5Esp;
 internal static partial class RaidCommands {
- internal static string[] Complete(string prefix,ChatPeer[] peers){
-  if(!ChatCommandSyntax.IsCommand(prefix))return Array.Empty<string>();
-  string[] words;try{words=ChatCommandSyntax.Tokens(prefix[1..],true);}catch{return Array.Empty<string>();}
+ internal static ChatSuggestion[] Complete(string prefix,ChatPeer[] peers){
+  if(!ChatCommandSyntax.IsCommand(prefix))return Array.Empty<ChatSuggestion>();
+  string[] words;try{words=ChatCommandSyntax.Tokens(prefix[1..],true);}catch{return Array.Empty<ChatSuggestion>();}
   int start=ChatCommandSyntax.CompletionStart(prefix);bool trailing=start==prefix.Length;
-  if(words.Length==0||words.Length==1&&!trailing){string head=words.FirstOrDefault()??"";return Usage.Keys.Where(k=>k.StartsWith(head,StringComparison.OrdinalIgnoreCase)).Select(k=>"/"+k).OrderBy(k=>k).ToArray();}
+  if(words.Length==0||words.Length==1&&!trailing){string head=words.FirstOrDefault()??"";return Usage.Keys.Where(k=>k.StartsWith(head,StringComparison.OrdinalIgnoreCase)).OrderBy(k=>k).Select(k=>new ChatSuggestion("/"+k,"/"+k,Usage[k])).ToArray();}
   string cmd=words[0].ToLowerInvariant(),token=trailing?"":words[^1];var args=words.Skip(1).ToArray();int at=trailing?args.Length:args.Length-1;
-  if(!ChatCommandHints.HasArgument(cmd,args,at))return Array.Empty<string>();
+  if(!ChatCommandHints.HasArgument(cmd,args,at))return Array.Empty<ChatSuggestion>();
   string Arg(int n)=>n<args.Length?args[n]:"";
   var candidates=new List<string>();void Add(params string[] values)=>candidates.AddRange(values);
   void Peers()=>candidates.AddRange(peers.SelectMany(p=>new[]{p.Name,p.Profile}));
   void Entities(){Add("@s","@a","@p","@e[type=ai]","@e[type=boss]","@selected");try{var w=Singleton<GameWorld>.Instance;if(w!=null&&RaidClock.Active)candidates.AddRange(All(w).SelectMany(p=>new[]{Name(p),Type(p)+":"+Name(p),"uuid:"+Id(p)}));}catch{}}
   void Places(){Add("~","^","btr");candidates.AddRange(markers.Keys.Select(k=>"marker:"+k));try{if(RaidClock.Active)candidates.AddRange(TeleportControl.ChatDestinations().Select(d=>d.Key));}catch{}}
-  void Items(bool ammo=false){string key=token.StartsWith("item:",StringComparison.OrdinalIgnoreCase)?token[5..]:token;if(key.Length==0){Add("item:");return;}var found=ammo?ItemSpawner.FindAmmo(key):ItemSpawner.FindTemplates(key);foreach(var p in found.Take(64)){Add("item:"+p.Id,p.Name);}}
+  ChatSuggestion[]? itemCandidates=null;
+  void Items(bool ammo=false){var catalog=ItemSpawner.CommandItems;itemCandidates=catalog.Search(token,ammo).Take(64).Select(p=>new ChatSuggestion(prefix[..start]+ChatCommandSyntax.Quote(catalog.Insert(p)),p.Title,(p.Name==p.Title?"":p.Name+"  ·  ")+p.Id)).ToArray();}
   void Slots()=>candidates.AddRange(Enum.GetNames<EquipmentSlot>());
   switch(cmd){
    case "help":candidates.AddRange(Usage.Keys);break;
@@ -54,6 +55,6 @@ internal static partial class RaidCommands {
    case "experience":case "xp":if(at==0)Add("query");else if(at==1)Add("@s");else Add("points","levels");break;
    case "spreadplayers":if(at==4)Entities();break;
   }
-  return candidates.Distinct(StringComparer.OrdinalIgnoreCase).Where(c=>c.StartsWith(token,StringComparison.OrdinalIgnoreCase)).OrderBy(c=>c).Take(64).Select(c=>prefix[..start]+ChatCommandSyntax.Quote(c)).ToArray();
+  return itemCandidates??candidates.Distinct(StringComparer.OrdinalIgnoreCase).Where(c=>c.StartsWith(token,StringComparison.OrdinalIgnoreCase)).OrderBy(c=>c).Take(64).Select(c=>new ChatSuggestion(prefix[..start]+ChatCommandSyntax.Quote(c),c)).ToArray();
  }
 }

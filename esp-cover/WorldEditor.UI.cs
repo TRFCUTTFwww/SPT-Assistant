@@ -13,7 +13,7 @@ internal static partial class WorldEditor {
  static (string Id,string Name)[] items=Array.Empty<(string,string)>();
  static readonly Dictionary<string,(string Max,string Current)> health=new();
  static ItemComponentEditor? componentEditor;
- internal static void DrawSettings(Rect rect){InterfaceMenu.DrawEntry(enabled!,new Rect(rect.x,rect.y,rect.width,84));InterfaceMenu.Paragraph(new Rect(rect.x,rect.y+100,rect.width,200),"按住 Alt 显示鼠标，左键拖框多选，右键编辑；混选时先选择 AI 或物品。\n松开 Alt 恢复镜头；Esc 清空选择。移动时滚轮调距，左键放下，右键或 Esc 取消。\n批量移动保留间距；AI 可固定在空中，菜单可解除固定。属性与重命名逐个编辑，切换对象放弃未应用输入。",null,14);InterfaceMenu.Paragraph(new Rect(rect.x,rect.y+310,rect.width,80),notice,InterfaceMenu.Accent,12);}
+ internal static void DrawSettings(Rect rect){InterfaceMenu.DrawEntry(enabled!,new Rect(rect.x,rect.y,rect.width,84));InterfaceMenu.DrawEntry(keepSingleSelection!,new Rect(rect.x,rect.y+94,rect.width,84));InterfaceMenu.Paragraph(new Rect(rect.x,rect.y+194,rect.width,200),"按住 Alt 显示鼠标，左键拖框多选，右键编辑；混选时先选择 AI 或物品。\n松开 Alt 恢复镜头；Esc 清空选择。移动时滚轮调距，左键放下，右键或 Esc 取消。\n批量移动保留间距；AI 可固定在空中，菜单可解除固定。属性与重命名逐个编辑，切换对象放弃未应用输入。",null,14);InterfaceMenu.Paragraph(new Rect(rect.x,rect.y+404,rect.width,80),notice,InterfaceMenu.Accent,12);}
  internal static void Draw(){
   if(!Active||InterfaceMenu.Open)return;int depth=GUI.depth;bool oldEnabled=GUI.enabled;GUI.depth=-900;
   try{

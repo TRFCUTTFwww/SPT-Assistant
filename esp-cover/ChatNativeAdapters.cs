@@ -7,7 +7,7 @@ using UnityEngine;
 namespace LocalSpt5Esp;
 internal static partial class TeleportControl {
  internal static (string Key,string Name,Vector3 Position)[] ChatDestinations(){Tick(Singleton<GameWorld>.Instance);int prior=page;string priorQuery=query;var result=new List<(string,string,Vector3)>();try{query="";foreach(int category in new[]{0,1,2,5,8,9,11}){page=category;Refresh();result.AddRange(destinations.Select(d=>(d.Key,d.Name,d.Position)));}return result.DistinctBy(p=>p.Item1).ToArray();}finally{page=prior;query=priorQuery;nextList=0;}}
- internal static void ChatMove(Player actor,Vector3 point){var current=Singleton<GameWorld>.Instance??throw new ArgumentException("请进入战局。");Tick(current);if(actor.IsYourPlayer)actor.Teleport(point,true);else{new LiveActorReference(current,actor).Resolve();AiFreePlacement.Place(current,actor,point);}}
+ internal static void ChatMove(Player actor,Vector3 point){var current=Singleton<GameWorld>.Instance??throw new ArgumentException("请进入战局。");Tick(current);if(actor.IsYourPlayer)actor.Teleport(point,true);else{new LiveActorReference(current,actor).Resolve();AiFreePlacement.Place(current,actor,point,anchorInAir:false);}}
 }
 internal static partial class WorldEditor {
  internal static Player[] ChatSelected()=>SelectedActors();

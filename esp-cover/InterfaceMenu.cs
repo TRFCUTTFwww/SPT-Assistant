@@ -112,7 +112,7 @@ internal static partial class InterfaceMenu {
   if(!slots.TryGetValue(id,out var slot))return initial;
   slot.Initial=initial;if(slot.AutoSize?.Value!=true){if(slot.Width.Value>0)initial.width=Math.Clamp(slot.Width.Value,60,Math.Max(60,Screen.width));if(slot.Height.Value>0)initial.height=Math.Clamp(slot.Height.Value,24,Math.Max(24,Screen.height));}
   if(id=="raidclock"){initial.width=Math.Max(180,initial.width);initial.height=Math.Max(70,initial.height);}
-  if(id=="chat"){initial.width=Math.Clamp(initial.width,Math.Min(360,Screen.width),Screen.width);initial.height=Math.Clamp(initial.height,Math.Min(220,Screen.height),Screen.height);}
+  if(id=="chat"){initial.width=Math.Clamp(initial.width,Math.Min(420,Screen.width),Screen.width);initial.height=Math.Clamp(initial.height,Math.Min(320,Screen.height),Screen.height);}
   var position=new Vector2(slot.X.Value,slot.Y.Value);
   if(position.x>=0&&position.y>=0){initial.x=position.x*Math.Max(0,Screen.width-initial.width);initial.y=position.y*Math.Max(0,Screen.height-initial.height);}
   initial.x=Math.Clamp(initial.x,0,Math.Max(0,Screen.width-initial.width));initial.y=Math.Clamp(initial.y,0,Math.Max(0,Screen.height-initial.height));

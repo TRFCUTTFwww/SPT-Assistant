@@ -9,15 +9,17 @@
 1. 备份存档和配置。构建 `esp-cover/Esp.csproj` 和 `gear-mail/GearMail.csproj`，或使用包含这次变更的安装包。主客户端仍使用单人版热加载宿主。
 2. 客户端模块 `Local.Spt5.ESP.Core.dll` 复制为 `BepInEx/plugins/LocalSpt5ESP/runtime/Local.Spt5.ESP.Core.module`。热加载宿主已安装时可使用既有 reload.request 流程；否则重启客户端。
 3. 关闭服务端，将 `LocalGearMail.dll` 放入 `SPT_Runtime/user/mods/LocalGearMail/`，重启服务端。**本地斜杠命令不依赖聊天中继**；跨客户端文字聊天需要所有人连接到安装此服务端组件的同一 SPT 服务端。
-4. 战局画面中按 **T** 打开聊天，**/** 直接输入命令；Enter 提交，Esc 关闭，↑/↓ 历史，Tab / Shift+Tab 循环候选。T 可在 **开发工具 → 聊天与命令** 修改。原生库存/菜单显示鼠标时不会抢 T 键；菜单里的“打开聊天”可在战局外打开。
+4. 战局画面中按 **T** 打开聊天，**/** 直接输入命令；Enter 提交，Esc 关闭。**↑/↓ 选择候选，Tab 填入，Shift+Tab 反向循环**；使用箭头选中候选后 Enter 也只填入，再次 Enter 才执行。无候选时 ↑/↓ 翻历史，有候选时可用 **Ctrl+↑/↓** 翻历史。候选支持鼠标点击填入、滚轮选择。T 可在 **开发工具 → 聊天与命令** 修改。原生库存/菜单显示鼠标时不会抢 T 键；菜单里的“打开聊天”可在战局外打开。
 5. Enter 提交后保持聊天框打开、清空输入；空行 Enter 不关闭，Esc 关闭。命令报错时保留输入以便修改。Tab 补全后光标停在补全内容末尾，不自动全选；移动光标后重新按当前参数补全。
-6. 输入 `/` 命令时，输入框上方实时显示用法、当前参数和候选，当前参数使用强调色。带引号的名称、选择器、子命令和坐标均按当前光标位置提示。无需先按 Tab。
+6. 聊天框采用独立标题、滚动消息区、参数提示、双行候选和输入栏。输入 `/` 时实时显示用法、当前参数和候选，当前参数使用强调色，选中候选保持在列表可见范围内。长物品名换行，第二行显示本地名称和 ID。带引号的名称、选择器、子命令和坐标均按当前光标位置提示，无需先按 Tab。
 7. 菜单顶部 **布局** 中的 **聊天框** 可拖动位置、拖右下角调整宽高；**视觉 → 界面布局** 或 **设置与热键 → 主题与布局 → 各悬浮窗不透明度 → 聊天框** 可调整背景透明度。文字保持清晰；尺寸、位置和透明度自动保存，关闭后的消息也使用相同布局。
 8. 中文通过 Unity 的 IME 文本输入。消息最多 2000 字符，聊天仅在内存保存 200 行；命令历史最多 100 项。关闭后最近消息逐渐淡出。`//hello` 发送以 `/` 开头的普通文字。
 
 Back up profiles/config first. Build the client and GearMail projects with the matching game references. Install the client DLL as `Local.Spt5.ESP.Core.module` in the existing host's runtime directory. Install `LocalGearMail.dll` under the server's `user/mods/LocalGearMail/` directory while the server is stopped, then restart it. Local commands work without the relay. Chat requires the same upgraded SPT server. Press T or / in the raid view; use Enter, Esc, history arrows and Tab/Shift+Tab. Change the binding or open chat outside raids under **Developer tools → Chat and commands**. Unity IME handles Chinese input. `//` escapes a leading slash.
 
 Enter keeps chat open and clears the input; failed commands retain the input for editing. Esc closes it. Tab leaves a collapsed caret after the completion. Syntax, the active argument and suggestions appear above the input as you type or move the caret. In the top **Layout** editor, drag **Chat window** to move it and drag its bottom-right corner to resize. Its background opacity is under **Visuals → Interface layout** or **Settings & hotkeys → Theme & layout → Window opacity**. Text stays readable, settings persist, and faded messages share the same bounds.
+
+The redesigned panel separates the title, scrollable messages, argument preview, two-line suggestions and input. Up/Down selects a suggestion without editing the input; Tab fills it. Enter also fills an explicitly selected suggestion, then a second Enter runs the command. Ctrl+Up/Down always recalls history; plain arrows recall history when there are no suggestions. Click a suggestion to fill it or use the wheel to select. Long item names wrap, and the second line distinguishes localized names and template IDs.
 
 ## 身份核验与加密 / Identity verification and encryption
 
@@ -78,6 +80,10 @@ The implementation uses platform mutual TLS 1.3, pinned certificates, no resumpt
 /data modify entity @e[type=scav,limit=1] invincible set value true
 /attribute @e[type=scav,limit=1] damageMultiplier base set 1
 /give @s item:5449016a4bdc2d6f028b456f 100000
+/give @s salewa 1
+/give @s IFAK 2
+/give @s bitcoin 1
+/give @s "Salewa first aid kit" 1
 /loot spawn ~ ~ ~2 item:5449016a4bdc2d6f028b456f 1000
 /item modify entity @s Backpack foundInRaid true
 /reload @s FirstPrimaryWeapon item:<ammo-template-id>
@@ -93,13 +99,13 @@ The implementation uses platform mutual TLS 1.3, pinned certificates, no resumpt
 
 Names must be unique or explicitly qualified. UUID prefixes must be unambiguous. AI UUIDs are local to this raid/module lifetime. `@p` means the nearest other human, so it normally has no match in single-player. `@selected` uses editor AI selection; `/copy` without an argument and `/remove @selected` can reuse the editor's item selection. Unified item/corpse entity selectors are not implemented.
 
-Tab 按当前参数位置提供候选：对象、效果、装备槽、规则、地点和物品模板。物品先输入部分名称或 `item:` 后的部分 ID；使用模板 ID 可避开本地化名称重名。当前命令反馈以中文为主，聊天设置和本说明提供英文。
+物品参数支持**中文名、英文名、简称、名称片段和模板 ID**，无需 `item:` 前缀；例如 `/give @s salewa 1`。英文忽略大小写，多个关键词使用引号，例如 `/give @s "first aid"`，再用 ↑↓ 选择具体候选。输入 `/give @s ` 时即可浏览物品，输入关键词缩小范围；精确名称和简称优先。补全自动给长名称加引号，同名物品自动填入明确的 `item:ID`，列表仍显示可读名称。直接执行的名称若匹配多个物品会提示继续选择，不会随便取第一项。`clear`、`item replace`、`loot spawn`、`reload` 同样支持名称搜索，reload 候选仅含弹药。当前命令反馈以中文为主。
 
-Tab candidates follow the current argument: entities, effects, slots, rules, places and item templates. Type part of an item name or ID first; template IDs avoid localized-name ambiguity. Command feedback is currently primarily Chinese; chat settings and this guide include English.
+Item arguments accept Chinese/English names, short names, substrings and template IDs without requiring `item:`. Try `/give @s salewa 1`. English matching is case-insensitive; quote multiword searches such as `"first aid"`, then select a result with arrows. Exact names and aliases rank first. Completion quotes full names automatically and uses an explicit ID for duplicate names while displaying readable labels. Ambiguous direct input asks for a selection instead of choosing an arbitrary item. This also applies to clear, item replace, loot spawn and reload (ammo only). Command feedback is currently primarily Chinese.
 
-坐标支持绝对、`~` 相对和 `^` 镜头局部坐标；`^` 不可混合使用，正 `^x` 为镜头左侧。地点支持 `room:`、`valuable:`（房间别名）、`exit:`、`saved:`、`marker:`、`airdrop:`、`interaction:`、`quest:`，以及 `btr`。地图标签依赖本机可用的地图数据和实时扫描，不保证每张地图都有房间/任务标签。传送到 AI 空中位置会固定 AI，`/ai resume` 解除。
+坐标支持绝对、`~` 相对和 `^` 镜头局部坐标；`^` 不可混合使用，正 `^x` 为镜头左侧。地点支持 `room:`、`valuable:`（房间别名）、`exit:`、`saved:`、`marker:`、`airdrop:`、`interaction:`、`quest:`，以及 `btr`。地图标签依赖本机可用的地图数据和实时扫描，不保证每张地图都有房间/任务标签。命令传送到无落脚点时不再自动固定或暂停 AI，后续移动由游戏原生逻辑处理；可用 `/ai anchor <AI> on` 主动固定。
 
-Coordinates accept absolute, relative `~`, or camera-local `^` values, with positive local X pointing left. Local and world coordinates cannot be mixed. Place labels depend on installed map data and current scans. Airborne AI are anchored; `/ai resume` releases them.
+Coordinates accept absolute, relative `~`, or camera-local `^` values, with positive local X pointing left. Local and world coordinates cannot be mixed. Place labels depend on installed map data and current scans. Command teleport no longer automatically anchors or pauses AI at airborne destinations; native movement continues. Use `/ai anchor <AI> on` to request an anchor explicitly.
 
 ## 已知限制 / Known limits
 
@@ -130,9 +136,13 @@ Each entry binds both `profile` and the uppercase full certificate `fingerprint`
 
 ## 验证 / Validation
 
-本次输入与布局更新通过客户端 Release 编译（0 错误、两条既有空引用警告）、119 项聊天检查和 127 组 Probe 检查。新增检查覆盖输入时预览、Tab 正反向循环、移动光标后重新补全、引号/选择器与后续参数保留、子命令分支和坐标参数提示。游戏内焦点、IME、绘制、缩放和透明度由用户验收。
+本次重做通过 EFT 48558 Release 编译（0 错误、两条既有空引用警告）、161 项聊天检查（含本机真实物品数据库）和 127 组 Probe 检查。界面外观、IME 操作和 AI 传送后的原生运动尚待游戏内验收。
 
-The input/layout update passes the Release client build (zero errors, two existing nullable warnings), 119 chat checks and 127 Probe groups. Added checks cover live suggestions, completion cycling, caret movement, quoted/selector token replacement, preserved following arguments, subcommands and coordinate hints. Focus, IME, rendering, resizing and opacity still require in-game acceptance.
+This redesign passes the EFT 48558 Release build (zero errors, two existing nullable warnings), 161 chat checks including the installed item database, and 127 Probe groups. In-game appearance, IME interaction and native AI movement after teleport remain manual acceptance checks.
+
+输入测试覆盖实时预览、Tab 正反向循环、箭头选择后填入、输入修改后清除选择、不同可用高度的候选边界、光标移动、引号/选择器、子命令和坐标提示。物品测试覆盖中英文片段、简称、重名拒绝、弹药筛选及补全与执行一致性；设置 `SPT_GAME_ROOT` 后还会读取本机实际物品和中英文本地化数据库验证。游戏内焦点、IME、绘制、缩放和透明度由用户验收。
+
+Input tests cover live previews, completion cycles, arrow-selection acceptance, edit invalidation, bounded suggestion layouts, caret movement, quoted/selector replacement, subcommands and coordinates. Item tests cover bilingual substrings/aliases, ambiguity rejection, ammo filtering and completion/execution round trips; set `SPT_GAME_ROOT` to also check the installed item and Chinese/English locale databases. Focus, IME, rendering, resizing and opacity still require in-game acceptance.
 
 `dotnet run --project chat-tests/Tests.csproj -c Release` 检查签名、防重放、档案绑定、双向核验、游标确认、撤销、队列上限、TLS 指纹失败关闭、加密上下文绑定、重新握手、Unicode 往返和命令语法。可选的 `-- --http <本机档案ID>` 使用 curl 和 EFT 48558 原生帧格式验证本机 `https://127.0.0.1:6969` 的真实中继，不修改档案。端到端消息仍通过固定指纹的双向 TLS；测试的外层 localhost 自签名 HTTPS 使用 `--insecure`。本机实际接口和双向加密消息测试已通过。
 

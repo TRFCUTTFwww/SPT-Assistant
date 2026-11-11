@@ -1,4 +1,6 @@
 {
+  "单选编辑后保留选中": "Keep single selection after editing",
+  "关闭时，结束单个 AI 或物品的属性／重命名编辑后解除选中；多选编辑仍保留选择。": "When disabled, closing properties or rename for one AI or item clears its selection. Multiple selections are retained.",
   "聊天框": "Chat window",
   "聊天与命令": "Chat and commands",
   "聊天按键": "Chat key",
@@ -6,7 +8,7 @@
   "打开聊天": "Open chat",
   "复制指纹": "Copy fingerprint",
   "填入核验命令": "Prepare verification command",
-  "T 打开聊天 · / 输入命令 · Enter 发送 · Esc 关闭 · ↑↓ 历史 · Tab / Shift+Tab 补全。单人命令可独立使用。": "T: chat · /: commands · Enter: submit · Esc: close · ↑↓: history · Tab / Shift+Tab: complete. Local commands work independently.",
+  "T 打开聊天 · / 输入命令 · ↑↓ 选择候选 · Tab 填入 · Enter 执行 · Ctrl+↑↓ 历史 · Esc 关闭。": "T: chat · /: commands · ↑↓: select · Tab: fill · Enter: run · Ctrl+↑↓: history · Esc: close.",
   "登录角色后连接聊天。需要安装服务端组件。": "Chat connects after profile login. Install the matching server component.",
   "通过其他可信渠道核对完整指纹，再输入 /identity verify 档案ID 指纹。双方都须核验；指纹改变会拒绝连接。": "Compare full fingerprints through another trusted channel, then run /identity verify <profileID> <fingerprint>. Both peers must verify. Changed keys are rejected.",
   "打开聊天时拦截游戏输入；可修改按键以避开原生 T 战术设备快捷键。": "Blocks game input while chat is open. Rebind to avoid the native T tactical-device shortcut.",

@@ -9,7 +9,7 @@ internal static class ChatCommandHints {
  ["inspect"]="<目标> [health|equipment|effects|position]",["kill"]="<目标>",["damage"]="<目标> <数值> [伤害类型] [部位]",["heal"]="[目标] [部位]",["effect"]="give <目标> <效果> [秒] [强度] [部位] | clear <目标> [效果]",
  ["summon"]="<AI 角色|template:场景名> [x y z] [数量] [难度0-3]",["tag"]="<目标> add|remove|list [标签]",["rename"]="<AI> <名称>",["ai"]="pause|resume|follow|look|pose|relation|anchor|remove <AI> [参数]",
  ["edit"]="on|off",["copy"]="[AI|@selected]",["paste"]="[x y z]",["remove"]="<AI|@selected>",["data"]="get entity <目标> [字段] | modify entity <AI> <字段> set value <值>",
- ["give"]="<玩家或AI> <item:模板ID或唯一名称> [数量]",["clear"]="<目标> [item:模板ID] [最大数量]",["item"]="replace entity <目标> <装备槽> with <物品> [数量] | modify entity <目标> <装备槽> <参数> <值>",["loot"]="spawn <x y z> <物品> [数量] | give <目标> loadout:<场景名>",["repair"]="<目标> [装备槽]",["reload"]="<目标> [装备槽] [item:弹药模板ID]",
+ ["give"]="<玩家或AI> <物品名称或item:模板ID> [数量]",["clear"]="<目标> [物品名称或item:模板ID] [最大数量]",["item"]="replace entity <目标> <装备槽> with <物品> [数量] | modify entity <目标> <装备槽> <参数> <值>",["loot"]="spawn <x y z> <物品> [数量] | give <目标> loadout:<场景名>",["repair"]="<目标> [装备槽]",["reload"]="<目标> [装备槽] [弹药名称或item:模板ID]",
  ["time"]="set day|noon|night|midnight|<ticks> | add <ticks> | query daytime",["weather"]="clear|rain|thunder [持续秒数]",["gamerule"]="[规则] [值]",["raid"]="time query|set|add [时长] | extract @s",["airdrop"]="summon",["btr"]="status|route <站点ID>|stop",["marker"]="set <名称> [x y z] | remove <名称> | list",["navigate"]="<目标标签|x y z>|stop",
  ["experience"]="query <玩家> [points|levels]",["xp"]="query <玩家> [points|levels]",["attribute"]="<目标> <属性> base get|set [数值]"};
  internal sealed record Preview(string Syntax,string Current);
