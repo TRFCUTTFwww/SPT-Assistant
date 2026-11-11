@@ -1,4 +1,8 @@
 {
+  "暂停／恢复活动": "Pause / resume activity",
+  "A ↔ B 敌对／停战": "A ↔ B hostility / ceasefire",
+  "对玩家敌对／停战": "Player hostility / ceasefire",
+  "切换无敌": "Toggle invincibility",
   "移动中的 AI 临时无敌": "Temporary invincibility while moving AI",
   "仅保护编辑模式正在移动的 AI；放下、取消或退出编辑后自动解除临时保护，原有无敌设置不变。": "Protect only AI being moved in the editor. Temporary protection ends on drop, cancel or editor exit; existing invincibility settings are preserved.",
   "F6 切换编辑模式，可在全部热键中修改；聊天、属性输入和其他界面占用输入时不触发。": "F6 toggles editor mode. Rebind in All hotkeys; suppressed during chat, property text entry and other input owners.",

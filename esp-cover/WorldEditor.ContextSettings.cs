@@ -22,6 +22,11 @@ internal static partial class WorldEditor {
   }}finally{GUI.EndScrollView();}
  }
  static void ContextRemoveWeapons(){var targets=SelectedActors();AiEquipmentRemoval.RemoveWeapons(Current(),targets);notice=AiEquipmentRemoval.Status;CloseDialog();}
+ static bool ContextPaused(EFT.Player target)=>AiTestControl.IsPaused(target)||AiFreePlacement.Pinned(target)||ModelPoseLock.Locked(target)||SceneTemplates.IsStaging(target);
+ static void ContextTogglePause()=>ContextPause(EditorContextRules.EnableNext(SelectedActors().Select(ContextPaused).ToArray()));
+ static void ContextToggleInvincible()=>ContextInvincible(EditorContextRules.EnableNext(SelectedActors().Select(p=>AiActorControl.EditorState(p).Invincible).ToArray()));
+ static void ContextTogglePlayerRelation()=>ContextPlayerRelation(EditorContextRules.EnableNext(SelectedActors().Select(AiActorControl.EditorPlayerCeasefire).ToArray())?1:2);
+ static void ContextToggleSides()=>ContextSides(!AiActorControl.EditorSidesHostile());
  static void ContextTeam(int side){var current=Current();var targets=SelectedActors();foreach(var target in targets)AiActorControl.MarkEditorSide(current,target,side);FeatureToasts.Show(side==0?"已清除队伍标记。":side==1?"已标记为 A 方。":"已标记为 B 方。");CloseDialog();}
  static void ContextPause(bool value){var targets=SelectedActors();if(value){AiTestControl.SetPaused(targets,true);FeatureToasts.Show("所选 AI 已暂停");}else AiTestControl.ResumeActors(targets);CloseDialog();}
  static void ContextSides(bool hostile){AiActorControl.CommandEditorSides(hostile);CloseDialog();}

@@ -15,17 +15,17 @@
                    "raidControls":  "passed"
                },
     "offlineChecks":  {
-                          "clientProbe":  "133 PASS groups; includes menu visibility/order boundaries and compiled routing checks for temporary movement protection, A/B scope, native search entry point and matrix interop removal",
+                          "clientProbe":  "133 PASS groups; includes merged menu migration, mixed-state toggle and visibility/order boundaries and compiled routing checks for temporary movement protection, A/B scope, native search entry point and matrix interop removal",
                           "chatAndCommands":  "passed, including TLS integration and command syntax",
                           "mailAndAdministration":  "24 PASS groups; two nullable warnings in test source"
                       },
     "packageVerification":  "passed: full and ClientOnly VerifyOnly modes, checksums, EFT dependencies and local database; no game files changed",
     "installation":  "Client runtime replacement prepared for the local EFT 48558 installation; full server installation not repeated",
-    "clientHotReload":  "Previous 2.1 module loaded in generations 2 and 3; client later crashed. New revision is installed with client closed, pending user launch.",
+    "clientHotReload":  "Previous 2.1 module loaded in generations 2 and 3; client later crashed. Latest crosshair/toggle revision built and verified offline; installation waits for running client to exit.",
     "broadTestingCompleted":  false,
     "requiresInGameConfirmation":  [
                                        "Version-only sidebar subtitle and overall UI layout",
-                                       "Configured hotkeys, text input isolation, hidden instruction HUD and through-wall world editor selection",
+                                       "Configured hotkeys, text input isolation, restored editor crosshair, hidden instruction text and through-wall world editor selection",
                                        "Corpse native creation/pose, movement cancellation, revival and inventory isolation; AI weapon addition and A/B marking",
                                        "Instant container search in actual containers/backpacks/rigs; native raid behavior and multi-client Fika synchronization",
                                        "Configurable context item ordering/scrolling, A/B hostility and ceasefire, editor F6 toggle, moving-AI temporary invincibility cleanup",

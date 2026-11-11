@@ -34,7 +34,7 @@ internal static class WorldEditorChecks {
   var selection=Calls("WorldEditor","SelectBox");Check(selection.Any(c=>c.Name=="Editable")&&selection.Any(c=>c.Name=="InBox"),"marquee uses locally controlled live AI eligibility and screen/depth filtering");
     var through=Type("WorldEditor").Methods.Single(m=>m.Name=="SelectAt").Body.Instructions.Where(i=>i.Operand is MethodReference m&&m.DeclaringType.Name=="CrosshairProbe"&&m.Name=="Read").ToArray();Check(through.Length==1&&through[0].Previous.OpCode.Code==Mono.Cecil.Cil.Code.Ldc_I4_1,"editor point selection explicitly ignores environment while preserving native body tests");
   Check(!Calls("WorldEditor","InBox").Any(m=>m.Name=="Raycast")&&Calls("WorldEditor","SelectBox").Any(m=>m.DeclaringType.Name=="CorpseReference"&&m.Name=="Read"),"marquee includes corpses behind walls while retaining screen/depth bounds");
-  var drawStrings=Type("WorldEditor").Methods.Single(m=>m.Name=="Draw").Body.Instructions.Where(i=>i.OpCode.Code==Mono.Cecil.Cil.Code.Ldstr).Select(i=>(string)i.Operand).ToArray();Check(!drawStrings.Any(s=>s=="+"||s.Contains("左键放下")||s.Contains("Alt 框选")),"idle editor draws no persistent crosshair or instruction HUD");
+  var drawStrings=Type("WorldEditor").Methods.Single(m=>m.Name=="Draw").Body.Instructions.Where(i=>i.OpCode.Code==Mono.Cecil.Cil.Code.Ldstr).Select(i=>(string)i.Operand).ToArray();Check(!drawStrings.Any(s=>s.Contains("左键放下")||s.Contains("Alt 框选"))&&Calls("WorldEditor","Draw").Any(m=>m.Name=="DrawEditorCrosshair"),"editor restores crosshair independently of hidden instruction HUD");
   var copy=Calls("WorldEditor","PlaceCorpse");Check(copy.Any(m=>m.Name=="CloneItem")&&copy.Any(m=>m.Name=="CreateStillCorpse")&&!copy.Any(m=>m.Name=="Instantiate"),"corpse duplication rebuilds fresh native inventory and corpse instead of cloning live callbacks or deleting the source");
   Check(Calls("WorldEditor","ReviveCorpses").Any(m=>m.DeclaringType.Name=="CorpseRevival"&&m.Name=="Enqueue")&&Calls("WorldEditor","FinishMove").Any(m=>m.Name=="RestoreCorpsePhysics"),"corpse right-click revival uses transactional queue and movement restores physics on exit");
   var add=Calls("AiEquipmentEditor","AddWeapon");Check(add.Any(m=>m.Name=="Target")&&add.Any(m=>m.Name=="get_ContainedItem")&&add.Any(m=>m.DeclaringType.Name=="ItemManipulator"&&m.Name=="Add")&&!add.Any(m=>m.Name.Contains("Remove")),"AI weapon addition validates live target and empty slot, uses native compatibility and never removes an occupied weapon");
@@ -46,11 +46,13 @@ internal static class WorldEditorChecks {
  internal static void Run(){
   void Check(bool value,string reason){if(!value)throw new Exception(reason);}
   var defaults=EditorContextRules.Read(EditorContextRules.Default);
-  Check(defaults.Length==25&&defaults.Distinct().Count()==25,"all context actions have stable unique IDs");
-  Check(EditorContextRules.Read("pause,unknown,pause, resume ,").SequenceEqual(new[]{"pause","resume"}),"context settings ignore unknown and duplicate IDs");
-  Check(EditorContextRules.Toggle("pause,resume","pause")=="resume"&&EditorContextRules.Toggle("resume","pause")=="resume,pause","context toggles preserve order and permit empty menus");
-  Check(EditorContextRules.Toggle("pause","pause")==""&&EditorContextRules.Read("").Length==0,"all optional context actions can be hidden");
-  Check(EditorContextRules.Move("pause,resume","resume",-1)=="resume,pause"&&EditorContextRules.Move("pause,resume","pause",-1)=="pause,resume"&&EditorContextRules.Move("pause,resume","resume",1)=="pause,resume","context ordering honors list boundaries");
+  Check(defaults.Length==21&&defaults.Distinct().Count()==21,"all context actions have stable unique IDs");
+  Check(EditorContextRules.Read("copy,unknown,copy, move ,").SequenceEqual(new[]{"copy","move"}),"context settings ignore unknown and duplicate IDs");
+  Check(EditorContextRules.Toggle("copy,move","copy")=="move"&&EditorContextRules.Toggle("move","copy")=="move,copy","context toggles preserve order and permit empty menus");
+  Check(EditorContextRules.Toggle("copy","copy")==""&&EditorContextRules.Read("").Length==0,"all optional context actions can be hidden");
+  Check(EditorContextRules.Move("copy,move","move",-1)=="move,copy"&&EditorContextRules.Move("copy,move","copy",-1)=="copy,move"&&EditorContextRules.Move("copy,move","move",1)=="copy,move","context ordering honors list boundaries");
+  Check(EditorContextRules.Read("resume,copy,pause,invincible-off,invincible-on,ab-peace,ab-hostile,player-hostile,player-peace").SequenceEqual(new[]{"pause-toggle","copy","invincible-toggle","ab-toggle","player-toggle"}),"legacy pairs merge once at their first visible position");
+  Check(EditorContextRules.EnableNext(new[]{false,false})&&EditorContextRules.EnableNext(new[]{true,false})&&!EditorContextRules.EnableNext(new[]{true,true})&&!EditorContextRules.EnableNext(Array.Empty<bool>()),"toggles unify mixed selections and reverse uniform selections");
   Console.WriteLine("PASS configurable context action IDs, filtering, visibility and ordering boundaries");
   foreach(HotkeyModifiers required in Enumerable.Range(0,8).Select(i=>(HotkeyModifiers)i))foreach(HotkeyModifiers held in Enumerable.Range(0,8).Select(i=>(HotkeyModifiers)i)){
    Check(HotkeyRules.Matches(required,held)==(required==held),"hotkey chords require exact modifiers outside editor selection");

@@ -23,15 +23,20 @@ internal static partial class WorldEditor {
   selectionKind=kind;TargetAt(0);categoryMenu=false;contextTitle="场景编辑";bool selected=SelectionCount>0;
   var available=new System.Collections.Generic.Dictionary<string,ContextAction>();
   void Add(string id,bool enabled,Action execute,string shortcut="")=>available[id]=new(EditorContextRules.Options.First(o=>o.Id==id).Name,enabled,execute,shortcut);
+  void Toggle(string id,string name,bool enabled,Action execute)=>available[id]=new(name,enabled,execute);
   Add("create",true,BeginCreate,ShortcutLabel(EditorShortcut.Create));Add("move",selected,BeginMove,ShortcutLabel(EditorShortcut.Move));Add("copy",selected,Copy,ShortcutLabel(EditorShortcut.Copy));Add("paste",clipboard.Length>0,Paste,ShortcutLabel(EditorShortcut.Paste));Add("duplicate",selected,()=>ApplyShortcut(EditorShortcut.Duplicate,selectionKind),ShortcutLabel(EditorShortcut.Duplicate));
   if(kind==SelectionKind.Ai&&selected){
    Add("rename",true,BeginRename,ShortcutLabel(EditorShortcut.Rename));Add("kill",true,Kill,ShortcutLabel(EditorShortcut.Kill));
    if(SelectedActors().Any(AiFreePlacement.Pinned))Add("release-air",true,ReleaseAir,ShortcutLabel(EditorShortcut.ReleaseAir));
    Add("remove-weapons",!AiEquipmentRemoval.Busy&&!AiSceneEquipment.Busy,ContextRemoveWeapons);
-   Add("team-a",true,()=>ContextTeam(1));Add("team-b",true,()=>ContextTeam(2));Add("team-clear",true,()=>ContextTeam(0));Add("pause",true,()=>ContextPause(true));Add("resume",true,()=>ContextPause(false));
-   Add("ab-hostile",AiActorControl.EditorSidesReady,()=>ContextSides(true));Add("ab-peace",AiActorControl.EditorSidesReady,()=>ContextSides(false));
-   Add("player-peace",true,()=>ContextPlayerRelation(1));Add("player-hostile",true,()=>ContextPlayerRelation(2));Add("player-default",true,()=>ContextPlayerRelation(0));
-   Add("invincible-on",true,()=>ContextInvincible(true));Add("invincible-off",true,()=>ContextInvincible(false));Add("clear-effects",true,ContextClearEffects);
+   Add("team-a",true,()=>ContextTeam(1));Add("team-b",true,()=>ContextTeam(2));Add("team-clear",true,()=>ContextTeam(0));
+   var targets=SelectedActors();
+   bool pause=EditorContextRules.EnableNext(targets.Select(ContextPaused).ToArray()),invincible=EditorContextRules.EnableNext(targets.Select(p=>AiActorControl.EditorState(p).Invincible).ToArray()),peace=EditorContextRules.EnableNext(targets.Select(AiActorControl.EditorPlayerCeasefire).ToArray());
+   bool hostile=!AiActorControl.EditorSidesHostile();
+   Toggle("pause-toggle",pause?"暂停活动":"恢复活动",true,ContextTogglePause);
+   Toggle("ab-toggle",hostile?"A ↔ B 双方敌对":"A ↔ B 双方停战",AiActorControl.EditorSidesReady,ContextToggleSides);
+   Toggle("player-toggle",peace?"对玩家停战":"对玩家敌对",true,ContextTogglePlayerRelation);Add("player-default",true,()=>ContextPlayerRelation(0));
+   Toggle("invincible-toggle",invincible?"开启无敌":"关闭无敌",true,ContextToggleInvincible);Add("clear-effects",true,ContextClearEffects);
   }
   Add("delete",selected,Delete,ShortcutLabel(EditorShortcut.Delete));if(kind==SelectionKind.Corpses)Add("revive",selected,ReviveCorpses);else Add("properties",selected,OpenProperties,ShortcutLabel(EditorShortcut.Properties));
   var actions=EditorContextRules.Read(contextOrder.Value).Where(available.ContainsKey).Select(id=>available[id]).ToList();
