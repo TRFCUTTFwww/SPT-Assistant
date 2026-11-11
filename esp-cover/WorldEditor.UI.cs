@@ -14,7 +14,7 @@ internal static partial class WorldEditor {
  static readonly Dictionary<string,(string Max,string Current)> health=new();
  static ItemComponentEditor? componentEditor;
  internal static void DrawSettings(Rect rect){
-  InterfaceMenu.DrawEntry(enabled!,new Rect(rect.x,rect.y,rect.width,84));InterfaceMenu.DrawEntry(toggleEditor!,new Rect(rect.x,rect.y+94,rect.width,84));InterfaceMenu.DrawEntry(keepSingleSelection!,new Rect(rect.x,rect.y+188,rect.width,84));
+  InterfaceMenu.DrawEntry(enabled!,new Rect(rect.x,rect.y,rect.width,84));InterfaceMenu.DrawEntry(toggleEditor!,new Rect(rect.x,rect.y+94,rect.width,84));InterfaceMenu.DrawEntry(throughWallSelection!,new Rect(rect.x,rect.y+188,rect.width,84));
   InterfaceMenu.DrawEntry(moveInvincible!,new Rect(rect.x,rect.y+282,rect.width,84));
   DrawContextSettings(new Rect(rect.x,rect.y+376,rect.width,Math.Max(100,rect.height-376)));
  }
@@ -46,10 +46,10 @@ internal static partial class WorldEditor {
   query=InterfaceMenu.Field(new Rect(rect.x,rect.y+42,rect.width,30),query);
   float top=rect.y+82;
   if(createAi){if(InterfaceMenu.Button(new Rect(rect.x,top,rect.width,30),"难度："+new[]{"简单","普通","困难","不可能"}[difficulty]))difficulty=(difficulty+1)%4;top+=40;
-   var options=AiSpawnCatalog.Options.Where(o=>o.Enabled&&(query.Length==0||(o.Name+o.Role+o.Group).Contains(query,StringComparison.OrdinalIgnoreCase))).ToArray();var view=new Rect(rect.x,top,rect.width,Math.Max(40,rect.yMax-top-64));scroll=GUI.BeginScrollView(view,scroll,new Rect(0,0,rect.width-22,options.Length*40));for(int i=0;i<options.Length;i++){var option=options[i];if(InterfaceMenu.Button(new Rect(0,i*40,rect.width-28,32),option.Group+" · "+option.Name))Run(()=>{AiSpawnService.Enqueue(Current(),point,option,difficulty,1,new AiBirthPreset(0,100,false,false,false,0,0,Array.Empty<string>(),EBodyPart.LeftLeg,60,1),"场景编辑");CloseDialog();});}GUI.EndScrollView();
+   var options=AiSpawnCatalog.Options.Where(o=>o.Enabled&&(query.Length==0||(o.Name+o.Role+o.Group).Contains(query,StringComparison.OrdinalIgnoreCase))).ToArray();var view=new Rect(rect.x,top,rect.width,Math.Max(40,rect.yMax-top-64));scroll=GUI.BeginScrollView(view,scroll,new Rect(0,0,rect.width-22,options.Length*40));for(int i=0;i<options.Length;i++){var option=options[i];if(InterfaceMenu.Button(new Rect(0,i*40,rect.width-28,32),option.Group+" · "+option.Name))Run(()=>{AiSpawnService.Enqueue(Current(),point,option,difficulty,1,new AiBirthPreset(0,100,false,false,false,0,0,Array.Empty<string>(),EBodyPart.LeftLeg,60,1),"场景编辑");CompleteOperation();});}GUI.EndScrollView();
   }else{
    if(items.Length==0||lastQuery!=query){items=ItemSpawner.FindTemplates(query).Take(300).ToArray();lastQuery=query;}
-   var view=new Rect(rect.x,top,rect.width,Math.Max(40,rect.yMax-top-64));scroll=GUI.BeginScrollView(view,scroll,new Rect(0,0,rect.width-22,items.Length*40));for(int i=0;i<items.Length;i++){var option=items[i];if(InterfaceMenu.Button(new Rect(0,i*40,rect.width-28,32),option.Name))Run(()=>{var factory=Singleton<ItemFactory>.Instance;PlaceItem(factory.CreateItem(factory.NextId.ToString(),option.Id,null));CloseDialog();});}GUI.EndScrollView();
+   var view=new Rect(rect.x,top,rect.width,Math.Max(40,rect.yMax-top-64));scroll=GUI.BeginScrollView(view,scroll,new Rect(0,0,rect.width-22,items.Length*40));for(int i=0;i<items.Length;i++){var option=items[i];if(InterfaceMenu.Button(new Rect(0,i*40,rect.width-28,32),option.Name))Run(()=>{var factory=Singleton<ItemFactory>.Instance;PlaceItem(factory.CreateItem(factory.NextId.ToString(),option.Id,null));CompleteOperation();});}GUI.EndScrollView();
   }
   InterfaceMenu.Paragraph(new Rect(rect.x,rect.yMax-60,rect.width,60),createAi?AiSpawnService.Status:"显示前 300 项，请输入名称或模板 ID 缩小范围。",InterfaceMenu.Accent,12);
  }

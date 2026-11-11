@@ -19,7 +19,7 @@
 
 按右 Shift，打开 **开发工具 → 编辑模式**，启用默认关闭的开关，再关闭主面板。显示中心小十字准星，不显示常驻操作文字；Alt 鼠标操作或弹窗中隐藏准星。编辑时暂停自动瞄准、玩具枪自动开火和镭射眼，并拦截本地射击、瞄准及武器滚轮命令；可以移动和转动镜头。按住 Alt 或打开编辑窗口时拦截游戏镜头及移动输入，松开并释放鼠标后恢复。
 
-- **Alt + 左键框选**：按住左/右 Alt 显示鼠标，拖动左键选择当前画面内的多个 AI、散落物和尸体。按对象中心投影选取，排除镜头后方和屏幕外的中心点，允许穿墙选择；已选对象显示标记。Alt + 左键单击改为点选，空白单击或 Esc 清空；松开 Alt 恢复镜头，已选对象保留。
+- **Alt + 左键框选**：按住左/右 Alt 显示鼠标，拖动左键选择当前画面内的多个 AI、散落物和尸体。按对象中心投影选取，排除镜头后方和屏幕外的中心点，遮挡检查由“穿墙选中”开关控制；已选对象显示标记。Alt + 左键单击改为点选，空白单击或 Esc 清空；松开 Alt 恢复镜头，已选对象保留。
 - **混合选择**：右键先显示“AI / 物品 / 尸体”类别及数量，选类别后进入编辑菜单；操作只作用于该类别。单一类别选择直接进入编辑菜单。
 - **右键**：对着存活 AI、散落物品或空地打开场景菜单。有选区时编辑已选对象；没有选区时按准星点选。Alt 下菜单显示在鼠标旁，否则显示在准星旁；滚轮循环选择可用功能，左键确认进入，右键或 Esc 关闭，也支持鼠标指向和方向键/Enter。**创建**默认位于顶层第一项，可以搜索 AI 类型或物品名称/模板 ID，点击后在右键时记录的位置生成。AI 使用原生异步生成队列，需要有效导航地面；不是立即生成。
 - **移动**：对象跟随准星，滚轮调整距离（1～100 米）。左键放下；右键或 Esc 取消并回到原位置。单类多选支持整体移动，保留三维相对间距，选区中心跟随准星。AI 移动期间临时暂停；放下使用精确坐标，不再要求导航落点。无导航地面时固定在空中并保持暂停，避免掉落或尝试寻路；重新移到导航地面或执行“解除空中固定”后恢复原暂停状态。取消逐个恢复位置、原有空中固定及暂停/刚体状态，即使其中对象已消失也继续恢复其他对象。需要先解除模型动作锁定。
@@ -41,7 +41,9 @@
 
 原编辑器验证：EFT 48558 编译通过，127 组客户端 Probe 通过，新增框选方向/屏幕/深度/有限值边界、空中批量相对坐标、编辑/玩具枪路由与物理拦截检查，并保留物品树复制、ID 冲突/环/孤立节点拒绝、根地址脱离、组件及格位保留、距离限制和鼠标释放检查。游戏内移动、模型、拾取持久性及窗口层级需实测；编译成功不代表视觉已验证。
 
-**单选编辑后保留选中**：在 **开发工具 → 编辑模式** 设置，默认关闭。结束单个 AI 或物品的属性／重命名窗口后自动解除选择；打开后沿用保留选择的行为。多选和混合选区保持选择，便于连续编辑。
+操作完成后清空单选、多选和混合选择，移动放下或取消后也清空；属性和重命名窗口内仍可切换多个对象，关闭窗口时清空。右键菜单按桌面习惯，点击菜单外取消菜单和选中，鼠标移出本身不关闭；标题、底栏和禁用项目不会误触发之前高亮的操作。Alt 下空白单击也取消选中。
+
+**穿墙选中**：在 **开发工具 → 编辑模式** 设置，默认开启以延续之前行为。关闭后，点选和 Alt 框选均检查遮挡，适用于 AI、物品和尸体。
 
 ## English
 
@@ -53,11 +55,11 @@ Target: SPT 5.0 BE / EFT 1.3.0.1.48558. **Unstable; not broadly tested or visual
 
 Press Right Shift, open **Development tools → Editor mode**, enable the opt-in setting, then close the main panel. A small center crosshair is shown while persistent instruction text stays hidden. In Customize context menu, **Show both actions for mixed states** defaults to on: mixed selections show both explicit operations. Turn it off to show one action that first applies pause, invincibility or player ceasefire to all (hostility for A/B). Uniform selections always show one reverse operation. Aim assistance, automatic toy firing and laser eyes pause during editing. Local firing, aiming and weapon-wheel commands are blocked while camera and movement axes remain available. Holding Alt or opening an editor window captures camera/movement input; releasing Alt and mouse buttons restores it.
 
-**Keep single selection after editing** is available on the same settings page and defaults to off. Closing properties or rename for one AI/item clears its selection. Enable it to retain the target. Multiple and mixed selections remain selected for continued editing.
+Completed operations clear single, multiple and mixed selections, including movement placement/cancellation. Properties and rename retain their target navigation until the dialog closes. Clicking outside a context menu cancels it and clears selection; moving the pointer outside alone keeps it open. Mouse clicks activate only the pointed enabled row. Alt-clicking empty space also clears selection. **Select through walls** on the editor settings page defaults to on; disabling it checks occlusion for both point and marquee selection of AI, items and corpses.
 
 - **Alt + left drag** shows the cursor while either Alt key is held and selects multiple AI, loose items and corpses by their projected centers. Behind-camera and off-screen centers are excluded; walls do not block selection. Selection markers remain visible. Alt + left-click selects a single target; an empty click or Esc clears selection. Releasing Alt restores camera control and retains the selection.
 - **Mixed selection** first offers AI / Items / Corpses and their counts. Choose a category, then an editing action; actions affect only that category. A single category opens the editing menu directly.
-- **Right-click** an AI, loose item or empty ground to open the menu. An existing selection takes priority over crosshair picking. The compact menu appears beside the mouse while Alt is held, otherwise beside the crosshair. Scroll to cycle through enabled actions, left-click to confirm, or right-click/Esc to close. Pointer selection and arrow keys/Enter also work. **Create** is always the first top-level action. Search AI roles or item names/template IDs and click a result to spawn at the recorded location. AI uses the asynchronous native queue and requires walkable navigation ground.
+- **Right-click** an AI, loose item or empty ground to open the menu. An existing selection takes priority over crosshair picking. The compact menu appears beside the mouse while Alt is held, otherwise beside the crosshair. Scroll to cycle through enabled actions, click an enabled row to confirm, or right-click/Esc to close. Pointer selection and arrow keys/Enter also work. **Create** is first by default and can be reordered. Search AI roles or item names/template IDs and click a result to spawn at the recorded location. AI uses the asynchronous native queue and requires walkable navigation ground.
 - **Move** makes the object follow the crosshair. Scroll to adjust distance from 1 to 100 meters; left-click to place, right-click or Esc to cancel. Cancellation restores its original position. Single-category batches preserve relative XYZ spacing and follow the crosshair by their centroid. AI pauses during dragging. Final placement uses exact coordinates without requiring navigation: points away from navigation are anchored in the air with AI/physics movement paused. Moving onto navigation or choosing Release air anchor restores the prior pause state. Cancellation restores each surviving object and its original anchor/pause/rigidbody state even if another target has disappeared. Release pose locks before moving AI.
 - **Copy / Paste** creates independent snapshots of the selected category and preserves relative spacing when pasting. Loose item copies preserve the complete contents tree, attachments, stacks and component state with fresh IDs. AI copies use scene templates and fresh profiles, preserving worn equipment, weapon attachments, appearance, health and scene settings. The existing AI template limitation applies: items inside backpack grids are not copied.
 - **Rename / Kill** apply only to AI. Rename uses a small 380 × 174 dialog that shrinks on smaller screens. Multi-selection adds a small Previous/Next target row; edits apply to one target and leave the window open. Switching targets discards unapplied input. Names must contain 1–64 characters. Kill acts on all selected AI using native death handling and can still be blocked by invincibility.
@@ -76,7 +78,7 @@ Validation: EFT 48558 build and 127 client Probe groups passed, including revers
 
 ## 2.1 覆盖更新 / Replacement build
 
-- 显示中心编辑准星、隐藏常驻操作说明，保留选中标记、拖框和操作弹窗。点选与 Alt 框选可以穿墙；屏幕后方及屏幕外对象仍排除，点选优先最近的目标。
+- 显示中心编辑准星、隐藏常驻操作说明，保留选中标记、拖框和操作弹窗。点选与 Alt 框选的穿墙行为可开关；屏幕后方及屏幕外对象仍排除，点选优先最近的目标。
 - AI 属性 → 装备 → 武器：空槽可添加第一主武器、第二主武器或手枪；近战页可添加近战武器。自动装配模板默认配件，原生槽位规则检查兼容性，已有武器先删除或用换枪功能替换。
 - AI 属性 → 战斗：标记 A 队、B 队或清除标记，接入全局控制的关系双方选择；标记本身不改变原生分组或自动开战。
 - 尸体可右键复活、复制、粘贴、移动、删除，也可框选并使用既有复制/粘贴/移动/删除热键。混选先选择 AI、物品或尸体类别。移动取消恢复姿态与物理状态；复制生成独立库存 ID，不改变源尸体。复制体可继承已有的 AI 复活资料，玩家尸体和缺失本局原始资料的尸体不能复活。

@@ -4,6 +4,7 @@ using System.Linq;
 using EFT;
 using EFT.Interactive;
 using Il2CppInterop.Runtime.InteropTypes;
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using UnityEngine;
 namespace LocalSpt5Esp;
 internal static partial class WorldEditor {
@@ -13,6 +14,7 @@ internal static partial class WorldEditor {
  static readonly List<CorpseReference> selectedCorpses=new();
  static SelectionKind selectionKind;static int selectionIndex;
  static bool altCursor,dragging;static Vector2 dragStart,dragEnd;
+ static readonly Il2CppStructArray<RaycastHit> selectionHits=new(512);
  static bool HasSelection=>selectedActors.Count+selectedItems.Count+selectedCorpses.Count>0;
  static int SelectionCount=>selectionKind==SelectionKind.Ai?selectedActors.Count:selectionKind==SelectionKind.Items?selectedItems.Count:selectedCorpses.Count;
  static bool AltDown=>Input.GetKey(KeyCode.LeftAlt)||Input.GetKey(KeyCode.RightAlt);
@@ -47,14 +49,15 @@ internal static partial class WorldEditor {
   var start=dragStart;var end=dragEnd;
   if((end-start).sqrMagnitude<25){SelectAt(current,PointerRay(true));return;}
   ClearSelection();OverlayProjection.BeginGui();var box=EditorSelectionRules.Box(start.x,start.y,end.x,end.y);var view=View;
-  var all=current.AllAlivePlayersList;if(all!=null)for(int i=0;i<all.Count;i++){var value=all[i];if(Editable(value)&&InBox(view,ActorSelectionPoint(value),box))selectedActors.Add(new(current,value));}
-  for(int i=0;i<current.LootItems.Count;i++){var value=current.LootItems.GetByIndex(i);if(value?.Item==null||value.TryCast<Corpse>()!=null||!value.gameObject.activeInHierarchy)continue;var center=value.BoundCollider?.bounds.center??value.transform.position;if(InBox(view,center,box))selectedItems.Add(new(current,value));}
-  foreach(var body in CorpseReference.Read(current))if(InBox(view,CorpseDisplay.Position(body),box))selectedCorpses.Add(new(current,body));
+  var all=current.AllAlivePlayersList;if(all!=null)for(int i=0;i<all.Count;i++){var value=all[i];if(Editable(value)&&InBox(view,ActorSelectionPoint(value),box)&&SelectionVisible(current,ActorSelectionPoint(value),value.transform))selectedActors.Add(new(current,value));}
+  for(int i=0;i<current.LootItems.Count;i++){var value=current.LootItems.GetByIndex(i);if(value?.Item==null||value.TryCast<Corpse>()!=null||!value.gameObject.activeInHierarchy)continue;var center=value.BoundCollider?.bounds.center??value.transform.position;if(InBox(view,center,box)&&SelectionVisible(current,center,value.transform))selectedItems.Add(new(current,value));}
+  foreach(var body in CorpseReference.Read(current))if(InBox(view,CorpseDisplay.Position(body),box)&&SelectionVisible(current,CorpseDisplay.Position(body),body.transform))selectedCorpses.Add(new(current,body));
   selectionKind=FirstSelectionKind;TargetAt(0);
   notice=I18n.Text("已选择")+" AI ×"+selectedActors.Count+" / "+I18n.Text("物品")+" ×"+selectedItems.Count;
  }
  static void SelectAt(GameWorld current,Ray ray){
-  ClearSelection();ReadPoint(current,ray);var contact=CrosshairProbe.Read(current,current.MainPlayer,ray,100,true);
+  ClearSelection();ReadPoint(current,ray);var contact=CrosshairProbe.Read(current,current.MainPlayer,ray,100,throughWallSelection?.Value==true);
+  if(contact.State==CrosshairState.Overflow)throw new ArgumentException("目标过于复杂，请换一个位置重新选择。");
   float nearest=contact.State==CrosshairState.Empty?100:contact.Distance;
   if(Editable(contact.Actor)){actor=new(current,contact.Actor!);point=contact.Point;distance=contact.Distance;}
   foreach(var body in CorpseReference.Read(current)){
@@ -65,6 +68,14 @@ internal static partial class WorldEditor {
   for(int i=0;i<current.LootItems.Count;i++){var value=current.LootItems.GetByIndex(i);if(value?.Item==null||value.TryCast<Corpse>()!=null||!value.gameObject.activeInHierarchy)continue;var collider=value.BoundCollider;if(collider==null||!collider.enabled||!collider.Raycast(ray,out var hit,nearest))continue;nearest=hit.distance;loot=new(current,value);actor=null;selectedCorpses.Clear();point=hit.point;distance=hit.distance;}
   if(actor!=null)selectedActors.Add(actor);if(loot!=null)selectedItems.Add(loot);selectionKind=FirstSelectionKind;TargetAt(0);
   current.MainPlayer.HandsController?.TryCast<Player.FirearmController>()?.SetTriggerPressed(false);
+ }
+ static bool SelectionVisible(GameWorld current,Vector3 position,Transform target){
+  if(throughWallSelection?.Value==true)return true;
+  Vector3 origin=View.transform.position,delta=position-origin;float length=delta.magnitude;if(length<=.01f)return true;
+  int mask=EFTHardSettings.Instance!=null?(int)EFTHardSettings.Instance.GunshotMask:~0;if(mask==0)mask=~0;
+  int count=Physics.RaycastNonAlloc(origin,delta/length,selectionHits,length,mask,QueryTriggerInteraction.Ignore);if(count>=selectionHits.Length)return false;
+  for(int i=0;i<count;i++){var collider=selectionHits[i].collider;if(collider==null||collider.transform.IsChildOf(target)||CrosshairProbe.LocalCollider(current,current.MainPlayer,collider))continue;return false;}
+  return true;
  }
  static void DrawSelection(){
   OverlayProjection.BeginGui();

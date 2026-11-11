@@ -43,14 +43,17 @@ internal static partial class WorldEditor {
  }
  static void ContextInput(){
   if(Time.frameCount<=contextFrame)return;
-  if(Input.GetMouseButtonDown(1)){if(!categoryMenu&&SelectionKinds>1)OpenContext();else CloseDialog();return;}
+  var bounds=ContextBounds;var pointer=MousePosition;bool left=Input.GetMouseButtonDown(0),right=Input.GetMouseButtonDown(1);
+  if((left||right)&&!bounds.Contains(pointer)){CancelContext();return;}
+  if(right){if(!categoryMenu&&SelectionKinds>1)OpenContext();else CancelContext();return;}
   var available=Array.ConvertAll(contextActions,a=>a.Enabled);float wheel=Input.mouseScrollDelta.y;
   if(wheel!=0){contextChoice=EditorMenuRules.Next(available,contextChoice,wheel>0?-1:1);contextPointer=MousePosition;}
   else if(Input.GetKeyDown(KeyCode.DownArrow))contextChoice=EditorMenuRules.Next(available,contextChoice,1);
   else if(Input.GetKeyDown(KeyCode.UpArrow))contextChoice=EditorMenuRules.Next(available,contextChoice,-1);
-  else if((MousePosition-contextPointer).sqrMagnitude>1){contextPointer=MousePosition;var bounds=ContextBounds;int row=(int)((contextPointer.y-bounds.y-28)/28);if(contextPointer.y>=bounds.y+28&&row>=0&&row<ContextVisibleRows&&contextPointer.x>=bounds.x&&contextPointer.x<=bounds.xMax&&contextActions[row+contextTop].Enabled)contextChoice=row+contextTop;}
+  else if((pointer-contextPointer).sqrMagnitude>1){contextPointer=pointer;contextChoice=EditorMenuRules.PointerRow(new(bounds.x,bounds.y,bounds.width,bounds.height),pointer.x,pointer.y,ContextVisibleRows,contextTop,available);}
   if(contextChoice>=0){if(contextChoice<contextTop)contextTop=contextChoice;else if(contextChoice>=contextTop+ContextVisibleRows)contextTop=contextChoice-ContextVisibleRows+1;}
-  if((Input.GetMouseButtonDown(0)||Input.GetKeyDown(KeyCode.Return))&&contextChoice>=0&&contextChoice<contextActions.Length&&contextActions[contextChoice].Enabled)Run(contextActions[contextChoice].Execute);
+  if(left){int row=EditorMenuRules.PointerRow(new(bounds.x,bounds.y,bounds.width,bounds.height),pointer.x,pointer.y,ContextVisibleRows,contextTop,available);if(row>=0)Run(contextActions[row].Execute);return;}
+  if(Input.GetKeyDown(KeyCode.Return)&&contextChoice>=0&&contextChoice<contextActions.Length&&contextActions[contextChoice].Enabled)Run(contextActions[contextChoice].Execute);
  }
  static void DrawContext(){
   var rect=ContextBounds;InterfaceMenu.Surface(rect,InterfaceMenu.Background,3);InterfaceMenu.Surface(new Rect(rect.x,rect.y,rect.width,25),Color.Lerp(InterfaceMenu.Background,InterfaceMenu.Text,.07f),3);

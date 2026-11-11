@@ -25,12 +25,12 @@ internal static partial class WorldEditor {
    try{GUI.enabled=was&&index>0;if(InterfaceMenu.Button(new(w-82,y,36,32),"↑"))contextOrder.Value=EditorContextRules.Move(contextOrder.Value,id,-1);GUI.enabled=was&&on&&index<order.Length-1;if(InterfaceMenu.Button(new(w-40,y,36,32),"↓"))contextOrder.Value=EditorContextRules.Move(contextOrder.Value,id,1);}finally{GUI.enabled=was;}
   }}finally{GUI.EndScrollView();}
  }
- static void ContextRemoveWeapons(){var targets=SelectedActors();AiEquipmentRemoval.RemoveWeapons(Current(),targets);notice=AiEquipmentRemoval.Status;CloseDialog();}
+ static void ContextRemoveWeapons(){var targets=SelectedActors();AiEquipmentRemoval.RemoveWeapons(Current(),targets);notice=AiEquipmentRemoval.Status;CompleteOperation();}
  static bool ContextPaused(EFT.Player target)=>AiTestControl.IsPaused(target)||AiFreePlacement.Pinned(target)||ModelPoseLock.Locked(target)||SceneTemplates.IsStaging(target);
- static void ContextTeam(int side){var current=Current();var targets=SelectedActors();foreach(var target in targets)AiActorControl.MarkEditorSide(current,target,side);FeatureToasts.Show(side==0?"已清除队伍标记。":side==1?"已标记为 A 方。":"已标记为 B 方。");CloseDialog();}
- static void ContextPause(bool value){var targets=SelectedActors();if(value){AiTestControl.SetPaused(targets,true);FeatureToasts.Show("所选 AI 已暂停");}else AiTestControl.ResumeActors(targets);CloseDialog();}
- static void ContextSides(bool hostile){AiActorControl.CommandEditorSides(hostile);CloseDialog();}
- static void ContextPlayerRelation(int mode){var current=Current();foreach(var target in SelectedActors())AiActorControl.CommandRelations(current,target,mode,null);FeatureToasts.Show(mode==0?"已恢复所选 AI 对玩家的默认关系。":mode==1?"所选 AI 已对玩家停战。":"所选 AI 已对玩家敌对。");CloseDialog();}
- static void ContextInvincible(bool value){var current=Current();foreach(var target in SelectedActors()){var state=AiActorControl.EditorState(target);AiActorControl.ApplyEditorState(current,target,value,state.Damage);}FeatureToasts.Show(value?"所选 AI 已开启无敌。":"所选 AI 已关闭无敌。");CloseDialog();}
- static void ContextClearEffects(){foreach(var target in SelectedActors())CharacterBuffs.ClearBirthEffects(target);FeatureToasts.Show("已清除所选 AI 可移除的异常状态。");CloseDialog();}
+ static void ContextTeam(int side){var current=Current();var targets=SelectedActors();foreach(var target in targets)AiActorControl.MarkEditorSide(current,target,side);FeatureToasts.Show(side==0?"已清除队伍标记。":side==1?"已标记为 A 方。":"已标记为 B 方。");CompleteOperation();}
+ static void ContextPause(bool value){var targets=SelectedActors();if(value){AiTestControl.SetPaused(targets,true);FeatureToasts.Show("所选 AI 已暂停");}else AiTestControl.ResumeActors(targets);CompleteOperation();}
+ static void ContextSides(bool hostile){AiActorControl.CommandEditorSides(hostile);CompleteOperation();}
+ static void ContextPlayerRelation(int mode){var current=Current();foreach(var target in SelectedActors())AiActorControl.CommandRelations(current,target,mode,null);FeatureToasts.Show(mode==0?"已恢复所选 AI 对玩家的默认关系。":mode==1?"所选 AI 已对玩家停战。":"所选 AI 已对玩家敌对。");CompleteOperation();}
+ static void ContextInvincible(bool value){var current=Current();foreach(var target in SelectedActors()){var state=AiActorControl.EditorState(target);AiActorControl.ApplyEditorState(current,target,value,state.Damage);}FeatureToasts.Show(value?"所选 AI 已开启无敌。":"所选 AI 已关闭无敌。");CompleteOperation();}
+ static void ContextClearEffects(){foreach(var target in SelectedActors())CharacterBuffs.ClearBirthEffects(target);FeatureToasts.Show("已清除所选 AI 可移除的异常状态。");CompleteOperation();}
 }

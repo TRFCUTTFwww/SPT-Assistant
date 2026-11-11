@@ -2,6 +2,11 @@ using System;
 namespace LocalSpt5Esp;
 internal readonly record struct EditorPopupBounds(float X,float Y,float Width,float Height);
 internal static class EditorMenuRules {
+ internal static int PointerRow(EditorPopupBounds bounds,float x,float y,int visible,int top,bool[] enabled){
+  if(!float.IsFinite(x)||!float.IsFinite(y)||x<bounds.X+4||x>=bounds.X+bounds.Width-4||y<bounds.Y+28)return -1;
+  float offset=y-bounds.Y-28;int row=(int)(offset/28),index=top+row;
+  return row>=0&&row<visible&&offset-row*28<26&&index>=0&&index<enabled.Length&&enabled[index]?index:-1;
+ }
  internal static int Next(bool[] available,int selected,int direction){
   int count=available.Length;if(count==0)return -1;
   if(direction==0&&selected>=0&&selected<count&&available[selected])return selected;

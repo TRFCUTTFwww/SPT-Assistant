@@ -44,7 +44,7 @@ internal static partial class WorldEditor {
    foreach(var value in moveActors){var goal=positions[i++];try{var target=value.Reference.Resolve();if(cancel){target.Teleport(value.Origin,true);AiTestControl.SetPaused(new[]{target},value.Pinned||value.Paused);}else AiFreePlacement.Place(Current(),target,goal,value.Paused);}catch(Exception e){errors.Add(e.Message);try{var target=value.Reference.Resolve();target.Teleport(value.Origin,true);AiTestControl.SetPaused(new[]{target},value.Pinned||value.Paused);}catch{}}}
    foreach(var value in moveItems){try{i++;if(cancel){var target=value.Reference.Resolve();target.transform.SetPositionAndRotation(value.Origin,value.Rotation);if(value.Body!=null)value.Body.position=value.Origin;}}catch(Exception e){errors.Add(e.Message);}finally{if(value.Body!=null)try{value.Body.isKinematic=value.Kinematic;value.Body.useGravity=value.Gravity;if(!value.Kinematic){value.Body.velocity=cancel?value.Velocity:Vector3.zero;value.Body.angularVelocity=cancel?value.Angular:Vector3.zero;}}catch(Exception e){errors.Add(e.Message);}}}
   foreach(var value in moveCorpses){try{MoveCorpse(value,cancel?value.Origin:positions[i]);}catch(Exception e){errors.Add(e.Message);}finally{RestoreCorpsePhysics(value,cancel);}i++;}
-  }finally{moving=false;moveActors.Clear();moveItems.Clear();moveCorpses.Clear();moveOrigins=Array.Empty<Vector3>();gate.SetOpen(false,Time.frameCount);}
+  }finally{moving=false;moveActors.Clear();moveItems.Clear();moveCorpses.Clear();moveOrigins=Array.Empty<Vector3>();gate.SetOpen(false,Time.frameCount);ClearSelection();}
   if(errors.Count>0)throw new ArgumentException(string.Join("；",errors.Distinct().Take(3)));
  }
  static void Copy(){
@@ -52,20 +52,20 @@ internal static partial class WorldEditor {
   if(selectionKind==SelectionKind.Ai)next=SelectedActors().Select(target=>{var snapshot=SceneTemplates.Capture(target,target.Profile.Nickname);return new ClipboardEntry(JsonSerializer.Deserialize<SceneTemplate>(JsonSerializer.Serialize(snapshot))!,null,target.Position);}).ToArray();
   else if(selectionKind==SelectionKind.Corpses)next=selectedCorpses.Select(reference=>{var target=reference.Resolve();return new ClipboardEntry(null,null,CorpseDisplay.Position(target),CaptureCorpse(target));}).ToArray();
   else next=selectedItems.Select(reference=>{var target=reference.Resolve();return new ClipboardEntry(null,CaptureItem(target.Item),target.transform.position);}).ToArray();
-  if(next.Length==0)throw new ArgumentException("请先选择对象。");clipboard=next;notice=I18n.Text("已复制独立快照。")+" ×"+next.Length;CloseDialog();
+  if(next.Length==0)throw new ArgumentException("请先选择对象。");clipboard=next;notice=I18n.Text("已复制独立快照。")+" ×"+next.Length;CompleteOperation();
  }
  static void Paste(){
   if(clipboard.Length==0)throw new ArgumentException("剪贴板为空。");var positions=Translated(clipboard.Select(v=>v.Position).ToArray(),point);var current=Current();int count=0;
   try{for(int i=0;i<clipboard.Length;i++){var value=clipboard[i];if(value.Ai!=null)SceneTemplates.Spawn(current,positions[i],value.Ai with{Id=Guid.NewGuid().ToString("N"),Count=1});else if(value.Corpse!=null)PlaceCorpse(value.Corpse,positions[i]);else if(value.Item!=null)PlaceItem(CloneItem(value.Item),positions[i]);count++;}}
   catch(Exception e){throw new ArgumentException(I18n.Text("已提交")+" "+count+" / "+clipboard.Length+"；"+e.Message);}
-  CloseDialog();
+  CompleteOperation();
  }
  static void Delete(){
   if(selectionKind==SelectionKind.Ai)AiActorControl.Delete(SelectedActors());
   else if(selectionKind==SelectionKind.Corpses){var bodies=selectedCorpses.Select(r=>r.Resolve()).ToArray();foreach(var body in bodies)Current().DestroyLoot(body.Cast<IKillable>());selectedCorpses.Clear();CorpseDisplay.Reset();RaidLoot.Invalidate();}
   else{var items=selectedItems.Select(r=>r.Resolve()).ToArray();var errors=new List<string>();foreach(var value in items)try{Current().DestroyLoot(value.Cast<IKillable>());}catch(Exception e){errors.Add(e.Message);}if(errors.Count>0)throw new ArgumentException(string.Join("；",errors.Distinct()));}
-  if(selectionKind==SelectionKind.Ai)selectedActors.Clear();else selectedItems.Clear();actor=null;loot=null;PruneSelection();CloseDialog();
+  if(selectionKind==SelectionKind.Ai)selectedActors.Clear();else selectedItems.Clear();actor=null;loot=null;PruneSelection();CompleteOperation();
  }
- static void Kill(){var targets=SelectedActors();var errors=new List<string>();foreach(var target in targets)try{target.ActiveHealthController.Kill(EDamageType.Bullet);if(target.HealthController.IsAlive)throw new ArgumentException("AI 仍然存活，请检查无敌或伤害保护设置。");}catch(Exception e){errors.Add(e.Message);}PruneSelection();if(errors.Count>0)throw new ArgumentException(string.Join("；",errors.Distinct()));CloseDialog();}
- static void ReleaseAir(){foreach(var target in SelectedActors())AiFreePlacement.Release(target);CloseDialog();}
+ static void Kill(){var targets=SelectedActors();var errors=new List<string>();foreach(var target in targets)try{target.ActiveHealthController.Kill(EDamageType.Bullet);if(target.HealthController.IsAlive)throw new ArgumentException("AI 仍然存活，请检查无敌或伤害保护设置。");}catch(Exception e){errors.Add(e.Message);}PruneSelection();if(errors.Count>0)throw new ArgumentException(string.Join("；",errors.Distinct()));CompleteOperation();}
+ static void ReleaseAir(){foreach(var target in SelectedActors())AiFreePlacement.Release(target);CompleteOperation();}
 }

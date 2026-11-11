@@ -49,5 +49,5 @@ internal static partial class WorldEditor {
   foreach(var value in move.Bodies)if(value.Body!=null){value.Body.position=value.Body.transform.position;value.Body.rotation=value.Body.transform.rotation;}
  }
  static void RestoreCorpsePhysics(CorpseMove move,bool cancel){foreach(var value in move.Bodies)if(value.Body!=null)try{value.Body.isKinematic=value.Kinematic;value.Body.useGravity=value.Gravity;if(!value.Kinematic){value.Body.velocity=cancel?value.Velocity:Vector3.zero;value.Body.angularVelocity=cancel?value.Angular:Vector3.zero;}}catch(Exception error){Plugin.Self.Log.LogWarning("Editor corpse physics: "+error.Message);}}
- static void ReviveCorpses(){var current=Current();var references=selectedCorpses.ToArray();foreach(var reference in references)reference.Resolve();foreach(var reference in references)CorpseRevival.Enqueue(current,reference);CloseDialog();}
+ static void ReviveCorpses(){var current=Current();var references=selectedCorpses.ToArray();foreach(var reference in references)reference.Resolve();foreach(var reference in references)CorpseRevival.Enqueue(current,reference);CompleteOperation();}
 }
