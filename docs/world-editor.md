@@ -19,9 +19,11 @@
 
 玩具枪 **选择／传送 AI** 同样使用精确坐标：先命中 AI 选中，再命中目标位置（包括墙面等无导航位置），整组保留间距，无地面时固定在空中。仍需真实弹丸命中；对着空白天空射击不会生成传送事件。AI 的创建和粘贴仍使用异步原生生成与原有导航要求。
 
+装备页按宽度换行显示槽位；短窗口内装备、武器与储物子页采用裁切和整页滚动，底部操作不会覆盖参数区。
+
 布局编辑的 **完成并返回 / 恢复默认位置** 工具栏在所有布局预览框之后绘制，预览框不能截获工具栏区域的点击。
 
-验证：EFT 48558 编译通过，126 组客户端 Probe 通过，新增框选方向/屏幕/深度/有限值边界、空中批量相对坐标、编辑/玩具枪路由与物理拦截检查，并保留物品树复制、ID 冲突/环/孤立节点拒绝、根地址脱离、组件及格位保留、距离限制和鼠标释放检查。游戏内移动、模型、拾取持久性及窗口层级需实测；编译成功不代表视觉已验证。
+验证：EFT 48558 编译通过，127 组客户端 Probe 通过，新增框选方向/屏幕/深度/有限值边界、空中批量相对坐标、编辑/玩具枪路由与物理拦截检查，并保留物品树复制、ID 冲突/环/孤立节点拒绝、根地址脱离、组件及格位保留、距离限制和鼠标释放检查。游戏内移动、模型、拾取持久性及窗口层级需实测；编译成功不代表视觉已验证。
 
 ## English
 
@@ -42,6 +44,8 @@ Only locally controlled living AI can be edited; players, teammates and BTR shoo
 
 Toy **Select / teleport AI** uses the same exact-coordinate placement. Hit AI to select it, then hit a destination, including walls or other points without navigation. Groups retain relative spacing and air destinations stay anchored. A real projectile impact is still required; firing into an empty sky does not trigger teleportation. Creating/pasting AI retains the asynchronous native spawn/navigation requirements.
 
+Equipment slots wrap by available width. In short windows, equipment/weapon/storage subpages are clipped and scroll as a whole so action controls do not overlap parameter fields.
+
 The layout **Finish and return / Reset positions** toolbar draws after all layout previews, and preview hit tests exclude its bounds.
 
-Validation: EFT 48558 build and 126 client Probe groups passed, including reverse marquee dragging, screen/depth/finite boundaries, airborne batch offsets and free-placement/physics routing, alongside nested item cloning, ID collision/cycle/orphan rejection, root detachment, component/grid preservation, distance bounds and mouse-release gating. In-raid movement, visuals, pickup persistence and window stacking still require manual verification.
+Validation: EFT 48558 build and 127 client Probe groups passed, including reverse marquee dragging, screen/depth/finite boundaries, airborne batch offsets and free-placement/physics routing, alongside nested item cloning, ID collision/cycle/orphan rejection, root detachment, component/grid preservation, distance bounds and mouse-release gating. In-raid movement, visuals, pickup persistence and window stacking still require manual verification.

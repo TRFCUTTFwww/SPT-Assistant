@@ -24,6 +24,17 @@ internal static class WorldEditorChecks {
  }
  internal static void Run(){
   void Check(bool value,string reason){if(!value)throw new Exception(reason);}
+  foreach(float width in new[]{240f,432f,440f,600f,824f,872f,890f,1280f})foreach(float height in new[]{160f,280f,412f,560f,760f,1080f})foreach(bool embedded in new[]{false,true}){
+   var frame=AiEditorLayout.Frame(width,height,"equipment",embedded);float header=AiEditorLayout.EquipmentHeader(frame.Width,embedded);
+   // Helmet plus removable attachment strip is the tallest branch before fields.
+   float fieldsTop=header+44+48+78+48,footerTop=frame.Height-124;
+   Check(fieldsTop+120<=footerTop,"equipment parameters retain their viewport without intersecting apply/reset/notice controls");
+   Check(frame.Width>=432&&frame.Height>=height&&(frame.Scroll||frame.Width<=width&&frame.Height<=height),"compact frames scroll rather than drawing outside the parent window");
+   int columns=AiEditorLayout.EquipmentColumns(frame.Width);Check((frame.Width-8*(columns-1))/columns>=100,"equipment tabs keep enough width for readable labels");
+  }
+  foreach(string page in new[]{"weapon","storage"})foreach(float height in new[]{160f,300f,420f,900f}){var frame=AiEditorLayout.Frame(824,height,page);Check(frame.Height>=(page=="weapon"?620:600)&&frame.Scroll==(height<frame.Height),"weapon and storage subpages preserve room for their nested fields and actions");}
+  Check(AiEditorLayout.Frame(824,412,"equipment",true).Scroll&&!AiEditorLayout.Frame(1280,900,"equipment").Scroll,"embedded raid editor scrolls while full standalone panels keep their normal layout");
+  Console.WriteLine("PASS AI equipment slot wrapping, short embedded viewport/footer separation and bounded weapon/storage subpages");
   void Reject(string text,string root){try{int id=100;EditorItemRules.Remap(text,root,()=> (++id).ToString("x24"),out _);}catch(ArgumentException){return;}throw new Exception("Invalid item tree was accepted.");}
   const string root="000000000000000000000001",tpl="5449016a4bdc2d6f028b456f";
   var source=new JsonArray();

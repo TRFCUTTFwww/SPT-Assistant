@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — AI equipment layout / AI 装备排版修复
+
+- 修复 AI 属性内嵌装备编辑页的参数区与底部按钮重叠；装备槽按宽度换行，移除内嵌模式多余标题留白，高度不足时提供整页滚动与边界裁切。
+- 武器、储物子页同样限制在所属区域内，短窗口可滚动访问底部操作；切换目标重置整页滚动位置。
+- Fix overlapping parameter/action regions in embedded AI equipment editing. Wrap slot buttons by available width, remove redundant embedded header spacing, and provide clipped scrollable equipment, weapon and storage pages in short windows.
+- Validation: EFT 48558 build and 127 Probe groups passed, including layout bounds across compact/full widths and heights. In-game visual verification remains manual.
+
 ## Unreleased — Marquee selection and air placement / 框选与空中放置
 
 - 编辑模式按住 Alt 显示鼠标，左键点选/拖框多选，提供投影标记与数量；混选时右键先选 AI/物品类别，再进入滚轮编辑菜单。
