@@ -153,8 +153,8 @@ internal class Plugin {
   if(!RaidClock.Active)return false;if(WorldEditor.ProtectMoving(h.Player)||AiActorControl.IndividuallyProtected(h))return true;if(!Self.AIGod.Value)return false;var owner=h.Player;return ProtectionRules.Protect(health.Pointer.ToInt64(),h.Pointer.ToInt64(),Self.God.Value,Self.AIGod.Value,owner?.AIData?.BotOwner!=null,owner==null||owner.Pointer==local.Pointer||owner.ProfileId==local.ProfileId);
  }catch{return false;}}
  internal static bool DamageBlocked(ActiveHealthController health)=>Protected(health);
- static bool BlockDamage(ActiveHealthController __instance,ref float __1,EFT.Ballistics.DamageInfo __2,ref float __result){if(Protected(__instance)){__result=0;return false;}try{return AiActorControl.ScaleDamage(__instance,__2,ref __1,ref __result);}catch(Exception e){Self.Error(e);return true;}}
- static bool BlockDeath(ActiveHealthController __instance)=>!Protected(__instance);
+ static bool BlockDamage(ActiveHealthController __instance,ref float __1,EFT.Ballistics.DamageInfo __2,ref float __result){if(Protected(__instance)||__2!=null&&MiscPanel.SniperDamage(__instance,__2.DamageType)){__result=0;return false;}try{return AiActorControl.ScaleDamage(__instance,__2!,ref __1,ref __result);}catch(Exception e){Self.Error(e);return true;}}
+ static bool BlockDeath(ActiveHealthController __instance,EDamageType __0)=>!Protected(__instance)&&!MiscPanel.SniperDamage(__instance,__0);
  void PatchAI(Type type,string method,string prefix){
   try{
    var target=type.GetMethod(method)??throw new MissingMethodException(type.FullName,method);
@@ -164,7 +164,7 @@ internal class Plugin {
  }
  internal static bool Hidden(IPlayer player){
   try{
-   if(!Self.IgnoreAI.Value||player==null)return false;
+   if(AiActorControl.HiddenFromAi(player))return true;if(!Self.IgnoreAI.Value||player==null)return false;
    var world=Singleton<GameWorld>.Instance;var local=world!=null?world.MainPlayer:null;
    return local!=null&&local.IsYourPlayer&&player.ProfileId==local.ProfileId;
   }catch{return false;}

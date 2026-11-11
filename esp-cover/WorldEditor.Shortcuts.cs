@@ -61,7 +61,7 @@ internal static partial class WorldEditor {
    case EditorShortcut.Duplicate:Copy();Paste();break;
    case EditorShortcut.Delete:Delete();break;
    case EditorShortcut.Move:BeginMove();break;
-   case EditorShortcut.Properties:if(kind!=SelectionKind.Corpses)OpenProperties();break;
+   case EditorShortcut.Properties:if(kind is SelectionKind.Ai or SelectionKind.Items)OpenProperties();break;
    case EditorShortcut.Rename:if(kind==SelectionKind.Ai)BeginRename();else FeatureToasts.Show("仅支持 AI。");break;
    case EditorShortcut.Kill:if(kind==SelectionKind.Ai)Kill();else FeatureToasts.Show("仅支持 AI。");break;
    case EditorShortcut.ReleaseAir:if(kind==SelectionKind.Ai)ReleaseAir();else FeatureToasts.Show("仅支持 AI。");break;

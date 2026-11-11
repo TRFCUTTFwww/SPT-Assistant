@@ -29,6 +29,8 @@ internal static class EventRaidDiagnostics {
   else if(action=="menu-search-state")Write("menu-search-state",InterfaceMenu.SearchDiagnostics());
   else if(action=="world-item-check"){WorldItemPlacement.Check(doc.RootElement.GetProperty("template").GetString()??"");Write("world-item-check",WorldItemPlacement.Diagnostics());}
   else if(action=="world-item-state")Write("world-item-state",WorldItemPlacement.Diagnostics());
+  else if(action=="world-editor-state")Write("world-editor-state",WorldEditor.Diagnostics());
+  else if(action=="airdrop-editor-check")Write("airdrop-editor-check",WorldEditor.CheckAirdrop());
   else if(action=="server-controls-state"){if(serverTask!=null)throw new InvalidOperationException("Server check already running");serverTask=ServerControlPanel.Diagnostics();}
   else if(action=="hideout-craft-state")Write("hideout-craft-state",HideoutCraftControl.Diagnostics());
   else if(action=="coordinates-state")Write("coordinates-state",CoordinateReader.Diagnostics());

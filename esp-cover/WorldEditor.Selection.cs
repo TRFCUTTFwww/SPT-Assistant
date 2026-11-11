@@ -8,19 +8,19 @@ using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using UnityEngine;
 namespace LocalSpt5Esp;
 internal static partial class WorldEditor {
- enum SelectionKind { Ai,Items,Corpses }
+ enum SelectionKind { Ai,Items,Corpses,Airdrops }
  static readonly List<LiveActorReference> selectedActors=new();
  static readonly List<LootReference> selectedItems=new();
  static readonly List<CorpseReference> selectedCorpses=new();
  static SelectionKind selectionKind;static int selectionIndex;
  static bool altCursor,dragging;static Vector2 dragStart,dragEnd;
  static readonly Il2CppStructArray<RaycastHit> selectionHits=new(512);
- static bool HasSelection=>selectedActors.Count+selectedItems.Count+selectedCorpses.Count>0;
- static int SelectionCount=>selectionKind==SelectionKind.Ai?selectedActors.Count:selectionKind==SelectionKind.Items?selectedItems.Count:selectedCorpses.Count;
+ static bool HasSelection=>selectedActors.Count+selectedItems.Count+selectedCorpses.Count+selectedAirdrops.Count>0;
+ static int SelectionCount=>selectionKind switch{SelectionKind.Ai=>selectedActors.Count,SelectionKind.Items=>selectedItems.Count,SelectionKind.Corpses=>selectedCorpses.Count,_=>selectedAirdrops.Count};
  static bool AltDown=>Input.GetKey(KeyCode.LeftAlt)||Input.GetKey(KeyCode.RightAlt);
  static bool Editable(Player? value)=>value!=null&&!value.IsYourPlayer&&value.HealthController?.IsAlive==true&&value.AIData?.BotOwner!=null&&value.Profile?.Info?.Settings?.Role!=WildSpawnType.shooterBTR;
- static void ClearSelection(){selectedActors.Clear();selectedItems.Clear();selectedCorpses.Clear();actor=null;loot=null;selectionIndex=0;dragging=false;}
- static void PruneSelection(){selectedCorpses.RemoveAll(reference=>{try{reference.Resolve();return false;}catch{return true;}});selectedActors.RemoveAll(reference=>{try{return !Editable(reference.Resolve());}catch{return true;}});selectedItems.RemoveAll(reference=>{try{reference.Resolve();return false;}catch{return true;}});}
+ static void ClearSelection(){selectedActors.Clear();selectedItems.Clear();selectedCorpses.Clear();selectedAirdrops.Clear();actor=null;loot=null;selectionIndex=0;dragging=false;}
+ static void PruneSelection(){selectedAirdrops.RemoveAll(reference=>{try{reference.Resolve();return false;}catch{return true;}});selectedCorpses.RemoveAll(reference=>{try{reference.Resolve();return false;}catch{return true;}});selectedActors.RemoveAll(reference=>{try{return !Editable(reference.Resolve());}catch{return true;}});selectedItems.RemoveAll(reference=>{try{reference.Resolve();return false;}catch{return true;}});}
  static void TargetAt(int index){selectionIndex=Math.Clamp(index,0,Math.Max(0,SelectionCount-1));actor=selectionKind==SelectionKind.Ai&&selectedActors.Count>0?selectedActors[selectionIndex]:null;loot=selectionKind==SelectionKind.Items&&selectedItems.Count>0?selectedItems[selectionIndex]:null;}
  static Player[] SelectedActors()=>selectedActors.Select(reference=>{var value=reference.Resolve();if(!Editable(value))throw new ArgumentException("只允许编辑本机控制的普通 AI。");return value;}).ToArray();
  static Camera View=>EFT.CameraControl.CameraManager.Instance?.Camera??throw new ArgumentException("镜头尚未就绪。");
@@ -52,6 +52,7 @@ internal static partial class WorldEditor {
   var all=current.AllAlivePlayersList;if(all!=null)for(int i=0;i<all.Count;i++){var value=all[i];if(Editable(value)&&InBox(view,ActorSelectionPoint(value),box)&&SelectionVisible(current,ActorSelectionPoint(value),value.transform))selectedActors.Add(new(current,value));}
   for(int i=0;i<current.LootItems.Count;i++){var value=current.LootItems.GetByIndex(i);if(value?.Item==null||value.TryCast<Corpse>()!=null||!value.gameObject.activeInHierarchy)continue;var center=value.BoundCollider?.bounds.center??value.transform.position;if(InBox(view,center,box)&&SelectionVisible(current,center,value.transform))selectedItems.Add(new(current,value));}
   foreach(var body in CorpseReference.Read(current))if(InBox(view,CorpseDisplay.Position(body),box)&&SelectionVisible(current,CorpseDisplay.Position(body),body.transform))selectedCorpses.Add(new(current,body));
+  foreach(var drop in AirdropControl.EditorDrops(current))if(InBox(view,AirdropPoint(drop),box)&&SelectionVisible(current,AirdropPoint(drop),drop.transform))selectedAirdrops.Add(new(current,drop));
   selectionKind=FirstSelectionKind;TargetAt(0);
   notice=I18n.Text("已选择")+" AI ×"+selectedActors.Count+" / "+I18n.Text("物品")+" ×"+selectedItems.Count;
  }
@@ -66,6 +67,7 @@ internal static partial class WorldEditor {
    }
   }
   for(int i=0;i<current.LootItems.Count;i++){var value=current.LootItems.GetByIndex(i);if(value?.Item==null||value.TryCast<Corpse>()!=null||!value.gameObject.activeInHierarchy)continue;var collider=value.BoundCollider;if(collider==null||!collider.enabled||!collider.Raycast(ray,out var hit,nearest))continue;nearest=hit.distance;loot=new(current,value);actor=null;selectedCorpses.Clear();point=hit.point;distance=hit.distance;}
+  foreach(var drop in AirdropControl.EditorDrops(current))foreach(var collider in drop.GetComponentsInChildren<Collider>())if(collider!=null&&collider.enabled&&collider.gameObject.activeInHierarchy&&collider.Raycast(ray,out var hit,nearest+.02f)&&hit.distance<=nearest+.02f){nearest=hit.distance;actor=null;loot=null;selectedCorpses.Clear();selectedAirdrops.Clear();selectedAirdrops.Add(new(current,drop));point=hit.point;distance=hit.distance;}
   if(actor!=null)selectedActors.Add(actor);if(loot!=null)selectedItems.Add(loot);selectionKind=FirstSelectionKind;TargetAt(0);
   current.MainPlayer.HandsController?.TryCast<Player.FirearmController>()?.SetTriggerPressed(false);
  }
@@ -83,6 +85,7 @@ internal static partial class WorldEditor {
   foreach(var reference in selectedActors)try{var value=reference.Resolve();Mark(ActorSelectionPoint(value),value.Profile.Nickname,InterfaceMenu.Accent);}catch{}
   foreach(var reference in selectedItems)try{var value=reference.Resolve();Mark(value.BoundCollider?.bounds.center??value.transform.position,ItemSpawner.TemplateName(value.Item.TemplateId.ToString()),new Color(.4f,.9f,.65f));}catch{}
   foreach(var reference in selectedCorpses)try{var body=reference.Resolve();Mark(CorpseDisplay.Position(body),reference.Name,new Color(.9f,.65f,.4f));}catch{}
+  foreach(var reference in selectedAirdrops)try{var drop=reference.Resolve();Mark(AirdropPoint(drop),I18n.Text("空投箱")+" #"+drop.ObjectId,new Color(.45f,1,.72f));}catch{}
   if(dragging){var b=EditorSelectionRules.Box(dragStart.x,dragStart.y,dragEnd.x,dragEnd.y);var rect=new Rect(b.X,b.Y,b.Width,b.Height);var color=InterfaceMenu.Accent;InterfaceMenu.Surface(rect,new Color(color.r,color.g,color.b,.14f),0);InterfaceMenu.Surface(new Rect(rect.x,rect.y,rect.width,1),color,0);InterfaceMenu.Surface(new Rect(rect.x,rect.yMax-1,rect.width,1),color,0);InterfaceMenu.Surface(new Rect(rect.x,rect.y,1,rect.height),color,0);InterfaceMenu.Surface(new Rect(rect.xMax-1,rect.y,1,rect.height),color,0);}
   }
  static void DrawTargetNavigation(float x,ref float y,float width){

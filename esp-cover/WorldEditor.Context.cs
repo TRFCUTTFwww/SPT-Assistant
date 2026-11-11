@@ -15,9 +15,9 @@ internal static partial class WorldEditor {
   if(SelectionKinds>1){categoryMenu=true;contextTitle="选择对象类别";SetContext(CategoryActions(OpenEditContext));return;}
   OpenEditContext(FirstSelectionKind);
  }
- static int SelectionKinds=>(selectedActors.Count>0?1:0)+(selectedItems.Count>0?1:0)+(selectedCorpses.Count>0?1:0);
- static SelectionKind FirstSelectionKind=>selectedActors.Count>0?SelectionKind.Ai:selectedItems.Count>0?SelectionKind.Items:selectedCorpses.Count>0?SelectionKind.Corpses:SelectionKind.Items;
- static ContextAction[] CategoryActions(Action<SelectionKind> apply){var result=new System.Collections.Generic.List<ContextAction>();if(selectedActors.Count>0)result.Add(new("AI ×"+selectedActors.Count,true,()=>apply(SelectionKind.Ai)));if(selectedItems.Count>0)result.Add(new(I18n.Text("物品")+" ×"+selectedItems.Count,true,()=>apply(SelectionKind.Items)));if(selectedCorpses.Count>0)result.Add(new(I18n.Text("尸体")+" ×"+selectedCorpses.Count,true,()=>apply(SelectionKind.Corpses)));return result.ToArray();}
+ static int SelectionKinds=>(selectedActors.Count>0?1:0)+(selectedItems.Count>0?1:0)+(selectedCorpses.Count>0?1:0)+(selectedAirdrops.Count>0?1:0);
+ static SelectionKind FirstSelectionKind=>selectedActors.Count>0?SelectionKind.Ai:selectedItems.Count>0?SelectionKind.Items:selectedCorpses.Count>0?SelectionKind.Corpses:selectedAirdrops.Count>0?SelectionKind.Airdrops:SelectionKind.Items;
+ static ContextAction[] CategoryActions(Action<SelectionKind> apply){var result=new System.Collections.Generic.List<ContextAction>();if(selectedActors.Count>0)result.Add(new("AI ×"+selectedActors.Count,true,()=>apply(SelectionKind.Ai)));if(selectedItems.Count>0)result.Add(new(I18n.Text("物品")+" ×"+selectedItems.Count,true,()=>apply(SelectionKind.Items)));if(selectedCorpses.Count>0)result.Add(new(I18n.Text("尸体")+" ×"+selectedCorpses.Count,true,()=>apply(SelectionKind.Corpses)));if(selectedAirdrops.Count>0)result.Add(new(I18n.Text("空投箱")+" ×"+selectedAirdrops.Count,true,()=>apply(SelectionKind.Airdrops)));return result.ToArray();}
  static void SetContext(ContextAction[] actions){contextActions=actions;contextChoice=EditorMenuRules.Next(Array.ConvertAll(actions,a=>a.Enabled),-1,1);contextTop=0;contextFrame=Time.frameCount;contextPointer=MousePosition;Modal("context");}
  static void OpenEditContext(SelectionKind kind){
   selectionKind=kind;TargetAt(0);categoryMenu=false;contextTitle="场景编辑";bool selected=SelectionCount>0;
@@ -36,7 +36,7 @@ internal static partial class WorldEditor {
    Pair("player-toggle",targets.Select(AiActorControl.EditorPlayerCeasefire).ToArray(),"对玩家停战","对玩家敌对",value=>ContextPlayerRelation(value?1:2));Add("player-default",true,()=>ContextPlayerRelation(0));
    Pair("invincible-toggle",targets.Select(p=>AiActorControl.EditorState(p).Invincible).ToArray(),"开启无敌","关闭无敌",ContextInvincible);Add("clear-effects",true,ContextClearEffects);
   }
-  Add("delete",selected,Delete,ShortcutLabel(EditorShortcut.Delete));if(kind==SelectionKind.Corpses)Add("revive",selected,ReviveCorpses);else Add("properties",selected,OpenProperties,ShortcutLabel(EditorShortcut.Properties));
+  Add("delete",selected,Delete,ShortcutLabel(EditorShortcut.Delete));if(kind==SelectionKind.Corpses)Add("revive",selected,ReviveCorpses);else if(kind!=SelectionKind.Airdrops)Add("properties",selected,OpenProperties,ShortcutLabel(EditorShortcut.Properties));
   var actions=EditorContextRules.Read(contextOrder.Value).Where(available.ContainsKey).SelectMany(id=>available[id]).ToList();
   actions.Add(new("自定义右键菜单",true,OpenContextSettings));
   if(SelectionKinds>1)actions.Add(new("返回类别选择",true,OpenContext));SetContext(actions.ToArray());
@@ -57,7 +57,7 @@ internal static partial class WorldEditor {
  }
  static void DrawContext(){
   var rect=ContextBounds;InterfaceMenu.Surface(rect,InterfaceMenu.Background,3);InterfaceMenu.Surface(new Rect(rect.x,rect.y,rect.width,25),Color.Lerp(InterfaceMenu.Background,InterfaceMenu.Text,.07f),3);
-  InterfaceMenu.Label(new Rect(rect.x+10,rect.y,rect.width-20,25),categoryMenu?I18n.Text(contextTitle):I18n.Text(contextTitle)+(SelectionCount>0?" · "+(selectionKind==SelectionKind.Ai?"AI":I18n.Text(selectionKind==SelectionKind.Items?"物品":"尸体"))+" ×"+SelectionCount:""),InterfaceMenu.Accent,12);
+  InterfaceMenu.Label(new Rect(rect.x+10,rect.y,rect.width-20,25),categoryMenu?I18n.Text(contextTitle):I18n.Text(contextTitle)+(SelectionCount>0?" · "+SelectionName+" ×"+SelectionCount:""),InterfaceMenu.Accent,12);
   float keyWidth=ContextKeyWidth;
   for(int i=contextTop;i<Math.Min(contextActions.Length,contextTop+ContextVisibleRows);i++){var action=contextActions[i];var row=new Rect(rect.x+4,rect.y+28+(i-contextTop)*28,rect.width-8,26);if(i==contextChoice)InterfaceMenu.Surface(row,Color.Lerp(InterfaceMenu.Background,InterfaceMenu.Accent,.27f),2);var color=action.Enabled?InterfaceMenu.Text:Color.Lerp(InterfaceMenu.Background,InterfaceMenu.Text,.3f);InterfaceMenu.Label(new Rect(row.x+10,row.y,Math.Max(1,row.width-(action.Shortcut.Length>0?keyWidth+38:30)),row.height),action.Name,color,13);if(action.Shortcut.Length>0)InterfaceMenu.Label(new Rect(row.xMax-keyWidth-22,row.y,keyWidth,row.height),action.Shortcut,color,11);if(i==contextChoice)InterfaceMenu.Label(new Rect(row.xMax-20,row.y,18,row.height),"›",InterfaceMenu.Accent,15);}
   InterfaceMenu.Label(new Rect(rect.x+10,rect.yMax-25,rect.width-20,22),"滚轮选择 · 左键进入",Color.Lerp(InterfaceMenu.Background,InterfaceMenu.Text,.65f),11);

@@ -26,7 +26,7 @@ internal static class MiscPanel {
   ("ScavNoCooldown","随叫随到 · Scav 无冷却","开启后立即解除当前 Scav 冷却，后续 Scav 出战无需等待。停用后，新生成的 Scav 恢复正常冷却。"),
   ("FreeInsurance","人情世故","投保费用为 0。重新打开投保页面后刷新报价。"),
   ("GuaranteedInsurance","客户就是上帝","所有地图的已投保遗失装备 100% 回保，包括实验室、迷宫；不模拟物品被拿走。"),
-  ("SniperBlind","我没看到","狙击边界区域不再射击本地玩家，不影响地图内的普通 AI 狙击手。"),
+  ("SniperBlind","看不见我","阻止边界狙击区锁定及狙击区伤害，仅保护本地玩家，不影响地图内普通 AI 狙击手的枪弹。"),
   ("ScavSecure","违禁品","Scav 使用独立安全箱，默认 Alpha，可选择箱型；一键售卖、撤离、阵亡和下一名 Scav 保留箱子及其内容，与 PMC 完全分开。更换箱型前须清空。开启后自动同步当前 Scav，重新打开装备页面查看。"),
   ("FreeFlea","诚信经营","跳蚤市场上架手续费为 0；重新打开挂单窗口刷新费用。"),
   ("ExpressInsurance","加急件","新产生的保险无需等待回送；在服务端下一次保险检查时发信，不改变领取期限。"),
@@ -36,6 +36,7 @@ internal static class MiscPanel {
  internal static void Initialize(Plugin plugin){
   plugin.Patches.Patch(AccessTools.Method(typeof(Profile.FenceTraderInfo),"AddStanding"),prefix:new HarmonyMethod(typeof(MiscPanel),nameof(Fence)));
   plugin.Patches.Patch(AccessTools.Method(typeof(SniperFiringZone),"Shoot"),prefix:new HarmonyMethod(typeof(MiscPanel),nameof(Sniper)));
+  plugin.Patches.Patch(AccessTools.Method(typeof(SniperFiringZone),"IsPlayerCanBeDamaged"),prefix:new HarmonyMethod(typeof(MiscPanel),nameof(SniperEligible)));
   plugin.Patches.Patch(AccessTools.Method(typeof(EquipmentTab),"Show"),postfix:new HarmonyMethod(typeof(MiscPanel),nameof(EquipmentShown)));
  }
  static void Fence(Profile.FenceTraderInfo __instance,ref double __0,EFenceStandingSource __1){
@@ -43,7 +44,10 @@ internal static class MiscPanel {
   var local=Singleton<GameWorld>.Instance?.MainPlayer;if(local?.Side!=EPlayerSide.Savage||local.Profile?.FenceInfo?.Pointer!=__instance.Pointer)return;
   __0=MiscSettings.StandingDelta(true,true,__0);
  }
- static bool Sniper(IPlayer __0)=>!(Options.SniperBlind&&RaidClock.Active&&__0?.IsYourPlayer==true);
+ internal static bool SniperProtected(IPlayer? player)=>Options.SniperBlind&&RaidClock.Active&&player!=null&&Singleton<GameWorld>.Instance?.MainPlayer is {} local&&player.ProfileId==local.ProfileId;
+ static bool Sniper(IPlayer __0)=>!SniperProtected(__0);
+ static bool SniperEligible(IPlayer __0,ref bool __result){if(!SniperProtected(__0))return true;__result=false;return false;}
+ internal static bool SniperDamage(EFT.HealthSystem.ActiveHealthController health,EDamageType type)=>type==EDamageType.Sniper&&SniperProtected(health.Player);
  static void EquipmentShown(EquipmentTab __instance,InventoryEquipment __1){if(__1?.GetSlot(EquipmentSlot.SecuredContainer)?.ContainedItem!=null)__instance.GetSlotView(EquipmentSlot.SecuredContainer)?.gameObject.SetActive(true);}
  static void Begin(Dictionary<string,object?> payload){if(request!=null)return;request=CharacterDataPanel.Call("/local/gear/data","characterData",payload);status="处理中…";}
  internal static void Tick(){

@@ -16,7 +16,8 @@ internal static partial class WorldEditor {
  internal static void DrawSettings(Rect rect){
   InterfaceMenu.DrawEntry(enabled!,new Rect(rect.x,rect.y,rect.width,84));InterfaceMenu.DrawEntry(toggleEditor!,new Rect(rect.x,rect.y+94,rect.width,84));InterfaceMenu.DrawEntry(throughWallSelection!,new Rect(rect.x,rect.y+188,rect.width,84));
   InterfaceMenu.DrawEntry(moveInvincible!,new Rect(rect.x,rect.y+282,rect.width,84));
-  DrawContextSettings(new Rect(rect.x,rect.y+376,rect.width,Math.Max(100,rect.height-376)));
+  InterfaceMenu.DrawEntry(moveIgnored!,new Rect(rect.x,rect.y+376,rect.width,84));
+  DrawContextSettings(new Rect(rect.x,rect.y+470,rect.width,Math.Max(100,rect.height-470)));
  }
  internal static void Draw(){
   if(!Active||InterfaceMenu.Open)return;int depth=GUI.depth;bool oldEnabled=GUI.enabled;GUI.depth=-900;
