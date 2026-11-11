@@ -10,7 +10,7 @@ internal static partial class WorldEditor {
  static void InitializeShortcuts(){
   shortcuts.Clear();
   void Bind(EditorShortcut action,string key,string name,KeyCode main,params KeyCode[] modifiers)=>shortcuts[action]=FeatureConfig.Bind("63. 场景编辑",key,name,new Shortcut(main,modifiers),"仅在编辑模式下生效；支持组合键，输入窗口中不触发。可在热键页清除绑定。");
-  toggleEditor=FeatureConfig.Bind("63. 场景编辑","Editor toggle shortcut","切换编辑模式热键",Shortcut.Empty,"战局内切换编辑模式；默认不绑定，可在热键页设置组合键。");
+  toggleEditor=FeatureConfig.Bind("63. 场景编辑","Editor toggle shortcut","切换编辑模式热键",new Shortcut(KeyCode.F6),"F6 切换编辑模式，可在全部热键中修改；聊天、属性输入和其他界面占用输入时不触发。");
   Bind(EditorShortcut.Create,"Editor create shortcut","编辑：创建",KeyCode.Insert);
   Bind(EditorShortcut.Move,"Editor move shortcut","编辑：移动",KeyCode.G);
   Bind(EditorShortcut.Copy,"Editor copy shortcut","编辑：复制",KeyCode.C,KeyCode.LeftControl);
@@ -25,7 +25,7 @@ internal static partial class WorldEditor {
  static string ShortcutLabel(EditorShortcut action)=>shortcuts.TryGetValue(action,out var key)?ShortcutBindings.Label(key.Value):"None";
  static string ShortcutHint=>I18n.Text("移动")+" "+ShortcutLabel(EditorShortcut.Move)+" · "+I18n.Text("复制")+" "+ShortcutLabel(EditorShortcut.Copy)+" · "+I18n.Text("粘贴")+" "+ShortcutLabel(EditorShortcut.Paste)+" · "+I18n.Text("删除")+" "+ShortcutLabel(EditorShortcut.Delete);
  static void ToggleShortcut(){
-  if(toggleEditor==null||!RaidClock.Active||InterfaceMenu.Open||RaidChat.InputBlocked||FloatingStatus.Capturing||!Application.isFocused||Cursor.visible)return;
+  if(toggleEditor==null||!RaidClock.Active||InterfaceMenu.Open||RaidChat.InputBlocked||FloatingStatus.Capturing||!Application.isFocused||DirectorStage.FreeActive||dialog is not ("" or "context")||Cursor.visible&&!cursorOwned)return;
   if(ShortcutBindings.Take(toggleEditor)){enabled!.Value=!enabled.Value;shortcutFrame=Time.frameCount;}
  }
  static void BeginCreate(){query=lastQuery="";items=System.Array.Empty<(string,string)>();Modal("create");}

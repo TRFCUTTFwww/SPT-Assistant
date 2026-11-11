@@ -13,17 +13,21 @@ internal static partial class WorldEditor {
  static (string Id,string Name)[] items=Array.Empty<(string,string)>();
  static readonly Dictionary<string,(string Max,string Current)> health=new();
  static ItemComponentEditor? componentEditor;
- internal static void DrawSettings(Rect rect){InterfaceMenu.DrawEntry(enabled!,new Rect(rect.x,rect.y,rect.width,84));InterfaceMenu.DrawEntry(keepSingleSelection!,new Rect(rect.x,rect.y+94,rect.width,84));InterfaceMenu.Paragraph(new Rect(rect.x,rect.y+194,rect.width,200),"按住 Alt 显示鼠标，左键拖框多选，右键编辑；混选时先选择 AI 或物品。\n松开 Alt 恢复镜头；Esc 清空选择。编辑热键可在本类热键或全部热键中修改；输入窗口中不触发。移动时滚轮调距，左键放下，右键或 Esc 取消。\n批量移动保留间距；AI 可固定在空中，菜单可解除固定。属性与重命名逐个编辑，切换对象放弃未应用输入。",null,14);InterfaceMenu.Paragraph(new Rect(rect.x,rect.y+404,rect.width,80),notice,InterfaceMenu.Accent,12);}
+ internal static void DrawSettings(Rect rect){
+  InterfaceMenu.DrawEntry(enabled!,new Rect(rect.x,rect.y,rect.width,84));InterfaceMenu.DrawEntry(toggleEditor!,new Rect(rect.x,rect.y+94,rect.width,84));InterfaceMenu.DrawEntry(keepSingleSelection!,new Rect(rect.x,rect.y+188,rect.width,84));
+  InterfaceMenu.DrawEntry(moveInvincible!,new Rect(rect.x,rect.y+282,rect.width,84));
+  DrawContextSettings(new Rect(rect.x,rect.y+376,rect.width,Math.Max(100,rect.height-376)));
+ }
  internal static void Draw(){
   if(!Active||InterfaceMenu.Open)return;int depth=GUI.depth;bool oldEnabled=GUI.enabled;GUI.depth=-900;
   try{
    if(dialog.Length==0){DrawSelection();return;}
    if(dialog=="context"){DrawContext();return;}
    KeepCursor();GUI.enabled=oldEnabled&&Time.frameCount>dialogFrame;float w=Math.Min(dialog=="rename"?380:actor!=null&&dialog=="properties"?860:700,Screen.width-24),h=Math.Min(dialog=="rename"?174+(SelectionCount>1?38:0):760,Screen.height-24);var rect=new Rect((Screen.width-w)/2,(Screen.height-h)/2,w,h);InterfaceMenu.Panel(rect);float x=rect.x+18,y=rect.y+14,width=w-36;
-   InterfaceMenu.Label(new Rect(x,y,width-90,30),dialog switch{"context"=>"场景编辑","create"=>"创建","rename"=>"重命名",_=>"属性"},InterfaceMenu.Accent,20);
+   InterfaceMenu.Label(new Rect(x,y,width-90,30),dialog switch{"context-settings"=>"自定义右键菜单","context"=>"场景编辑","create"=>"创建","rename"=>"重命名",_=>"属性"},InterfaceMenu.Accent,20);
    if(InterfaceMenu.Button(new Rect(rect.xMax-94,y,76,30),"关闭")){CloseDialog();return;}y+=44;
    if(dialog is "properties" or "rename")DrawTargetNavigation(x,ref y,width);
-   switch(dialog){case "create":DrawCreate(new Rect(x,y,width,rect.yMax-y-18));break;case "rename":DrawRename(x,y,width);break;case "properties":DrawProperties(new Rect(x,y,width,rect.yMax-y-18));break;}
+   switch(dialog){case "context-settings":DrawContextSettings(new Rect(x,y,width,rect.yMax-y-18));break;case "create":DrawCreate(new Rect(x,y,width,rect.yMax-y-18));break;case "rename":DrawRename(x,y,width);break;case "properties":DrawProperties(new Rect(x,y,width,rect.yMax-y-18));break;}
    var e=Event.current;if(e.isMouse||e.type==EventType.ScrollWheel)e.Use();
   }catch(Exception error){notice=error.Message;CloseDialog();FeatureToasts.Show(notice);}finally{GUI.depth=depth;GUI.enabled=oldEnabled;}
  }

@@ -8,6 +8,17 @@ internal static class WorldEditorChecks {
   TypeDefinition Type(string name)=>core.MainModule.Types.Single(t=>t.Name==name);
   MethodReference[] Calls(string type,string method)=>Type(type).Methods.Single(m=>m.Name==method).Body.Instructions.Where(i=>i.Operand is MethodReference).Select(i=>(MethodReference)i.Operand).ToArray();
   void Check(bool ok,string reason){if(!ok)throw new Exception(reason);}
+  var icons=Type("MenuIcons").Methods.Where(m=>m.HasBody).SelectMany(m=>m.Body.Instructions).Where(i=>i.Operand is MethodReference).Select(i=>(MethodReference)i.Operand).ToArray();
+  Check(!icons.Any(m=>m.DeclaringType.Name=="Matrix4x4"||m.Name=="RotateAroundPivot"||m.Name=="set_matrix"),"icon rendering cannot reenter native Matrix4x4 operators at observed crash site");
+  Check(Calls("WorldEditor","ContextRemoveWeapons").Any(m=>m.DeclaringType.Name=="AiEquipmentRemoval"&&m.Name=="RemoveWeapons")&&Calls("WorldEditor","ContextTeam").Any(m=>m.Name=="MarkEditorSide")&&Calls("WorldEditor","ContextPause").Any(m=>m.Name=="ResumeActors"),"context batch actions reuse existing live AI operations");
+  Check(Calls("CorpseRevival","Enqueue").Any(m=>m.Name=="ValidateWeapons")&&Calls("CorpseRevival","Prepare").Any(m=>m.Name=="ValidateWeapons"),"unarmed corpses are rejected before queueing and after inventory rebuild");
+  var sides=Type("AiActorControl").Methods.Single(m=>m.Name=="CommandEditorSides");
+  Check(sides.Body.ExceptionHandlers.Any(h=>h.HandlerType==Mono.Cecil.Cil.ExceptionHandlerType.Finally)&&Calls("AiActorControl","CommandEditorSides").Any(m=>m.Name=="SetRelations")&&!Calls("AiActorControl","CommandEditorSides").Any(m=>m.Name=="Select"),"editor A/B operation restores panel scope in finally and preserves management selection");
+  var toggle=Type("WorldEditor").Methods.Single(m=>m.Name=="ToggleShortcut").Body.Instructions;
+  Check(toggle.Any(i=>i.Operand is FieldReference f&&f.Name=="dialog")&&toggle.Any(i=>i.Operand is FieldReference f&&f.Name=="cursorOwned"),"toggle permits editor-owned cursor while isolating text dialogs");
+  Check(Calls("Plugin","Protected").Any(m=>m.Name=="ProtectMoving")&&Calls("WorldEditor","ProtectMoving").Any(m=>m.Name=="Holding")&&!Calls("WorldEditor","ProtectMoving").Any(m=>m.Name=="ApplyEditorState"),"move protection shares native damage/death protection without overwriting persistent invincibility");
+  Check(Type("WorldEditor").Methods.Single(m=>m.Name=="FinishMove").Body.ExceptionHandlers.Any(h=>h.HandlerType==Mono.Cecil.Cil.ExceptionHandlerType.Finally),"move cleanup always releases temporary movement protection");
+  Console.WriteLine("PASS crash-site matrix interop removal, corpse weapon preflight and custom AI action routing");
   var selected=Calls("CharacterBuffs","SelectedPlayer");Check(selected.Any(c=>c.DeclaringType.Name=="WorldEditor"&&c.Name=="get_EditingBuffs"),"embedded Buffs participates in AI selection instead of falling back to local player");
   var close=Calls("WorldEditor","CloseDialog");Check(close.Any(c=>c.Name=="ReleasePropertyEditors"),"closing the editor releases embedded selections");
   var release=Calls("WorldEditor","ReleasePropertyEditors");Check(release.Any(c=>c.DeclaringType.Name=="CharacterBuffs"&&c.Name=="CloseAi")&&release.Any(c=>c.DeclaringType.Name=="AiEquipmentEditor"&&c.Name=="Close"),"embedded editor ownership is cleaned up without resetting applied effects");
@@ -34,6 +45,13 @@ internal static class WorldEditorChecks {
  }
  internal static void Run(){
   void Check(bool value,string reason){if(!value)throw new Exception(reason);}
+  var defaults=EditorContextRules.Read(EditorContextRules.Default);
+  Check(defaults.Length==25&&defaults.Distinct().Count()==25,"all context actions have stable unique IDs");
+  Check(EditorContextRules.Read("pause,unknown,pause, resume ,").SequenceEqual(new[]{"pause","resume"}),"context settings ignore unknown and duplicate IDs");
+  Check(EditorContextRules.Toggle("pause,resume","pause")=="resume"&&EditorContextRules.Toggle("resume","pause")=="resume,pause","context toggles preserve order and permit empty menus");
+  Check(EditorContextRules.Toggle("pause","pause")==""&&EditorContextRules.Read("").Length==0,"all optional context actions can be hidden");
+  Check(EditorContextRules.Move("pause,resume","resume",-1)=="resume,pause"&&EditorContextRules.Move("pause,resume","pause",-1)=="pause,resume"&&EditorContextRules.Move("pause,resume","resume",1)=="pause,resume","context ordering honors list boundaries");
+  Console.WriteLine("PASS configurable context action IDs, filtering, visibility and ordering boundaries");
   foreach(HotkeyModifiers required in Enumerable.Range(0,8).Select(i=>(HotkeyModifiers)i))foreach(HotkeyModifiers held in Enumerable.Range(0,8).Select(i=>(HotkeyModifiers)i)){
    Check(HotkeyRules.Matches(required,held)==(required==held),"hotkey chords require exact modifiers outside editor selection");
    Check(HotkeyRules.Matches(required,held,true)==(required==held||(held&~HotkeyModifiers.Alt)==required),"editor selection permits extra Alt while retaining exact Ctrl/Shift requirements");

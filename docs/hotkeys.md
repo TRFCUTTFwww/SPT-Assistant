@@ -18,7 +18,7 @@
 | 属性 | F4 |
 | 杀死 AI | 未绑定 |
 | 解除 AI 空中固定 | 未绑定 |
-| 切换编辑模式 | 未绑定 |
+| 切换编辑模式 | F6（旧配置保留已有绑定，可在全部热键中修改） |
 
 复制并粘贴采用独立快照，在当前准星位置生成副本；Alt 下使用鼠标指向，菜单打开时沿用菜单记录的落点。AI 创建与副本仍走原异步生成队列。重命名、杀死、解除空中固定只支持 AI。混合选区操作前选择类别；无选区时不会自动删除准星对象。创建和粘贴允许无选区。
 
@@ -34,6 +34,6 @@
 
 Open **Settings & hotkeys → All hotkeys** or a category's hotkey page. Single keys and combinations are discoverable, searchable, clearable and resettable. For combination entries, hold Ctrl/Shift/Alt and press the main key; either side of a modifier works, and mouse buttons are supported. Legacy Ctrl toggles retain their behavior and show their actual prefix. Fixed controls are listed as read-only reference.
 
-Editor defaults: Insert create, G move, Ctrl+C copy, Ctrl+V paste, Ctrl+D duplicate, Del delete, F2 rename AI, F4 properties. Kill AI, release air anchors and editor toggle start unbound. Mixed selections request a category. Input dialogs, other input owners, focus loss and active movement/marquee dragging suppress scene shortcuts. Extra Alt is permitted for editor cursor use. Context menus and HUD hints reflect current bindings.
+Editor defaults: Insert create, G move, Ctrl+C copy, Ctrl+V paste, Ctrl+D duplicate, Del delete, F2 rename AI, F4 properties. F6 toggles editor mode (existing bindings are preserved). Kill AI and release air anchors start unbound. Mixed selections request a category. Input dialogs, other input owners, focus loss and active movement/marquee dragging suppress scene shortcuts. Extra Alt is permitted for editor cursor use. Context menus and HUD hints reflect current bindings.
 
 Other newly configurable defaults: Ctrl+F2 cycle profiles, PageUp/PageDown item/AI-buff details, Ctrl+PageUp/PageDown extraction pages, and / command input. Paging is processed once per frame. Ctrl+F1 remains a fixed host shortcut. Build and offline checks do not establish in-game acceptance.

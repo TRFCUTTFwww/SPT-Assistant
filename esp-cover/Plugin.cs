@@ -150,7 +150,7 @@ internal class Plugin {
  static bool Protected(ActiveHealthController h){try{
   if(h==null)return false;var local=Singleton<GameWorld>.Instance?.MainPlayer;var health=local?.ActiveHealthController;if(local==null||health==null)return false;
   if(health.Pointer==h.Pointer)return ProtectionRules.Protect(health.Pointer.ToInt64(),h.Pointer.ToInt64(),Self.God.Value,false,false,true);
-  if(!RaidClock.Active)return false;if(AiActorControl.IndividuallyProtected(h))return true;if(!Self.AIGod.Value)return false;var owner=h.Player;return ProtectionRules.Protect(health.Pointer.ToInt64(),h.Pointer.ToInt64(),Self.God.Value,Self.AIGod.Value,owner?.AIData?.BotOwner!=null,owner==null||owner.Pointer==local.Pointer||owner.ProfileId==local.ProfileId);
+  if(!RaidClock.Active)return false;if(WorldEditor.ProtectMoving(h.Player)||AiActorControl.IndividuallyProtected(h))return true;if(!Self.AIGod.Value)return false;var owner=h.Player;return ProtectionRules.Protect(health.Pointer.ToInt64(),h.Pointer.ToInt64(),Self.God.Value,Self.AIGod.Value,owner?.AIData?.BotOwner!=null,owner==null||owner.Pointer==local.Pointer||owner.ProfileId==local.ProfileId);
  }catch{return false;}}
  internal static bool DamageBlocked(ActiveHealthController health)=>Protected(health);
  static bool BlockDamage(ActiveHealthController __instance,ref float __1,EFT.Ballistics.DamageInfo __2,ref float __result){if(Protected(__instance)){__result=0;return false;}try{return AiActorControl.ScaleDamage(__instance,__2,ref __1,ref __result);}catch(Exception e){Self.Error(e);return true;}}

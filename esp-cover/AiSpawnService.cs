@@ -166,6 +166,7 @@ internal static class AiSpawnService {
        string error=fault?activating.Exception?.Message??"原生激活已取消":"";
        Plugin.Self.Log.LogInfo($"Manual AI activation settled: created={made}/{job.BatchWanted}, seconds={Time.unscaledTime-job.PhaseStart:F2}, error={error}");
        ReleaseBatch(fault);
+       if(job.Revival is {} revival&&!revival.Completed){revival.Failure=error.Length>0?error:"原生 AI 激活未确认成功，已停止自动重试。";Finish(revival.Failure);return;}
        if(made<job.BatchWanted){job.Failures++;if(job.Failures>2){Finish("补生成两次后仍有缺额。"+error);return;}}else job.Failures=0;
        if(job.Ledger.Missing==0){Finish("已完成。");return;}
       }

@@ -57,6 +57,13 @@ internal static partial class AiActorControl {
   internal static string EditorSide(Player actor)=>world==Singleton<GameWorld>.Instance?.Pointer&&identities.GetValueOrDefault(actor.Pointer)==actor.ProfileId?(sideA.Any(p=>p.Pointer==actor.Pointer&&p.ProfileId==actor.ProfileId)?"A 队":sideB.Any(p=>p.Pointer==actor.Pointer&&p.ProfileId==actor.ProfileId)?"B 队":"未标记"):"未标记";
  internal static void MarkEditorSide(GameWorld current,Player actor,int side){if(side is <0 or >2)throw new ArgumentException("队伍标记无效。");var state=EditorState(actor);ApplyEditorState(current,actor,state.Invincible,state.Damage);sideA.RemoveAll(p=>p.Pointer==actor.Pointer||p.ProfileId==actor.ProfileId);sideB.RemoveAll(p=>p.Pointer==actor.Pointer||p.ProfileId==actor.ProfileId);if(side==1)sideA.Add(actor);else if(side==2)sideB.Add(actor);}
  internal static bool ForcedCombatActive(Player actor)=>forcedActive.Contains(actor.Pointer);
+ internal static bool EditorSidesReady=>world==Singleton<GameWorld>.Instance?.Pointer&&sideA.Count>0&&sideB.Count>0;
+ internal static void CommandEditorSides(bool hostile){
+  if(!EditorSidesReady)throw new ArgumentException("请先分别将 AI 标记为 A 方和 B 方。");
+  // Editor marks refer to individual actors, including members of one native group.
+  // Preserve the management panel's independent whole-team mode.
+  bool previous=teamMode;try{teamMode=false;SetRelations(hostile);}finally{teamMode=previous;}
+ }
  internal static void RestoreSceneRelations(IEnumerable<(Player First,Player Second,bool Hostile)> pairs){foreach(var pair in pairs)relations.ActorPair(pair.First.ProfileId,pair.Second.ProfileId,pair.Hostile);nextTick=0;}
  static bool? GroupRelation(BotsGroup group,IPlayer target){if(evaluating?.BotsGroup?.Pointer==group.Pointer)return Relation(evaluating,target);var other=NativeAiGroups.Group(target);return other!=null&&relations.Teams.TryGetValue((group.Id,other.Id),out bool value)?value:NativeAiGroups.Same(group,target)?false:null;}
  internal static bool EnemyOverride(BotEnemiesController controller,IPlayer target,ref bool result){if(Ignored(controller._owner,target)){result=false;return false;}if(controller._owner!=null&&Relation(controller._owner,target) is bool value){result=value;return false;}return true;}
