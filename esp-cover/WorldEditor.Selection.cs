@@ -65,7 +65,7 @@ internal static partial class WorldEditor {
   foreach(var reference in selectedActors)try{var value=reference.Resolve();Mark(ActorSelectionPoint(value),value.Profile.Nickname,InterfaceMenu.Accent);}catch{}
   foreach(var reference in selectedItems)try{var value=reference.Resolve();Mark(value.BoundCollider?.bounds.center??value.transform.position,ItemSpawner.TemplateName(value.Item.TemplateId.ToString()),new Color(.4f,.9f,.65f));}catch{}
   if(dragging){var b=EditorSelectionRules.Box(dragStart.x,dragStart.y,dragEnd.x,dragEnd.y);var rect=new Rect(b.X,b.Y,b.Width,b.Height);var color=InterfaceMenu.Accent;InterfaceMenu.Surface(rect,new Color(color.r,color.g,color.b,.14f),0);InterfaceMenu.Surface(new Rect(rect.x,rect.y,rect.width,1),color,0);InterfaceMenu.Surface(new Rect(rect.x,rect.yMax-1,rect.width,1),color,0);InterfaceMenu.Surface(new Rect(rect.x,rect.y,1,rect.height),color,0);InterfaceMenu.Surface(new Rect(rect.xMax-1,rect.y,1,rect.height),color,0);}
-  if(HasSelection)InterfaceMenu.Label(new Rect(24,Screen.height-84,600,30),I18n.Text("已选择")+" AI ×"+selectedActors.Count+" / "+I18n.Text("物品")+" ×"+selectedItems.Count+" · "+I18n.Text("右键编辑 · Esc 清空"),InterfaceMenu.Accent,13);
+  if(HasSelection)InterfaceMenu.Label(new Rect(24,Screen.height-84,Math.Max(1,Screen.width-48),30),I18n.Text("已选择")+" AI ×"+selectedActors.Count+" / "+I18n.Text("物品")+" ×"+selectedItems.Count+" · "+I18n.Text("右键编辑 · Ctrl+C 复制 · Ctrl+V 粘贴 · Del 删除 · Esc 清空"),InterfaceMenu.Accent,13);
  }
  static void DrawTargetNavigation(float x,ref float y,float width){
   if(SelectionCount<2)return;

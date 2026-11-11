@@ -26,6 +26,16 @@ internal static class WorldEditorChecks {
  }
  internal static void Run(){
   void Check(bool value,string reason){if(!value)throw new Exception(reason);}
+  Check(EditorShortcutRules.Read(true,false,true,false,false)==EditorShortcut.Copy&&EditorShortcutRules.Read(true,false,false,true,false)==EditorShortcut.Paste&&EditorShortcutRules.Read(false,false,false,false,true)==EditorShortcut.Delete,"editor supports Ctrl+C, Ctrl+V and unmodified Delete");
+  Check(EditorShortcutRules.Read(false,false,true,false,false)==EditorShortcut.None&&EditorShortcutRules.Read(false,false,false,true,false)==EditorShortcut.None&&EditorShortcutRules.Read(true,false,false,false,true)==EditorShortcut.None,"bare C/V and modified Delete cannot trigger scene edits");
+  Check(EditorShortcutRules.Read(true,true,true,true,true)==EditorShortcut.None&&EditorShortcutRules.Read(false,true,false,false,true)==EditorShortcut.None,"Shift-modified combinations remain available to other tools");
+  foreach(string mode in new[]{"","context"}){
+   Check(EditorShortcutRules.Allowed(mode,false,false,false,true),"shortcuts work in scene selection and context menus");
+   Check(!EditorShortcutRules.Allowed(mode,true,false,false,true)&&!EditorShortcutRules.Allowed(mode,false,true,false,true),"active movement and marquee dragging suppress copy/paste/delete");
+   Check(!EditorShortcutRules.Allowed(mode,false,false,true,true)&&!EditorShortcutRules.Allowed(mode,false,false,false,false),"external text input, focus loss and unrelated cursors suppress editor commands");
+  }
+  foreach(string mode in new[]{"properties","rename","create"})Check(!EditorShortcutRules.Allowed(mode,false,false,false,true),"typing in editor fields cannot copy, paste or delete scene objects");
+  Console.WriteLine("PASS editor shortcut modifiers, text-entry isolation, external-input ownership and active-drag/move suppression");
   Check(EditorSelectionRules.ClearAfterEditing("properties",1,false)&&EditorSelectionRules.ClearAfterEditing("rename",1,false),"single-target property/rename close clears selection by default");
   Check(!EditorSelectionRules.ClearAfterEditing("properties",1,true)&&!EditorSelectionRules.ClearAfterEditing("properties",2,false)&&!EditorSelectionRules.ClearAfterEditing("context",1,false)&&!EditorSelectionRules.ClearAfterEditing("create",1,false),"retention setting, multiple targets and non-edit dialogs preserve selection");
   foreach(float width in new[]{240f,432f,440f,600f,824f,872f,890f,1280f})foreach(float height in new[]{160f,280f,412f,560f,760f,1080f})foreach(bool embedded in new[]{false,true}){

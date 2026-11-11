@@ -13,11 +13,11 @@ internal static partial class WorldEditor {
  static (string Id,string Name)[] items=Array.Empty<(string,string)>();
  static readonly Dictionary<string,(string Max,string Current)> health=new();
  static ItemComponentEditor? componentEditor;
- internal static void DrawSettings(Rect rect){InterfaceMenu.DrawEntry(enabled!,new Rect(rect.x,rect.y,rect.width,84));InterfaceMenu.DrawEntry(keepSingleSelection!,new Rect(rect.x,rect.y+94,rect.width,84));InterfaceMenu.Paragraph(new Rect(rect.x,rect.y+194,rect.width,200),"按住 Alt 显示鼠标，左键拖框多选，右键编辑；混选时先选择 AI 或物品。\n松开 Alt 恢复镜头；Esc 清空选择。移动时滚轮调距，左键放下，右键或 Esc 取消。\n批量移动保留间距；AI 可固定在空中，菜单可解除固定。属性与重命名逐个编辑，切换对象放弃未应用输入。",null,14);InterfaceMenu.Paragraph(new Rect(rect.x,rect.y+404,rect.width,80),notice,InterfaceMenu.Accent,12);}
+ internal static void DrawSettings(Rect rect){InterfaceMenu.DrawEntry(enabled!,new Rect(rect.x,rect.y,rect.width,84));InterfaceMenu.DrawEntry(keepSingleSelection!,new Rect(rect.x,rect.y+94,rect.width,84));InterfaceMenu.Paragraph(new Rect(rect.x,rect.y+194,rect.width,200),"按住 Alt 显示鼠标，左键拖框多选，右键编辑；混选时先选择 AI 或物品。\n松开 Alt 恢复镜头；Esc 清空选择。Ctrl+C 复制，Ctrl+V 粘贴，Del 删除；输入窗口中不触发。移动时滚轮调距，左键放下，右键或 Esc 取消。\n批量移动保留间距；AI 可固定在空中，菜单可解除固定。属性与重命名逐个编辑，切换对象放弃未应用输入。",null,14);InterfaceMenu.Paragraph(new Rect(rect.x,rect.y+404,rect.width,80),notice,InterfaceMenu.Accent,12);}
  internal static void Draw(){
   if(!Active||InterfaceMenu.Open)return;int depth=GUI.depth;bool oldEnabled=GUI.enabled;GUI.depth=-900;
   try{
-   if(dialog.Length==0){DrawSelection();InterfaceMenu.Label(new Rect(Screen.width/2f-12,Screen.height/2f-16,24,32),"+",InterfaceMenu.Accent,24);InterfaceMenu.Label(new Rect(Screen.width/2f-260,Screen.height/2f+35,520,30),moving?"左键放下 · 右键 / Esc 取消 · 滚轮调整距离":"按住 Alt 框选 · 右键编辑 · Esc 清空",InterfaceMenu.Accent,14);return;}
+   if(dialog.Length==0){float hintWidth=Math.Max(1,Math.Min(740,Screen.width-24));DrawSelection();InterfaceMenu.Label(new Rect(Screen.width/2f-12,Screen.height/2f-16,24,32),"+",InterfaceMenu.Accent,24);InterfaceMenu.Label(new Rect((Screen.width-hintWidth)/2,Screen.height/2f+35,hintWidth,30),moving?"左键放下 · 右键 / Esc 取消 · 滚轮调整距离":"Alt 框选 · 右键编辑 · Ctrl+C / Ctrl+V / Del",InterfaceMenu.Accent,14);return;}
    if(dialog=="context"){DrawContext();return;}
    KeepCursor();GUI.enabled=oldEnabled&&Time.frameCount>dialogFrame;float w=Math.Min(dialog=="rename"?380:actor!=null&&dialog=="properties"?860:700,Screen.width-24),h=Math.Min(dialog=="rename"?174+(SelectionCount>1?38:0):760,Screen.height-24);var rect=new Rect((Screen.width-w)/2,(Screen.height-h)/2,w,h);InterfaceMenu.Panel(rect);float x=rect.x+18,y=rect.y+14,width=w-36;
    InterfaceMenu.Label(new Rect(x,y,width-90,30),dialog switch{"context"=>"场景编辑","create"=>"创建","rename"=>"重命名",_=>"属性"},InterfaceMenu.Accent,20);
