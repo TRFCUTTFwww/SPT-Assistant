@@ -1,4 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
  <PropertyGroup><TargetFramework>net10.0</TargetFramework><OutputType>Exe</OutputType><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
- <ItemGroup><Compile Include="../blackwall-pulse/PulseRules.cs" Link="PulseRules.cs"/><Compile Include="../blackwall-pulse/GlbAnimation.cs" Link="GlbAnimation.cs"/></ItemGroup>
+ <ItemGroup><Compile Include="../blackwall-pulse/PulseRules.cs" Link="PulseRules.cs"/><Compile Include="../blackwall-pulse/GlbAnimation.cs" Link="GlbAnimation.cs"/><Compile Include="../blackwall-pulse/PoseRetarget.cs" Link="PoseRetarget.cs"/><Compile Include="../blackwall-pulse/WavePcm.cs" Link="WavePcm.cs"/></ItemGroup>
 </Project>

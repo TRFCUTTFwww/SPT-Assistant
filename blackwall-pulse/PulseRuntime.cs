@@ -17,9 +17,9 @@ internal static class PulseRuntime {
  static readonly List<Target> targets=new();
  sealed record Target(Player Actor,string Id,IntPtr World,float Delay);
  static Player? owner;static IntPtr world,hands;
- static bool preview,assistant,blocked,enabled=true,walls,effects=true,filter=true;
+ static bool preview,assistant,blocked,enabled=true,walls,effects=true,filter;
  static float range=60,cone=70,volume=.65f,lastAssistant,nextError;
- static int limit=8,variant,casts,kills;static bool released;
+ static int limit=8,variant,casts,kills,lastTick=-1;static bool released;static float nextState;static long frames;
  internal static float Age=>cast.Active?Time.unscaledTime-cast.Started:-1;
  internal static void Initialize(string home,ManualLogSource log){Home=home;Log=log;ArmAnimation.Load(Path.Combine(home,"Assets","station-arms.glb"));PulseVisuals.Initialize();PulseAudio.Initialize();}
  internal static void Configure(bool on,float reach,float angle,int count,bool wall,bool fx,bool screen,float sound){enabled=on;range=float.IsFinite(reach)?Math.Clamp(reach,1,300):60;cone=float.IsFinite(angle)?Math.Clamp(angle,1,180):70;limit=Math.Clamp(count,1,24);walls=wall;effects=fx;filter=screen;volume=float.IsFinite(sound)?Math.Clamp(sound,0,1):.65f;}
@@ -58,8 +58,9 @@ internal static class PulseRuntime {
  }
  internal static void Tick(){
   try{
+   if(lastTick==Time.frameCount)return;lastTick=Time.frameCount;frames++;
    if(assistant&&Time.unscaledTime-lastAssistant>3){assistant=false;Protection=null;blocked=false;}
-   var p=Plugin.Instance;if(p==null)return;
+   var p=RuntimeHost.Settings;if(p==null)return;
    if(!assistant){Configure(p.Enabled.Value,p.Range.Value,p.Cone.Value,p.Limit.Value,p.ThroughWalls.Value,p.Effects.Value,p.Filter.Value,p.Volume.Value);if(p.Key.Value!=KeyCode.None&&Input.GetKeyDown(p.Key.Value))Cast();}
    PulseAudio.Tick();
    if(cast.Active){
@@ -71,6 +72,7 @@ internal static class PulseRuntime {
     if(!cast.Active)Finish();
    }
    PulseVisuals.Tick(InRaid(),effects,Age);
+   if(Time.unscaledTime>=nextState){nextState=Time.unscaledTime+2;WriteState();}
   }catch(Exception error){Fail(error);}
  }
  static void Hit(GameWorld current,Target entry){
@@ -91,7 +93,8 @@ internal static class PulseRuntime {
  static int killsBefore;
  static void Cancel(){cast.Cancel();ArmAnimation.Reset();PulseVisuals.Clear();PulseAudio.Stop();targets.Clear();owner=null;released=false;Status="施放已取消";killsBefore=kills;WriteState();}
  static void Fail(Exception error){Cancel();Status="黑墙脉冲错误："+error.Message;if(Time.unscaledTime>=nextError){nextError=Time.unscaledTime+10;Log.LogWarning(error);}WriteState();}
- internal static string Diagnostics()=>JsonSerializer.Serialize(new{version="0.1.0",status=Status,busy=cast.Active,age=Age,casts,kills,assistant,blocked,enabled,range,cone,limit,walls,effects,filter,arm=ArmAnimation.Diagnostics(),visuals=PulseVisuals.Diagnostics(),utc=DateTime.UtcNow});
+ internal static string Diagnostics()=>JsonSerializer.Serialize(new{version="0.2.0",status=Status,busy=cast.Active,age=Age,frames,casts,kills,assistant,blocked,enabled,range,cone,limit,walls,effects,filter,arm=ArmAnimation.Diagnostics(),rig=ArmAnimation.InspectRig(Singleton<GameWorld>.Instance?.MainPlayer),visuals=PulseVisuals.Diagnostics(),audio=PulseAudio.Diagnostics(),utc=DateTime.UtcNow});
+ internal static bool SoundPreview()=>PulseAudio.Preview(volume);
  static void WriteState(){try{File.WriteAllText(Path.Combine(Home,"blackwall-state.json"),Diagnostics());}catch{}}
  internal static void Shutdown(){Cancel();ArmAnimation.Shutdown();PulseVisuals.Shutdown();PulseAudio.Shutdown();Protection=null;}
 }
