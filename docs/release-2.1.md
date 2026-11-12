@@ -2,6 +2,8 @@
 
 ## 简体中文
 
+修正镭射眼短按容易只闪一下的输入路径：鼠标侧键改用独立鼠标按下/保持/松开状态，在 Update 与 LateUpdate 采样，短按至少显示 0.12 秒；长按持续发射，长按后的松开不增加延迟。菜单、编辑模式、自由镜头或失焦立即取消短按，不改现有按键和功能开关。增加只读停射原因诊断；侧键实机效果仍需用户确认。
+
 新增“移动中的 AI 被其他 AI 无视”（编辑模式设置，默认开启），在开始移动时和移动期间清除敌人记忆并抑制普通/强制敌对识别，放下或取消后解除。AI 开发/管理的“行为与伤害”另有独立的长期无视开关，仅作用于本局所选 AI，不覆盖原关系设置。已落地空投箱可点选、框选、移动、复制/粘贴、删除；复制保留物资并重新分配全部物品 ID，支持现有编辑快捷键。杂项“我没看到”改为“看不见我”，增加边界狙击资格、伤害和死亡拦截；仍只保护本地玩家免受边界狙击区伤害，不屏蔽普通 AI 枪弹。
 
 进一步修正物品资源加载回调：使用游戏自带的 General 优先级委托，避免自定义回调在 JobYieldPriority.Priority 中触发 NotImplementedException。增加可选运行诊断，验证资源加载、物品注册及临时物品清理。
@@ -40,6 +42,8 @@ Fika 成员添加 `-ClientOnly`，连接房主，不启动本地服务端。本�
 仍为实验版，未经过广泛测试，不保证向后兼容；安装前备份存档和配置。编译、离线检查和安装包校验不代表游戏内验收。实际按键、界面、战局效果和 Fika 多客户端同步由用户检查。具体执行的检查见[验证记录](validation-2.1.json)。
 
 ## English
+
+Stabilize laser-eye short presses with explicit mouse-button down/held/up sampling in Update and LateUpdate and a 0.12-second minimum tap pulse. Long holds continue firing and release without added delay; menu/editor/free-camera/focus blockers immediately cancel pending pulses. Preserve bindings and feature flags. Add read-only stop-reason diagnostics; physical side-button behavior still requires in-game confirmation.
 
 Add **Ignore AI while moving** (editor settings, on by default), clearing existing enemy memory and suppressing native/forced hostility during movement, with automatic release after placement or cancellation. AI management → Behavior & damage adds an independent raid-scoped toggle for selected AI. Landed airdrop crates support point/marquee selection, move, copy/paste, duplicate and delete with existing editor hotkeys; copies retain contents with fresh IDs throughout. Rename Misc “I saw nothing” to “You can't see me” and extend local-player border sniper protection to eligibility, damage and death. Ordinary AI bullets are unaffected.
 

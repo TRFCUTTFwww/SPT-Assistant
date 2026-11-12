@@ -250,6 +250,7 @@
   "双眼发出红色激光，命中 AI 后立即致死；墙体会挡住射线，保留 AI 无敌保护。无需持枪或消耗弹药。": "Fire red beams from both eyes. AI hits are lethal; walls block the beams and AI invulnerability is respected. No weapon or ammunition is required.",
   "开启后持续发射，无需按住快捷键；菜单、背包、自由镜头和切出游戏时暂时停射。": "Fire continuously without holding a key. Firing pauses in menus, inventory, free camera, or while the game is unfocused.",
   "开启功能后按住发射，松开停止。None 表示不发射；菜单、背包和自由镜头中不触发。": "Hold to fire when enabled, release to stop. None disables held firing. Does not fire in menus, inventory, or free camera.",
+  "开启功能后按住发射，松开停止；短按至少显示 0.12 秒。None 表示不发射；菜单、背包和自由镜头中不触发。": "Hold to fire and release to stop. Short taps display for at least 0.12 seconds. None disables manual firing; inactive in menus, inventory and free camera.",
 
   "筛选任务": "Filter quests",
   "显示距离（米）": "Range (m)",

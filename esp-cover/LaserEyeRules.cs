@@ -1,6 +1,19 @@
 using System;
 using System.Numerics;
 namespace LocalSpt5Esp;
+// Preserve short presses across Update/LateUpdate without turning hold-to-fire
+// into a toggle. Blocking input always discards the pending pulse.
+internal sealed class LaserEyeInput {
+ const float MinimumPulse=.12f;
+ float until;bool wasHeld;
+ internal bool Sample(float now,bool held,bool down,bool up,bool allowed){
+  if(!allowed||!float.IsFinite(now)){Reset();return false;}
+  if(down||held&&!wasHeld)until=now+MinimumPulse;
+  wasHeld=held&&!up;
+  return wasHeld||now<until;
+ }
+ internal void Reset(){until=0;wasHeld=false;}
+}
 internal static class LaserEyeRules {
  internal static bool CanFire(bool enabled,bool held,bool raid,bool alive,bool blocked,bool freeCamera,bool cursor,bool focused)
   =>enabled&&held&&raid&&alive&&!blocked&&!freeCamera&&!cursor&&focused;

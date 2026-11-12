@@ -15,22 +15,36 @@ internal static class LaserEyes {
  static readonly LineRenderer?[] beams=new LineRenderer?[4];
  static readonly Vector3[] ends=new Vector3[2];
  static readonly bool[] visible=new bool[2];
+ static readonly LaserEyeInput input=new();
+ static bool requested;static KeyCode sampledKey;static string stopped="not requested";static int starts,stops;
  static IntPtr world;static float nextTrace,nextError;static Vector3 lastDirection,lastPosition;static bool firing,lastThroughWalls;
  internal static void Initialize(){
   const string section="61. 镭射眼";
   enabled=FeatureConfig.Bind(section,"Laser eyes","镭射眼（命中秒杀）",false,"双眼发出红色激光，命中 AI 后立即致死；是否穿墙由独立开关控制，保留 AI 无敌保护。无需持枪或消耗弹药。");
   continuous=FeatureConfig.Bind(section,"Laser eyes continuous","镭射眼持续发射",false,"开启后持续发射，无需按住快捷键；菜单、背包、自由镜头和切出游戏时暂时停射。");
   throughWalls=FeatureConfig.Bind(section,"Laser eyes through walls","激光穿墙",false,"开启后忽略墙体、门和地形遮挡，激光可命中后方射线上的 AI；关闭后在首个障碍处停止。仍受最大距离、人物命中区域和 AI 无敌保护限制。");
-  holdKey=FeatureConfig.Bind(section,"Laser eyes fire key","镭射眼按住键",KeyCode.F10,"开启功能后按住发射，松开停止。None 表示不发射；菜单、背包和自由镜头中不触发。");
+  holdKey=FeatureConfig.Bind(section,"Laser eyes fire key","镭射眼按住键",KeyCode.F10,"开启功能后按住发射，松开停止；短按至少显示 0.12 秒。None 表示不发射；菜单、背包和自由镜头中不触发。");
   range=FeatureConfig.Bind(section,"Laser eyes reach","镭射眼最大距离（米）",300f,"",new AcceptableValueRange<float>(1,1000));
  }
+ static bool KeyState(KeyCode key,int state){
+  if(key==KeyCode.None)return false;
+  int mouse=(int)key-(int)KeyCode.Mouse0;
+  if(mouse is >=0 and <=6)return state switch{1=>Input.GetMouseButtonDown(mouse),2=>Input.GetMouseButtonUp(mouse),_=>Input.GetMouseButton(mouse)};
+  return state switch{1=>Input.GetKeyDown(key),2=>Input.GetKeyUp(key),_=>Input.GetKey(key)};
+ }
+ internal static void CaptureInput(){
+  var player=Singleton<GameWorld>.Instance?.MainPlayer;var key=holdKey.Value;
+  if(sampledKey!=key){input.Reset();sampledKey=key;}
+  bool reserved=key==KeyCode.F10&&(Input.GetKey(KeyCode.LeftControl)||Input.GetKey(KeyCode.RightControl));
+  bool allowed=LaserEyeRules.CanFire(enabled.Value,true,RaidClock.Active,player?.IsYourPlayer==true&&player.HealthController?.IsAlive==true,InterfaceMenu.InputBlocked||WorldEditor.Active,DirectorStage.FreeActive,Cursor.visible,Application.isFocused);
+  requested=input.Sample(Time.unscaledTime,KeyState(key,0),KeyState(key,1),KeyState(key,2),allowed&&!reserved);
+ }
+ internal static object Diagnostics()=>new{enabled=enabled.Value,continuous=continuous.Value,key=holdKey.Value.ToString(),requested,firing,stopped,starts,stops,held=KeyState(holdKey.Value,0),down=KeyState(holdKey.Value,1),up=KeyState(holdKey.Value,2),menuBlocked=InterfaceMenu.InputBlocked,editor=WorldEditor.Active,freeCamera=DirectorStage.FreeActive,cursor=Cursor.visible,focused=Application.isFocused,utc=DateTime.UtcNow};
  internal static void Tick(){
   try{
    var current=Singleton<GameWorld>.Instance;var player=current?.MainPlayer;
-   bool held=holdKey.Value!=KeyCode.None&&Input.GetKey(holdKey.Value);
-   // Ctrl+F10 belongs to exit control; holding plain F10 fires the default beam.
-   if(holdKey.Value==KeyCode.F10&&(Input.GetKey(KeyCode.LeftControl)||Input.GetKey(KeyCode.RightControl)))held=false;
-   if(!LaserEyeRules.CanFire(enabled.Value,continuous.Value||held,RaidClock.Active,player?.IsYourPlayer==true&&player.HealthController?.IsAlive==true,InterfaceMenu.InputBlocked||WorldEditor.Active,DirectorStage.FreeActive,Cursor.visible,Application.isFocused)){Hide();return;}
+   CaptureInput();
+   if(!LaserEyeRules.CanFire(enabled.Value,continuous.Value||requested,RaidClock.Active,player?.IsYourPlayer==true&&player.HealthController?.IsAlive==true,InterfaceMenu.InputBlocked||WorldEditor.Active,DirectorStage.FreeActive,Cursor.visible,Application.isFocused)){Hide(!enabled.Value?"disabled":!RaidClock.Active?"not in raid":player?.HealthController?.IsAlive!=true?"not alive":InterfaceMenu.InputBlocked?"menu input":WorldEditor.Active?"editor":DirectorStage.FreeActive?"free camera":!Application.isFocused?"unfocused":Cursor.visible?"cursor":"released");return;}
    if(current==null||player==null){Hide();return;}
    var camera=OverlayProjection.MainCamera;if(camera==null){Hide();return;}
    if(world!=current.Pointer){Hide();world=current.Pointer;}
@@ -59,7 +73,7 @@ internal static class LaserEyes {
    // with character-only depth instead of drawing over every actor with Always.
    bool masked=throughWalls.Value&&LaserBeamOcclusion.Enable(current,beams,visible);
    if(!masked)LaserBeamOcclusion.Disable();
-   firing=true;
+   if(!firing)starts++;firing=true;stopped="";
    for(int eye=0;eye<2;eye++){
     var origin=center+right*(eye==0?-.032f:.032f);var delta=ends[eye]-origin;
     // Start visible first-person geometry just beyond the near plane, along the actual eye ray.
@@ -68,7 +82,7 @@ internal static class LaserEyes {
     // layer is unavailable, empty or overwritten by a post-processing effect.
     for(int layer=0;layer<2;layer++){var beam=beams[eye*2+layer]!;beam.enabled=visible[eye];if(!visible[eye])continue;beam.SetPosition(0,start);beam.SetPosition(1,ends[eye]);}
    }
-  }catch(Exception error){Hide();if(Time.unscaledTime>=nextError){nextError=Time.unscaledTime+15;Plugin.Self.Log.LogWarning("Laser eyes: "+error);}}
+  }catch(Exception error){Hide("exception: "+error.Message);if(Time.unscaledTime>=nextError){nextError=Time.unscaledTime+15;Plugin.Self.Log.LogWarning("Laser eyes: "+error);}}
  }
  static CrosshairContact Trace(GameWorld current,Player player,Vector3 origin,Vector3 aim,Vector3 forward,float limit,int eye){
   if(!LaserEyeRules.Beam(N(origin),N(aim),N(forward),limit,out var direction,out float length)){visible[eye]=false;return default;}
@@ -104,6 +118,6 @@ internal static class LaserEyes {
   }
   return true;
  }
- static void Hide(){LaserBeamOcclusion.Disable();firing=false;nextTrace=0;for(int i=0;i<beams.Length;i++)if(beams[i]!=null)beams[i]!.enabled=false;visible[0]=visible[1]=false;}
- internal static void Reset(){Hide();LaserBeamOcclusion.Reset();world=IntPtr.Zero;if(root!=null)UnityEngine.Object.Destroy(root);if(material!=null)UnityEngine.Object.Destroy(material);root=null;material=null;Array.Clear(beams);}
+ static void Hide(string reason="render or trace unavailable"){LaserBeamOcclusion.Disable();if(firing)stops++;stopped=reason;firing=false;nextTrace=0;for(int i=0;i<beams.Length;i++)if(beams[i]!=null)beams[i]!.enabled=false;visible[0]=visible[1]=false;}
+ internal static void Reset(){input.Reset();requested=false;Hide();LaserBeamOcclusion.Reset();world=IntPtr.Zero;if(root!=null)UnityEngine.Object.Destroy(root);if(material!=null)UnityEngine.Object.Destroy(material);root=null;material=null;Array.Clear(beams);}
 }

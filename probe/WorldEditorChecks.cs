@@ -9,6 +9,9 @@ internal static class WorldEditorChecks {
   MethodReference[] Calls(string type,string method)=>Type(type).Methods.Single(m=>m.Name==method).Body.Instructions.Where(i=>i.Operand is MethodReference).Select(i=>(MethodReference)i.Operand).ToArray();
   void Check(bool ok,string reason){if(!ok)throw new Exception(reason);}
   var icons=Type("MenuIcons").Methods.Where(m=>m.HasBody).SelectMany(m=>m.Body.Instructions).Where(i=>i.Operand is MethodReference).Select(i=>(MethodReference)i.Operand).ToArray();
+  Check(Calls("RuntimeModule","Update").Any(m=>m.DeclaringType.Name=="LaserEyes"&&m.Name=="CaptureInput")&&Calls("LaserEyes","Tick").Any(m=>m.Name=="CaptureInput"),"laser input captures in Update and rechecks blockers in LateUpdate");
+  foreach(string method in new[]{"GetMouseButton","GetMouseButtonDown","GetMouseButtonUp","GetKey","GetKeyDown","GetKeyUp"})Check(Calls("LaserEyes","KeyState").Any(m=>m.Name==method),"laser input uses explicit mouse and keyboard state: "+method);
+  Check(Calls("LaserEyes","CaptureInput").Any(m=>m.DeclaringType.Name=="LaserEyeInput"&&m.Name=="Sample")&&!Calls("LaserEyes","CaptureInput").Any(m=>m.Name=="set_Value"),"laser sampling preserves press pulses without toggling configuration");
   Check(!icons.Any(m=>m.DeclaringType.Name=="Matrix4x4"||m.Name=="RotateAroundPivot"||m.Name=="set_matrix"),"icon rendering cannot reenter native Matrix4x4 operators at observed crash site");
   Check(Calls("WorldEditor","ContextRemoveWeapons").Any(m=>m.DeclaringType.Name=="AiEquipmentRemoval"&&m.Name=="RemoveWeapons")&&Calls("WorldEditor","ContextTeam").Any(m=>m.Name=="MarkEditorSide")&&Calls("WorldEditor","ContextPause").Any(m=>m.Name=="ResumeActors"),"context batch actions reuse existing live AI operations");
   Check(Calls("CorpseRevival","Enqueue").Any(m=>m.Name=="ValidateWeapons")&&Calls("CorpseRevival","Prepare").Any(m=>m.Name=="ValidateWeapons"),"unarmed corpses are rejected before queueing and after inventory rebuild");
