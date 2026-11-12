@@ -3679,5 +3679,26 @@
   "A/B 标记用于 AI 关系双方；可在全局控制中设置双方敌对或中立，不改变原生队伍。": "A/B marks select sides for AI relationships. Set hostility or neutrality in Global control; native groups are unchanged.",
   "搜索并添加到空武器槽；自动装配模板默认配件。槽位兼容性由游戏检查。": "Search and add to an empty weapon slot with template default attachments. The game checks slot compatibility.",
   "该武器槽已有装备，请先删除或使用换枪功能。": "This slot is occupied. Remove its weapon first or use weapon replacement.",
-  "该武器不适合此槽位，原装备保持不变。": "This weapon is incompatible with the slot. Existing equipment is unchanged."
+  "该武器不适合此槽位，原装备保持不变。": "This weapon is incompatible with the slot. Existing equipment is unchanged.",
+
+    "黑墙脉冲":  "Blackwall Pulse",
+    "黑墙脉冲 · 独立 Mod":  "Blackwall Pulse · Standalone Mod",
+    "启用黑墙脉冲":  "Enable Blackwall Pulse",
+    "黑墙脉冲施放键":  "Blackwall Pulse shortcut",
+    "黑墙无伤害预览键":  "Harmless Blackwall preview shortcut",
+    "黑墙最大距离（米）":  "Blackwall maximum range (m)",
+    "黑墙前方范围（度）":  "Blackwall forward cone (degrees)",
+    "每次最多目标数":  "Maximum targets per cast",
+    "黑墙穿墙":  "Blackwall through walls",
+    "黑墙手部与人物特效":  "Blackwall hand and character effects",
+    "黑墙施放滤镜":  "Blackwall screen filter",
+    "黑墙音量":  "Blackwall volume",
+    "无伤害预览（关闭菜单后播放）":  "Harmless preview (plays after closing menu)",
+    "由独立 Blackwall Pulse Mod 执行动作、特效与伤害。关闭后停止施放。":  "The standalone Blackwall Pulse Mod handles animation, effects and damage. Disable to stop casting.",
+    "单击施放；无冷却，收手结束即可再次施放。支持组合键与鼠标键。":  "Press once to cast. No cooldown; cast again when the hand returns. Supports modifier and mouse bindings.",
+    "只播放玩家动作、音效和滤镜，不选择或伤害 AI。":  "Plays only the player animation, audio and filter, without targeting or damaging AI.",
+    "镜头正前方扇形范围；数值越大可覆盖越多目标。":  "Targets a cone in front of the camera. Wider angles cover more targets.",
+    "范围内优先选择距离较近的 AI。":  "Prefers nearby AI within the targeting range.",
+    "允许选择遮挡后的 AI。默认关闭。仍保留辅助 Mod 的 AI 无敌保护。":  "Allows targeting AI behind cover. Disabled by default. Respects Assistant AI invincibility protection.",
+    "尚未连接 Blackwall Pulse。安装独立插件后启动客户端；辅助 Mod 负责调用和快捷键设置。":  "Blackwall Pulse is not connected. Install the standalone plugin and start the client; Assistant provides controls and shortcuts."
 }

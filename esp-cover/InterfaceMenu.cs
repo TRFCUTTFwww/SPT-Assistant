@@ -203,6 +203,7 @@ internal static partial class InterfaceMenu {
     case ("战斗与枪械","击杀特效"):KillEffects.DrawSettings(content);break;
     case ("人物与移动","Buff 状态"):CharacterBuffs.Draw(content);break;
     case ("模型与镜头","动作锁定"):ModelPoseLock.Draw(content);break;
+    case ("模型与镜头","黑墙脉冲"):BlackwallBridge.Draw(content);break;
     case ("人物与移动","死亡保留"):DeathInventory.Draw(content);break;
     case ("开发工具","编辑模式"):WorldEditor.DrawSettings(content);break;
     case ("开发工具","聊天与命令"):RaidChat.DrawSettings(content);break;
