@@ -66,9 +66,30 @@ gesture.Cancel();
 Check(!gesture.Step(5,true,false,.25),"ESC or a conflicting UI cannot reopen scanning while Ctrl stays held");
 gesture.Step(6,false,false,.25);
 Check(gesture.Step(7,true,false,0),"Other configurable scanner keys retain immediate activation");
-Check(HackRules.All.Select(HackRules.Name).SequenceEqual(new[]{"重启义眼","武器故障","阻碍移动","记忆清除","赛博精神病","黑墙网关"}),"Six retained quickhacks appear in order after removing backup");
+Check(HackRules.All.Select(HackRules.Name).SequenceEqual(new[]{"重启义眼","武器故障","阻碍移动","记忆清除","义体过热","突触熔融","赛博精神病","黑墙网关"}),"Eight quickhacks appear in order with the two new combat programs");
 Check(HackRules.Cycle(HackKind.RebootOptics,-1)==HackKind.BlackwallGateway&&HackRules.Cycle(HackKind.BlackwallGateway,1)==HackKind.RebootOptics,"Scrolling wraps over all six skills");
-Check(HackRules.All.Select(HackRules.Icon).Distinct().Count()==6,"Each quickhack uses its own original icon");
+Check(HackRules.All.Select(HackRules.Icon).Distinct().Count()==8,"Each quickhack uses its own original icon");
+var uploads=new UploadQueue<string>();
+Check(uploads.TryAdd("a",HackKind.Overheat,5,10)&&uploads.TryAdd("a",HackKind.WeaponGlitch,3,10)&&uploads.TryAdd("b",HackKind.RebootOptics,2,10),"Different targets upload independently while a target queues multiple programs");
+Check(uploads.Current("a")!.Progress(11)==.5f&&uploads.Current("b")!.Progress(11)>0,"Both targets advance concurrently");
+Check(uploads.For("a")[1].Elapsed(100)==0&&!uploads.TryAdd("a",HackKind.Overheat,5,11),"Waiting entries never upload early; duplicate pending skills are rejected");
+Check(uploads.Complete("a",11)==null&&uploads.Complete("a",12)!.Kind==HackKind.Overheat,"A program cannot execute before its actual upload deadline");
+Check(uploads.Current("a")!.Started==12&&uploads.Current("a")!.Progress(12)==0,"Promotion starts the next timer at completion, without retroactive progress");
+Check(uploads.Complete("a",12)==null&&uploads.Cancel("a")==3&&uploads.Cancel("a")==0,"A completed effect cannot repeat and only pending paid RAM is refunded once");
+Check(uploads.Current("b")!=null&&uploads.Clear()==2&&uploads.Count==0,"Cancellation is isolated by target and global cleanup refunds the rest");
+foreach(var kind in HackRules.All.Take(UploadQueue<string>.PerTargetLimit)) Check(uploads.TryAdd("c",kind,1,20),"Four per-target slots are accepted");
+Check(!uploads.TryAdd("c",HackKind.BlackwallGateway,12,20)&&uploads.Count==4,"Full target queues reject before payment");
+uploads.Clear();
+Check(uploads.TryAdd("free",HackKind.SynapseBurnout,0,30)&&uploads.Clear()==0,"Infinite RAM requests never manufacture refunds");
+Check(!GatewayTiming.CanExecute(-1,100)&&!GatewayTiming.CanExecute(10,10.4f)&&!GatewayTiming.CanExecute(10,11.24f)&&GatewayTiming.CanExecute(10,11.25f),"Blackwall deaths wait until upload completion and the entire body animation have finished");
+Check(GatewayTiming.ExecutionDuration>UploadAnimation.CompleteDuration,"Blackwall death cannot precede the original head completion track");
+foreach(float step in new[]{.016f,.25f,.7f,3f}) {
+    float sum=0,previous=0;
+    for(float elapsed=step;previous<10;elapsed+=step) { sum+=CombatHackRules.HeatDamage(elapsed,previous); previous=elapsed; }
+    Check(Math.Abs(sum-160)<.01f,"Heat integrates the same capped damage at different frame and tick rates");
+}
+Check(CombatHackRules.HeatDamage(-1,0)==0&&CombatHackRules.HeatDamage(10,10)==0,"Heat cannot damage before start or after expiry");
+Check(CombatHackRules.BurnoutDamage(0)==80&&CombatHackRules.BurnoutDamage(12)==200&&CombatHackRules.BurnoutDamage(24)==320&&CombatHackRules.BurnoutDamage(100)==320,"Burnout scales with missing RAM within the documented damage cap");
 var introStart=UploadAnimation.Intro(-1); var introEnd=UploadAnimation.Intro(2);
 Check(introStart.Scale==1.5f&&introStart.Y==-50&&introStart.Alpha==0,"Upload starts above the badge at the original 1.5 scale");
 Check(Math.Abs(introEnd.Scale-1)<.0001f&&Math.Abs(introEnd.Y)<.0001f&&introEnd.Alpha==1,"Intro settles independently of gameplay upload duration");
@@ -115,7 +136,7 @@ if(args.Length>1) {
             Check(font.GetProperty("glyphs").TryGetProperty(((int)c).ToString(),out _),"Original Chinese atlas covers every retained quickhack name");
     }
     var sounds=Directory.GetFiles(args[1],"*.wav");
-    Check(sounds.Length==14,"UI, five quickhacks and real Blackwall death audio; no borrowed upload sound");
+    Check(sounds.Length==16,"UI, seven quickhacks and real Blackwall death audio; no borrowed upload sound");
     foreach(var kind in HackRules.All) {
         Check(File.Exists(Path.Combine(args[1],HackRules.Icon(kind)+".png")),"Original quickhack icon packaged: "+kind);
         Check(File.Exists(Path.Combine(args[1],HackRules.Icon(kind)+".wav"))==(kind!=HackKind.BlackwallGateway),"Only confirmed quickhack sounds packaged: "+kind);

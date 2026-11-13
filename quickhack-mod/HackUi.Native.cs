@@ -137,14 +137,14 @@ internal static partial class HackUi {
         var actor=Runtime.Target?.Resolve();
         if(preview) Hologram(); else if(actor!=null) TargetBracket(actor);
         ScannerReticle();
-        const float x=194,w=430,top=373;
+        const float x=194,w=430,top=335,pitch=60;
         Text(new Rect(x-16,top-71,340,17),"CYBERDECK  V  S53 332",Alpha(ScanRed,.55f),11,2);
         Text(new Rect(x+4,top-57,400,29),"可用快速破解:",ScanCyan,23);
         Line(x,top-18,x+w-26,top-18,Alpha(ScanRed,.8f));
         if(lastSelected!=Runtime.Selected) { lastSelected=Runtime.Selected; selectedAt=Now; }
         for(int i=0;i<HackRules.All.Length;i++) {
             var kind=HackRules.All[i]; bool selected=Runtime.Selected==kind;
-            float y=top+i*64,reveal=Math.Clamp((Now-Runtime.ModeStarted-i*.025f)/.18f,0,1);
+            float y=top+i*pitch,reveal=Math.Clamp((Now-Runtime.ModeStarted-i*.025f)/.18f,0,1);
             // The selected row steps to the right in the reference.
             float offset=selected?22:i%3==2?-7:0;
             var row=new Rect(x+offset+(1-reveal)*15,y,w-(selected?22:0),55);
@@ -161,7 +161,8 @@ internal static partial class HackUi {
                 Fill(row,Alpha(accent,flash*.15f));
             }
             Text(new Rect(row.x+23,y+1,row.width-117,28),HackRules.Name(kind),c,21);
-            string state=Runtime.Uploading&&Runtime.UploadKind==kind?"正在上传":enough?"就绪":"可用 RAM 不足";
+            int queuePosition=Runtime.QueuePosition(kind);
+            string state=queuePosition==0?"正在上传":queuePosition>0?"等待上传":enough?"就绪":"可用 RAM 不足";
             float stateWidth=state.Length*14+8;
             Frame(new Rect(row.x+24,y+32,stateWidth,17),Alpha(c,.6f));
             Text(new Rect(row.x+28,y+32,stateWidth-4,18),state,c,13);
@@ -170,11 +171,12 @@ internal static partial class HackUi {
             Image(new Rect(row.xMax-59,y+17,6,23),"qh_memory_small_fg",c,true);
             Image(new Rect(row.xMax-47,y+7,43,43),"qh_frame_qh_fg",c,true);
             Image(new Rect(row.xMax-42,y+12,32,32),HackRules.Icon(kind),c);
-            if(Runtime.Uploading&&Runtime.UploadKind==kind) Fill(new Rect(row.x+3,y+52,(row.width-8)*Runtime.UploadProgress,2),c);
+            if(queuePosition==0) Fill(new Rect(row.x+3,y+52,(row.width-8)*Runtime.UploadProgress,2),c);
             if(Click(row,"hack"+i)) { Runtime.Selected=kind; showTargetData=false; Assets.Play("press"); }
         }
-        if(Click(new Rect(x,top+384,w,35),"execute")) { if(preview) Runtime.PreviewCast(); else Runtime.Upload(); }
-        Text(new Rect(x+8,top+385,w-16,29),"F  执行",Alpha(ScanCyan,.7f),17);
+        float executeY=top+HackRules.All.Length*pitch+7;
+        if(Click(new Rect(x,executeY,w,35),"execute")) { if(preview) Runtime.PreviewCast(); else Runtime.Upload(); }
+        Text(new Rect(x+8,executeY+1,w-16,29),"F  执行",Alpha(ScanCyan,.7f),17);
         if(preview&&Event.current.type==EventType.KeyDown&&Event.current.keyCode==KeyCode.F) { Runtime.PreviewCast(); Event.current.Use(); }
         ScanDetails(preview,actor);
         // Ordinary scanner text has no centre-screen upload card in the source HUD.
@@ -278,6 +280,10 @@ internal static partial class HackUi {
         if(kind==HackKind.BlackwallGateway) {
             Image(new Rect(843,330,236,310),"blackwall",new Color(1,.08f,.12f,.8f));
             for(int i=0;i<11;i++) Fill(new Rect(877+Mathf.Sin(age*28+i)*46,top+25+i*31,48+Mathf.Sin(age*19+i)*35,3),Alpha(Red,.8f));
+        } else if(kind==HackKind.Overheat) {
+            var flame=new Color(1,.35f,.015f,.8f);
+            Image(new Rect(875,373,170,190),"blackwall",flame);
+            for(int i=0;i<7;i++) Fill(new Rect(cx-48+Mathf.Sin(age*19+i)*35,top+100+i*20,20+Mathf.Abs(Mathf.Sin(age*11+i))*30,3),Alpha(flame,.7f));
         } else if(kind==HackKind.RebootOptics) {
             Fill(new Rect(cx-27,top+31,54,5),Cyan); Corners(new Rect(cx-42,top+7,84,70),Cyan,9);
         } else {

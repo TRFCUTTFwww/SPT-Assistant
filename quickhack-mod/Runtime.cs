@@ -40,9 +40,9 @@ internal static class Runtime {
     static int releaseFrame=-1,openedFrame;
     static float nextScan,nextWarning,lastTime;
     static bool puzzleHandled;
-    static ActorRef? uploading;
-    internal static ActorRef? UploadTarget=>uploading;
-    internal static HackKind UploadKind=>uploadKind;
+    internal static readonly UploadQueue<ActorRef> Uploads=new();
+    internal static ActorRef? UploadTarget=>Uploads.Current(Target)?.Target;
+    internal static HackKind UploadKind=>Uploads.Current(Target)?.Kind??Selected;
     static readonly ScannerGesture scanGesture=new();
     static readonly KeyCode[] chordKeys=Enum.GetValues<KeyCode>().Where(k=>(int)k>=8&&(int)k<=329).Distinct().ToArray();
     static bool ControlScanner=>Plugin.ScanKey.Value is KeyCode.LeftControl or KeyCode.RightControl;
@@ -57,13 +57,14 @@ internal static class Runtime {
         if(!Active||!ControlScanner||Mode!=UiMode.Scanner||!ScanConflict(true)) return;
         scanGesture.Cancel(); SetMode(UiMode.None); releaseFrame=-1;
     }
-    static HackKind uploadKind;
-    static float uploadStart;
     static IntPtr localWorld;
-    internal static bool Uploading=>uploading!=null;
-    internal static float UploadElapsed=>uploading==null?0:Math.Max(0,Time.unscaledTime-uploadStart);
-    internal static float UploadProgress=>uploading==null?0:Math.Clamp((Time.unscaledTime-uploadStart)/HackRules.Upload(uploadKind),0,1);
-    internal static string UploadName=>HackRules.Name(uploadKind);
+    internal static bool Uploading=>Uploads.Count>0;
+    internal static float UploadElapsed=>Uploads.Current(Target)?.Elapsed(Time.unscaledTime)??0;
+    internal static float UploadProgress=>Uploads.Current(Target)?.Progress(Time.unscaledTime)??0;
+    internal static string UploadName=>HackRules.Name(UploadKind);
+    internal static int QueuePosition(HackKind kind)=>Array.FindIndex(Uploads.For(Target),e=>e.Kind==kind);
+    static void Refund(float paid)=>Ram=Math.Min(24,Ram+paid);
+    static void CancelUploads()=>Refund(Uploads.Clear());
     internal static int Frames { get; private set; }
 
     internal static void Start() { Assets.Initialize(); OriginalFonts.Initialize(); lastTime=Time.unscaledTime; Active=true; }
@@ -85,14 +86,14 @@ internal static class Runtime {
         try {
             Frames++;
             float now=Time.unscaledTime,delta=Math.Clamp(now-lastTime,0,.1f); lastTime=now;
-            if(!Plugin.Enabled.Value||!Application.isFocused) { Close(); uploading=null; scanGesture.Cancel(); AiHacks.Reset(); return; }
+            if(!Plugin.Enabled.Value||!Application.isFocused) { Close(); CancelUploads(); scanGesture.Cancel(); AiHacks.Reset(); return; }
             var current=Singleton<GameWorld>.Instance;
             if(!InRaid||current?.MainPlayer?.HealthController?.IsAlive!=true||current.MainPlayer.IsYourPlayer!=true) {
-                uploading=null; Target=null;
+                CancelUploads(); Target=null;
                 if(Mode==UiMode.Scanner||Mode==UiMode.Breach&&!PreviewBreach) Close();
                 AiHacks.Reset(); localWorld=IntPtr.Zero;
             } else {
-                if(localWorld!=IntPtr.Zero&&localWorld!=current.Pointer) { Close(); uploading=null; Target=null; AiHacks.Reset(); DoorHacking.Reset(); }
+                if(localWorld!=IntPtr.Zero&&localWorld!=current.Pointer) { Close(); CancelUploads(); Target=null; AiHacks.Reset(); DoorHacking.Reset(); }
                 localWorld=current.Pointer;
                 AiHacks.Tick();
             }
@@ -111,14 +112,17 @@ internal static class Runtime {
                     if(Time.frameCount>openedFrame+1&&Input.GetKeyDown(KeyCode.F)) Upload();
                 }
             }
-            if(uploading!=null) {
-                var target=uploading.Resolve();
-                if(target==null||!Visible(target)) { Status="上传已中断：目标离开范围或视线。"; uploading=null; Assets.Play("denied"); }
-                else if(UploadProgress>=1) {
-                    var actor=uploading; uploading=null;
-                    try { Status=AiHacks.Apply(actor,uploadKind); Assets.Play("granted"); }
-                    catch(Exception e) { Ram=Math.Min(24,Ram+HackRules.Cost(uploadKind)); Status=e.Message+"（RAM 已返还）"; Assets.Play("denied"); Warn("Apply quickhack",e); }
+            foreach(var reference in Uploads.Targets) {
+                var target=reference.Resolve();
+                if(target==null||!Visible(target)) {
+                    Refund(Uploads.Cancel(reference)); Status="目标上传已中断，未生效的 RAM 已返还。"; Assets.Play("denied"); continue;
                 }
+                var entry=Uploads.Complete(reference,now);
+                if(entry==null) continue;
+                try { Status=AiHacks.Apply(reference,entry.Kind,24-Ram); Assets.Play("granted"); }
+                catch(Exception e) { Refund(entry.Paid); Status=e.Message+"（RAM 已返还）"; Assets.Play("denied"); Warn("Apply quickhack",e); }
+                // Lethal programs cancel only this target's remaining queue.
+                if(reference.Resolve()==null) Refund(Uploads.Cancel(reference));
             }
             if(Mode==UiMode.Breach&&Puzzle!=null) {
                 if(!puzzleHandled&&!PreviewBreach&&Door?.Valid()!=true) { Status="门禁已失效，破解取消。"; Close(); return; }
@@ -131,16 +135,16 @@ internal static class Runtime {
             }
             PreviewProgress=Math.Clamp((now-PreviewStarted)/HackRules.Upload(PreviewKind),0,1);
             KeepCursor();
-        } catch(Exception e) { Status=e.Message; Warn("Runtime",e); Close(); uploading=null; }
+        } catch(Exception e) { Status=e.Message; Warn("Runtime",e); Close(); CancelUploads(); }
     }
     internal static void Upload() {
-        if(uploading!=null) { Status="已有快速破解正在上传。"; return; }
         var target=Target?.Resolve();
         if(target==null||!Visible(target)) { Status="请锁定视线内的存活 AI。"; return; }
         if(!CanAfford(Selected)) { Status="RAM 不足。"; Assets.Play("denied"); return; }
-        if(!Plugin.InfiniteRam.Value) Ram-=HackRules.Cost(Selected);
-        uploading=Target; uploadKind=Selected; uploadStart=Time.unscaledTime; Assets.Play("press");
-        Status=HackRules.Name(Selected)+" · 上传中";
+        float paid=Plugin.InfiniteRam.Value?0:HackRules.Cost(Selected);
+        if(!Uploads.TryAdd(Target!,Selected,paid,Time.unscaledTime)) { Status="该破解已在队列中，或队列已满（每目标最多 4 个）。"; Assets.Play("fail"); return; }
+        Ram-=paid; Assets.Play("press");
+        Status=HackRules.Name(Selected)+(Uploads.For(Target).Length>1?" · 等待上传":" · 上传中");
     }
     internal static bool Visible(Player actor) {
         var view=Camera; if(view==null) return false;
@@ -180,7 +184,7 @@ internal static class Runtime {
     internal static void Stop() {
         // Old native action lists can briefly retain callback delegates. Disable
         // this generation first so those callbacks cannot reopen its UI.
-        Active=false; uploading=null; scanGesture.Reset();
+        Active=false; CancelUploads(); scanGesture.Reset();
         foreach(Action step in new Action[]{Close,AiHacks.Reset,Effects.Clear,DoorHacking.Reset,Assets.Clear})
             try {step();} catch(Exception e) {Plugin.Logger?.LogWarning("Quickhack cleanup: "+e);}
     }

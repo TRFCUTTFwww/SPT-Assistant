@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using EFT;
 using BepInEx.Configuration;
 using UnityEngine;
 namespace LocalSpt5Esp;
@@ -7,6 +8,22 @@ internal static class QuickhackSettingsBridge {
  static Vector2 scroll;
  static float nextLookup;
  static Type? api;
+ static Func<bool>? active;
+ static Func<BotOwner,IPlayer,bool>? hostile;
+ static void FindApi() {
+  if(active?.Invoke()==true) return;
+  api=null; active=null; hostile=null;
+  if(Time.unscaledTime<nextLookup) return;
+  nextLookup=Time.unscaledTime+1;
+  api=AppDomain.CurrentDomain.GetAssemblies().Select(a=>a.GetType("LocalQuickhacks.QuickhackApi")).FirstOrDefault(t=>t?.GetProperty("Active")?.GetValue(null) is true);
+  active=api?.GetProperty("Active")?.GetMethod?.CreateDelegate<Func<bool>>();
+  hostile=api?.GetMethod("IsHostile")?.CreateDelegate<Func<BotOwner,IPlayer,bool>>();
+ }
+ internal static bool IsHostile(BotOwner? owner,IPlayer? target) {
+  if(owner==null||target==null) return false;
+  try { FindApi(); return hostile?.Invoke(owner,target)==true; }
+  catch { api=null; active=null; hostile=null; nextLookup=Time.unscaledTime+1; return false; }
+ }
  static string Name(ConfigEntryBase entry)=>entry.Definition.Key switch {
   "Enabled"=>"启用独立快速破解", "Infinite RAM"=>"无限 RAM", "Range"=>"扫描与上传距离（米）",
   "Gateway spread range"=>"黑墙每跳传染范围（米）", "Gateway target limit"=>"黑墙连锁总目标数",
@@ -14,11 +31,7 @@ internal static class QuickhackSettingsBridge {
  };
  internal static void Draw(Rect rect) {
   try {
-   if(api?.GetProperty("Active")?.GetValue(null) is not true) api=null;
-   if(api==null&&Time.unscaledTime>=nextLookup) {
-    nextLookup=Time.unscaledTime+1;
-    api=AppDomain.CurrentDomain.GetAssemblies().Select(a=>a.GetType("LocalQuickhacks.QuickhackApi")).FirstOrDefault(t=>t?.GetProperty("Active")?.GetValue(null) is true);
-   }
+   FindApi();
    InterfaceMenu.Label(new Rect(rect.x,rect.y,rect.width,30),"CP2077 快速破解",InterfaceMenu.Accent,20);
    if(api?.GetMethod("GetSettings")?.Invoke(null,null) is not ConfigEntryBase[] entries) {
     InterfaceMenu.Paragraph(new Rect(rect.x,rect.y+44,rect.width,85),"独立快速破解 Mod 尚未就绪。安装并启用 CP2077 Quickhacks 后，即可在这里调整设置。",null,15);return;

@@ -52,13 +52,13 @@ internal static class Effects {
     internal static IReadOnlyList<Marker> Markers=>markers;
     internal static void Forget(ActorRef reference,HackKind kind)=>markers.RemoveAll(m=>m.Ref==reference&&m.Kind==kind);
     internal static void ForgetAll()=>markers.Clear();
-    sealed record Effect(EFT.Player Actor,HackKind Kind,float Start,GameObject Root,Material Material,Transform[] Panels);
+    sealed record Effect(EFT.Player Actor,HackKind Kind,float Start,float Duration,GameObject Root,Material Material,Transform[] Panels);
     static readonly List<Effect> effects=[];
     static readonly List<Mesh> frames=[];
     internal static float PreviewTime=-100;
     internal static HackKind PreviewKind;
     internal static void Preview(HackKind kind) { PreviewKind=kind; PreviewTime=Time.unscaledTime; }
-    internal static void Target(EFT.Player actor,HackKind kind) {
+    internal static void Target(EFT.Player actor,HackKind kind,float effectDuration=3) {
         var reference=ActorRef.Of(actor);
         Forget(reference,kind);
         markers.Add(new(reference,kind,Time.unscaledTime,Time.unscaledTime+HackRules.Duration(kind)));
@@ -66,17 +66,17 @@ internal static class Effects {
         var shader=Shader.Find("Sprites/Default"); if(shader==null) return;
         var root=new GameObject("Quickhack effect") { hideFlags=HideFlags.HideAndDontSave };
         var material=new Material(shader) { hideFlags=HideFlags.HideAndDontSave };
-        material.mainTexture=Assets.Texture(kind==HackKind.BlackwallGateway?"blackwall":HackRules.Icon(kind));
+        material.mainTexture=Assets.Texture(kind is HackKind.BlackwallGateway or HackKind.Overheat?"blackwall":HackRules.Icon(kind));
         material.SetInt("_ZWrite",0); material.SetInt("_ZTest",(int)UnityEngine.Rendering.CompareFunction.LessEqual);
-        material.color=kind==HackKind.RebootOptics?new Color(.2f,1,1,.7f):new Color(1,.06f,.1f,.8f);
+        material.color=kind==HackKind.RebootOptics?new Color(.2f,1,1,.7f):kind==HackKind.Overheat?new Color(1,.35f,.015f,.8f):new Color(1,.06f,.1f,.8f);
         var panels=new Transform[6];
         for(int i=0;i<panels.Length;i++) {
             var p=GameObject.CreatePrimitive(PrimitiveType.Quad); p.name="Quickhack glitch"; p.transform.SetParent(root.transform,false);
             var c=p.GetComponent<Collider>(); if(c!=null) { c.enabled=false; UnityEngine.Object.Destroy(c); }
-            if(kind==HackKind.BlackwallGateway) { MakeFrames(); p.GetComponent<MeshFilter>().sharedMesh=frames[i%frames.Count]; }
+            if(kind is HackKind.BlackwallGateway or HackKind.Overheat) { MakeFrames(); p.GetComponent<MeshFilter>().sharedMesh=frames[i%frames.Count]; }
             p.GetComponent<Renderer>().sharedMaterial=material; panels[i]=p.transform;
         }
-        effects.Add(new(actor,kind,Time.unscaledTime,root,material,panels));
+        effects.Add(new(actor,kind,Time.unscaledTime,effectDuration,root,material,panels));
         while(effects.Count>10) Drop(effects[0]);
     }
     static void MakeFrames() {
@@ -92,20 +92,21 @@ internal static class Effects {
     internal static void Tick() {
         foreach(var e in effects.ToArray()) {
             float age=Time.unscaledTime-e.Start;
-            if(e.Actor==null||age>3||!Runtime.InRaid) { Drop(e); continue; }
+            if(e.Actor==null||age>=e.Duration||!Runtime.InRaid) { Drop(e); continue; }
             var center=e.Kind switch {
-                HackKind.BlackwallGateway or HackKind.WeaponGlitch => e.Actor.PlayerBones?.Ribcage?.Original?.position??e.Actor.Position+Vector3.up,
+                HackKind.BlackwallGateway or HackKind.Overheat or HackKind.WeaponGlitch => e.Actor.PlayerBones?.Ribcage?.Original?.position??e.Actor.Position+Vector3.up,
                 HackKind.CrippleMovement => e.Actor.Position+Vector3.up*.35f,
                 _=>e.Actor.PlayerBones?.Head?.Original?.position??e.Actor.Position+Vector3.up*1.6f
             };
             var camera=Runtime.Camera;
             for(int i=0;i<e.Panels.Length;i++) {
                 var p=e.Panels[i]; float phase=Mathf.Floor(age*9+i)*1.8f;
-                p.position=center+new Vector3(Mathf.Sin(phase)*.22f,Mathf.Cos(phase*1.3f)*(e.Kind==HackKind.BlackwallGateway?.65f:.15f),Mathf.Cos(phase)*.15f);
-                p.localScale=new Vector3(.1f+Mathf.Abs(Mathf.Sin(phase))*.18f,e.Kind==HackKind.BlackwallGateway?.5f:.12f,1);
+                bool body=e.Kind is HackKind.BlackwallGateway or HackKind.Overheat;
+                p.position=center+new Vector3(Mathf.Sin(phase)*.22f,Mathf.Cos(phase*1.3f)*(body?.65f:.15f),Mathf.Cos(phase)*.15f);
+                p.localScale=new Vector3(.1f+Mathf.Abs(Mathf.Sin(phase))*.18f,body?.5f:.12f,1);
                 if(camera!=null) p.rotation=camera.transform.rotation;
             }
-            var color=e.Material.color; color.a=(.3f+.5f*Mathf.Abs(Mathf.Sin(age*35)))*Math.Clamp(3-age,0,1); e.Material.color=color;
+            var color=e.Material.color; color.a=(.3f+.5f*Mathf.Abs(Mathf.Sin(age*35)))*Math.Clamp((e.Duration-age)/Math.Min(1,e.Duration),0,1); e.Material.color=color;
         }
     }
     static void Drop(Effect e) { UnityEngine.Object.Destroy(e.Root); UnityEngine.Object.Destroy(e.Material); effects.Remove(e); }

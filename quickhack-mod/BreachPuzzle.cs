@@ -91,28 +91,30 @@ internal sealed class BreachPuzzle {
     }
 }
 
-internal enum HackKind { RebootOptics, WeaponGlitch, CrippleMovement, MemoryWipe, Cyberpsychosis, BlackwallGateway }
+internal enum HackKind { RebootOptics, WeaponGlitch, CrippleMovement, MemoryWipe, Overheat, SynapseBurnout, Cyberpsychosis, BlackwallGateway }
 internal static class HackRules {
     internal const float GatewayRange=25,GatewayHopTime=1.2f;
     internal const int GatewayTargets=5;
     internal static readonly HackKind[] All=Enum.GetValues<HackKind>();
     internal static string Name(HackKind kind) => kind switch {
         HackKind.RebootOptics=>"重启义眼", HackKind.WeaponGlitch=>"武器故障", HackKind.CrippleMovement=>"阻碍移动",
-        HackKind.MemoryWipe=>"记忆清除", HackKind.Cyberpsychosis=>"赛博精神病", _=>"黑墙网关"
+        HackKind.MemoryWipe=>"记忆清除", HackKind.Overheat=>"义体过热", HackKind.SynapseBurnout=>"突触熔融", HackKind.Cyberpsychosis=>"赛博精神病", _=>"黑墙网关"
     };
     internal static string Icon(HackKind kind) => kind switch {
         HackKind.RebootOptics=>"GlitchScreenBlind", HackKind.WeaponGlitch=>"WeaponMalfunction", HackKind.CrippleMovement=>"LocomotionMalfunction",
-        HackKind.MemoryWipe=>"MemoryWipe", HackKind.Cyberpsychosis=>"Cyberpsychosis", _=>"BlackwallBreach"
+        HackKind.MemoryWipe=>"MemoryWipe", HackKind.Overheat=>"Overheat", HackKind.SynapseBurnout=>"BrainMelt", HackKind.Cyberpsychosis=>"Cyberpsychosis", _=>"BlackwallBreach"
     };
-    internal static int Cost(HackKind kind) => kind switch { HackKind.Cyberpsychosis=>8, HackKind.BlackwallGateway=>12, HackKind.MemoryWipe=>6, HackKind.CrippleMovement=>4, HackKind.WeaponGlitch=>3, _=>2 };
-    internal static float Upload(HackKind kind) => kind switch { HackKind.Cyberpsychosis=>3, HackKind.BlackwallGateway=>4, HackKind.MemoryWipe=>2, _=>1.5f };
-    internal static float Duration(HackKind kind) => kind switch { HackKind.Cyberpsychosis=>20, HackKind.MemoryWipe=>8, HackKind.BlackwallGateway=>3, _=>10 };
-    internal static string Category(HackKind kind)=>kind is HackKind.Cyberpsychosis or HackKind.BlackwallGateway?"终极":"控制";
+    internal static int Cost(HackKind kind) => kind switch { HackKind.Cyberpsychosis=>8, HackKind.BlackwallGateway=>12, HackKind.SynapseBurnout=>8, HackKind.Overheat=>5, HackKind.MemoryWipe=>6, HackKind.CrippleMovement=>4, HackKind.WeaponGlitch=>3, _=>2 };
+    internal static float Upload(HackKind kind) => kind switch { HackKind.Cyberpsychosis=>3, HackKind.BlackwallGateway=>4, HackKind.SynapseBurnout=>2.5f, HackKind.Overheat or HackKind.MemoryWipe=>2, _=>1.5f };
+    internal static float Duration(HackKind kind) => kind switch { HackKind.Cyberpsychosis=>20, HackKind.MemoryWipe or HackKind.Overheat=>8, HackKind.SynapseBurnout=>1, HackKind.BlackwallGateway=>3, _=>10 };
+    internal static string Category(HackKind kind)=>kind is HackKind.Cyberpsychosis or HackKind.BlackwallGateway?"终极":kind is HackKind.Overheat or HackKind.SynapseBurnout?"战斗":"控制";
     internal static HackKind Cycle(HackKind kind,int direction)=>All[((int)kind+direction+All.Length)%All.Length];
     internal static string Description(HackKind kind) => kind switch {
         HackKind.WeaponGlitch=>"干扰目标手持武器。\n暂时阻止开火，仍可移动和换弹。",
         HackKind.CrippleMovement=>"锁住目标的移动系统。\n目标留在原地，仍可观察与开火。",
         HackKind.MemoryWipe=>"清除目标当前的战斗记忆。\n短暂阻断重新锁定，随后可再次警觉。",
+        HackKind.Overheat=>"持续灼烧目标，造成热能伤害。\n8 秒内累计造成 160 点基础伤害。",
+        HackKind.SynapseBurnout=>"上传后造成一次物理重创。\n已消耗 RAM 越多，伤害越高。\n基础 80 点，最高增加 300%。",
         HackKind.Cyberpsychosis=>"扰乱目标的威胁识别。\n使其攻击附近 AI，包括原队友。",
         HackKind.BlackwallGateway=>"释放黑墙，摧毁目标。\n向附近可见 AI 连锁传播。",
         _=>"重启目标的视觉系统。\n暂时阻断视觉，听觉仍然有效。"

@@ -30,7 +30,7 @@ if($LASTEXITCODE -ne 0) { throw 'Quickhack host checks failed.' }
 
 $files=[ordered]@{}
 $iconDir='03_images/base/gameplay/gui/common/icons/quickhacks_icons.inkatlas/2160p'
-foreach($name in @('Cyberpsychosis','BlackwallBreach','GlitchScreenBlind','WeaponMalfunction','LocomotionMalfunction','MemoryWipe')) { $files["$name.png"]=@($ResourceRoot,"$iconDir/$name.png") }
+foreach($name in @('Cyberpsychosis','BlackwallBreach','GlitchScreenBlind','WeaponMalfunction','LocomotionMalfunction','MemoryWipe','Overheat','BrainMelt')) { $files["$name.png"]=@($ResourceRoot,"$iconDir/$name.png") }
 $files['DoorAuthorization.png']=@($ResourceRoot,'03_images/base/gameplay/gui/fullscreen/hacking_minigame/atlas_minigame_programs.inkatlas/2160p/DoorAuthorization.png')
 $breachAtlas='03_images/base/gameplay/gui/fullscreen/hacking_minigame/atlas_minigame.inkatlas/2160p'
 foreach($name in @('buffer_empty','buffer_activated','fluff_1','fluff_2','fluff_3','fluff_barcode1','fluff_barcode2','fluff_code1','fluff_header1','fluff_protocol2','fluff_text2','fluff_text6','fluff_pettern','frame_glow_small','ico_programs','logo_nettech')) { $files["breach_$name.png"]=@($ResourceRoot,"$breachAtlas/$name.png") }
@@ -48,7 +48,8 @@ $audioMap=[ordered]@{
     'denied'='ui_hacking_access_denied.wav'; 'scan'='ui_focus_mode_scanning_open.wav';
     'Cyberpsychosis'='quickhack_cyberpsychosis {r}.wav'; 'GlitchScreenBlind'='quickhack_reboot_optics {r}.wav';
     'WeaponMalfunction'='quickhack_weapon_malfunction {r}.wav'; 'LocomotionMalfunction'='quickhack_locomotion_malfunction {r}.wav';
-    'MemoryWipe'='quickhack_memory_wipe {r}.wav'
+    'MemoryWipe'='quickhack_memory_wipe {r}.wav';
+    'Overheat'='quickhack_overheat {r}.wav'; 'BrainMelt'='quickhack_synapse_burnout {r}.wav'
 }
 foreach($pair in $audioMap.GetEnumerator()) { $files["$($pair.Key).wav"]=@($ResourceRoot,"$audioDir/$($pair.Value)") }
 $files['blackwall.png']=@($BlackwallRoot,'03_images/ep1/fx/blackwall/textures/blackwall_atlas.png')
@@ -86,9 +87,9 @@ if($LASTEXITCODE -ne 0) { throw 'Original font rasterization failed.' }
 foreach($generated in (Get-ChildItem -LiteralPath $assets -File -Filter 'font_*')) {
     $packaged+=@{name=$generated.Name;bytes=$generated.Length;sha256=(Get-FileHash -LiteralPath $generated.FullName -Algorithm SHA256).Hash}
 }
-@{version='0.5.3';target='EFT 48558 / SPT 5.0';files=$packaged} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $payload 'asset-manifest.json') -Encoding UTF8
+@{version='0.6.0';target='EFT 48558 / SPT 5.0';files=$packaged} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $payload 'asset-manifest.json') -Encoding UTF8
 @{
-    version='0.5.3'
+    version='0.6.0'
     hostSha256=(Get-FileHash -LiteralPath (Join-Path $payload 'Local.Cp2077.Quickhacks.dll') -Algorithm SHA256).Hash
     coreSha256=(Get-FileHash -LiteralPath (Join-Path $payload 'runtime/Local.Cp2077.Quickhacks.Core.module') -Algorithm SHA256).Hash
 } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $payload 'release-manifest.json') -Encoding UTF8

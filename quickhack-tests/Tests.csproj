@@ -4,6 +4,9 @@
     <Compile Include="../quickhack-mod/BreachPuzzle.cs" Link="BreachPuzzle.cs" />
     <Compile Include="../quickhack-mod/ScannerGesture.cs" Link="ScannerGesture.cs" />
     <Compile Include="../quickhack-mod/UploadAnimation.cs" Link="UploadAnimation.cs" />
+    <Compile Include="../quickhack-mod/UploadQueue.cs" Link="UploadQueue.cs" />
+    <Compile Include="../quickhack-mod/GatewayTiming.cs" Link="GatewayTiming.cs" />
+    <Compile Include="../quickhack-mod/CombatHackRules.cs" Link="CombatHackRules.cs" />
     <Compile Include="../blackwall-pulse/WavePcm.cs" Link="WavePcm.cs" />
     <Reference Include="Mono.Cecil"><HintPath>$(GameRoot)/BepInEx/core/Mono.Cecil.dll</HintPath></Reference>
   </ItemGroup>

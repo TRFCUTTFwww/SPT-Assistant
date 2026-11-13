@@ -52,23 +52,43 @@ internal static partial class HackUi {
         if(Runtime.Mode is UiMode.Preview or UiMode.Breach) return;
         Effects.PruneMarkers();
         var infected=AiHacks.GatewayUploads.ToArray();
-        var upload=Runtime.UploadTarget?.Resolve();
-        foreach(var group in Effects.Markers.GroupBy(m=>m.Ref)) {
-            var actor=group.Key.Resolve();
+        var references=Runtime.Uploads.Targets.Concat(infected.Select(c=>c.Ref)).Concat(Effects.Markers.Select(m=>m.Ref)).Distinct().ToArray();
+        foreach(var reference in references) {
+            var actor=reference.Resolve();
             if(actor==null||!HeadPosition(actor,out var point,out var size)) continue;
-            var states=group.OrderByDescending(m=>m.Start).ToArray();
-            int slot=upload?.Pointer==actor.Pointer||infected.Any(c=>c.Ref.Pointer==actor.Pointer)?1:0;
+            var queue=Runtime.Uploads.For(reference);
+            var chain=infected.FirstOrDefault(c=>c.Ref==reference);
+            bool chainVisible=chain.Ref!=null&&(chain.Completed<0||Now-chain.Completed<UploadAnimation.CompleteDuration);
+            int slot=0;
+            Vector2 Position(int index)=>index==0?point:point+new Vector2(35*size+(index-1)%8*28*size,(index-1)/8*32*size);
+            float Size(int index)=>index==0?size:size*.6f;
+            if(queue.Length>0) {
+                var current=queue[0];
+                HeadBadge(point,size,current.Kind,current.Progress(Now),0,true,age:current.Elapsed(Now)); slot++;
+                float wait=Math.Max(0,HackRules.Upload(current.Kind)-current.Elapsed(Now));
+                foreach(var pending in queue.Skip(1)) {
+                    QueuedBadge(Position(slot++),size*.6f,pending.Kind,wait);
+                    wait+=HackRules.Upload(pending.Kind);
+                }
+            }
+            if(chainVisible) {
+                float completeAge=chain.Completed<0?-1:Now-chain.Completed;
+                float progress=completeAge<0?Math.Clamp((Now-chain.Started)/Math.Max(.01f,chain.At-chain.Started),0,1):1;
+                HeadBadge(Position(slot),Size(slot),HackKind.BlackwallGateway,progress,0,true,age:Now-chain.Started,completeAge:completeAge); slot++;
+            }
+            var states=Effects.Markers.Where(m=>m.Ref==reference&&!(chainVisible&&m.Kind==HackKind.BlackwallGateway)).OrderByDescending(m=>m.Start);
             foreach(var state in states) {
                 float activeAge=Now-state.Start;
-                HeadBadge(point,size,state.Kind,activeAge<UploadAnimation.CompleteDuration?1:Math.Clamp((state.Until-Now)/HackRules.Duration(state.Kind),0,1),state.Until-Now,false,slot++,activeAge+HackRules.Upload(state.Kind),activeAge);
+                HeadBadge(Position(slot),Size(slot),state.Kind,activeAge<UploadAnimation.CompleteDuration?1:Math.Clamp((state.Until-Now)/HackRules.Duration(state.Kind),0,1),state.Until-Now,false,age:activeAge+HackRules.Upload(state.Kind),completeAge:activeAge); slot++;
             }
         }
-        foreach(var pending in infected) {
-            var actor=pending.Ref.Resolve();
-            if(actor==null||!HeadPosition(actor,out var point,out var size)) continue;
-            float age=Now-pending.Started;
-            HeadBadge(point,size,HackKind.BlackwallGateway,Math.Clamp(age/Math.Max(.01f,pending.At-pending.Started),0,1),0,true,age:age);
-        }
-        if(upload!=null&&HeadPosition(upload,out var head,out var uploadSize)) HeadBadge(head,uploadSize,Runtime.UploadKind,Runtime.UploadProgress,0,true,age:Runtime.UploadElapsed);
+    }
+    static void QueuedBadge(Vector2 center,float size,HackKind kind,float wait) {
+        // Static small frames stay to the right; promotion uses the main intro track.
+        var plate=new Rect(center.x-20*size,center.y-36*size,40*size,44*size);
+        Image(plate,"qh_frame_qh_bg",Alpha(ScanRed,.15f),true);
+        Image(new Rect(plate.x+4*size,plate.y+3*size,32*size,32*size),HackRules.Icon(kind),Alpha(ScanRed,.65f));
+        Image(plate,"qh_frame_qh_fg",Alpha(ScanRed,.65f),true);
+        Text(new Rect(plate.x-5,plate.yMax+1,plate.width+10,14),MathF.Ceiling(wait).ToString("0"),Alpha(ScanRed,.8f),10,2,TextAnchor.UpperCenter);
     }
 }

@@ -28,14 +28,14 @@ internal static class Plugin {
         InfiniteRam = Config.Bind("Gameplay", "Infinite RAM", false, "无限 RAM：技能不消耗 RAM，也不会因 RAM 不足而禁止上传。");
         GatewayRange = Config.Bind("Gameplay", "Gateway spread range", HackRules.GatewayRange, new ConfigDescription("黑墙每次传染搜索的半径（米），仍检查墙体阻挡。",new AcceptableValueRange<float>(1,150)));
         GatewayTargets = Config.Bind("Gameplay", "Gateway target limit", HackRules.GatewayTargets, new ConfigDescription("一次黑墙连锁的总目标数，包含首个目标。",new AcceptableValueRange<int>(1,30)));
-        GatewayHopTime = Config.Bind("Gameplay", "Gateway hop duration", HackRules.GatewayHopTime, new ConfigDescription("每个传染目标头顶上传动画的时长（秒），结束后结算。",new AcceptableValueRange<float>(.5f,5)));
+        GatewayHopTime = Config.Bind("Gameplay", "Gateway hop duration", HackRules.GatewayHopTime, new ConfigDescription("每个传染目标头顶上传动画的时长（秒），结束后播放生效动画，再结算死亡。",new AcceptableValueRange<float>(.5f,5)));
     }
 }
 
 public sealed class RuntimeModule:IQuickhackModule {
     Harmony? patches;
     public int ApiVersion=>1;
-    public string Version=>"0.5.3";
+    public string Version=>"0.6.0";
     public bool CanReload=>!Runtime.Uploading&&Runtime.Mode!=UiMode.Breach;
     public void Initialize(ConfigFile config,ManualLogSource log,string directory) {
         Plugin.Configure(config,log);
@@ -46,7 +46,8 @@ public sealed class RuntimeModule:IQuickhackModule {
             DoorHacking.Install(patches);
             InputHooks.Install(patches);
             AiHacks.Install(patches);
-            log.LogInfo("Quickhacks 0.5.3 runtime ready: six quickhacks / head markers; Left Ctrl scanner / F10 preview; native keycard list retains cards and adds 破解");
+
+            log.LogInfo("Quickhacks 0.6.0 runtime ready: eight quickhacks / per-target queues / head markers; Left Ctrl scanner / F10 preview; native keycard list retains cards and adds 破解");
         } catch { patches.UnpatchSelf(); Runtime.Stop(); throw; }
     }
     public void Shutdown() { try { Runtime.Stop(); } finally { patches?.UnpatchSelf(); patches=null; } }
@@ -78,9 +79,10 @@ internal static class InputHooks {
 
 public static class QuickhackApi {
     public static bool Active=>Runtime.Active;
+    public static bool IsHostile(BotOwner owner,IPlayer target)=>Runtime.Active&&AiHacks.IsHostile(owner,target);
     // Shared BepInEx types keep the optional Assistant panel independent of this assembly.
     public static ConfigEntryBase[] GetSettings()=>[Plugin.Enabled,Plugin.InfiniteRam,Plugin.Range,Plugin.GatewayRange,Plugin.GatewayTargets,Plugin.GatewayHopTime,Plugin.Volume];
-    public static string Version=>"0.5.3";
+    public static string Version=>"0.6.0";
     public static int Frames=>Runtime.Frames;
     public static string Diagnostics()=>System.Text.Json.JsonSerializer.Serialize(new { version=Version,frames=Frames,mode=Runtime.Mode.ToString(),status=Runtime.Status,menuAppends=DoorHacking.MenuCount,aiEffects=AiHacks.ActiveCount,uploading=Runtime.Uploading });
 }
