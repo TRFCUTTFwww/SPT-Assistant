@@ -27,7 +27,7 @@ if($LASTEXITCODE -ne 0) { throw 'Quickhack host checks failed.' }
 
 $files=[ordered]@{}
 $iconDir='03_images/base/gameplay/gui/common/icons/quickhacks_icons.inkatlas/2160p'
-foreach($name in @('Cyberpsychosis','BlackwallBreach','GlitchScreenBlind','WeaponMalfunction','LocomotionMalfunction','MemoryWipe','CommunicationCallIn')) { $files["$name.png"]=@($ResourceRoot,"$iconDir/$name.png") }
+foreach($name in @('Cyberpsychosis','BlackwallBreach','GlitchScreenBlind','WeaponMalfunction','LocomotionMalfunction','MemoryWipe')) { $files["$name.png"]=@($ResourceRoot,"$iconDir/$name.png") }
 $files['DoorAuthorization.png']=@($ResourceRoot,'03_images/base/gameplay/gui/fullscreen/hacking_minigame/atlas_minigame_programs.inkatlas/2160p/DoorAuthorization.png')
 $breachAtlas='03_images/base/gameplay/gui/fullscreen/hacking_minigame/atlas_minigame.inkatlas/2160p'
 foreach($name in @('buffer_empty','buffer_activated','fluff_1','fluff_2','fluff_3','fluff_barcode1','fluff_barcode2','fluff_code1','fluff_header1','fluff_protocol2','fluff_text2','fluff_text6','fluff_pettern','frame_glow_small','ico_programs','logo_nettech')) { $files["breach_$name.png"]=@($ResourceRoot,"$breachAtlas/$name.png") }
@@ -37,6 +37,7 @@ $quickAtlas='03_images/base/gameplay/gui/widgets/quickhacks/atlas_quickhacks.ink
 foreach($name in @('memory_small_bg','memory_small_fg','frame_qh_bg','frame_qh_fg','seal','arrow')) { $files["qh_$name.png"]=@($ResourceRoot,"$quickAtlas/$name.png") }
 $quickUi='03_images/base/gameplay/gui/widgets/quickhacks/quickhacks.inkatlas/2160p'
 foreach($name in @('selection_plate','selection_fluff','quickhacks_handle','warning_tiles')) { $files["qh_$name.png"]=@($ResourceRoot,"$quickUi/$name.png") }
+$files['qh_selection_glow.png']=@($ResourceRoot,'03_images/base/gameplay/gui/widgets/quickhacks/texture_mask.inkatlas/2160p/glow_plate_2.png')
 $audioDir='04_audio/WAV_by_event'
 $audioMap=[ordered]@{
     'open'='ui_hacking_open.wav'; 'close'='ui_hacking_close.wav'; 'hover'='ui_hacking_hover.wav';
@@ -45,7 +46,7 @@ $audioMap=[ordered]@{
     'Cyberpsychosis'='quickhack_cyberpsychosis {r}.wav'; 'GlitchScreenBlind'='quickhack_reboot_optics {r}.wav';
     'BlackwallBreach'='quickhack_synapse_burnout {r}.wav';
     'WeaponMalfunction'='quickhack_weapon_malfunction {r}.wav'; 'LocomotionMalfunction'='quickhack_locomotion_malfunction {r}.wav';
-    'MemoryWipe'='quickhack_memory_wipe {r}.wav'; 'CommunicationCallIn'='quickhack_request_backup {r}.wav'
+    'MemoryWipe'='quickhack_memory_wipe {r}.wav'
 }
 foreach($pair in $audioMap.GetEnumerator()) { $files["$($pair.Key).wav"]=@($ResourceRoot,"$audioDir/$($pair.Value)") }
 $files['blackwall.png']=@($BlackwallRoot,'03_images/ep1/fx/blackwall/textures/blackwall_atlas.png')
@@ -78,9 +79,9 @@ foreach($file in $files.GetEnumerator()) {
     Copy-Item -LiteralPath $source -Destination $destination
     $packaged+=@{name=$file.Key;bytes=(Get-Item -LiteralPath $destination).Length;sha256=(Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash}
 }
-@{version='0.4.1';target='EFT 48558 / SPT 5.0';files=$packaged} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $payload 'asset-manifest.json') -Encoding UTF8
+@{version='0.5.1';target='EFT 48558 / SPT 5.0';files=$packaged} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $payload 'asset-manifest.json') -Encoding UTF8
 @{
-    version='0.4.1'
+    version='0.5.1'
     hostSha256=(Get-FileHash -LiteralPath (Join-Path $payload 'Local.Cp2077.Quickhacks.dll') -Algorithm SHA256).Hash
     coreSha256=(Get-FileHash -LiteralPath (Join-Path $payload 'runtime/Local.Cp2077.Quickhacks.Core.module') -Algorithm SHA256).Hash
 } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $payload 'release-manifest.json') -Encoding UTF8

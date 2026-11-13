@@ -66,9 +66,9 @@ gesture.Cancel();
 Check(!gesture.Step(5,true,false,.25),"ESC or a conflicting UI cannot reopen scanning while Ctrl stays held");
 gesture.Step(6,false,false,.25);
 Check(gesture.Step(7,true,false,0),"Other configurable scanner keys retain immediate activation");
-Check(HackRules.All.Select(HackRules.Name).SequenceEqual(new[]{"重启义眼","武器故障","阻碍移动","记忆清除","请求支援","赛博精神病","黑墙网关"}),"Seven requested quickhacks appear in the requested order");
-Check(HackRules.Cycle(HackKind.RebootOptics,-1)==HackKind.BlackwallGateway&&HackRules.Cycle(HackKind.BlackwallGateway,1)==HackKind.RebootOptics,"Scrolling wraps over all seven skills");
-Check(HackRules.All.Select(HackRules.Icon).Distinct().Count()==7,"Each quickhack uses its own original icon");
+Check(HackRules.All.Select(HackRules.Name).SequenceEqual(new[]{"重启义眼","武器故障","阻碍移动","记忆清除","赛博精神病","黑墙网关"}),"Six retained quickhacks appear in order after removing backup");
+Check(HackRules.Cycle(HackKind.RebootOptics,-1)==HackKind.BlackwallGateway&&HackRules.Cycle(HackKind.BlackwallGateway,1)==HackKind.RebootOptics,"Scrolling wraps over all six skills");
+Check(HackRules.All.Select(HackRules.Icon).Distinct().Count()==6,"Each quickhack uses its own original icon");
 
 string root=args.FirstOrDefault()??"D:/SPT-5.0.0-48558";
 using var game=AssemblyDefinition.ReadAssembly(Path.Combine(root,"BepInEx/interop/Assembly-CSharp.dll"));
@@ -82,13 +82,12 @@ Check(bot.Methods.Any(m=>m.Name=="UpdateManual"&&m.Parameters.Count==0),"Madness
 var mover=game.MainModule.Types.Single(t=>t.Name=="BotMover");
 Check(new[]{"Pause","_pauseEndTime"}.All(n=>mover.Properties.Any(p=>p.Name==n)),"Movement lock has reversible native pause state");
 Check(new[]{"ManualUpdate","ManualFixedUpdate"}.All(n=>mover.Methods.Count(m=>m.Name==n)==1),"Movement patches have unique native entry points");
-Check(game.MainModule.Types.Single(t=>t.Name=="BotGroupRequestController").Methods.Any(m=>m.Name=="TryAddRequestByPlayer"&&m.Parameters.Count==3),"Backup uses native directed group requests");
 Check(game.MainModule.Types.Single(t=>t.FullName=="EFT.BotMemory").Methods.Any(m=>m.Name=="DeleteInfoAboutEnemy"&&m.Parameters.Count==1),"Memory wipe uses native personal enemy-memory removal");
 var firearm=game.MainModule.Types.Single(t=>t.FullName=="EFT.Player").NestedTypes.Single(t=>t.Name=="FirearmController");
 Check(firearm.Methods.Any(m=>m.Name=="SetTriggerPressed"&&m.Parameters.Count==1&&m.Parameters[0].ParameterType.FullName=="System.Boolean"),"Weapon glitch uses the dedicated trigger-press entry point");
 if(args.Length>1) {
     var sounds=Directory.GetFiles(args[1],"*.wav");
-    Check(sounds.Length==16,"Complete packaged UI, seven quickhacks and Blackwall audio set");
+    Check(sounds.Length==15,"Complete packaged UI, six quickhacks and Blackwall audio set");
     foreach(var kind in HackRules.All) {
         Check(File.Exists(Path.Combine(args[1],HackRules.Icon(kind)+".png")),"Original quickhack icon packaged: "+kind);
         Check(File.Exists(Path.Combine(args[1],HackRules.Icon(kind)+".wav")),"Individual quickhack sound packaged: "+kind);
@@ -104,6 +103,7 @@ if(args.Length>1) {
         var aiHacks=core.MainModule.Types.Single(t=>t.FullName=="LocalQuickhacks.AiHacks");
         var patchStrings=aiHacks.Methods.Where(m=>m.HasBody).SelectMany(m=>m.Body.Instructions).Where(i=>i.OpCode.Code==Mono.Cecil.Cil.Code.Ldstr).Select(i=>i.Operand as string).ToArray();
         Check(!patchStrings.Contains("CanPressTrigger")&&!aiHacks.Methods.Any(m=>m.Name=="CanFire"),"Regression: shared IL2CPP CanPressTrigger body must never be detoured");
+        Check(!aiHacks.Methods.Any(m=>m.Name.Contains("Backup")),"Removed backup does not create native requests");
         Check(patchStrings.Contains("SetTriggerPressed"),"Dedicated trigger hook remains present in the built module");
         using var host=AssemblyDefinition.ReadAssembly(Path.Combine(payload,"Local.Cp2077.Quickhacks.dll"));
         Check(core.MainModule.Types.Single(t=>t.FullName=="LocalQuickhacks.RuntimeModule").Interfaces.Any(i=>i.InterfaceType.FullName=="LocalQuickhacks.Hosting.IQuickhackModule"),"Core implements the standalone host contract");

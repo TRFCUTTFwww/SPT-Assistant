@@ -58,6 +58,7 @@ internal static class Runtime {
     static float uploadStart;
     static IntPtr localWorld;
     internal static bool Uploading=>uploading!=null;
+    internal static float UploadElapsed=>uploading==null?0:Math.Max(0,Time.unscaledTime-uploadStart);
     internal static float UploadProgress=>uploading==null?0:Math.Clamp((Time.unscaledTime-uploadStart)/HackRules.Upload(uploadKind),0,1);
     internal static string UploadName=>HackRules.Name(uploadKind);
     internal static int Frames { get; private set; }

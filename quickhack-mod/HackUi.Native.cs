@@ -34,7 +34,6 @@ internal static partial class HackUi {
             opacity=Runtime.Mode==UiMode.None?1:Math.Clamp((Now-Runtime.ModeStarted)/.22f,0,1);
             if(Runtime.Mode==UiMode.Breach) Breach();
             else if(Runtime.Mode is UiMode.Scanner or UiMode.Preview) Scanner(Runtime.Mode==UiMode.Preview);
-            else if(Runtime.Uploading) Upload(new Rect(720,155,480,73),Runtime.UploadName,Runtime.UploadProgress);
             TargetStatuses();
         } catch(Exception e) { Runtime.Warn("Quickhack UI",e); }
         finally { GUI.matrix=saved; GUI.color=color; GUI.depth=depth; opacity=1; }
@@ -98,108 +97,166 @@ internal static partial class HackUi {
             Line(x,y,x+(x==r.x?len:-len),y,c,2); Line(x,y,x,y+(y==r.y?len:-len),c,2);
         }
     }
+    // Measured against the user's 1920x1080 CP2077 recording (6s and 18s).
+    static bool showTargetData=true;
+    static readonly Color ScanCyan=new(.369f,.965f,1), ScanRed=new(1,.31f,.29f), ScanPanel=new(.07f,.025f,.06f,.9f);
     static void ScanSurface(bool preview) {
-        Fill(canvas,new Color(.025f,.075f,.07f,preview?.97f:.22f));
-        // The central field remains transparent in live raids.
-        Fill(new Rect(0,0,590,1080),new Color(.015f,.04f,.038f,.38f));
-        Fill(new Rect(1280,0,640,1080),new Color(.015f,.04f,.038f,.3f));
-        for(int y=2;y<1080;y+=5) Fill(new Rect(canvas.x,y,canvas.width,1),new Color(.1f,.3f,.25f,.035f));
-        Corners(new Rect(54,49,1812,961),Alpha(Cyan,.55f),38);
-        Image(new Rect(82,74,183,54),"scan_fluff_corner_text",Alpha(Cyan,.75f));
-        Image(new Rect(1635,74,190,43),"scan_fluff_top_right",Alpha(Cyan,.7f));
-        Image(new Rect(64,420,16,164),"scan_fluff_left",Alpha(Cyan,.7f));
-        Image(new Rect(1790,346,28,404),"scan_ruller",Alpha(Cyan,.65f));
-        Image(new Rect(1450,931,347,44),"scan_fluff_bottom",Alpha(Cyan,.5f));
-        Text(new Rect(85,932,420,24),preview?"本地模拟  /  TRAINING LINK":"扫描模式  /  OPTICAL LINK",Cyan,15);
-        if(preview) Text(new Rect(695,150,530,26),"施放模拟  ·  未连接真实目标",Alpha(Cyan,.7f),16,0,TextAnchor.MiddleCenter);
+        Fill(canvas,new Color(.015f,.06f,.04f,preview?.96f:.14f));
+        for(int i=0;i<24;i++) {
+            float a=(24-i)/24f;
+            Fill(new Rect(canvas.x+i*7,canvas.y,7,canvas.height),new Color(.055f,.015f,.025f,a*.13f));
+            Fill(new Rect(canvas.xMax-(i+1)*7,canvas.y,7,canvas.height),new Color(.055f,.015f,.025f,a*.13f));
+        }
+        for(int y=1;y<1080;y+=4) Fill(new Rect(canvas.x,y,canvas.width,1),new Color(.1f,.25f,.2f,.025f));
+        Image(new Rect(65,47,172,32),"scan_fluff_corner_text",Alpha(ScanRed,.3f));
+        Image(new Rect(1632,55,187,32),"scan_fluff_top_right",Alpha(ScanRed,.3f));
+        Image(new Rect(35,483,12,139),"scan_fluff_left",Alpha(ScanRed,.45f));
+        Image(new Rect(1510,1010,305,29),"scan_fluff_bottom",Alpha(ScanRed,.25f));
+        Line(170,947,1750,947,Alpha(ScanRed,.12f));
+        if(preview) Text(new Rect(770,979,380,25),"F10  /  施放预览",Alpha(ScanCyan,.5f),14,0,TextAnchor.MiddleCenter);
     }
     static void Scanner(bool preview) {
         ScanSurface(preview);
-        Text(new Rect(630,61,660,28),"赛博甲板内存",Cyan,19,0,TextAnchor.MiddleCenter);
+        Text(new Rect(746,110,500,29),$"网络接入仓 RAM: {Runtime.Ram:0}/24",Alpha(ScanRed,.72f),22);
+        const float cell=14,gap=4;
+        const float ramLeft=746;
+        Line(720,140,1230,140,Alpha(ScanRed,.3f));
         for(int i=0;i<24;i++) {
-            float x=637+i*27;
-            Image(new Rect(x,105,21,29),"qh_memory_small_bg",Alpha(Cyan,.25f),true);
-            if(i<Runtime.Ram) Image(new Rect(x,105,21,29),"qh_memory_small_fg",i<Runtime.Ram-HackRules.Cost(Runtime.Selected)?Cyan:Red,true);
+            var r=new Rect(ramLeft+i*(cell+gap),150,cell,48);
+            // The atlas bg is the solid shape; fg is its outline.
+            bool available=i<Runtime.Ram,reserved=i<HackRules.Cost(Runtime.Selected);
+            if(available) Image(r,"qh_memory_small_bg",Alpha(ScanCyan,reserved?.32f:1),true);
+            Image(r,"qh_memory_small_fg",available?Alpha(ScanCyan,.7f):Alpha(ScanRed,.45f),true);
         }
-        Text(new Rect(1310,102,125,28),$"{Runtime.Ram:F0} / 24",Cyan,20,1);
+        if(Runtime.Ram<HackRules.Cost(Runtime.Selected)) {
+            Fill(new Rect(746,207,428,30),Alpha(ScanRed,.16f));
+            Text(new Rect(754,207,415,29),"可用 RAM 不足",ScanRed,21);
+        }
         var actor=Runtime.Target?.Resolve();
-        if(preview) Hologram(); else if(actor!=null) TargetBracket(actor); else Crosshair(new Rect(810,365,300,350),Dim);
-        const float x0=127,w=432;
-        Text(new Rect(x0,267,w,32),"可用快速破解",Red,23);
-        Text(new Rect(x0,304,w,23),"QUICKHACKS  /  07",Alpha(Red,.55f),16,2);
-        Line(x0,340,x0+w,340,Alpha(Red,.5f));
-        Image(new Rect(x0-25,342,16,439),"qh_quickhacks_handle",Alpha(Red,.7f),true);
+        if(preview) Hologram(); else if(actor!=null) TargetBracket(actor);
+        ScannerReticle();
+        const float x=194,w=430,top=373;
+        Text(new Rect(x-16,top-71,340,17),"CYBERDECK  V  S53 332",Alpha(ScanRed,.55f),11,2);
+        Text(new Rect(x+4,top-57,400,29),"可用快速破解:",ScanCyan,23);
+        Line(x,top-18,x+w-26,top-18,Alpha(ScanRed,.8f));
         if(lastSelected!=Runtime.Selected) { lastSelected=Runtime.Selected; selectedAt=Now; }
         for(int i=0;i<HackRules.All.Length;i++) {
-            var kind=HackRules.All[i]; bool selected=Runtime.Selected==kind; float y=352+i*62;
-            float reveal=Math.Clamp((Now-Runtime.ModeStarted-.025f*i)/.22f,0,1);
-            var row=new Rect(x0-(1-reveal)*20,y,w,56); bool over=row.Contains(Event.current.mousePosition);
+            var kind=HackRules.All[i]; bool selected=Runtime.Selected==kind;
+            float y=top+i*64,reveal=Math.Clamp((Now-Runtime.ModeStarted-i*.025f)/.18f,0,1);
+            // The selected row steps to the right in the reference.
+            float offset=selected?22:i%3==2?-7:0;
+            var row=new Rect(x+offset+(1-reveal)*15,y,w-(selected?22:0),55);
+            bool over=row.Contains(Event.current.mousePosition);
+            bool enough=Runtime.Ram>=HackRules.Cost(kind);
+            Color accent=enough?ScanCyan:ScanRed;
+            Color c=Alpha(accent,selected?1:over?.9f:.73f);
+            Fill(new Rect(row.x+3,row.y+2,row.width-8,row.height-4),enough?new Color(.015f,.045f,.06f,.76f):new Color(.24f,.025f,.035f,.72f));
+            QuickhackRowFrame(row,Alpha(c,selected?1:.48f),selected?2:1);
             if(selected) {
-                Image(row,"qh_selection_plate",Alpha(Red,.25f),true);
-                Fill(new Rect(row.x,y,3,56),Red); Line(row.x,y,row.xMax,y,Alpha(Red,.7f));
-                Image(new Rect(row.xMax-24,y+18,16,20),"qh_arrow",Red);
-                float sweep=Math.Clamp((Now-selectedAt)/.22f,0,1);
-                if(sweep<1) Fill(new Rect(row.x,y,row.width*sweep,56),Alpha(Red,(1-sweep)*.15f));
-            } else if(over) Fill(row,Alpha(Red,.07f));
-            Image(new Rect(row.x+12,y+8,40,40),HackRules.Icon(kind),selected?Red:Alpha(Red,.65f));
-            Text(new Rect(row.x+69,y+4,268,29),HackRules.Name(kind),selected?Red:Alpha(Red,.8f),21);
-            Text(new Rect(row.x+70,y+33,252,19),$"{HackRules.Upload(kind):F1} 秒  /  {HackRules.Category(kind)}",Alpha(Red,.55f),13);
-            Text(new Rect(row.xMax-70,y+10,35,30),HackRules.Cost(kind).ToString("00"),Red,25,1,TextAnchor.MiddleRight);
-            if(Click(row,"hack"+i)) { Runtime.Selected=kind; Assets.Play("press"); }
+                for(int glow=1;glow<=3;glow++) QuickhackRowFrame(new Rect(row.x-glow*2,row.y-glow,row.width+glow*4,row.height+glow*2),Alpha(c,.09f/glow),2);
+                Image(row,"qh_selection_glow",Alpha(accent,.26f),true);
+                float flash=Math.Clamp(1-(Now-selectedAt)/.16f,0,1);
+                Fill(row,Alpha(accent,flash*.15f));
+            }
+            Text(new Rect(row.x+23,y+1,row.width-117,28),HackRules.Name(kind),c,23);
+            string state=Runtime.Uploading&&Runtime.UploadKind==kind?"正在上传":enough?"就绪":"可用 RAM 不足";
+            float stateWidth=state.Length*14+8;
+            Frame(new Rect(row.x+24,y+32,stateWidth,17),Alpha(c,.6f));
+            Text(new Rect(row.x+28,y+32,stateWidth-4,18),state,c,13);
+            Text(new Rect(row.x+34+stateWidth,y+32,140,18),HackRules.Category(kind),Alpha(c,.65f),13);
+            Text(new Rect(row.xMax-105,y+7,42,38),HackRules.Cost(kind).ToString(),c,30,2,TextAnchor.MiddleRight);
+            Image(new Rect(row.xMax-59,y+17,6,23),"qh_memory_small_fg",c,true);
+            Image(new Rect(row.xMax-47,y+7,43,43),"qh_frame_qh_fg",c,true);
+            Image(new Rect(row.xMax-42,y+12,32,32),HackRules.Icon(kind),c);
+            if(Runtime.Uploading&&Runtime.UploadKind==kind) Fill(new Rect(row.x+3,y+52,(row.width-8)*Runtime.UploadProgress,2),c);
+            if(Click(row,"hack"+i)) { Runtime.Selected=kind; showTargetData=false; Assets.Play("press"); }
         }
-        const float detail=687,dx=1318;
-        CutPanel(new Rect(dx,detail,w,209),Alpha(Red,.6f));
-        Text(new Rect(dx+17,detail+17,w-34,29),HackRules.Name(Runtime.Selected),Red,22);
-        Text(new Rect(dx+17,detail+54,w-34,23),HackRules.Category(Runtime.Selected)+"  /  "+(HackRules.Category(Runtime.Selected)=="终极"?"ULTIMATE":"CONTROL"),Alpha(Red,.6f),15);
-        Line(dx+17,detail+91,dx+w-17,detail+91,Alpha(Red,.3f));
-        Text(new Rect(dx+17,detail+106,w-34,58),HackRules.Description(Runtime.Selected),Alpha(Red,.85f),17);
-        Text(new Rect(dx+17,detail+176,w-34,22),Runtime.Selected==HackKind.BlackwallGateway?"连锁传播  最多 5 个目标":$"持续时间  {HackRules.Duration(Runtime.Selected):0} 秒",Alpha(Red,.5f),14);
-        if(Button(new Rect(x0,880,w,48),"F",preview?"执行施放模拟":"上传快速破解",Red,"upload")) { if(preview) Runtime.PreviewCast(); else Runtime.Upload(); }
+        if(Click(new Rect(x,top+384,w,35),"execute")) { if(preview) Runtime.PreviewCast(); else Runtime.Upload(); }
+        Text(new Rect(x+8,top+385,w-16,29),"F  执行",Alpha(ScanCyan,.7f),17);
         if(preview&&Event.current.type==EventType.KeyDown&&Event.current.keyCode==KeyCode.F) { Runtime.PreviewCast(); Event.current.Use(); }
-        const float right=1318;
-        string name=preview?"训练目标":actor?.Profile?.Nickname??"搜索目标";
-        Text(new Rect(right,303,430,24),"目标数据",Alpha(Red,.6f),17);
-        Text(new Rect(right,343,435,48),name,Red,31);
-        Line(right,402,right+430,402,Red,2);
-        DataRow(right,425,"类型",preview||actor!=null?"人类":"未识别");
-        DataRow(right,468,"状态",preview?"模拟链路":actor!=null?"存活":"等待扫描");
-        DataRow(right,511,"距离",preview?"—":actor!=null?Vector3.Distance(actor.Position,Runtime.Camera!.transform.position).ToString("F1")+" m":"—");
-        Line(right,565,right+430,565,Alpha(Red,.35f));
-        Image(new Rect(right,593,61,61),"qh_seal",Alpha(Red,.65f));
-        Text(new Rect(right+80,598,350,27),preview||actor!=null?"允许快速破解":"请对准视线内的 AI",Red,19);
-        Text(new Rect(right+80,632,350,27),"远程访问  /  REMOTE ACCESS",Alpha(Red,.5f),14,2);
-        if(preview&&Button(new Rect(right,923,430,52),"01","入侵协议 · 门禁授权",Yellow,"breach-preview")) Runtime.OpenPreviewBreach();
-        if(Runtime.Uploading) Upload(new Rect(698,770,524,78),Runtime.UploadName,Runtime.UploadProgress);
-        else if(preview&&Now-Runtime.PreviewStarted<6) Upload(new Rect(698,770,524,78),HackRules.Name(Runtime.PreviewKind),Runtime.PreviewProgress);
-        Text(new Rect(630,882,660,50),Runtime.Status,Alpha(Cyan,.85f),16,0,TextAnchor.MiddleCenter);
-        if(Button(new Rect(1586,993,240,43),"ESC","退出扫描",Red,"close-scanner")) Runtime.Close();
+        ScanDetails(preview,actor);
+        // Ordinary scanner text has no centre-screen upload card in the source HUD.
+        if(!string.IsNullOrEmpty(Runtime.Status)) Text(new Rect(690,877,540,44),Runtime.Status,Alpha(ScanCyan,.7f),15,0,TextAnchor.MiddleCenter);
+        if(preview) {
+            if(Button(new Rect(1380,864,425,42),"01","入侵协议 · 门禁授权",Yellow,"breach-preview")) Runtime.OpenPreviewBreach();
+            if(Button(new Rect(1555,964,250,40),"ESC","退出预览",ScanRed,"close-scanner")) Runtime.Close();
+        }
     }
-    static void DataRow(float x,float y,string label,string value) {
-        Text(new Rect(x,y,120,30),label,Alpha(Red,.55f),17);
-        Text(new Rect(x+132,y,300,30),value,Red,19);
+    static void QuickhackRowFrame(Rect r,Color c,float width=1) {
+        Vector2[] points=[new(r.x,r.y),new(r.xMax-9,r.y),new(r.xMax,r.y+9),new(r.xMax,r.yMax),new(r.x+5,r.yMax),new(r.x+5,r.y+29),new(r.x,r.y+24),new(r.x,r.y)];
+        for(int i=1;i<points.Length;i++) Line(points[i-1].x,points[i-1].y,points[i].x,points[i].y,c,width);
+    }
+    static void ScanDetails(bool preview,EFT.Player? actor) {
+        const float x=1390,y=342,w=414,h=487;
+        Fill(new Rect(x,y,w,h-11),ScanPanel);
+        Fill(new Rect(x,y+h-11,w-11,11),ScanPanel);
+        Line(x,y,x,y+h,Alpha(ScanCyan,.6f)); Line(x,y+h,x+w-11,y+h,Alpha(ScanCyan,.6f));
+        Line(x+w-11,y+h,x+w,y+h-11,Alpha(ScanCyan,.6f)); Line(x+w,y,x+w,y+h-11,Alpha(ScanCyan,.6f));
+        for(int i=0;i<2;i++) {
+            float tabX=x+i*207; bool active=i==0?showTargetData:!showTargetData;
+            Fill(new Rect(tabX,y-46,207,46),active?ScanPanel:Alpha(ScanRed,.19f));
+            Line(tabX,y-46,tabX+198,y-46,Alpha(active?ScanCyan:ScanRed,.65f));
+            Line(tabX+198,y-46,tabX+207,y-37,Alpha(active?ScanCyan:ScanRed,.65f));
+            if(!active) Line(tabX,y,tabX+207,y,Alpha(ScanCyan,.65f));
+        }
+        Text(new Rect(x+14,y-36,170,30),"数据",showTargetData?ScanCyan:ScanRed,22);
+        Text(new Rect(x+221,y-36,180,30),"破解",showTargetData?ScanRed:ScanCyan,22);
+        if(Click(new Rect(x,y-46,207,46),"data-tab")) showTargetData=true;
+        if(Click(new Rect(x+207,y-46,207,46),"hacks-tab")) showTargetData=false;
+        if(showTargetData) {
+            Text(new Rect(x+20,y+18,w-40,22),"扫描结果",ScanRed,15);
+            Text(new Rect(x+20,y+52,w-40,67),preview?"训练目标":actor?.Profile?.Nickname??"未识别目标",Yellow,27);
+            Text(new Rect(x+20,y+130,w-40,25),"人物资料",ScanRed,15);
+            Text(new Rect(x+20,y+170,w-40,27),preview?"模拟链路":actor!=null?"本地 AI":"等待扫描",ScanCyan,20);
+            Text(new Rect(x+20,y+224,w-40,23),"距离",ScanRed,15);
+            Text(new Rect(x+20,y+261,w-40,29),preview?"—":actor!=null?Vector3.Distance(actor.Position,Runtime.Camera!.transform.position).ToString("F1")+" m":"—",ScanCyan,23,2);
+        } else {
+            Text(new Rect(x+20,y+18,w-70,34),HackRules.Name(Runtime.Selected),ScanRed,23);
+            Image(new Rect(x+w-58,y+18,33,33),HackRules.Icon(Runtime.Selected),ScanRed);
+            Text(new Rect(x+20,y+68,w-40,22),HackRules.Category(Runtime.Selected)+"快速破解",Alpha(ScanRed,.65f),14);
+            Text(new Rect(x+20,y+112,w-40,25),Runtime.Selected==HackKind.BlackwallGateway?"传播上限：5 个目标":$"持续时间：{HackRules.Duration(Runtime.Selected):0} 秒",new Color(.78f,.76f,.76f),18);
+            Text(new Rect(x+20,y+143,w-40,25),$"上传时间：{HackRules.Upload(Runtime.Selected):0.0} 秒",new Color(.78f,.76f,.76f),18);
+            Line(x+20,y+183,x+w-20,y+183,Alpha(ScanRed,.25f));
+            Text(new Rect(x+20,y+205,w-40,92),HackRules.Description(Runtime.Selected),ScanRed,18);
+            Line(x+20,y+326,x+w-20,y+326,Alpha(ScanRed,.2f));
+            Text(new Rect(x+20,y+344,w-40,32),$"{HackRules.Cost(Runtime.Selected)}  RAM 消耗",ScanCyan,19);
+        }
+        Image(new Rect(x,y+h+8,210,18),"scan_fluff_bottom",Alpha(ScanCyan,.32f));
+    }
+    static void ScannerReticle() {
+        const float cx=960,cy=540;
+        for(int side=-1;side<=1;side+=2) {
+            float x=cx+side*249;
+            for(int i=0;i<12;i++) { float yy=cy-78+i*14; Line(x,yy,x-side*10,yy+4,Alpha(ScanRed,.58f)); }
+            Image(new Rect(x-8,cy-7,16,14),"scan_inner_crosshair",Alpha(ScanRed,.55f),true);
+            for(int i=0;i<5;i++) Frame(new Rect(cx-185+i*93-7,cy+side*108-7,14,14),Alpha(ScanRed,.5f));
+        }
+        Text(new Rect(672,526,45,25),"1x",ScanRed,19,2);
+        var actor=Runtime.Target?.Resolve();
+        if(actor!=null&&Runtime.Camera!=null) Text(new Rect(1222,532,90,25),Vector3.Distance(actor.Position,Runtime.Camera.transform.position).ToString("F1"),ScanRed,21,2);
+        for(int i=0;i<40;i++) {
+            float a=i*Mathf.PI/20,b=(i+1)*Mathf.PI/20;
+            Line(cx+Mathf.Cos(a)*28,cy+Mathf.Sin(a)*28,cx+Mathf.Cos(b)*28,cy+Mathf.Sin(b)*28,Alpha(ScanRed,.7f));
+        }
+        Line(cx-5,cy,cx+5,cy,Alpha(ScanRed,.45f)); Line(cx,cy-5,cx,cy+5,Alpha(ScanRed,.45f));
     }
     static void Crosshair(Rect r,Color color) {
-        Corners(r,color,22);
-        Line(r.center.x-7,r.center.y,r.center.x+7,r.center.y,Alpha(color,.6f));
-        Line(r.center.x,r.center.y-7,r.center.x,r.center.y+7,Alpha(color,.6f));
-        Image(new Rect(r.x-33,r.center.y-90,14,180),"scan_inner_crosshair",color);
+        // Kept for the harmless training target outline.
+        Corners(r,Alpha(color,.25f),9);
     }
     static void TargetBracket(EFT.Player actor) {
         var camera=Runtime.Camera; if(camera==null) return;
-        var feet=camera.WorldToScreenPoint(actor.Position);
         var head=camera.WorldToScreenPoint(actor.PlayerBones?.Head?.Original?.position??actor.Position+Vector3.up*1.7f);
-        if(feet.z<=0||head.z<=0) return;
-        float height=Math.Clamp(Math.Abs(feet.y-head.y)/scale,100,540),width=height*.52f;
+        if(head.z<=0) return;
         float x=(head.x-ox)/scale,y=(Screen.height-head.y-oy)/scale;
-        var r=new Rect(x-width/2-18,y-26,width+36,height+54);
-        Crosshair(r,Red); Text(new Rect(r.x,r.y-31,300,24),"目标已锁定",Red,16);
-        Image(new Rect(r.xMax+10,r.y,18,r.height),"scan_ruller",Alpha(Red,.7f));
+        Image(new Rect(x-8,y-33,16,16),"qh_arrow",ScanRed);
+        if(!Runtime.Uploading) Text(new Rect(x-190,y-76,380,29),actor.Profile?.Nickname??"AI",ScanCyan,18,0,TextAnchor.MiddleCenter);
     }
     static void Hologram() {
         var r=new Rect(771,258,378,451); Crosshair(r,Alpha(Cyan,.75f));
         float age=Now-Runtime.PreviewStarted; var kind=Runtime.PreviewKind;
         bool active=age>=HackRules.Upload(kind)&&age<HackRules.Upload(kind)+2;
-        if(age>=0&&age<HackRules.Upload(kind)+2) HeadBadge(new Vector2(960,224),1,kind,active?1:Runtime.PreviewProgress,active?HackRules.Duration(kind):0,!active);
+        if(age>=0&&age<HackRules.Upload(kind)+2) HeadBadge(new Vector2(960,260),1,kind,active?1:Runtime.PreviewProgress,active?HackRules.Duration(kind):0,!active,age:age);
         Color color=active?(kind==HackKind.RebootOptics?Cyan:Red):Alpha(Cyan,.6f);
         Vector2[] contour=[new(-19,0),new(-29,12),new(-31,42),new(-24,64),new(-21,77),new(-57,91),new(-76,112),new(-89,183),new(-100,249),new(-91,258),new(-79,246),new(-64,191),new(-53,157),new(-51,227),new(-44,256),new(-47,320),new(-49,383),new(-30,389),new(-21,374),new(-15,314),new(-6,269),new(6,269),new(15,314),new(21,374),new(30,389),new(49,383),new(47,320),new(44,256),new(51,227),new(53,157),new(64,191),new(79,246),new(91,258),new(100,249),new(89,183),new(76,112),new(57,91),new(21,77),new(24,64),new(31,42),new(29,12),new(19,0),new(-19,0)];
         const float cx=960,top=283;
@@ -221,11 +278,5 @@ internal static partial class HackUi {
             Corners(new Rect(cx-42,effectY,84,70),Red,9); Image(new Rect(cx+62,effectY+11,58,58),HackRules.Icon(kind),Red);
             for(int i=0;i<4;i++) Fill(new Rect(cx-30+Mathf.Sin(age*23+i)*12,effectY+12+i*14,52,2),Alpha(Red,.7f));
         }
-    }
-    static void Upload(Rect r,string name,float progress) {
-        Color c=progress>=1?Cyan:Red; CutPanel(r,Alpha(c,.6f));
-        Text(new Rect(r.x+13,r.y+10,r.width-100,25),name+(progress>=1?"  ·  已上传":"  ·  上传中"),c,18);
-        Text(new Rect(r.xMax-84,r.y+10,66,25),(progress*100).ToString("F0")+"%",c,20,1,TextAnchor.MiddleRight);
-        Fill(new Rect(r.x+14,r.yMax-20,r.width-28,5),Alpha(c,.15f)); Fill(new Rect(r.x+14,r.yMax-20,(r.width-28)*progress,5),c);
     }
 }

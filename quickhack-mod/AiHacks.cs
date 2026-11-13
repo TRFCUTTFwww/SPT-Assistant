@@ -30,13 +30,11 @@ internal static class AiHacks {
         internal bool Pause;
         internal float PauseUntil,Until;
     }
-    sealed record Backup(ActorRef Caller,ActorRef Recipient,GoToPointRequest Request,float Until);
     static readonly Dictionary<IntPtr,MovementLock> movement=[];
-    static readonly List<Backup> backups=[];
     static readonly List<Chain> chains=[];
     [ThreadStatic] static BotOwner? evaluating;
     static float nextMadness;
-    internal static int ActiveCount=>madness.Count+blind.Count+jammed.Count+wiped.Count+movement.Count+backups.Count+chains.Count;
+    internal static int ActiveCount=>madness.Count+blind.Count+jammed.Count+wiped.Count+movement.Count+chains.Count;
     internal static void Install(Harmony h) {
         void Patch(Type t,string method,string? before=null,string? after=null,string? final=null) {
             var m=AccessTools.Method(t,method); if(m==null) return;
@@ -94,8 +92,6 @@ internal static class AiHacks {
         } else if(kind==HackKind.MemoryWipe) {
             if(madness.Remove(owner.Pointer,out var active)) { Restore(active); Effects.Forget(reference,HackKind.Cyberpsychosis); }
             wiped[owner.Pointer]=(reference,Time.unscaledTime+HackRules.Duration(kind)); Forget(owner);
-        } else if(kind==HackKind.RequestBackup) {
-            result=RequestBackup(reference,actor,owner);
         } else if(kind==HackKind.Cyberpsychosis) {
             if(wiped.Remove(owner.Pointer)) Effects.Forget(reference,HackKind.MemoryWipe);
             if(madness.TryGetValue(owner.Pointer,out var active)) active.Until=Time.unscaledTime+20;
@@ -116,28 +112,9 @@ internal static class AiHacks {
         }
         memory.IsPeace=true;
     }
-    static string RequestBackup(ActorRef reference,Player actor,BotOwner owner) {
-        if(backups.Any(b=>b.Caller==reference)) throw new InvalidOperationException("目标已发出支援请求。");
-        var group=owner.BotsGroup?.RequestsController??throw new InvalidOperationException("目标没有可用的同队支援系统。");
-        var mates=Bots().Where(p=>p.Pointer!=actor.Pointer&&p.AIData.BotOwner.BotsGroup?.Pointer==owner.BotsGroup.Pointer&&Vector3.Distance(p.Position,actor.Position)<=40)
-            .Where(p=>p.AIData.BotOwner.Memory?.GoalEnemy==null&&p.AIData.BotOwner.BotRequestController?.CurRequest==null&&!movement.ContainsKey(p.AIData.BotOwner.Pointer)&&!Mad(p.AIData.BotOwner))
-            .OrderBy(p=>(p.Position-actor.Position).sqrMagnitude).ToArray();
-        foreach(var mate in mates) {
-            var request=new GoToPointRequest(actor,actor.Position,null,null);
-            if(!group.TryAddRequestByPlayer(actor,request,mate.AIData.BotOwner)) { request.Dispose(); continue; }
-            backups.Add(new Backup(reference,ActorRef.Of(mate),request,Time.unscaledTime+15));
-            return "请求支援 · 已呼叫 "+mate.Profile.Nickname;
-        }
-        throw new InvalidOperationException("附近没有可响应的空闲同队 AI。");
-    }
     static void ReleaseMovement(MovementLock state) {
         try { if(state.Ref.Resolve()==null||state.Mover._pauseEndTime!=float.MaxValue) return; state.Mover._pauseEndTime=state.PauseUntil; state.Mover.Pause=state.Pause&&state.PauseUntil>Time.time; }
         catch(Exception e) { Runtime.Warn("Restore movement",e); }
-    }
-    static void EndBackup(Backup state) {
-        try { if(state.Recipient.Resolve()!=null&&!state.Request.Removed) state.Request.Complete(); }
-        catch(Exception e) { Runtime.Warn("End backup",e); }
-        Effects.Forget(state.Caller,HackKind.RequestBackup);
     }
     internal static void Tick() {
         foreach(var p in blind.ToArray()) if(Time.unscaledTime>=p.Value.Until||p.Value.Ref.Resolve()==null) blind.Remove(p.Key);
@@ -147,7 +124,6 @@ internal static class AiHacks {
             if(Time.unscaledTime>=p.Value.Until||p.Value.Ref.Resolve()==null) { ReleaseMovement(p.Value); movement.Remove(p.Key); }
             else KeepMovementLocked(p.Value.Mover);
         }
-        foreach(var state in backups.ToArray()) if(Time.unscaledTime>=state.Until||state.Caller.Resolve()==null||state.Recipient.Resolve()==null||state.Request.Removed) { EndBackup(state); backups.Remove(state); }
         foreach(var p in madness.ToArray()) if(Time.unscaledTime>=p.Value.Until||p.Value.Ref.Resolve()==null) { Restore(p.Value); madness.Remove(p.Key); }
         if(Time.unscaledTime>=nextMadness) {
             nextMadness=Time.unscaledTime+.3f;
@@ -222,8 +198,7 @@ internal static class AiHacks {
     internal static void Reset() {
         foreach(var state in madness.Values.ToArray()) Restore(state);
         foreach(var state in movement.Values.ToArray()) ReleaseMovement(state);
-        foreach(var state in backups.ToArray()) EndBackup(state);
-        madness.Clear(); blind.Clear(); jammed.Clear(); wiped.Clear(); movement.Clear(); backups.Clear(); chains.Clear(); evaluating=null;
+        madness.Clear(); blind.Clear(); jammed.Clear(); wiped.Clear(); movement.Clear(); chains.Clear(); evaluating=null;
         Effects.ForgetAll();
     }
 }

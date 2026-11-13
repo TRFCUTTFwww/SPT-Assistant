@@ -1,4 +1,4 @@
-# CP2077 Quickhacks 独立原型 0.4.1
+# CP2077 Quickhacks 独立原型 0.5.1
 
 目标：SPT 5.0 / EFT 48558，BepInEx IL2CPP / .NET 10。插件名称 CP2077 Quickhacks，配置文件 `BepInEx/config/local.cp2077.quickhacks.cfg`。独立于 SPT Assistant，可与其及其内置黑墙脉冲共存。
 
@@ -25,9 +25,22 @@
 
 0.4.1 修复原生补丁导致的访问冲突风险：移除 FirearmController.CanPressTrigger 补丁。EFT 48558 中该方法与 593 个其他方法共用原生函数体，挂钩会将其他对象误当作武器控制器。武器故障保留独立 SetTriggerPressed 入口，上传时释放已有扳机状态；七种破解、头顶标记及 Ctrl 扫描继续保留。打包检查直接检查已编译模块，拒绝重新引入这个共享入口。2026-11-13 本机崩溃日志出现共享函数体警告并伴随 Windows 0xc0000005，修复后的游戏启动与战局仍需实机复测。
 
+0.5.0 删除请求支援：移除列表、原生请求创建/追踪/清理及安装包中的对应图标音效，保留六种破解。扫描界面根据联网读取的 Gamepressure 原版实机截图与 D 盘 quickhacks.inkwidget 的样式重新布局：左侧青色窄行，RAM 消耗及技能图标在右端，右侧切换「数据 / 快速破解」标签，RAM 格移至上方原版比例区域，取消大号全屏取景角框和中央上传卡。上传改为头顶紧凑青色文字、横向进度条与技能图标，移除自制旋转环、方形底板和飞入点。上传的原版逐帧时序、NPC 头顶控件和字体仍缺素材，现阶段不作为一比一复刻验收。
+
+参考来源（2026-11-13）：
+- https://www.gamepressure.com/cyberpunk-2077/quick-scanning/zee03f （38918109.jpg、38918140.jpg，实机扫描与快速破解面板）。
+- https://interfaceingame.com/screenshots/cyberpunk-2077-quickhacking/ （原版教程与扫描器环境；不是上传动画依据）。
+本地读取的 quickhacks.inkwidget.json 为 GameVersion 2310，选中辉光颜色为 RGB 0.369 / 0.965 / 1，已接入 glow_plate_2 原版贴图。网上所用实机截图来自早期版本，未据此添加旧版技能或虚构技能队列。需补充当前版本原版实机视频才能进一步核对动画。
+
+0.5.1 按用户新增的实机录像 `D:/aaa/2026-11-13 19-54-40.mkv`（1920×1080、60 fps、43.434 秒）继续修正。6 秒处测量左侧标题、切角列表、选中行右移、图标框与 RAM 格位置；18 秒处核对 RAM 不足时的红色样式。修正 RAM 图集实心底图与轮廓层的使用顺序。右侧默认显示数据页，采用录像中的上下页签及青色外框；目标资料取 EFT 实际数据。
+
+头顶动画依据 7.52–7.93 秒与 20.70–20.90 秒：技能图标从标记上方落入原版 `frame_qh_bg/fg` 红色切角底框，约 0.4 秒落位；上传到生效保留同一标记位置，移除青色“正在上传”悬浮条和状态倒计时条。实际上传进度仍在对应技能行下沿显示，数值与中断规则保持 EFT 原型设定。录像下方“正在追踪你的位置”属于敌方追踪，不将该提示挪作上传动画，也未实现敌方追踪系统。F10 与真实目标共用头顶动画。详细依据见 `docs/quickhacks-video-reference.zh-CN.md`，录像只用于本地分析。
+
+这段录像足够校准扫描布局和技能图标落位；中文原版字体、全部技能特效和 REDengine 材质仍不是逐帧复刻。离线构建和热加载状态不代表游戏画面验收。
+
 ## 操作
 
-- **F10**：界面与无伤施放预览，可在主菜单打开。选择七种技能，点击「执行施放模拟」或按 F；点击右侧「入侵协议 · 门禁授权」检查代码矩阵。预览不选择或伤害 AI，不操作任何门。施放模拟启动后保留当次技能，即使切换列表选项也不会改变已开始的模拟。
+- **F10**：界面与无伤施放预览，可在主菜单打开。选择六种技能，点击「执行施放模拟」或按 F；点击右侧「入侵协议 · 门禁授权」检查代码矩阵。预览不选择或伤害 AI，不操作任何门。施放模拟启动后保留当次技能，即使切换列表选项也不会改变已开始的模拟。
 - **单独按住左 Ctrl 约 0.25 秒**：战局内扫描 AI，滚轮或鼠标选技能，**F** 上传。松开左 Ctrl 返回游戏。上传结束前目标离开视线、范围、战局，或玩家死亡、失焦会取消。
 - **ESC**：取消当前界面或尚未完成的门禁破解。关闭后恢复原光标状态；不修改时间倍率。
 - 热键、扫描范围、音量可在 BepInEx 配置修改；默认不占用原有黑墙 F11。
@@ -50,8 +63,7 @@ CardReader 按原 `_keyMap` 中唯一的成功触发器向当前战局 `Triggers
 - 武器故障：10 秒内阻止目标扣动扳机，仍允许观察、移动及换弹；不永久损坏武器或修改物品耐久。
 - 阻碍移动：10 秒内锁住原生移动器 Pause，不暂停 AI 思考、视线或射击；结束、失焦或热更新时恢复此前 Pause 状态。外部 Mod 已接管的暂停值不覆盖。
 - 记忆清除：移除个人战斗目标及敌人记忆，8 秒内阻断视觉重新锁定并清理重新写入的战斗记忆；不删除队伍的敌对关系，结束后可重新发现敌人。与同一目标的赛博精神病互相替换。
-- 请求支援：向 40 米内最近的空闲同队 AI 提交原生 GoToPointRequest，让它前往被破解目标的上传完成位置。仅选择没有战斗目标、没有当前请求、未被本插件锁住移动或发狂的队友，最长 15 秒；不生成新 AI，不修改阵营。不具备队伍控制器、无人可响应或重复呼叫会提示失败并返还 RAM。请求是否被特殊首领或第三方 AI 执行仍需实机验证。
-- 原型 RAM 上限 24，每秒恢复 1；按列表顺序，七种技能消耗为 2、3、4、6、4、8、12，上传时间为 1.5、1.5、1.5、2、1、3、4 秒。这是 EFT 适配数值，不是 2077 各阶级数值的完整复刻。
+- 原型 RAM 上限 24，每秒恢复 1；按列表顺序，六种技能消耗为 2、3、4、6、8、12，上传时间为 1.5、1.5、1.5、2、3、4 秒。这是 EFT 适配数值，不是 2077 各阶级数值的完整复刻。
 
 当前仅面向单机或本机实际拥有 AI 控制权的战局；尚未实现 FIKA 客户端请求与同步。
 
@@ -66,7 +78,7 @@ CardReader 按原 `_keyMap` 中唯一的成功触发器向当前战局 `Triggers
 - 首次从 0.1 / 0.2 迁移需要重启一次。若客户端正在运行，安装器会验证并排队完整安装包，启动隐藏安装进程等待这个客户端退出，再备份并安装；不会关闭游戏。安装状态见 `mod-updates/quickhacks-install-status.json`。之后使用同一加载器的更新可以在运行中安装。
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-Quickhacks.ps1 -GameRoot 'D:\SPT-5.0.0-48558' -ResourceRoot 'D:\CP2077_Quickhack_Resources_20261112' -BlackwallRoot 'D:\CP2077_Blackwall_Supplement_20261112' -Dotnet 'D:\SPT_Mod_Staging_20261027\dotnet-sdk\dotnet.exe' -HostReleaseRevision '3c728b5b0e7b5c8665597048f5c947e295b7ae23' -OutputDirectory 'D:\SPT_Mod_Staging_20261027\quickhacks-0.4.1' -Install
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-Quickhacks.ps1 -GameRoot 'D:\SPT-5.0.0-48558' -ResourceRoot 'D:\CP2077_Quickhack_Resources_20261112' -BlackwallRoot 'D:\CP2077_Blackwall_Supplement_20261112' -Dotnet 'D:\SPT_Mod_Staging_20261027\dotnet-sdk\dotnet.exe' -HostReleaseRevision '3c728b5b0e7b5c8665597048f5c947e295b7ae23' -OutputDirectory 'D:\SPT_Mod_Staging_20261027\quickhacks-0.5.1-video' -Install
 ```
 
 脚本构建加载器与逻辑模块，运行离线检查，按本地资源清单逐项验证 SHA256 后打包。输出目录须为空；`-Install` 调用安装器，备份已有独立插件，先复制资源，再原子发布逻辑模块。分发包也可运行 Install.ps1 并指定 GameRoot。资源只保留在本地安装包，不提交源码仓库。
@@ -77,4 +89,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-Quickhacks.p
 
 ## 验证边界
 
-编译、离线解码、谜题求解与 API 检查不等于游戏内画面、声音或门禁已经通过验收。游戏界面检查由用户完成：先在主菜单 F10 预览；进入战局确认真实卡列表保留，再分别检查取消、失败和成功开门；最后对少量 AI 检查七种效果。
+编译、离线解码、谜题求解与 API 检查不等于游戏内画面、声音或门禁已经通过验收。游戏界面检查由用户完成：先在主菜单 F10 预览；进入战局确认真实卡列表保留，再分别检查取消、失败和成功开门；最后对少量 AI 检查六种效果。
