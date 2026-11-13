@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>Local.Cp2077.Quickhacks.Core</AssemblyName>
-    <Version>0.6.0</Version>
+    <Version>0.6.1</Version>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -12,5 +12,6 @@
     <Reference Include="$(GameRoot)/BepInEx/core/*.dll" Exclude="$(GameRoot)/BepInEx/core/dobby.dll"><Private>false</Private></Reference>
     <Reference Include="$(GameRoot)/BepInEx/interop/*.dll"><Private>false</Private></Reference>
     <Compile Include="../blackwall-pulse/WavePcm.cs" Link="WavePcm.cs" />
+    <Compile Include="../shared/NativeEnemyMemory.cs" Link="NativeEnemyMemory.cs" />
   </ItemGroup>
 </Project>

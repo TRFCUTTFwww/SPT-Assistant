@@ -87,9 +87,9 @@ if($LASTEXITCODE -ne 0) { throw 'Original font rasterization failed.' }
 foreach($generated in (Get-ChildItem -LiteralPath $assets -File -Filter 'font_*')) {
     $packaged+=@{name=$generated.Name;bytes=$generated.Length;sha256=(Get-FileHash -LiteralPath $generated.FullName -Algorithm SHA256).Hash}
 }
-@{version='0.6.0';target='EFT 48558 / SPT 5.0';files=$packaged} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $payload 'asset-manifest.json') -Encoding UTF8
+@{version='0.6.1';target='EFT 48558 / SPT 5.0';files=$packaged} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $payload 'asset-manifest.json') -Encoding UTF8
 @{
-    version='0.6.0'
+    version='0.6.1'
     hostSha256=(Get-FileHash -LiteralPath (Join-Path $payload 'Local.Cp2077.Quickhacks.dll') -Algorithm SHA256).Hash
     coreSha256=(Get-FileHash -LiteralPath (Join-Path $payload 'runtime/Local.Cp2077.Quickhacks.Core.module') -Algorithm SHA256).Hash
 } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $payload 'release-manifest.json') -Encoding UTF8

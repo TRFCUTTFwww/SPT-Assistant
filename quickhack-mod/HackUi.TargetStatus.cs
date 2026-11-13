@@ -18,15 +18,15 @@ internal static partial class HackUi {
         size=Math.Clamp(30/Math.Max(1,delta.magnitude),.85f,1.12f);
         return point.x>32&&point.x<1888&&point.y>55&&point.y<1010;
     }
-    static void HeadBadge(Vector2 center,float size,HackKind kind,float progress,float remaining,bool uploading,int slot=0,float age=0,float completeAge=-1) {
+    static void HeadBadge(Vector2 center,float size,HackKind kind,float progress,float remaining,bool uploading,int slot=0,float age=0,float completeAge=-1,bool settled=false) {
         // Original widget: background/frame 80x88, glyph 64x64 at 2160p.
         // Keep those proportions and use a small distance-aware HUD scale.
-        var intro=UploadAnimation.Intro(age);
+        var intro=settled?(Scale:1f,Y:0f,Alpha:1f):UploadAnimation.Intro(age);
         var complete=completeAge>=0&&completeAge<UploadAnimation.CompleteDuration
             ?UploadAnimation.Complete(completeAge):(Y:0f,Alpha:1f);
         bool finishing=completeAge>=0&&completeAge<UploadAnimation.CompleteDuration;
         bool uploadStyle=uploading||finishing;
-        Color c=uploadStyle?ScanRed:ScanCyan;
+        Color c=uploadStyle||kind==HackKind.BlackwallGateway?ScanRed:ScanCyan;
         float alpha=intro.Alpha*complete.Alpha;
         float w=40*size,h=44*size,x=center.x+slot*46*size-w/2,y=center.y-36*size+complete.Y*size;
         var plate=new Rect(x,y,w,h);
@@ -64,11 +64,16 @@ internal static partial class HackUi {
             float Size(int index)=>index==0?size:size*.6f;
             if(queue.Length>0) {
                 var current=queue[0];
-                HeadBadge(point,size,current.Kind,current.Progress(Now),0,true,age:current.Elapsed(Now)); slot++;
-                float wait=Math.Max(0,HackRules.Upload(current.Kind)-current.Elapsed(Now));
+                bool promoted=float.IsFinite(current.PromotedAt);
+                float move=promoted?UploadAnimation.QueueMove(Now-current.PromotedAt):1;
+                var mainPosition=point+new Vector2((1-move)*35*size,0);
+                HeadBadge(mainPosition,size*(.6f+.4f*move),current.Kind,current.Progress(Now),0,true,age:current.Elapsed(Now),completeAge:current.Completed<0?-1:Now-current.Completed,settled:promoted); slot++;
+                float wait=current.Completed<0?Math.Max(0,current.Started-Now)+Math.Max(0,HackRules.Upload(current.Kind)-current.Elapsed(Now))+UploadQueue<ActorRef>.HandoffDuration:Math.Max(0,UploadAnimation.CompleteDuration-(Now-current.Completed))+UploadAnimation.QueueMoveDuration;
                 foreach(var pending in queue.Skip(1)) {
-                    QueuedBadge(Position(slot++),size*.6f,pending.Kind,wait);
-                    wait+=HackRules.Upload(pending.Kind);
+                    var position=Position(slot++);
+                    if(promoted) position.x+=(1-move)*28*size;
+                    QueuedBadge(position,size*.6f,pending.Kind,wait);
+                    wait+=HackRules.Upload(pending.Kind)+UploadQueue<ActorRef>.HandoffDuration;
                 }
             }
             if(chainVisible) {
@@ -76,10 +81,14 @@ internal static partial class HackUi {
                 float progress=completeAge<0?Math.Clamp((Now-chain.Started)/Math.Max(.01f,chain.At-chain.Started),0,1):1;
                 HeadBadge(Position(slot),Size(slot),HackKind.BlackwallGateway,progress,0,true,age:Now-chain.Started,completeAge:completeAge); slot++;
             }
-            var states=Effects.Markers.Where(m=>m.Ref==reference&&!(chainVisible&&m.Kind==HackKind.BlackwallGateway)).OrderByDescending(m=>m.Start);
+            var states=Effects.Markers.Where(m=>m.Ref==reference&&!(chainVisible&&m.Kind==HackKind.BlackwallGateway)&&!queue.Any(e=>e.Kind==m.Kind&&e.Completed>=0)).OrderByDescending(m=>m.Start);
+            int activeSlot=0;
             foreach(var state in states) {
                 float activeAge=Now-state.Start;
-                HeadBadge(Position(slot),Size(slot),state.Kind,activeAge<UploadAnimation.CompleteDuration?1:Math.Clamp((state.Until-Now)/HackRules.Duration(state.Kind),0,1),state.Until-Now,false,age:activeAge+HackRules.Upload(state.Kind),completeAge:activeAge); slot++;
+                // Active effects have their own cyan row below the upload queue.
+                // Their completion animation belongs solely to the main upload badge.
+                var activePosition=point+new Vector2(activeSlot++*27*size,38*size);
+                HeadBadge(activePosition,size*.6f,state.Kind,Math.Clamp((state.Until-Now)/HackRules.Duration(state.Kind),0,1),state.Until-Now,false,settled:true);
             }
         }
     }

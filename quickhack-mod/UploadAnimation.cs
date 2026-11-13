@@ -4,6 +4,8 @@ namespace LocalQuickhacks;
 // use 2160p; this helper returns 1080p offsets. Gameplay upload time is separate.
 internal static class UploadAnimation {
     internal const float CompleteDuration=.4159999641f;
+    internal const float QueueMoveDuration=.250750000007f;
+    internal static float QueueMove(float age)=>1-MathF.Pow(1-Unit(age,QueueMoveDuration),4);
     internal static float Unit(float t,float duration)=>Math.Clamp(t/duration,0,1);
     static float BackIn(float t)=>2.70158f*t*t*t-1.70158f*t*t;
     internal static (float Scale,float Y,float Alpha) Intro(float age) => (

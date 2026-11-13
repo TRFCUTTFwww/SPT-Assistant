@@ -60,6 +60,9 @@ internal static partial class HackUi {
     }
     static void Image(Rect r,string key,Color color,bool stretch=false) {
         var texture=Assets.Texture(key); if(texture==null) return;
+        TextureImage(r,texture,color,stretch);
+    }
+    static void TextureImage(Rect r,Texture2D texture,Color color,bool stretch=false) {
         GUI.color=Alpha(color,opacity); GUI.DrawTexture(r,texture,stretch?ScaleMode.StretchToFill:ScaleMode.ScaleToFit,true); GUI.color=Color.white;
     }
     static void Line(float x,float y,float x2,float y2,Color c,float width=1) {
@@ -261,7 +264,7 @@ internal static partial class HackUi {
         var r=new Rect(771,258,378,451); Crosshair(r,Alpha(Cyan,.75f));
         float age=Now-Runtime.PreviewStarted; var kind=Runtime.PreviewKind;
         bool active=age>=HackRules.Upload(kind)&&age<HackRules.Upload(kind)+2;
-        if(age>=0&&age<HackRules.Upload(kind)+2) {
+        if(age>=0&&age<HackRules.Upload(kind)+2&&(kind!=HackKind.BlackwallGateway||age<HackRules.Upload(kind)+UploadAnimation.CompleteDuration)) {
             float activeAge=age-HackRules.Upload(kind);
             float progress=!active?Runtime.PreviewProgress:activeAge<UploadAnimation.CompleteDuration?1:Math.Clamp(1-activeAge/HackRules.Duration(kind),0,1);
             HeadBadge(new Vector2(960,260),1,kind,progress,active?HackRules.Duration(kind)-activeAge:0,!active,age:age,completeAge:activeAge);
@@ -280,16 +283,13 @@ internal static partial class HackUi {
         if(kind==HackKind.BlackwallGateway) {
             Image(new Rect(843,330,236,310),"blackwall",new Color(1,.08f,.12f,.8f));
             for(int i=0;i<11;i++) Fill(new Rect(877+Mathf.Sin(age*28+i)*46,top+25+i*31,48+Mathf.Sin(age*19+i)*35,3),Alpha(Red,.8f));
-        } else if(kind==HackKind.Overheat) {
-            var flame=new Color(1,.35f,.015f,.8f);
-            Image(new Rect(875,373,170,190),"blackwall",flame);
-            for(int i=0;i<7;i++) Fill(new Rect(cx-48+Mathf.Sin(age*19+i)*35,top+100+i*20,20+Mathf.Abs(Mathf.Sin(age*11+i))*30,3),Alpha(flame,.7f));
-        } else if(kind==HackKind.RebootOptics) {
-            Fill(new Rect(cx-27,top+31,54,5),Cyan); Corners(new Rect(cx-42,top+7,84,70),Cyan,9);
         } else {
-            float effectY=kind==HackKind.CrippleMovement?top+290:kind==HackKind.WeaponGlitch?top+140:top+7;
-            Corners(new Rect(cx-42,effectY,84,70),Red,9); Image(new Rect(cx+62,effectY+11,58,58),HackRules.Icon(kind),Red);
-            for(int i=0;i<4;i++) Fill(new Rect(cx-30+Mathf.Sin(age*23+i)*12,effectY+12+i*14,52,2),Alpha(Red,.7f));
+            float effectY=kind==HackKind.Overheat?top+150:kind==HackKind.CrippleMovement?top+290:kind==HackKind.WeaponGlitch?top+140:top+25;
+            for(int i=0;i<SkillVisuals.Panels(kind);i++) {
+                var pose=SkillVisuals.Pose(kind,age-HackRules.Upload(kind),i,2);
+                var rect=new Rect(cx+pose.Offset.x*180-pose.Size.x*90,effectY-pose.Offset.y*130-pose.Size.y*90,pose.Size.x*180,pose.Size.y*180);
+                TextureImage(rect,SkillVisuals.Texture(kind),pose.Color,true);
+            }
         }
     }
 }

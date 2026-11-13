@@ -15,6 +15,9 @@ internal static class CombatDiagnostics {
                 shooting=owner.ShootData?.Shooting,canShootByState=owner.ShootData?.CanShootByState,lastTrigger=owner.ShootData?.LastTriggerPressd,
                 aiming=owner.AimingManager?.CurrentAiming?.GetType().Name,hands=actor?.HandsController?.GetIl2CppType()?.Name,
                 friendly=target!=null?owner.BotsGroup?.IsAlly(target):null,
+                groupEnemy=target!=null?owner.BotsGroup?.BotGroupHostility?.Enemies?.ContainsKey(target):null,
+                nativeAlly=target!=null?owner.BotsGroup?.BotGroupHostility?.Allies?.ContainsKey(target):null,
+                registeredGroupInfo=target!=null&&owner.BotsGroup?.BotGroupHostility?.Enemies?.ContainsKey(target)==true?owner.BotsGroup.BotGroupHostility.Enemies[target].Pointer==enemy?.GroupInfo?.Pointer:(bool?)null,
                 distance=target!=null&&actor!=null?Vector3.Distance(actor.Position,target.Position):(float?)null };
             File.AppendAllText(Path.Combine(Home,"cyberpsychosis.jsonl"),JsonSerializer.Serialize(entry)+Environment.NewLine);
             Plugin.Logger.LogInfo($"Cyberpsychosis {stage}: goal={entry.goal}; visible={entry.visible}; canShoot={entry.canShoot}; fireState={entry.canShootByState}; ally={entry.friendly}; standby={entry.standby}");

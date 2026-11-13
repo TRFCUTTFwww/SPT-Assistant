@@ -94,16 +94,7 @@ internal static partial class AiActorControl {
   var enemies=owner.EnemiesController??throw new ArgumentException("AI 敌人控制器尚未就绪。");
   var group=owner.BotsGroup??throw new ArgumentException("AI 没有队伍。");
   AiNativeRelations.EnsureEnemyEntry(group,target);
-  if(!enemies.EnemyInfos.ContainsKey(target)){
-   var shared=AiNativeRelations.EnsureEnemyEntry(group,target);
-   owner.Memory?.AddEnemyInfo(target,shared,false);
-   if(!enemies.EnemyInfos.ContainsKey(target))enemies.AddNew(group,target,shared);
-  }
-  if(!enemies.EnemyInfos.ContainsKey(target))throw new InvalidOperationException("AI 敌人记忆创建失败。");
-  var info=enemies.EnemyInfos[target];info.IgnoreUntilAggression=false;info.SetIgnoreState(false);
-  // Supply the commanded target's location for native search; vision and firing still use native checks.
-  info.PersonalLastPos=target.Position;info.GroupInfo.EnemyLastPosition=target.Position;
-  return info;
+  return LocalAiCombat.NativeEnemyMemory.EnsurePersonal(owner,target,AiNativeRelations.EnsureEnemyEntry(group,target));
  }
  internal static void KnowPosition(BotOwner owner,Player target){var info=EnsureEnemy(owner,target);info.PersonalLastPos=target.Position;info.GroupInfo.EnemyLastPosition=target.Position;info.HaveSeenPersonal=true;info.PersonalLastSeenTime=Time.time;}
  internal static void Tick(GameWorld? current,Player? player){
@@ -143,7 +134,7 @@ internal static partial class AiActorControl {
   }finally{RuntimePerformance.AiCombatDone(stamp,processed);}
  }
  static void NextCombatSource(CombatPass pass){pass.Schedule.NextSource();pass.Chosen=null;pass.Target=null;pass.Nearest=float.MaxValue;}
- internal static void CommandAttack(BotOwner owner,Player target){if(HiddenFromAi(target))return;var actor=owner.GetPlayer??throw new ArgumentException("AI 尚未就绪。");if(AiTestControl.IsPaused(actor)||ModelPoseLock.Locked(actor))return;var previous=evaluating;evaluating=owner;try{var info=EnsureEnemy(owner,target);var memory=owner.Memory??throw new ArgumentException("AI 战斗记忆尚未就绪。");if(!combatOriginals.ContainsKey(actor.Pointer))combatOriginals[actor.Pointer]=(new(Singleton<GameWorld>.Instance,actor),memory.Pointer,memory.AttackImmediately);memory.IsPeace=false;memory.AttackImmediately=true;if(memory.GoalEnemy?.Pointer!=info.Pointer)memory.GoalEnemy=info;AiLimitCompatibility.Wake(actor);}finally{evaluating=previous;}}
+ internal static void CommandAttack(BotOwner owner,Player target){if(HiddenFromAi(target))return;var actor=owner.GetPlayer??throw new ArgumentException("AI 尚未就绪。");if(AiTestControl.IsPaused(actor)||ModelPoseLock.Locked(actor))return;var previous=evaluating;evaluating=owner;try{var info=EnsureEnemy(owner,target);var memory=owner.Memory??throw new ArgumentException("AI 战斗记忆尚未就绪。");if(!combatOriginals.ContainsKey(actor.Pointer))combatOriginals[actor.Pointer]=(new(Singleton<GameWorld>.Instance,actor),memory.Pointer,memory.AttackImmediately);LocalAiCombat.NativeEnemyMemory.Command(owner,info);AiLimitCompatibility.Wake(actor);}finally{evaluating=previous;}}
  static void WarnRelation(Exception error){if(Time.unscaledTime<nextWarning)return;nextWarning=Time.unscaledTime+10;Plugin.Self.Log.LogWarning("AI relation update: "+error.Message);}
  static void RestoreCombat(IntPtr pointer){if(!combatOriginals.Remove(pointer,out var saved))return;try{var owner=saved.Actor.Resolve().AIData?.BotOwner;var memory=owner?.Memory;if(memory?.Pointer==saved.Memory){memory.AttackImmediately=saved.Attack;memory.CheckIsPeace();}}catch{}}
  static Player[] LiveBots(GameWorld current){var result=new List<Player>();var all=current.AllAlivePlayersList;if(all!=null)for(int i=0;i<all.Count;i++){var actor=all[i];if(actor?.IsAI==true&&!actor.IsYourPlayer&&actor.HealthController?.IsAlive==true&&actor.AIData?.BotOwner?.BotsGroup!=null)result.Add(actor);}return result.ToArray();}

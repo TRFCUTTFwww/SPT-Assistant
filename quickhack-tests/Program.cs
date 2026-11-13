@@ -74,13 +74,25 @@ Check(uploads.TryAdd("a",HackKind.Overheat,5,10)&&uploads.TryAdd("a",HackKind.We
 Check(uploads.Current("a")!.Progress(11)==.5f&&uploads.Current("b")!.Progress(11)>0,"Both targets advance concurrently");
 Check(uploads.For("a")[1].Elapsed(100)==0&&!uploads.TryAdd("a",HackKind.Overheat,5,11),"Waiting entries never upload early; duplicate pending skills are rejected");
 Check(uploads.Complete("a",11)==null&&uploads.Complete("a",12)!.Kind==HackKind.Overheat,"A program cannot execute before its actual upload deadline");
-Check(uploads.Current("a")!.Started==12&&uploads.Current("a")!.Progress(12)==0,"Promotion starts the next timer at completion, without retroactive progress");
-Check(uploads.Complete("a",12)==null&&uploads.Cancel("a")==3&&uploads.Cancel("a")==0,"A completed effect cannot repeat and only pending paid RAM is refunded once");
+Check(uploads.Current("a")!.Kind==HackKind.Overheat&&uploads.Current("a")!.Completed==12&&uploads.For("a")[1].Elapsed(12.3f)==0,"Completed program keeps the main icon until the entire original completion track finishes");
+Check(uploads.Complete("a",12.3f)==null&&uploads.Current("a")!.Kind==HackKind.Overheat,"Next upload cannot overlap the previous completion animation");
+Check(uploads.Complete("a",12.5f)==null&&uploads.Current("a")!.Kind==HackKind.WeaponGlitch&&uploads.Current("a")!.Progress(12.6f)==0,"Queue promotion has its own 0.25 second move before the next upload starts");
+Check(uploads.Current("a")!.Progress(13) > 0&&uploads.Complete("a",13)==null&&uploads.Cancel("a")==3&&uploads.Cancel("a")==0,"Only pending paid RAM is refunded once after animated promotion");
 Check(uploads.Current("b")!=null&&uploads.Clear()==2&&uploads.Count==0,"Cancellation is isolated by target and global cleanup refunds the rest");
 foreach(var kind in HackRules.All.Take(UploadQueue<string>.PerTargetLimit)) Check(uploads.TryAdd("c",kind,1,20),"Four per-target slots are accepted");
 Check(!uploads.TryAdd("c",HackKind.BlackwallGateway,12,20)&&uploads.Count==4,"Full target queues reject before payment");
 uploads.Clear();
 Check(uploads.TryAdd("free",HackKind.SynapseBurnout,0,30)&&uploads.Clear()==0,"Infinite RAM requests never manufacture refunds");
+Check(uploads.TryAdd("outro",HackKind.RebootOptics,2,40)&&uploads.Complete("outro",42)!=null&&uploads.Cancel("outro")==0,"Cancelling a completed but visible icon does not refund an applied effect");
+foreach(float tick in new[]{.016f,.1f,.7f,5f}) {
+    var sequence=new UploadQueue<string>();
+    sequence.TryAdd("npc",HackKind.RebootOptics,2,0); sequence.TryAdd("npc",HackKind.WeaponGlitch,3,0); sequence.TryAdd("npc",HackKind.MemoryWipe,6,0);
+    var executed=new List<(HackKind Kind,float At)>();
+    for(float now=0;now<40;now+=tick) if(sequence.Complete("npc",now) is {} entry) executed.Add((entry.Kind,now));
+    Check(executed.Select(e=>e.Kind).SequenceEqual(new[]{HackKind.RebootOptics,HackKind.WeaponGlitch,HackKind.MemoryWipe}),"All frame rates execute queued programs exactly once and in order");
+    Check(executed[1].At-executed[0].At>=UploadQueue<string>.HandoffDuration+HackRules.Upload(HackKind.WeaponGlitch)-.001f,"Frame stalls cannot skip completion/move animations or upload the next program early");
+}
+Check(UploadAnimation.QueueMove(0)==0&&UploadAnimation.QueueMove(UploadAnimation.QueueMoveDuration)==1&&UploadAnimation.QueueMove(.1f)>.5f,"Original queue promotion uses its own quartic easing and settles at the main slot");
 Check(!GatewayTiming.CanExecute(-1,100)&&!GatewayTiming.CanExecute(10,10.4f)&&!GatewayTiming.CanExecute(10,11.24f)&&GatewayTiming.CanExecute(10,11.25f),"Blackwall deaths wait until upload completion and the entire body animation have finished");
 Check(GatewayTiming.ExecutionDuration>UploadAnimation.CompleteDuration,"Blackwall death cannot precede the original head completion track");
 foreach(float step in new[]{.016f,.25f,.7f,3f}) {
@@ -115,6 +127,11 @@ Check(new[]{"Pause","_pauseEndTime"}.All(n=>mover.Properties.Any(p=>p.Name==n)),
 Check(new[]{"ManualUpdate","ManualFixedUpdate"}.All(n=>mover.Methods.Count(m=>m.Name==n)==1),"Movement patches have unique native entry points");
 Check(game.MainModule.Types.Single(t=>t.FullName=="EFT.BotMemory").Methods.Any(m=>m.Name=="DeleteInfoAboutEnemy"&&m.Parameters.Count==1),"Memory wipe uses native personal enemy-memory removal");
 var memoryType=game.MainModule.Types.Single(t=>t.FullName=="EFT.BotMemory");
+var hostilityService=game.MainModule.Types.Single(t=>t.Name=="BotHostilityService");
+Check(hostilityService.Methods.Count(m=>m.Name=="EvaluateHostility"&&m.Parameters.Count==2&&m.Parameters[0].ParameterType.Name=="BotGroupInnerHostilityData"&&m.Parameters[1].ParameterType.Name=="BotHostilityData"&&m.ReturnType.Name=="HostilityEvaluationResult")==1,"Cyberpsychosis hooks the exact native hostility evaluation overload");
+var hostility=game.MainModule.Types.Single(t=>t.Name=="BotGroupHostility");
+Check(new[]{"Enemies","Allies","Warns","Neutrals","LastHostilityStatus"}.All(n=>hostility.Properties.Any(p=>p.Name==n)),"Temporary native hostility can save and restore all relationship registries");
+Check(hostility.Methods.Any(m=>m.Name=="UpdatePlayerHostilityCollection"&&m.Parameters.Count==2),"Temporary hostility uses the same native transition as Assistant's friend-to-enemy action");
 Check(memoryType.Properties.Single(p=>p.Name=="GoalEnemy").SetMethod.Parameters.Single().ParameterType.Name=="EnemyInfo","Cyberpsychosis can preserve a commanded goal through the native setter");
 Check(memoryType.Methods.Any(m=>m.Name=="AddEnemyInfo"&&m.Parameters.Count==3&&m.Parameters[1].ParameterType.Name=="BotGroupEnemyInfo"),"Cyberpsychosis registers native memory and its shared enemy position");
 Check(game.MainModule.Types.Single(t=>t.Name=="BotEnemiesController").Methods.Any(m=>m.Name=="UpdateFor"&&m.Parameters.Count==2&&m.Parameters[1].ParameterType.FullName=="System.Boolean"),"Commanded enemy participates in native observation updates");

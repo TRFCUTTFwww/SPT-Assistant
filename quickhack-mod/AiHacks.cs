@@ -3,6 +3,7 @@ using EFT;
 using EFT.Ballistics;
 using HarmonyLib;
 using UnityEngine;
+using LocalAiCombat;
 
 namespace LocalQuickhacks;
 
@@ -53,6 +54,7 @@ internal static class AiHacks {
         Patch(typeof(BotEnemiesController),"IsEnemy",after:nameof(IsEnemy));
         Patch(typeof(BotsGroup),"IsEnemy",after:nameof(GroupEnemy));
         Patch(typeof(BotsGroup),"IsAlly",after:nameof(GroupAlly));
+        h.Patch(typeof(BotHostilityService).GetMethod("EvaluateHostility",[typeof(BotGroupInnerHostilityData),typeof(BotHostilityData)]),postfix:new HarmonyMethod(typeof(AiHacks),nameof(NativeHostility)) { priority=Priority.Last });
         Patch(typeof(EnemyInfo),"CheckLookEnemy",before:nameof(Vision));
         foreach(string m in new[]{"ShallKnowEnemy","ShallKnowEnemyLate"}) Patch(typeof(EnemyInfo),m,after:nameof(Know));
         // Scope same-squad overrides to the currently evaluating bot.
@@ -71,6 +73,11 @@ internal static class AiHacks {
     internal static bool IsHostile(BotOwner? owner,IPlayer? target)=>IsAi(target)&&owner?.GetPlayer is {} actor&&!actor.IsYourPlayer&&actor.Pointer!=target!.Pointer&&(Mad(owner)||MadTarget(target));
     static void IsEnemy(BotEnemiesController __instance,IPlayer __0,ref bool __result) { if(IsHostile(__instance._owner,__0)) __result=true; }
     static bool GroupRule(BotsGroup group,IPlayer target)=>IsAi(target)&&target.Pointer!=evaluating?.GetPlayer?.Pointer&&(MadTarget(target)||evaluating?.BotsGroup?.Pointer==group.Pointer&&Mad(evaluating));
+    static bool NativeGroupRule(BotsGroup group,IPlayer target)=>IsAi(target)&&MadnessRelations.Contains(group,target);
+    static void NativeHostility(BotGroupInnerHostilityData __0,BotHostilityData __1,ref HostilityEvaluationResult __result) {
+        var group=__0?.OwnedGroup?.TryCast<BotsGroup>(); var target=__1?.Player;
+        if(group!=null&&target!=null&&(MadTarget(target)||NativeGroupRule(group,target))) __result=new(BotHostilityStatus.Enemy,"Cyberpsychosis temporary native enemy registry");
+    }
     static void GroupEnemy(BotsGroup __instance,IPlayer __0,ref bool __result) { if(GroupRule(__instance,__0)) __result=true; }
     static void GroupAlly(BotsGroup __instance,IPlayer __0,ref bool __result) { if(GroupRule(__instance,__0)) __result=false; }
     static void Know(EnemyInfo __instance,ref bool __result) { if(Timed(wiped,__instance.Owner)) __result=false; else if(IsHostile(__instance.Owner,__instance.Person)) __result=true; }
@@ -186,20 +193,12 @@ internal static class AiHacks {
         if(target==null) { state.Last=null; Report(state,"no-nearby-ai"); return; }
         var previous=evaluating; evaluating=owner;
         try {
-            EnemyInfo info;
-            if(owner.EnemiesController.EnemyInfos.ContainsKey(target)) info=owner.EnemiesController.EnemyInfos[target];
-            else {
-                var shared=new BotGroupEnemyInfo(target,owner.BotsGroup);
-                owner.Memory.AddEnemyInfo(target,shared,false);
-                info=owner.EnemiesController.EnemyInfos.ContainsKey(target)?owner.EnemiesController.EnemyInfos[target]:owner.EnemiesController.AddNew(owner.BotsGroup,target,shared);
-                state.Created.Add((target,info.Pointer));
-            }
-            info.SetIgnoreState(false); info.IgnoreUntilAggression=false;
-            info.PersonalLastPos=target.Position;
-            info.GroupInfo.EnemyLastPosition=target.Position;
+            bool existed=owner.EnemiesController.EnemyInfos.ContainsKey(target);
+            var shared=MadnessRelations.Acquire(owner,target);
+            var info=NativeEnemyMemory.EnsurePersonal(owner,target,shared);
+            if(!existed) state.Created.Add((target,info.Pointer));
             state.Last=info;
-            owner.EnemiesController.UpdateFor(info,true);
-            owner.Memory.IsPeace=false; owner.Memory.AttackImmediately=true; owner.Memory.GoalEnemy=info;
+            NativeEnemyMemory.Command(owner,info);
             Report(state,"commanded");
         } finally { evaluating=previous; }
     }
@@ -210,6 +209,7 @@ internal static class AiHacks {
     }
     static void Restore(Madness state) {
         try {
+            MadnessRelations.Release(state.Owner.Pointer);
             if(state.Ref.Resolve()==null) return;
             var owner=state.Owner;
             if(owner.Memory is {} memory&&state.Last!=null&&memory.GoalEnemy?.Pointer==state.Last.Pointer) memory.GoalEnemy=state.Goal!;

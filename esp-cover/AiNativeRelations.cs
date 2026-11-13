@@ -13,8 +13,7 @@ internal static class AiNativeRelations {
  static readonly Dictionary<(IntPtr Group,IntPtr Target),Shared> shared=new();
  internal static BotGroupEnemyInfo EnsureEnemyEntry(BotsGroup group,Player target){
   var state=group.BotGroupHostility??throw new ArgumentException("AI 队伍仇恨控制器尚未就绪。");if(state.Enemies.ContainsKey(target))return state.Enemies[target];
-  var info=new BotGroupEnemyInfo(target,group);state.AddEnemyAction(target,info);if(!state.Enemies.ContainsKey(target))state.Enemies[target]=info;
-  if(!state.Enemies.ContainsKey(target))throw new InvalidOperationException("AI 队伍敌人登记失败。");var stored=state.Enemies[target];shared.TryAdd((group.Pointer,target.Pointer),new(group,new(Singleton<GameWorld>.Instance,target),stored));return stored;
+  var stored=LocalAiCombat.NativeEnemyMemory.EnsureGroup(group,target);shared.TryAdd((group.Pointer,target.Pointer),new(group,new(Singleton<GameWorld>.Instance,target),stored));return stored;
  }
  internal static void Set(BotsGroup group,Player target,bool hostile){
   var state=group.BotGroupHostility??throw new ArgumentException("AI 队伍仇恨控制器尚未就绪。");

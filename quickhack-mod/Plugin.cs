@@ -35,7 +35,7 @@ internal static class Plugin {
 public sealed class RuntimeModule:IQuickhackModule {
     Harmony? patches;
     public int ApiVersion=>1;
-    public string Version=>"0.6.0";
+    public string Version=>"0.6.1";
     public bool CanReload=>!Runtime.Uploading&&Runtime.Mode!=UiMode.Breach;
     public void Initialize(ConfigFile config,ManualLogSource log,string directory) {
         Plugin.Configure(config,log);
@@ -47,7 +47,7 @@ public sealed class RuntimeModule:IQuickhackModule {
             InputHooks.Install(patches);
             AiHacks.Install(patches);
 
-            log.LogInfo("Quickhacks 0.6.0 runtime ready: eight quickhacks / per-target queues / head markers; Left Ctrl scanner / F10 preview; native keycard list retains cards and adds 破解");
+            log.LogInfo("Quickhacks 0.6.1 runtime ready: eight quickhacks / per-target queues / head markers; Left Ctrl scanner / F10 preview; native keycard list retains cards and adds 破解");
         } catch { patches.UnpatchSelf(); Runtime.Stop(); throw; }
     }
     public void Shutdown() { try { Runtime.Stop(); } finally { patches?.UnpatchSelf(); patches=null; } }
@@ -82,7 +82,7 @@ public static class QuickhackApi {
     public static bool IsHostile(BotOwner owner,IPlayer target)=>Runtime.Active&&AiHacks.IsHostile(owner,target);
     // Shared BepInEx types keep the optional Assistant panel independent of this assembly.
     public static ConfigEntryBase[] GetSettings()=>[Plugin.Enabled,Plugin.InfiniteRam,Plugin.Range,Plugin.GatewayRange,Plugin.GatewayTargets,Plugin.GatewayHopTime,Plugin.Volume];
-    public static string Version=>"0.6.0";
+    public static string Version=>"0.6.1";
     public static int Frames=>Runtime.Frames;
     public static string Diagnostics()=>System.Text.Json.JsonSerializer.Serialize(new { version=Version,frames=Frames,mode=Runtime.Mode.ToString(),status=Runtime.Status,menuAppends=DoorHacking.MenuCount,aiEffects=AiHacks.ActiveCount,uploading=Runtime.Uploading });
 }
