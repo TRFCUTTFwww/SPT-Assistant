@@ -1,4 +1,4 @@
-# CP2077 Quickhacks 独立原型 0.3.1
+# CP2077 Quickhacks 独立原型 0.3.2
 
 目标：SPT 5.0 / EFT 48558，BepInEx IL2CPP / .NET 10。插件名称 CP2077 Quickhacks，配置文件 `BepInEx/config/local.cp2077.quickhacks.cfg`。独立于 SPT Assistant，可与其及其内置黑墙脉冲共存。
 
@@ -7,6 +7,10 @@
 0.3.1 按本机 `D:/aaa` 两张 1920×1080 参考图重排入侵协议：紫黑半透明底、全屏细框及边缘技术纹样、左上 NETTECH 与线框地球、顶部长条、左侧紧凑 7×7 代码矩阵、右上八格缓冲，以及右侧三行程序。右侧三行分别表示当前门禁序列的握手、访问校验、完整授权阶段，按实际缓冲匹配显示状态，不产生数据挖掘奖励；只有完整授权成功才提交开门。结束时左侧替换为绿色或红色终端日志、结果板和退出按钮，保留至手动退出，计时冻结。图中视频水印和 FPS 不属于界面。
 
 扫描器保留左侧快速破解、中央光学取景、右侧目标数据和上方 RAM 栏；接入原版扫描刻度、内存格、选中底板和技术纹样。无真实目标的 F10 预览使用光学人体轮廓，战局中的锁定框按目标投影尺寸调整。
+
+0.3.2 增加入侵协议动画：开场边框展开、扫描线掠过、标题条展开及矩阵代码逐行解码；悬停边框呼吸、选码闪烁、代码沿弧线飞入缓冲区，落位后才显示缓冲代码；匹配序列闪亮并显示下一代码提示。最后一次选码飞入后，矩阵以短暂故障条纹切换为终端；终端展开、日志逐字输出、封包点线和完成状态推进、程序结果依次展开，最后展开结果板与退出按钮。约三秒后播放一次完成音效。失败采用红色终端及拒绝结果。所有动画使用非缩放时间，支持不同帧率；选码飞行不锁住下一次合法选择，开场代码全部稳定后才接受输入，ESC 随时可退出。
+
+动画仅控制显示和音效时序；完整序列匹配后仍由原有单次授权逻辑提交开门，不因动画重复提交授权。
 
 已有入侵协议图标（DoorAuthorization）和打开、关闭、选码、成功、失败等音效，可用于上传魔偶界面；代码矩阵与交互由插件重建。当前黑墙上传提示临时使用资源包中的突触熔融音效，黑墙死亡音效使用补充包原素材。
 
@@ -47,7 +51,7 @@ CardReader 按原 `_keyMap` 中唯一的成功触发器向当前战局 `Triggers
 - 首次从 0.1 / 0.2 迁移需要重启一次。若客户端正在运行，安装器会验证并排队完整安装包，启动隐藏安装进程等待这个客户端退出，再备份并安装；不会关闭游戏。安装状态见 `mod-updates/quickhacks-install-status.json`。之后使用同一加载器的更新可以在运行中安装。
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-Quickhacks.ps1 -GameRoot 'D:\SPT-5.0.0-48558' -ResourceRoot 'D:\CP2077_Quickhack_Resources_20261112' -BlackwallRoot 'D:\CP2077_Blackwall_Supplement_20261112' -Dotnet 'D:\SPT_Mod_Staging_20261027\dotnet-sdk\dotnet.exe' -HostReleaseRevision '3c728b5b0e7b5c8665597048f5c947e295b7ae23' -OutputDirectory 'D:\SPT_Mod_Staging_20261027\quickhacks-0.3.1' -Install
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-Quickhacks.ps1 -GameRoot 'D:\SPT-5.0.0-48558' -ResourceRoot 'D:\CP2077_Quickhack_Resources_20261112' -BlackwallRoot 'D:\CP2077_Blackwall_Supplement_20261112' -Dotnet 'D:\SPT_Mod_Staging_20261027\dotnet-sdk\dotnet.exe' -HostReleaseRevision '3c728b5b0e7b5c8665597048f5c947e295b7ae23' -OutputDirectory 'D:\SPT_Mod_Staging_20261027\quickhacks-0.3.2' -Install
 ```
 
 脚本构建加载器与逻辑模块，运行离线检查，按本地资源清单逐项验证 SHA256 后打包。输出目录须为空；`-Install` 调用安装器，备份已有独立插件，先复制资源，再原子发布逻辑模块。分发包也可运行 Install.ps1 并指定 GameRoot。资源只保留在本地安装包，不提交源码仓库。

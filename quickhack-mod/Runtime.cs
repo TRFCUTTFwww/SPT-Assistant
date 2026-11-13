@@ -99,8 +99,8 @@ internal static class Runtime {
                 Puzzle.Tick(now);
                 if(Puzzle.Ended&&!puzzleHandled) {
                     puzzleHandled=true;
-                    if(Puzzle.Won) { if(!PreviewBreach) Door!.Authorize(true); Status=PreviewBreach?"预览：门禁授权魔偶上传完成。":"门禁授权已提交。"; Assets.Play("granted"); }
-                    else { Status="破解失败：缓冲区已满或时间耗尽。"; Assets.Play("denied"); }
+                    if(Puzzle.Won) { if(!PreviewBreach) Door!.Authorize(true); Status=PreviewBreach?"预览：门禁授权魔偶上传完成。":"门禁授权已提交。"; }
+                    else { Status="破解失败：缓冲区已满或时间耗尽。"; }
                 }
             }
             PreviewProgress=Math.Clamp((now-PreviewStarted)/HackRules.Upload(PreviewKind),0,1);

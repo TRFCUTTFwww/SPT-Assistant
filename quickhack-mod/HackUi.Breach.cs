@@ -12,12 +12,14 @@ internal static partial class HackUi {
         if(!ReferenceEquals(shownPuzzle,p)) {
             shownPuzzle=p; focusRow=focusCol=shownPicks=0; hovered="";
             lastMouse=new(-9999,-9999); breachHelp=false; keyboardFocus=false;
+            ResetBreachMotion();
         }
-        if(shownPicks!=p.Picks.Count) { shownPicks=p.Picks.Count; pickedAt=Now; }
+        ObserveBreach(p);
         Fill(canvas,Purple);
         BreachFrame(p.Ended);
         float savedOpacity=opacity;
-        if(p.Ended) opacity*=.35f;
+        opacity*=Ease(OpeningAge,.08f,.25f);
+        if(p.Ended) opacity*=1-.65f*Ease(ResultAge,0,.3f);
         Fill(new Rect(canvas.x,168,canvas.width,85),Alpha(Lime,.09f));
         Text(new Rect(140,184,435,48),"剩余入侵时间",Lime,32);
         Frame(new Rect(606,189,108,43),Lime);
@@ -31,15 +33,19 @@ internal static partial class HackUi {
         for(int i=0;i<p.Capacity;i++) {
             var cell=new Rect(905+i*42,197,32,32);
             Image(cell,"breach_buffer_empty",Alpha(Lime,.65f),true);
-            if(i<p.Buffer.Count) {
+            if(i<p.Buffer.Count&&BufferLanded(i)) {
                 Image(cell,"breach_buffer_activated",Lime,true);
                 Text(new Rect(cell.x-1,cell.y-4,34,40),p.Buffer[i],Lime,29,2,TextAnchor.MiddleCenter);
             }
         }
         opacity=savedOpacity;
-        if(p.Ended) BreachTerminal(p); else BreachMatrix(p);
+        if(p.Ended&&ResultAge>=0) BreachTerminal(p); else BreachMatrix(p);
         BreachPrograms(p);
+        DrawCodeFlights();
+        BreachSweep(p);
+        opacity*=Ease(OpeningAge,.4f,.25f);
         BreachControls();
+        opacity=savedOpacity;
         if(breachHelp&&!p.Ended) {
             Fill(new Rect(886,645,880,216),new Color(.08f,.07f,.105f,.99f));
             Frame(new Rect(886,645,880,216),Alpha(Lime,.6f));
@@ -71,8 +77,9 @@ internal static partial class HackUi {
         Image(new Rect(836,59,220,6),"breach_fluff_text2",Alpha(Purple,.8f),true);
         Image(new Rect(1510,58,180,7),"breach_fluff_header1",Alpha(Purple,.6f),true);
         Image(new Rect(1632,37,120,26),"breach_fluff_barcode1",Lime,true);
-        Frame(new Rect(124,112,1672,864),Alpha(Lime,.8f));
-        Frame(new Rect(121,167,1678,765),Alpha(Lime,.45f));
+        float expand=Ease(OpeningAge,0,.35f);
+        Frame(new Rect(124,112,1672*expand,864*expand),Alpha(Lime,.8f));
+        Frame(new Rect(121,167,1678*expand,765*expand),Alpha(Lime,.45f));
         foreach(float x in new[]{144,165,1754,1775}) Line(x,113,x,975,Alpha(Lime,.45f));
         Line(116,487,116,711,Lime,2); Line(122,289,122,490,Lime,3);
         foreach(float y in new[]{485,673}) { Fill(new Rect(107,y,5,6),Alpha(Lime,.6f)); Fill(new Rect(116,y,5,6),Alpha(Lime,.6f)); }
@@ -83,10 +90,12 @@ internal static partial class HackUi {
         Image(new Rect(1228,976,568,15),"breach_fluff_barcode2",Alpha(Lime,.7f),true);
     }
     static void BreachMatrix(BreachPuzzle p) {
+        float savedOpacity=opacity;
+        opacity*=Ease(OpeningAge,.16f,.24f);
         Fill(new Rect(141,291,698,514),new Color(.092f,.08f,.12f,.92f));
         Frame(new Rect(141,291,698,514),Alpha(Lime,.85f));
         // Angled leading corner of the filled title strip.
-        Fill(new Rect(153,291,686,45),Lime); Fill(new Rect(141,303,12,33),Lime);
+        Fill(new Rect(153,291,686*Ease(OpeningAge,.18f,.3f),45),Lime); Fill(new Rect(141,303,12,33),Lime);
         for(int i=0;i<12;i++) Fill(new Rect(152-i,291+i,1,12-i),Lime);
         Image(new Rect(161,301,25,25),"breach_fluff_1",Purple);
         Text(new Rect(201,294,540,40),"代码矩阵",Purple,28);
@@ -103,20 +112,36 @@ internal static partial class HackUi {
             int r=p.SelectRow?p.ActiveLine:i,c=p.SelectRow?i:p.ActiveLine;
             if(p.CanPick(r,c)) { focusRow=r; focusCol=c; break; }
         }
-        BreachKeyboard(p);
+        if(OpeningAge>=.85f) BreachKeyboard(p);
         var band=p.SelectRow?new Rect(142,by+p.ActiveLine*pitch,696,pitch):new Rect(bx+p.ActiveLine*pitch,337,pitch,467);
         Fill(band,new Color(.27f,.30f,.36f,.64f));
+        if(!p.Ended) {
+            float sweep=Now*.35f%1;
+            if(p.SelectRow) Fill(new Rect(band.x+sweep*(band.width-24),band.y,24,band.height),Alpha(Lime,.035f));
+            else Fill(new Rect(band.x,band.y+sweep*(band.height-24),band.width,24),Alpha(Lime,.035f));
+        }
         bool hasFocus=mouse.x>=bx&&mouse.x<bx+p.Size*pitch&&mouse.y>=by&&mouse.y<by+p.Size*pitch||keyboardFocus;
         for(int r=0;r<p.Size;r++) for(int c=0;c<p.Size;c++) {
             var cell=new Rect(bx+c*pitch,by+r*pitch,pitch,pitch);
             bool allowed=p.CanPick(r,c),used=p.Used(r,c),focus=hasFocus&&allowed&&r==focusRow&&c==focusCol;
-            if(focus) { Fill(cell,Lime); Frame(new Rect(cell.x-3,cell.y-3,cell.width+6,cell.height+6),Lime); }
-            Text(cell,used?"··":p.Matrix[r,c],focus?Purple:used?Alpha(Lime,.25f):Lime,34,2,TextAnchor.MiddleCenter);
-            if(allowed&&Click(cell,"code"+r+":"+c)) { keyboardFocus=false; Runtime.Pick(r,c); }
+            float settle=Phase(OpeningAge,.25f+r*.045f+c*.012f,.22f);
+            float rowOpacity=opacity; opacity*=settle;
+            if(focus) {
+                Fill(cell,Lime); Frame(new Rect(cell.x-3,cell.y-3,cell.width+6,cell.height+6),Alpha(Cyan,.6f+.4f*Pulse));
+            }
+            string code=used?"··":settle<1?BreachPuzzle.Symbols[((int)(Now*30)+r*7+c)%BreachPuzzle.Symbols.Length]:p.Matrix[r,c];
+            Text(cell,code,focus?Purple:used?Alpha(Lime,.25f):Lime,34,2,TextAnchor.MiddleCenter);
+            foreach(var flight in codeFlights) if(flight.Row==r&&flight.Col==c) {
+                float flash=1-Phase(Now-flight.Started,0,.4f);
+                Fill(cell,Alpha(Cyan,flash*.25f)); Frame(cell,Alpha(Cyan,flash),2);
+            }
+            if(OpeningAge>=.85f&&allowed&&Click(cell,"code"+r+":"+c)) { keyboardFocus=false; Runtime.Pick(r,c); }
+            opacity=rowOpacity;
         }
         Image(new Rect(141,815,118,38),"breach_fluff_protocol2",Lime,true);
         Image(new Rect(345,817,316,25),"breach_fluff_code1",Alpha(Lime,.8f),true);
         Image(new Rect(770,807,69,13),"breach_fluff_barcode1",Lime,true);
+        opacity=savedOpacity;
     }
     static bool keyboardFocus;
     static void BreachKeyboard(BreachPuzzle p) {
@@ -133,6 +158,8 @@ internal static partial class HackUi {
         } else if(e.keyCode is KeyCode.F or KeyCode.Return or KeyCode.KeypadEnter) { Runtime.Pick(focusRow,focusCol); e.Use(); }
     }
     static void BreachPrograms(BreachPuzzle p) {
+        float savedOpacity=opacity;
+        opacity*=Ease(OpeningAge,.25f,.3f);
         Frame(new Rect(884,287,924,273),Alpha(Lime,.65f));
         Line(884,299,896,287,Lime); Fill(new Rect(884,287,11,1),Purple);
         Image(new Rect(904,298,25,25),"breach_ico_programs",Lime,true);
@@ -146,27 +173,44 @@ internal static partial class HackUi {
             string[] sequence=p.Sequence.Take(length).ToArray();
             bool installed=BreachPuzzle.Contains(p.Buffer,sequence);
             float y=342+i*65;
-            Color ink=p.Ended?Terminal:Lime;
-            if(p.Ended) BreachCutFill(new Rect(904,y,890,64),installed?Emerald:Salmon);
+            float rowReveal=Ease(ResultAge,1.9f+i*.24f,.24f);
+            bool result=p.Ended&&rowReveal>0;
+            Color ink=result?Terminal:Lime;
+            if(result) BreachCutFill(new Rect(904,y,890*rowReveal,64),installed?Emerald:Salmon);
             else Fill(new Rect(904,y,32,64),new Color(.15f,.135f,.19f,.6f));
-            if(p.Ended) Text(new Rect(930,y+9,350,44),installed?"已安装":"失败",ink,24);
+            if(result) Text(new Rect(930,y+9,350,44),installed?"已安装":"失败",Alpha(ink,rowReveal),24);
             else {
-                for(int n=0;n<length;n++) Text(new Rect(905+n*42,y-3,42,43),sequence[n],installed?Emerald:Color.white,29,2);
+                int prefix=SequencePrefix(p,length);
+                float flash=1-Phase(Now-programPulse[i],0,.45f);
+                if(flash>0) Fill(new Rect(904,y,890,64),Alpha(Emerald,flash*.22f));
+                for(int n=0;n<length;n++) {
+                    Text(new Rect(905+n*42,y-3,42,43),sequence[n],installed?Emerald:n<prefix?Lime:Color.white,29,2);
+                    if(n==prefix&&!installed) Line(908+n*42,y+38,936+n*42,y+38,Alpha(Lime,Pulse),2);
+                }
+                if(p.Ended&&ResultAge>.25f) {
+                    float progress=Ease(ResultAge,.25f,2.1f);
+                    Line(1137,y+44,1137+143*progress,y+44,p.Won?Emerald:Salmon,2);
+                }
             }
             Image(new Rect(1299,y+3,60,59),"DoorAuthorization",ink);
             string name=i==0?"门禁握手_V1":i==1?"访问校验_V2":"门禁授权_V3";
             string desc=i==0?"建立当前门禁的授权上传链路。":i==1?"校验访问请求，等待完整授权。":"上传门禁授权魔偶，取得开门权限。";
-            Text(new Rect(1377,y-1,414,31),name,p.Ended?ink:Color.white,24);
+            Text(new Rect(1377,y-1,414,31),name,result?ink:Color.white,24);
             Text(new Rect(1377,y+26,414,32),desc,ink,22);
         }
         Image(new Rect(884,569,205,25),"breach_fluff_text2",Lime,true);
         Image(new Rect(1740,563,68,15),"breach_fluff_barcode1",Lime,true);
+        opacity=savedOpacity;
     }
     static void BreachTerminal(BreachPuzzle p) {
+        float age=ResultAge,savedOpacity=opacity;
+        opacity*=Ease(age,0,.2f);
         Color c=p.Won?Emerald:Salmon;
-        BreachCutFill(new Rect(174,291,634,490),c);
-        BreachCutFill(new Rect(175,330,632,315),Terminal);
-        Line(174,330,808,330,c); Line(174,330,174,645,c);
+        Fill(new Rect(174,291,634*Ease(age,0,.18f),39),c);
+        float bodyHeight=315*Ease(age,.08f,.24f);
+        BreachCutFill(new Rect(175,330,632,Math.Max(12,bodyHeight)),Terminal);
+        Line(174,330,808,330,c); Line(174,330,174,330+bodyHeight,c);
+        Line(808,330,808,330+bodyHeight-12,c);
         Image(new Rect(190,297,25,25),"breach_fluff_1",Terminal,true);
         Text(new Rect(553,303,180,15),"MODEL LINE     12.12AA",Alpha(Terminal,.8f),8,1);
         Image(new Rect(740,302,42,17),"breach_fluff_text6",Alpha(Terminal,.8f),true);
@@ -175,22 +219,34 @@ internal static partial class HackUi {
             "//ROOT\n//访问_请求\n//访问_请求_拒绝\n//\n//协议_中断\n//授权_未提交\n//\n//连接_已终止";
         var lines=log.Split('\n');
         for(int i=0;i<lines.Length;i++) {
+            float start=terminalStarts[i]; if(age<start) continue;
             float y=334+i*24;
             if(p.Won&&i>=3&&i<=6) {
-                Text(new Rect(189,y,185,32),"//正在收集封包_"+(i-2),c,20);
-                Text(new Rect(370,y+2,278,30),new string('·',29),c,16,1);
-                Text(new Rect(653,y,65,32),"完成",c,22);
-            } else Text(new Rect(189,y,600,32),lines[i],c,22);
+                Text(new Rect(189,y,185,32),Typed("//正在收集封包_"+(i-2),age,start),c,20);
+                Text(new Rect(370,y+2,278,30),new string('·',(int)(29*Phase(age,start+.04f,.2f))),c,16,1);
+                if(age>=start+.24f) Text(new Rect(653,y,65,32),"完成",c,22);
+            } else Text(new Rect(189,y,600,32),Typed(lines[i],age,start),c,22);
         }
-        Text(new Rect(175,645,632,136),p.Won?"魔偶已上传":"入侵失败",Terminal,25,0,TextAnchor.MiddleCenter);
-        Text(new Rect(553,661,180,15),"MODEL LINE     12.12AA",Alpha(Terminal,.8f),8,1);
-        Image(new Rect(740,660,42,17),"breach_fluff_text6",Alpha(Terminal,.8f),true);
+        if(age<2.5f) {
+            float scan=330+(age*.8f%1)*315;
+            Fill(new Rect(175,scan,632,1),Alpha(c,.2f));
+            Text(new Rect(738,600,42,32),((int)(age*4)%2)==0?"_":"",c,22,1);
+        }
+        float complete=Ease(age,2.4f,.3f);
+        if(complete>0) {
+            BreachCutFill(new Rect(174,645,634*complete,136),c);
+            Text(new Rect(175,645,632,136),p.Won?"魔偶已上传":"入侵失败",Alpha(Terminal,complete),25,0,TextAnchor.MiddleCenter);
+            Text(new Rect(553,661,180,15),"MODEL LINE     12.12AA",Alpha(Terminal,.8f*complete),8,1);
+            Image(new Rect(740,660,42,17),"breach_fluff_text6",Alpha(Terminal,.8f*complete),true);
+        }
+        opacity*=Ease(age,2.65f,.25f);
         var exit=new Rect(582,798,248,53);
         BreachCutFill(exit,Alpha(c,exit.Contains(Event.current.mousePosition)?.8f:.58f));
         Line(582,798,830,798,c,2); Line(582,798,582,851,c,2);
         Line(582,851,818,851,c,2); Line(818,851,830,839,c,2); Line(830,798,830,839,c,2);
         Text(new Rect(597,801,220,46),"退出界面",c,29);
-        if(Click(exit,"exit-breach")) Runtime.ExitBreach();
+        if(age>=2.65f&&Click(exit,"exit-breach")) Runtime.ExitBreach();
+        opacity=savedOpacity;
     }
     static void BreachControls() {
         BreachKey(1247,1000,25,"↑"); BreachKey(1284,1000,25,"↓");
