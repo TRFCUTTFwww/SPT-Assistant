@@ -26,23 +26,29 @@ internal static partial class HackUi {
         Text(new Rect(607,186,106,45),p.Remaining(Now).ToString("F2"),Lime,34,2,TextAnchor.MiddleCenter);
         Fill(new Rect(142,240,572,9),Alpha(Lime,.16f));
         Fill(new Rect(142,240,(float)(572*p.Remaining(Now)/p.Duration),9),Lime);
+        BreachTimerMotion(p);
         Image(new Rect(140,173,290,8),"breach_fluff_text2",Alpha(Lime,.5f),true);
         Text(new Rect(884,122,366,45),"缓冲",Lime,32);
         Image(new Rect(884,118,196,7),"breach_fluff_barcode2",Lime,true);
         Frame(new Rect(884,177,42*p.Capacity+30,72),Lime);
         for(int i=0;i<p.Capacity;i++) {
             var cell=BufferCell(i);
+            float bufferOpacity=opacity;
+            opacity*=Ease(OpeningAge,.12f+i*.035f,.24f);
             Image(cell,"breach_buffer_empty",Alpha(Lime,.65f),true);
             if(i<p.Buffer.Count&&BufferLanded(i)) {
                 Image(cell,"breach_buffer_activated",Lime,true);
                 BufferCode(cell,p.Buffer[i]);
             }
+            BreachBufferMotion(p,i,cell);
+            opacity=bufferOpacity;
         }
         opacity=savedOpacity;
         if(p.Ended&&ResultAge>=0) BreachTerminal(p); else BreachMatrix(p);
         BreachPrograms(p);
         DrawCodeFlights();
         BreachSweep(p);
+        BreachAmbient(p);
         BreachShortcuts();
         opacity=savedOpacity;
         if(breachHelp&&!p.Ended) {
@@ -59,18 +65,22 @@ internal static partial class HackUi {
         // The wire globe is part of NETTECH's visual identity, not a scanner reticle.
         const float cx=65,cy=123,radius=24;
         for(int axis=0;axis<5;axis++) {
-            float squeeze=axis==0?1:axis*.2f;
+            float angle=OpeningAge*.42f+axis*Mathf.PI/4;
+            float squeeze=axis==0?1:Mathf.Cos(angle);
             for(int i=0;i<48;i++) {
                 float a=i*Mathf.PI/24,b=(i+1)*Mathf.PI/24;
                 Line(cx+Mathf.Cos(a)*radius*squeeze,cy+Mathf.Sin(a)*radius,
-                    cx+Mathf.Cos(b)*radius*squeeze,cy+Mathf.Sin(b)*radius,Alpha(Lime,.65f));
+                    cx+Mathf.Cos(b)*radius*squeeze,cy+Mathf.Sin(b)*radius,Alpha(Lime,axis==0?.65f:.3f+.35f*(.5f+.5f*Mathf.Sin(angle))));
             }
         }
         for(int i=-3;i<=3;i++) {
             float y=cy+i*6,w=Mathf.Sqrt(radius*radius-i*i*36);
             Line(cx-w,y,cx+w,y,Alpha(Lime,.6f));
         }
-        for(int row=0;row<3;row++) for(int col=0;col<12;col++) Fill(new Rect(515+col*27,37+row*26,4,2),Alpha(Lime,.6f));
+        for(int row=0;row<3;row++) for(int col=0;col<12;col++) {
+            float signal=.5f+.5f*Mathf.Sin(OpeningAge*2.1f-col*.48f+row*1.6f);
+            Fill(new Rect(515+col*27,37+row*26,4+signal*5,2),Alpha(Lime,.18f+signal*.65f));
+        }
         Fill(new Rect(830,39,922,30),Lime);
         Text(new Rect(830,40,810,22),"入侵协议界面",Alpha(Purple,.65f),11,0,TextAnchor.UpperCenter);
         Image(new Rect(836,59,220,6),"breach_fluff_text2",Alpha(Purple,.8f),true);
@@ -79,7 +89,7 @@ internal static partial class HackUi {
         float expand=Ease(OpeningAge,0,.35f);
         Frame(new Rect(124,112,1672*expand,864*expand),Alpha(Lime,.8f));
         Frame(new Rect(121,167,1678*expand,765*expand),Alpha(Lime,.45f));
-        foreach(float x in new[]{144,165,1754,1775}) Line(x,113,x,975,Alpha(Lime,.45f));
+        for(int i=0;i<4;i++) { float x=i==0?144:i==1?165:i==2?1754:1775; Line(x,113,x,113+862*expand,Alpha(Lime,.45f)); }
         Line(116,487,116,711,Lime,2); Line(122,289,122,490,Lime,3);
         foreach(float y in new[]{485,673}) { Fill(new Rect(107,y,5,6),Alpha(Lime,.6f)); Fill(new Rect(116,y,5,6),Alpha(Lime,.6f)); }
         Line(1805,137,1805,288,Lime,2); Fill(new Rect(1811,137,5,6),Lime);
@@ -140,6 +150,7 @@ internal static partial class HackUi {
         Image(new Rect(141,815,118,38),"breach_fluff_protocol2",Lime,true);
         Image(new Rect(345,817,316,25),"breach_fluff_code1",Alpha(Lime,.8f),true);
         Image(new Rect(770,807,69,13),"breach_fluff_barcode1",Lime,true);
+        BreachMatrixMotion(p);
         opacity=savedOpacity;
     }
     static bool keyboardFocus;
@@ -192,6 +203,7 @@ internal static partial class HackUi {
                 }
             }
             Image(new Rect(1299,y+3,60,59),"DoorAuthorization",ink);
+            BreachProgramMotion(i,y,installed,result,ink);
             string name=i==0?"网络诊断":i==1?"访问映射":"门禁授权";
             string desc=i==0?"辅助目标：提取门禁连接诊断。":i==1?"辅助目标：解析访问节点映射。":"必要目标：取得当前门禁的开门权限。";
             Text(new Rect(1377,y-1,414,31),name,result?ink:Color.white,24);
@@ -213,10 +225,7 @@ internal static partial class HackUi {
         Image(new Rect(190,297,25,25),"breach_fluff_1",Terminal,true);
         Text(new Rect(553,303,180,15),"MODEL LINE     12.12AA",Alpha(Terminal,.8f),8,1);
         Image(new Rect(740,302,42,17),"breach_fluff_text6",Alpha(Terminal,.8f),true);
-        string log=p.Won?
-            "//ROOT\n//访问_请求\n//访问_请求_成功\n//正在收集封包_1...............................完成\n//正在收集封包_2...............................完成\n//正在收集封包_3...............................完成\n//正在收集封包_4...............................完成\n//登录\n//登录_成功\n//\n//正在_上传\n//上传_完成!":
-            "//ROOT\n//访问_请求\n//访问_请求_拒绝\n//\n//协议_中断\n//授权_未提交\n//\n//连接_已终止";
-        var lines=log.Split('\n');
+        var lines=p.Won?terminalSuccess:terminalFailure;
         for(int i=0;i<lines.Length;i++) {
             float start=terminalStarts[i]; if(age<start) continue;
             float y=334+i*24;
@@ -226,10 +235,10 @@ internal static partial class HackUi {
                 if(age>=start+.24f) Text(new Rect(653,y,65,32),"完成",c,22);
             } else Text(new Rect(189,y,600,32),Typed(lines[i],age,start),c,22);
         }
-        if(age<2.5f) {
-            float scan=330+(age*.8f%1)*315;
-            Fill(new Rect(175,scan,632,1),Alpha(c,.2f));
-            Text(new Rect(738,600,42,32),((int)(age*4)%2)==0?"_":"",c,22,1);
+        if(age>.32f) {
+            float scan=330+Mathf.Repeat(age*.18f,1)*313;
+            Fill(new Rect(175,scan,632,1),Alpha(c,age<2.5f?.16f:.045f));
+            Fill(new Rect(747,613,13,2),Alpha(c,.25f+.45f*(.5f+.5f*Mathf.Sin(age*3))));
         }
         float complete=Ease(age,2.4f,.3f);
         if(complete>0) {
@@ -244,6 +253,7 @@ internal static partial class HackUi {
         Line(582,798,830,798,c,2); Line(582,798,582,851,c,2);
         Line(582,851,818,851,c,2); Line(818,851,830,839,c,2); Line(830,798,830,839,c,2);
         Text(new Rect(597,801,220,46),"退出界面",c,29);
+        if(age>=2.65f) BreachPacket(new Rect(584,800,242,47),Mathf.Repeat((age-2.65f)*.16f,1),Alpha(c,.65f));
         if(age>=2.65f&&Click(exit,"exit-breach")) Runtime.ExitBreach();
         opacity=savedOpacity;
     }
