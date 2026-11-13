@@ -57,6 +57,19 @@ Check(!BreachPuzzle.Contains(new[]{"1C","FF","55"},new[]{"1C","55"}),"Sequence m
 var latch=new AuthorizationLatch();
 Check(!latch.Take(false,true)&&!latch.Take(true,false)&&latch.Take(true,true)&&!latch.Take(true,true),"Failure and invalid target do not authorize; success authorizes exactly once");
 
+var gesture=new ScannerGesture();
+Check(!gesture.Step(0,true,false,.25)&&!gesture.Step(.1,true,false,.25)&&gesture.Step(.26,true,false,.25),"Ctrl requires a deliberate standalone hold");
+Check(!gesture.Step(.27,true,true,.25)&&!gesture.Step(2,true,false,.25),"Ctrl chord cancels scanning until release, even after other key is released");
+gesture.Step(3,false,false,.25);
+Check(!gesture.Step(4,true,false,.25)&&gesture.Step(4.3,true,false,.25),"Releasing Ctrl rearms the scanner");
+gesture.Cancel();
+Check(!gesture.Step(5,true,false,.25),"ESC or a conflicting UI cannot reopen scanning while Ctrl stays held");
+gesture.Step(6,false,false,.25);
+Check(gesture.Step(7,true,false,0),"Other configurable scanner keys retain immediate activation");
+Check(HackRules.All.Select(HackRules.Name).SequenceEqual(new[]{"重启义眼","武器故障","阻碍移动","记忆清除","请求支援","赛博精神病","黑墙网关"}),"Seven requested quickhacks appear in the requested order");
+Check(HackRules.Cycle(HackKind.RebootOptics,-1)==HackKind.BlackwallGateway&&HackRules.Cycle(HackKind.BlackwallGateway,1)==HackKind.RebootOptics,"Scrolling wraps over all seven skills");
+Check(HackRules.All.Select(HackRules.Icon).Distinct().Count()==7,"Each quickhack uses its own original icon");
+
 string root=args.FirstOrDefault()??"D:/SPT-5.0.0-48558";
 using var game=AssemblyDefinition.ReadAssembly(Path.Combine(root,"BepInEx/interop/Assembly-CSharp.dll"));
 var helper=game.MainModule.Types.Single(t=>t.FullName=="EFT.InteractionContextHelper");
@@ -64,9 +77,22 @@ foreach(string type in new[]{"CardReader","KeycardDoor"}) Check(helper.Methods.C
 var action=game.MainModule.Types.Single(t=>t.FullName=="EFT.UI.InteractionAction");
 Check(new[]{"Name","Action","Disabled"}.All(n=>action.Properties.Any(p=>p.Name==n)),"Native menu supports a real action independent of card items");
 Check(game.MainModule.Types.Single(t=>t.FullName=="EFT.GameTriggers.TriggersEmitter").Methods.Any(m=>m.Name=="Emit"&&m.Parameters.Count==2&&m.Parameters[0].ParameterType.FullName=="System.String"),"Native success trigger emission contract");
+var bot=game.MainModule.Types.Single(t=>t.FullName=="EFT.BotOwner");
+Check(bot.Methods.Any(m=>m.Name=="UpdateManual"&&m.Parameters.Count==0),"Madness evaluation uses the real EFT owner update entry point");
+var mover=game.MainModule.Types.Single(t=>t.Name=="BotMover");
+Check(new[]{"Pause","_pauseEndTime"}.All(n=>mover.Properties.Any(p=>p.Name==n)),"Movement lock has reversible native pause state");
+Check(new[]{"ManualUpdate","ManualFixedUpdate"}.All(n=>mover.Methods.Count(m=>m.Name==n)==1),"Movement patches have unique native entry points");
+Check(game.MainModule.Types.Single(t=>t.Name=="BotGroupRequestController").Methods.Any(m=>m.Name=="TryAddRequestByPlayer"&&m.Parameters.Count==3),"Backup uses native directed group requests");
+Check(game.MainModule.Types.Single(t=>t.FullName=="EFT.BotMemory").Methods.Any(m=>m.Name=="DeleteInfoAboutEnemy"&&m.Parameters.Count==1),"Memory wipe uses native personal enemy-memory removal");
+var firearm=game.MainModule.Types.Single(t=>t.FullName=="EFT.Player").NestedTypes.Single(t=>t.Name=="FirearmController");
+Check(firearm.Methods.Count(m=>m.Name=="CanPressTrigger")==1&&firearm.Methods.Any(m=>m.Name=="SetTriggerPressed"&&m.Parameters.Count==1),"Weapon glitch hooks both trigger eligibility and trigger press");
 if(args.Length>1) {
     var sounds=Directory.GetFiles(args[1],"*.wav");
-    Check(sounds.Length==12,"Complete packaged UI, quickhack and Blackwall audio set");
+    Check(sounds.Length==16,"Complete packaged UI, seven quickhacks and Blackwall audio set");
+    foreach(var kind in HackRules.All) {
+        Check(File.Exists(Path.Combine(args[1],HackRules.Icon(kind)+".png")),"Original quickhack icon packaged: "+kind);
+        Check(File.Exists(Path.Combine(args[1],HackRules.Icon(kind)+".wav")),"Individual quickhack sound packaged: "+kind);
+    }
     foreach(var path in sounds) {
         var wave=WavePcm.Read(path);
         Check(wave.Samples.Length>0&&wave.Samples.Length%wave.Channels==0&&wave.Samples.All(float.IsFinite),"Packaged WAV decodes for Unity: "+Path.GetFileName(path));

@@ -29,7 +29,7 @@ internal static class Runtime {
     internal static HackKind PreviewKind;
     internal static float ModeStarted { get; private set; }
     internal static float Ram=24, PreviewStarted=-100, PreviewProgress;
-    internal static string Status="按 F10 预览界面，按住 F9 扫描 AI。";
+    internal static string Status="按 F10 预览界面，按住左 Ctrl 扫描 AI。";
     internal static Camera? Camera=>CameraManager.Instance?.Camera??UnityEngine.Camera.main;
     internal static bool InRaid { get { var g=Singleton<AbstractGame>.Instance; return g!=null&&g.InRaid&&g.TryCast<HideoutGame>()==null; } }
     static bool cursorOwned,oldCursor;
@@ -38,6 +38,22 @@ internal static class Runtime {
     static float nextScan,nextWarning,lastTime;
     static bool puzzleHandled;
     static ActorRef? uploading;
+    internal static ActorRef? UploadTarget=>uploading;
+    internal static HackKind UploadKind=>uploadKind;
+    static readonly ScannerGesture scanGesture=new();
+    static readonly KeyCode[] chordKeys=Enum.GetValues<KeyCode>().Where(k=>(int)k>=8&&(int)k<=329).Distinct().ToArray();
+    static bool ControlScanner=>Plugin.ScanKey.Value is KeyCode.LeftControl or KeyCode.RightControl;
+    static bool ScanConflict(bool scanning) {
+        foreach(var key in chordKeys) {
+            if(key==Plugin.ScanKey.Value||scanning&&(key==KeyCode.F||key==KeyCode.Escape||key==KeyCode.Mouse0)) continue;
+            if(Input.GetKey(key)) return true;
+        }
+        return !scanning&&Math.Abs(Input.mouseScrollDelta.y)>.001f;
+    }
+    internal static void CheckScanChord() {
+        if(!Active||!ControlScanner||Mode!=UiMode.Scanner||!ScanConflict(true)) return;
+        scanGesture.Cancel(); SetMode(UiMode.None); releaseFrame=-1;
+    }
     static HackKind uploadKind;
     static float uploadStart;
     static IntPtr localWorld;
@@ -65,7 +81,7 @@ internal static class Runtime {
         try {
             Frames++;
             float now=Time.unscaledTime,delta=Math.Clamp(now-lastTime,0,.1f); lastTime=now;
-            if(!Plugin.Enabled.Value||!Application.isFocused) { Close(); uploading=null; AiHacks.Reset(); return; }
+            if(!Plugin.Enabled.Value||!Application.isFocused) { Close(); uploading=null; scanGesture.Cancel(); AiHacks.Reset(); return; }
             var current=Singleton<GameWorld>.Instance;
             if(!InRaid||current?.MainPlayer?.HealthController?.IsAlive!=true||current.MainPlayer.IsYourPlayer!=true) {
                 uploading=null; Target=null;
@@ -79,12 +95,14 @@ internal static class Runtime {
             Ram=Math.Min(24,Ram+delta);
             if(Input.GetKeyDown(Plugin.PreviewKey.Value)) { if(Mode==UiMode.None) { Assets.Play("open"); SetMode(UiMode.Preview); } else Close(); }
             if(Mode!=UiMode.None&&Time.frameCount>openedFrame&&Input.GetKeyDown(KeyCode.Escape)) { Close(); return; }
-            if(Mode==UiMode.None&&InRaid&&!Cursor.visible&&Input.GetKeyDown(Plugin.ScanKey.Value)) { Assets.Play("scan"); SetMode(UiMode.Scanner); nextScan=0; }
+            CheckScanChord();
+            bool scanReady=scanGesture.Step(now,Input.GetKey(Plugin.ScanKey.Value),!InRaid||Mode is UiMode.Preview or UiMode.Breach||Mode==UiMode.None&&Cursor.visible||ControlScanner&&ScanConflict(Mode==UiMode.Scanner),ControlScanner?.25:0);
+            if(Mode==UiMode.None&&InRaid&&!Cursor.visible&&scanReady) { Assets.Play("scan"); SetMode(UiMode.Scanner); nextScan=0; }
             if(Mode==UiMode.Scanner) {
                 if(!Input.GetKey(Plugin.ScanKey.Value)) { SetMode(UiMode.None); }
                 else {
                     float wheel=Input.mouseScrollDelta.y;
-                    if(Math.Abs(wheel)>.001f) { Selected=(HackKind)(((int)Selected+(wheel>0?2:1))%3); Assets.Play("hover"); }
+                    if(Math.Abs(wheel)>.001f) { Selected=HackRules.Cycle(Selected,wheel>0?-1:1); Assets.Play("hover"); }
                     if(now>=nextScan) { nextScan=now+.12f; Target=Scan(); }
                     if(Time.frameCount>openedFrame+1&&Input.GetKeyDown(KeyCode.F)) Upload();
                 }
@@ -92,7 +110,11 @@ internal static class Runtime {
             if(uploading!=null) {
                 var target=uploading.Resolve();
                 if(target==null||!Visible(target)) { Status="上传已中断：目标离开范围或视线。"; uploading=null; Assets.Play("denied"); }
-                else if(UploadProgress>=1) { var actor=uploading; uploading=null; AiHacks.Apply(actor,uploadKind); Status=HackRules.Name(uploadKind)+" · 已上传"; Assets.Play("granted"); }
+                else if(UploadProgress>=1) {
+                    var actor=uploading; uploading=null;
+                    try { Status=AiHacks.Apply(actor,uploadKind); Assets.Play("granted"); }
+                    catch(Exception e) { Ram=Math.Min(24,Ram+HackRules.Cost(uploadKind)); Status=e.Message+"（RAM 已返还）"; Assets.Play("denied"); Warn("Apply quickhack",e); }
+                }
             }
             if(Mode==UiMode.Breach&&Puzzle!=null) {
                 if(!puzzleHandled&&!PreviewBreach&&Door?.Valid()!=true) { Status="门禁已失效，破解取消。"; Close(); return; }
@@ -147,12 +169,12 @@ internal static class Runtime {
     }
     internal static void Pick(int r,int c) { if(Puzzle?.Pick(r,c,Time.unscaledTime)==true) Assets.Play("press"); else Assets.Play("fail"); }
     internal static void PreviewCast() { PreviewKind=Selected; PreviewStarted=Time.unscaledTime; Assets.Play(HackRules.Icon(Selected)); Effects.Preview(Selected); Status="无伤预览 · "+HackRules.Name(Selected); }
-    internal static void Close() { if(Mode!=UiMode.None) Assets.Play("close"); SetMode(UiMode.None); Door=null; Puzzle=null; PreviewBreach=false; }
+    internal static void Close() { scanGesture.Cancel(); if(Mode!=UiMode.None) Assets.Play("close"); SetMode(UiMode.None); Door=null; Puzzle=null; PreviewBreach=false; }
     internal static void Warn(string context,Exception e) { if(Time.unscaledTime<nextWarning) return; nextWarning=Time.unscaledTime+5; Plugin.Logger.LogWarning(context+": "+e); }
     internal static void Stop() {
         // Old native action lists can briefly retain callback delegates. Disable
         // this generation first so those callbacks cannot reopen its UI.
-        Active=false; uploading=null;
+        Active=false; uploading=null; scanGesture.Reset();
         foreach(Action step in new Action[]{Close,AiHacks.Reset,Effects.Clear,DoorHacking.Reset,Assets.Clear})
             try {step();} catch(Exception e) {Plugin.Logger?.LogWarning("Quickhack cleanup: "+e);}
     }

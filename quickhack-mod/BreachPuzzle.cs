@@ -91,16 +91,30 @@ internal sealed class BreachPuzzle {
     }
 }
 
-internal enum HackKind { Cyberpsychosis, BlackwallGateway, RebootOptics }
+internal enum HackKind { RebootOptics, WeaponGlitch, CrippleMovement, MemoryWipe, RequestBackup, Cyberpsychosis, BlackwallGateway }
 internal static class HackRules {
-    internal static string Name(HackKind kind) => kind switch { HackKind.Cyberpsychosis => "赛博精神病", HackKind.BlackwallGateway => "黑墙网关", _ => "重启义眼" };
-    internal static string Icon(HackKind kind) => kind switch { HackKind.Cyberpsychosis => "Cyberpsychosis", HackKind.BlackwallGateway => "BlackwallBreach", _ => "GlitchScreenBlind" };
-    internal static int Cost(HackKind kind) => kind switch { HackKind.Cyberpsychosis => 8, HackKind.BlackwallGateway => 12, _ => 2 };
-    internal static float Upload(HackKind kind) => kind switch { HackKind.Cyberpsychosis => 3, HackKind.BlackwallGateway => 4, _ => 1.5f };
+    internal static readonly HackKind[] All=Enum.GetValues<HackKind>();
+    internal static string Name(HackKind kind) => kind switch {
+        HackKind.RebootOptics=>"重启义眼", HackKind.WeaponGlitch=>"武器故障", HackKind.CrippleMovement=>"阻碍移动",
+        HackKind.MemoryWipe=>"记忆清除", HackKind.RequestBackup=>"请求支援", HackKind.Cyberpsychosis=>"赛博精神病", _=>"黑墙网关"
+    };
+    internal static string Icon(HackKind kind) => kind switch {
+        HackKind.RebootOptics=>"GlitchScreenBlind", HackKind.WeaponGlitch=>"WeaponMalfunction", HackKind.CrippleMovement=>"LocomotionMalfunction",
+        HackKind.MemoryWipe=>"MemoryWipe", HackKind.RequestBackup=>"CommunicationCallIn", HackKind.Cyberpsychosis=>"Cyberpsychosis", _=>"BlackwallBreach"
+    };
+    internal static int Cost(HackKind kind) => kind switch { HackKind.Cyberpsychosis=>8, HackKind.BlackwallGateway=>12, HackKind.MemoryWipe=>6, HackKind.RequestBackup=>4, HackKind.CrippleMovement=>4, HackKind.WeaponGlitch=>3, _=>2 };
+    internal static float Upload(HackKind kind) => kind switch { HackKind.Cyberpsychosis=>3, HackKind.BlackwallGateway=>4, HackKind.MemoryWipe=>2, HackKind.RequestBackup=>1, _=>1.5f };
+    internal static float Duration(HackKind kind) => kind switch { HackKind.Cyberpsychosis=>20, HackKind.MemoryWipe=>8, HackKind.RequestBackup=>15, HackKind.BlackwallGateway=>3, _=>10 };
+    internal static string Category(HackKind kind)=>kind is HackKind.Cyberpsychosis or HackKind.BlackwallGateway?"终极":"控制";
+    internal static HackKind Cycle(HackKind kind,int direction)=>All[((int)kind+direction+All.Length)%All.Length];
     internal static string Description(HackKind kind) => kind switch {
-        HackKind.Cyberpsychosis => "使目标暂时敌视附近所有 AI，包括原队友。",
-        HackKind.BlackwallGateway => "上传黑墙，摧毁目标并向附近 AI 连锁传播。",
-        _ => "使目标暂时失去视觉；仍可移动、听声与躲避。"
+        HackKind.WeaponGlitch=>"干扰目标手持武器。\n暂时阻止开火，仍可移动和换弹。",
+        HackKind.CrippleMovement=>"锁住目标的移动系统。\n目标留在原地，仍可观察与开火。",
+        HackKind.MemoryWipe=>"清除目标当前的战斗记忆。\n短暂阻断重新锁定，随后可再次警觉。",
+        HackKind.RequestBackup=>"令目标呼叫附近一名空闲队友。\n队友通过原生任务前往目标位置。",
+        HackKind.Cyberpsychosis=>"扰乱目标的威胁识别。\n使其攻击附近 AI，包括原队友。",
+        HackKind.BlackwallGateway=>"释放黑墙，摧毁目标。\n向附近可见 AI 连锁传播。",
+        _=>"重启目标的视觉系统。\n暂时阻断视觉，听觉仍然有效。"
     };
 }
 

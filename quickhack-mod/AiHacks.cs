@@ -23,10 +23,20 @@ internal static class AiHacks {
     }
     static readonly Dictionary<IntPtr,Madness> madness=[];
     static readonly Dictionary<IntPtr,(ActorRef Ref,float Until)> blind=[];
+    static readonly Dictionary<IntPtr,(ActorRef Ref,float Until)> jammed=[],wiped=[];
+    sealed class MovementLock {
+        internal ActorRef Ref=null!;
+        internal BotMover Mover=null!;
+        internal bool Pause;
+        internal float PauseUntil,Until;
+    }
+    sealed record Backup(ActorRef Caller,ActorRef Recipient,GoToPointRequest Request,float Until);
+    static readonly Dictionary<IntPtr,MovementLock> movement=[];
+    static readonly List<Backup> backups=[];
     static readonly List<Chain> chains=[];
     [ThreadStatic] static BotOwner? evaluating;
     static float nextMadness;
-    internal static int ActiveCount=>madness.Count+blind.Count+chains.Count;
+    internal static int ActiveCount=>madness.Count+blind.Count+jammed.Count+wiped.Count+movement.Count+backups.Count+chains.Count;
     internal static void Install(Harmony h) {
         void Patch(Type t,string method,string? before=null,string? after=null,string? final=null) {
             var m=AccessTools.Method(t,method); if(m==null) return;
@@ -38,7 +48,10 @@ internal static class AiHacks {
         Patch(typeof(EnemyInfo),"CheckLookEnemy",before:nameof(Vision));
         foreach(string m in new[]{"ShallKnowEnemy","ShallKnowEnemyLate"}) Patch(typeof(EnemyInfo),m,after:nameof(Know));
         // Scope same-squad overrides to the currently evaluating bot.
-        foreach(string m in new[]{"Update","ManualUpdate"}) Patch(typeof(BotOwner),m,before:nameof(BeforeOwner),final:nameof(AfterOwner));
+        Patch(typeof(BotOwner),"UpdateManual",before:nameof(BeforeOwner),final:nameof(AfterOwner));
+        h.Patch(AccessTools.Method(typeof(Player.FirearmController),"SetTriggerPressed",[typeof(bool)]),prefix:new HarmonyMethod(typeof(AiHacks),nameof(AllowTrigger)));
+        Patch(typeof(Player.FirearmController),"CanPressTrigger",before:nameof(CanFire));
+        foreach(string m in new[]{"ManualUpdate","ManualFixedUpdate"}) Patch(typeof(BotMover),m,before:nameof(KeepMovementLocked));
     }
     static bool Mad(BotOwner? owner)=>owner!=null&&madness.TryGetValue(owner.Pointer,out var m)&&m.Ref.Resolve()!=null&&Time.unscaledTime<m.Until;
     static bool IsAi(IPlayer? player)=>player!=null&&!player.IsYourPlayer&&player.AIData?.BotOwner!=null;
@@ -47,32 +60,93 @@ internal static class AiHacks {
     static bool GroupRule(BotsGroup group,IPlayer target)=>IsAi(target)&&(MadTarget(target)||evaluating?.BotsGroup?.Pointer==group.Pointer&&Mad(evaluating));
     static void GroupEnemy(BotsGroup __instance,IPlayer __0,ref bool __result) { if(GroupRule(__instance,__0)) __result=true; }
     static void GroupAlly(BotsGroup __instance,IPlayer __0,ref bool __result) { if(GroupRule(__instance,__0)) __result=false; }
-    static void Know(EnemyInfo __instance,ref bool __result) { if(IsAi(__instance.Person)&&Mad(__instance.Owner)) __result=true; }
+    static void Know(EnemyInfo __instance,ref bool __result) { if(Timed(wiped,__instance.Owner)) __result=false; else if(IsAi(__instance.Person)&&Mad(__instance.Owner)) __result=true; }
+    static bool Timed(Dictionary<IntPtr,(ActorRef Ref,float Until)> effects,BotOwner? owner)=>owner!=null&&effects.TryGetValue(owner.Pointer,out var state)&&Time.unscaledTime<state.Until&&state.Ref.Resolve()!=null;
+    static bool CannotFire(Player? actor)=>actor!=null&&!actor.IsYourPlayer&&(Timed(jammed,actor.AIData?.BotOwner)||Timed(wiped,actor.AIData?.BotOwner));
+    static bool AllowTrigger(Player.FirearmController __instance,bool __0)=>!__0||!CannotFire(__instance._player);
+    static bool CanFire(Player.FirearmController __instance,ref bool __result) { if(!CannotFire(__instance._player)) return true; __result=false; return false; }
+    static void KeepMovementLocked(BotMover __instance) {
+        foreach(var state in movement.Values) if(state.Mover.Pointer==__instance.Pointer&&Time.unscaledTime<state.Until&&state.Ref.Resolve()!=null) { __instance.Pause=true; __instance._pauseEndTime=float.MaxValue; break; }
+    }
     static void BeforeOwner(BotOwner __instance,out BotOwner? __state) { __state=evaluating; evaluating=__instance; }
     static void AfterOwner(BotOwner? __state) { evaluating=__state; }
     static bool Vision(EnemyInfo __instance) {
         var owner=__instance.Owner;
-        if(owner==null||!blind.TryGetValue(owner.Pointer,out var state)||state.Ref.Resolve()==null||Time.unscaledTime>=state.Until) return true;
-        __instance.SetVisible(false); return false;
+        if(!Timed(blind,owner)&&!Timed(wiped,owner)) return true;
+        __instance.SetVisible(false); __instance.SetCanShoot(false); return false;
     }
-    internal static void Apply(ActorRef reference,HackKind kind) {
+    internal static string Apply(ActorRef reference,HackKind kind) {
         var actor=reference.Resolve()??throw new InvalidOperationException("破解目标已离开。");
         var owner=actor.AIData?.BotOwner??throw new InvalidOperationException("目标没有本地 AI 控制器。");
-        Assets.Play(HackRules.Icon(kind)); Effects.Target(actor,kind);
+        string result=HackRules.Name(kind)+" · 已上传";
         if(kind==HackKind.RebootOptics) {
             blind[owner.Pointer]=(reference,Time.unscaledTime+10);
             owner.Memory?.LoseVisionCurrentEnemy();
             if(owner.EnemiesController?.EnemyInfos!=null) foreach(var pair in owner.EnemiesController.EnemyInfos) pair.Value.SetVisible(false);
+        } else if(kind==HackKind.WeaponGlitch) {
+            jammed[owner.Pointer]=(reference,Time.unscaledTime+HackRules.Duration(kind));
+            actor.HandsController?.TryCast<Player.FirearmController>()?.SetTriggerPressed(false);
+        } else if(kind==HackKind.CrippleMovement) {
+            var mover=owner.Mover??throw new InvalidOperationException("目标移动控制器未就绪。");
+            if(!movement.TryGetValue(owner.Pointer,out var state)) movement[owner.Pointer]=state=new MovementLock { Ref=reference,Mover=mover,Pause=mover.Pause,PauseUntil=mover._pauseEndTime };
+            state.Until=Time.unscaledTime+HackRules.Duration(kind); owner.StopMove(); mover.Pause=true; mover._pauseEndTime=float.MaxValue;
+        } else if(kind==HackKind.MemoryWipe) {
+            if(madness.Remove(owner.Pointer,out var active)) { Restore(active); Effects.Forget(reference,HackKind.Cyberpsychosis); }
+            wiped[owner.Pointer]=(reference,Time.unscaledTime+HackRules.Duration(kind)); Forget(owner);
+        } else if(kind==HackKind.RequestBackup) {
+            result=RequestBackup(reference,actor,owner);
         } else if(kind==HackKind.Cyberpsychosis) {
-            if(madness.TryGetValue(owner.Pointer,out var active)) { active.Until=Time.unscaledTime+20; return; }
-            madness[owner.Pointer]=new Madness { Ref=reference,Owner=owner,Until=Time.unscaledTime+20,Attack=owner.Memory.AttackImmediately,Peace=owner.Memory.IsPeace,Goal=owner.Memory.GoalEnemy };
+            if(wiped.Remove(owner.Pointer)) Effects.Forget(reference,HackKind.MemoryWipe);
+            if(madness.TryGetValue(owner.Pointer,out var active)) active.Until=Time.unscaledTime+20;
+            else madness[owner.Pointer]=new Madness { Ref=reference,Owner=owner,Until=Time.unscaledTime+20,Attack=owner.Memory.AttackImmediately,Peace=owner.Memory.IsPeace,Goal=owner.Memory.GoalEnemy };
             nextMadness=0;
         } else {
             chains.Add(new Chain { Next=reference,World=reference.World,At=Time.unscaledTime+.5f });
         }
+        Assets.Play(HackRules.Icon(kind)); Effects.Target(actor,kind); return result;
+    }
+    static void Forget(BotOwner owner) {
+        var memory=owner.Memory; if(memory==null) return;
+        owner.GetPlayer?.HandsController?.TryCast<Player.FirearmController>()?.SetTriggerPressed(false);
+        memory.LoseVisionCurrentEnemy(); memory.GoalEnemy=null!; memory.LastEnemy=null!;
+        if(owner.EnemiesController?.EnemyInfos is {} infos) {
+            var targets=new List<IPlayer>(); foreach(var pair in infos) targets.Add(pair.Key);
+            foreach(var target in targets) { memory.DeleteInfoAboutEnemy(target); if(infos.ContainsKey(target)) owner.EnemiesController.Remove(target); }
+        }
+        memory.IsPeace=true;
+    }
+    static string RequestBackup(ActorRef reference,Player actor,BotOwner owner) {
+        if(backups.Any(b=>b.Caller==reference)) throw new InvalidOperationException("目标已发出支援请求。");
+        var group=owner.BotsGroup?.RequestsController??throw new InvalidOperationException("目标没有可用的同队支援系统。");
+        var mates=Bots().Where(p=>p.Pointer!=actor.Pointer&&p.AIData.BotOwner.BotsGroup?.Pointer==owner.BotsGroup.Pointer&&Vector3.Distance(p.Position,actor.Position)<=40)
+            .Where(p=>p.AIData.BotOwner.Memory?.GoalEnemy==null&&p.AIData.BotOwner.BotRequestController?.CurRequest==null&&!movement.ContainsKey(p.AIData.BotOwner.Pointer)&&!Mad(p.AIData.BotOwner))
+            .OrderBy(p=>(p.Position-actor.Position).sqrMagnitude).ToArray();
+        foreach(var mate in mates) {
+            var request=new GoToPointRequest(actor,actor.Position,null,null);
+            if(!group.TryAddRequestByPlayer(actor,request,mate.AIData.BotOwner)) { request.Dispose(); continue; }
+            backups.Add(new Backup(reference,ActorRef.Of(mate),request,Time.unscaledTime+15));
+            return "请求支援 · 已呼叫 "+mate.Profile.Nickname;
+        }
+        throw new InvalidOperationException("附近没有可响应的空闲同队 AI。");
+    }
+    static void ReleaseMovement(MovementLock state) {
+        try { if(state.Ref.Resolve()==null||state.Mover._pauseEndTime!=float.MaxValue) return; state.Mover._pauseEndTime=state.PauseUntil; state.Mover.Pause=state.Pause&&state.PauseUntil>Time.time; }
+        catch(Exception e) { Runtime.Warn("Restore movement",e); }
+    }
+    static void EndBackup(Backup state) {
+        try { if(state.Recipient.Resolve()!=null&&!state.Request.Removed) state.Request.Complete(); }
+        catch(Exception e) { Runtime.Warn("End backup",e); }
+        Effects.Forget(state.Caller,HackKind.RequestBackup);
     }
     internal static void Tick() {
         foreach(var p in blind.ToArray()) if(Time.unscaledTime>=p.Value.Until||p.Value.Ref.Resolve()==null) blind.Remove(p.Key);
+        foreach(var effects in new[]{jammed,wiped}) foreach(var p in effects.ToArray()) if(Time.unscaledTime>=p.Value.Until||p.Value.Ref.Resolve()==null) effects.Remove(p.Key);
+        foreach(var state in wiped.Values) if(state.Ref.Resolve()?.AIData?.BotOwner is {} owner) Forget(owner);
+        foreach(var p in movement.ToArray()) {
+            if(Time.unscaledTime>=p.Value.Until||p.Value.Ref.Resolve()==null) { ReleaseMovement(p.Value); movement.Remove(p.Key); }
+            else KeepMovementLocked(p.Value.Mover);
+        }
+        foreach(var state in backups.ToArray()) if(Time.unscaledTime>=state.Until||state.Caller.Resolve()==null||state.Recipient.Resolve()==null||state.Request.Removed) { EndBackup(state); backups.Remove(state); }
         foreach(var p in madness.ToArray()) if(Time.unscaledTime>=p.Value.Until||p.Value.Ref.Resolve()==null) { Restore(p.Value); madness.Remove(p.Key); }
         if(Time.unscaledTime>=nextMadness) {
             nextMadness=Time.unscaledTime+.3f;
@@ -144,5 +218,11 @@ internal static class AiHacks {
         chain.Next=ActorRef.Of(next); chain.At=Time.unscaledTime+.9f;
         return true;
     }
-    internal static void Reset() { foreach(var state in madness.Values.ToArray()) Restore(state); madness.Clear(); blind.Clear(); chains.Clear(); evaluating=null; }
+    internal static void Reset() {
+        foreach(var state in madness.Values.ToArray()) Restore(state);
+        foreach(var state in movement.Values.ToArray()) ReleaseMovement(state);
+        foreach(var state in backups.ToArray()) EndBackup(state);
+        madness.Clear(); blind.Clear(); jammed.Clear(); wiped.Clear(); movement.Clear(); backups.Clear(); chains.Clear(); evaluating=null;
+        Effects.ForgetAll();
+    }
 }

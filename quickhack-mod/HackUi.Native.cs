@@ -14,13 +14,15 @@ internal static partial class HackUi {
     static BreachPuzzle? shownPuzzle;
     static int focusRow,focusCol,shownPicks;
     static float pickedAt=-100;
+    static HackKind lastSelected;
+    static float selectedAt;
     static Vector2 lastMouse=new(-9999,-9999);
     static float Now=>Time.unscaledTime;
     static float Pulse=>.6f+.4f*Mathf.Sin(Now*4);
     static Color Alpha(Color c,float a)=>new(c.r,c.g,c.b,c.a*a);
 
     internal static void Draw() {
-        if(Runtime.Mode==UiMode.None&&!Runtime.Uploading) return;
+        if(Runtime.Mode==UiMode.None&&!Runtime.Uploading&&Effects.Markers.Count==0) return;
         var saved=GUI.matrix; var color=GUI.color; int depth=GUI.depth;
         try {
             GUI.depth=-500;
@@ -32,7 +34,8 @@ internal static partial class HackUi {
             opacity=Runtime.Mode==UiMode.None?1:Math.Clamp((Now-Runtime.ModeStarted)/.22f,0,1);
             if(Runtime.Mode==UiMode.Breach) Breach();
             else if(Runtime.Mode is UiMode.Scanner or UiMode.Preview) Scanner(Runtime.Mode==UiMode.Preview);
-            else Upload(new Rect(720,155,480,73),Runtime.UploadName,Runtime.UploadProgress);
+            else if(Runtime.Uploading) Upload(new Rect(720,155,480,73),Runtime.UploadName,Runtime.UploadProgress);
+            TargetStatuses();
         } catch(Exception e) { Runtime.Warn("Quickhack UI",e); }
         finally { GUI.matrix=saved; GUI.color=color; GUI.depth=depth; opacity=1; }
     }
@@ -123,35 +126,34 @@ internal static partial class HackUi {
         if(preview) Hologram(); else if(actor!=null) TargetBracket(actor); else Crosshair(new Rect(810,365,300,350),Dim);
         const float x0=127,w=432;
         Text(new Rect(x0,267,w,32),"可用快速破解",Red,23);
-        Text(new Rect(x0,304,w,23),"QUICKHACKS  /  03",Alpha(Red,.55f),16,2);
+        Text(new Rect(x0,304,w,23),"QUICKHACKS  /  07",Alpha(Red,.55f),16,2);
         Line(x0,340,x0+w,340,Alpha(Red,.5f));
-        Image(new Rect(x0-25,342,16,310),"qh_quickhacks_handle",Alpha(Red,.7f),true);
-        for(int i=0;i<3;i++) {
-            var kind=(HackKind)i; bool selected=Runtime.Selected==kind; float y=358+i*91;
-            var row=new Rect(x0,y,w,81); bool over=row.Contains(Event.current.mousePosition);
+        Image(new Rect(x0-25,342,16,439),"qh_quickhacks_handle",Alpha(Red,.7f),true);
+        if(lastSelected!=Runtime.Selected) { lastSelected=Runtime.Selected; selectedAt=Now; }
+        for(int i=0;i<HackRules.All.Length;i++) {
+            var kind=HackRules.All[i]; bool selected=Runtime.Selected==kind; float y=352+i*62;
+            float reveal=Math.Clamp((Now-Runtime.ModeStarted-.025f*i)/.22f,0,1);
+            var row=new Rect(x0-(1-reveal)*20,y,w,56); bool over=row.Contains(Event.current.mousePosition);
             if(selected) {
-                Image(row,"qh_selection_plate",Alpha(Red,.24f),true);
-                Fill(new Rect(x0,y,3,81),Red); Line(x0,y,x0+w,y,Alpha(Red,.7f));
-                Image(new Rect(x0+w-24,y+29,16,20),"qh_arrow",Red);
+                Image(row,"qh_selection_plate",Alpha(Red,.25f),true);
+                Fill(new Rect(row.x,y,3,56),Red); Line(row.x,y,row.xMax,y,Alpha(Red,.7f));
+                Image(new Rect(row.xMax-24,y+18,16,20),"qh_arrow",Red);
+                float sweep=Math.Clamp((Now-selectedAt)/.22f,0,1);
+                if(sweep<1) Fill(new Rect(row.x,y,row.width*sweep,56),Alpha(Red,(1-sweep)*.15f));
             } else if(over) Fill(row,Alpha(Red,.07f));
-            Image(new Rect(x0+15,y+15,49,49),HackRules.Icon(kind),selected?Red:Alpha(Red,.65f));
-            Text(new Rect(x0+82,y+13,268,32),HackRules.Name(kind),selected?Red:Alpha(Red,.8f),23);
-            Text(new Rect(x0+83,y+50,252,21),$"{HackRules.Upload(kind):F1} 秒上传",Alpha(Red,.55f),15);
-            Text(new Rect(x0+w-70,y+13,35,30),HackRules.Cost(kind).ToString("00"),Red,25,1,TextAnchor.MiddleRight);
+            Image(new Rect(row.x+12,y+8,40,40),HackRules.Icon(kind),selected?Red:Alpha(Red,.65f));
+            Text(new Rect(row.x+69,y+4,268,29),HackRules.Name(kind),selected?Red:Alpha(Red,.8f),21);
+            Text(new Rect(row.x+70,y+33,252,19),$"{HackRules.Upload(kind):F1} 秒  /  {HackRules.Category(kind)}",Alpha(Red,.55f),13);
+            Text(new Rect(row.xMax-70,y+10,35,30),HackRules.Cost(kind).ToString("00"),Red,25,1,TextAnchor.MiddleRight);
             if(Click(row,"hack"+i)) { Runtime.Selected=kind; Assets.Play("press"); }
         }
-        const float detail=655;
-        CutPanel(new Rect(x0,detail,w,209),Alpha(Red,.6f));
-        Text(new Rect(x0+17,detail+17,w-34,29),HackRules.Name(Runtime.Selected),Red,22);
-        Text(new Rect(x0+17,detail+54,w-34,23),Runtime.Selected==HackKind.RebootOptics?"控制  /  CONTROL":"终极  /  ULTIMATE",Alpha(Red,.6f),15);
-        Line(x0+17,detail+91,x0+w-17,detail+91,Alpha(Red,.3f));
-        string desc=Runtime.Selected switch {
-            HackKind.Cyberpsychosis=>"扰乱目标的威胁识别。\n使其攻击附近 AI，包括原队友。",
-            HackKind.BlackwallGateway=>"释放黑墙，摧毁目标。\n向附近可见 AI 连锁传播。",
-            _=>"重启目标的视觉系统。\n暂时阻断视觉，听觉仍然有效。"
-        };
-        Text(new Rect(x0+17,detail+106,w-34,58),desc,Alpha(Red,.85f),17);
-        Text(new Rect(x0+17,detail+176,w-34,22),$"持续时间  {(Runtime.Selected==HackKind.Cyberpsychosis?"20 秒":Runtime.Selected==HackKind.RebootOptics?"10 秒":"最多 5 个目标")}",Alpha(Red,.5f),14);
+        const float detail=687,dx=1318;
+        CutPanel(new Rect(dx,detail,w,209),Alpha(Red,.6f));
+        Text(new Rect(dx+17,detail+17,w-34,29),HackRules.Name(Runtime.Selected),Red,22);
+        Text(new Rect(dx+17,detail+54,w-34,23),HackRules.Category(Runtime.Selected)+"  /  "+(HackRules.Category(Runtime.Selected)=="终极"?"ULTIMATE":"CONTROL"),Alpha(Red,.6f),15);
+        Line(dx+17,detail+91,dx+w-17,detail+91,Alpha(Red,.3f));
+        Text(new Rect(dx+17,detail+106,w-34,58),HackRules.Description(Runtime.Selected),Alpha(Red,.85f),17);
+        Text(new Rect(dx+17,detail+176,w-34,22),Runtime.Selected==HackKind.BlackwallGateway?"连锁传播  最多 5 个目标":$"持续时间  {HackRules.Duration(Runtime.Selected):0} 秒",Alpha(Red,.5f),14);
         if(Button(new Rect(x0,880,w,48),"F",preview?"执行施放模拟":"上传快速破解",Red,"upload")) { if(preview) Runtime.PreviewCast(); else Runtime.Upload(); }
         if(preview&&Event.current.type==EventType.KeyDown&&Event.current.keyCode==KeyCode.F) { Runtime.PreviewCast(); Event.current.Use(); }
         const float right=1318;
@@ -166,7 +168,7 @@ internal static partial class HackUi {
         Image(new Rect(right,593,61,61),"qh_seal",Alpha(Red,.65f));
         Text(new Rect(right+80,598,350,27),preview||actor!=null?"允许快速破解":"请对准视线内的 AI",Red,19);
         Text(new Rect(right+80,632,350,27),"远程访问  /  REMOTE ACCESS",Alpha(Red,.5f),14,2);
-        if(preview&&Button(new Rect(right,755,430,52),"01","入侵协议 · 门禁授权",Yellow,"breach-preview")) Runtime.OpenPreviewBreach();
+        if(preview&&Button(new Rect(right,923,430,52),"01","入侵协议 · 门禁授权",Yellow,"breach-preview")) Runtime.OpenPreviewBreach();
         if(Runtime.Uploading) Upload(new Rect(698,770,524,78),Runtime.UploadName,Runtime.UploadProgress);
         else if(preview&&Now-Runtime.PreviewStarted<6) Upload(new Rect(698,770,524,78),HackRules.Name(Runtime.PreviewKind),Runtime.PreviewProgress);
         Text(new Rect(630,882,660,50),Runtime.Status,Alpha(Cyan,.85f),16,0,TextAnchor.MiddleCenter);
@@ -197,6 +199,7 @@ internal static partial class HackUi {
         var r=new Rect(771,258,378,451); Crosshair(r,Alpha(Cyan,.75f));
         float age=Now-Runtime.PreviewStarted; var kind=Runtime.PreviewKind;
         bool active=age>=HackRules.Upload(kind)&&age<HackRules.Upload(kind)+2;
+        if(age>=0&&age<HackRules.Upload(kind)+2) HeadBadge(new Vector2(960,224),1,kind,active?1:Runtime.PreviewProgress,active?HackRules.Duration(kind):0,!active);
         Color color=active?(kind==HackKind.RebootOptics?Cyan:Red):Alpha(Cyan,.6f);
         Vector2[] contour=[new(-19,0),new(-29,12),new(-31,42),new(-24,64),new(-21,77),new(-57,91),new(-76,112),new(-89,183),new(-100,249),new(-91,258),new(-79,246),new(-64,191),new(-53,157),new(-51,227),new(-44,256),new(-47,320),new(-49,383),new(-30,389),new(-21,374),new(-15,314),new(-6,269),new(6,269),new(15,314),new(21,374),new(30,389),new(49,383),new(47,320),new(44,256),new(51,227),new(53,157),new(64,191),new(79,246),new(91,258),new(100,249),new(89,183),new(76,112),new(57,91),new(21,77),new(24,64),new(31,42),new(29,12),new(19,0),new(-19,0)];
         const float cx=960,top=283;
@@ -214,7 +217,9 @@ internal static partial class HackUi {
         } else if(kind==HackKind.RebootOptics) {
             Fill(new Rect(cx-27,top+31,54,5),Cyan); Corners(new Rect(cx-42,top+7,84,70),Cyan,9);
         } else {
-            Corners(new Rect(cx-42,top+7,84,70),Red,9); Image(new Rect(cx+62,top+18,58,58),"Cyberpsychosis",Red);
+            float effectY=kind==HackKind.CrippleMovement?top+290:kind==HackKind.WeaponGlitch?top+140:top+7;
+            Corners(new Rect(cx-42,effectY,84,70),Red,9); Image(new Rect(cx+62,effectY+11,58,58),HackRules.Icon(kind),Red);
+            for(int i=0;i<4;i++) Fill(new Rect(cx-30+Mathf.Sin(age*23+i)*12,effectY+12+i*14,52,2),Alpha(Red,.7f));
         }
     }
     static void Upload(Rect r,string name,float progress) {

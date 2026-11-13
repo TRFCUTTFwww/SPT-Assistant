@@ -44,6 +44,11 @@ internal static class Assets {
 }
 
 internal static class Effects {
+    internal sealed record Marker(ActorRef Ref,HackKind Kind,float Start,float Until);
+    static readonly List<Marker> markers=[];
+    internal static IReadOnlyList<Marker> Markers=>markers;
+    internal static void Forget(ActorRef reference,HackKind kind)=>markers.RemoveAll(m=>m.Ref==reference&&m.Kind==kind);
+    internal static void ForgetAll()=>markers.Clear();
     sealed record Effect(EFT.Player Actor,HackKind Kind,float Start,GameObject Root,Material Material,Transform[] Panels);
     static readonly List<Effect> effects=[];
     static readonly List<Mesh> frames=[];
@@ -51,6 +56,10 @@ internal static class Effects {
     internal static HackKind PreviewKind;
     internal static void Preview(HackKind kind) { PreviewKind=kind; PreviewTime=Time.unscaledTime; }
     internal static void Target(EFT.Player actor,HackKind kind) {
+        var reference=ActorRef.Of(actor);
+        Forget(reference,kind);
+        markers.Add(new(reference,kind,Time.unscaledTime,Time.unscaledTime+HackRules.Duration(kind)));
+        while(markers.Count>128) markers.RemoveAt(0);
         var shader=Shader.Find("Sprites/Default"); if(shader==null) return;
         var root=new GameObject("Quickhack effect") { hideFlags=HideFlags.HideAndDontSave };
         var material=new Material(shader) { hideFlags=HideFlags.HideAndDontSave };
@@ -81,7 +90,11 @@ internal static class Effects {
         foreach(var e in effects.ToArray()) {
             float age=Time.unscaledTime-e.Start;
             if(e.Actor==null||age>3||!Runtime.InRaid) { Drop(e); continue; }
-            var center=e.Kind==HackKind.BlackwallGateway?(e.Actor.PlayerBones?.Ribcage?.Original?.position??e.Actor.Position+Vector3.up):(e.Actor.PlayerBones?.Head?.Original?.position??e.Actor.Position+Vector3.up*1.6f);
+            var center=e.Kind switch {
+                HackKind.BlackwallGateway or HackKind.WeaponGlitch => e.Actor.PlayerBones?.Ribcage?.Original?.position??e.Actor.Position+Vector3.up,
+                HackKind.CrippleMovement => e.Actor.Position+Vector3.up*.35f,
+                _=>e.Actor.PlayerBones?.Head?.Original?.position??e.Actor.Position+Vector3.up*1.6f
+            };
             var camera=Runtime.Camera;
             for(int i=0;i<e.Panels.Length;i++) {
                 var p=e.Panels[i]; float phase=Mathf.Floor(age*9+i)*1.8f;
@@ -93,5 +106,6 @@ internal static class Effects {
         }
     }
     static void Drop(Effect e) { UnityEngine.Object.Destroy(e.Root); UnityEngine.Object.Destroy(e.Material); effects.Remove(e); }
-    internal static void Clear() { foreach(var e in effects.ToArray()) Drop(e); foreach(var mesh in frames) UnityEngine.Object.Destroy(mesh); frames.Clear(); }
+    internal static void Clear() { ForgetAll(); foreach(var e in effects.ToArray()) Drop(e); foreach(var mesh in frames) UnityEngine.Object.Destroy(mesh); frames.Clear(); }
+    internal static void PruneMarkers()=>markers.RemoveAll(m=>Time.unscaledTime>=m.Until||m.Ref.Resolve()==null);
 }
