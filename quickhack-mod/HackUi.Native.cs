@@ -171,7 +171,6 @@ internal static partial class HackUi {
         else if(preview&&Now-Runtime.PreviewStarted<6) Upload(new Rect(698,770,524,78),HackRules.Name(Runtime.PreviewKind),Runtime.PreviewProgress);
         Text(new Rect(630,882,660,50),Runtime.Status,Alpha(Cyan,.85f),16,0,TextAnchor.MiddleCenter);
         if(Button(new Rect(1586,993,240,43),"ESC","退出扫描",Red,"close-scanner")) Runtime.Close();
-        Text(new Rect(640,1008,700,26),preview?"F10  关闭     F  施放模拟":"滚轮  切换破解     F  上传     松开 F9  退出",Alpha(Cyan,.7f),16,0,TextAnchor.MiddleCenter);
     }
     static void DataRow(float x,float y,string label,string value) {
         Text(new Rect(x,y,120,30),label,Alpha(Red,.55f),17);

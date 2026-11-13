@@ -6,7 +6,7 @@ internal sealed class BreachPuzzle {
     internal static readonly string[] Symbols = ["1C", "55", "BD", "E9", "7A", "FF"];
     internal readonly int Size, Capacity;
     internal readonly string[,] Matrix;
-    internal readonly string[] Sequence;
+    internal readonly string[][] Programs;
     internal readonly (int Row, int Col)[] Solution;
     internal readonly List<(int Row, int Col)> Picks = [];
     internal readonly List<string> Buffer = [];
@@ -26,7 +26,7 @@ internal sealed class BreachPuzzle {
         Duration = 36;
         Matrix = new string[Size, Size];
         for (int r = 0; r < Size; r++) for (int c = 0; c < Size; c++) Matrix[r,c] = Symbols[random.Next(Symbols.Length)];
-        int length = Math.Clamp(3 + difficulty, 4, 6);
+        int length = Capacity;
         // Backtrack rather than retry random walks: every generated sequence has
         // a legal row/column path, even when many cells have already been used.
         var path = new List<(int Row, int Col)>();
@@ -45,22 +45,41 @@ internal sealed class BreachPuzzle {
         }
         if (!Build()) throw new InvalidOperationException("No breach path");
         Solution = path.ToArray();
-        Sequence = Solution.Select(p => Matrix[p.Row,p.Col]).ToArray();
+        // Independent programs share overlapping sections of one valid route.
+        // Shuffling the rows makes the best upload order vary between boards.
+        // These are never nested prefixes of one authorization sequence.
+        int firstLength=difficulty>=3?4:3, secondLength=difficulty<=1?3:4;
+        var spans=new[]{(Start:0,Length:firstLength),(Start:2,Length:secondLength),(Start:4,Length:4)};
+        string[][] programs=[];
+        for(int attempt=0;;attempt++) {
+            var codes=Solution.Select(p=>Matrix[p.Row,p.Col]).ToArray();
+            programs=spans.Select(s=>codes.Skip(s.Start).Take(s.Length).ToArray()).ToArray();
+            bool independent=Enumerable.Range(0,3).All(a=>Enumerable.Range(0,3).All(b=>a==b||!Contains(programs[a],programs[b])));
+            if(independent) break;
+            for(int i=0;i<Solution.Length;i++) {
+                var cell=Solution[i];
+                Matrix[cell.Row,cell.Col]=attempt<63?Symbols[random.Next(Symbols.Length)]:Symbols[new[]{0,1,2,3,4,5,0,4}[i]];
+            }
+        }
+        Programs=programs.OrderBy(_=>random.Next()).ToArray();
     }
 
     internal bool Used(int row, int col) => Picks.Contains((row,col));
     internal bool CanPick(int row, int col) => !Ended && row >= 0 && col >= 0 && row < Size && col < Size && !Used(row,col) && (SelectRow ? row : col) == ActiveLine;
     internal double Remaining(double now) => Started is {} start ? Math.Clamp(Duration - ((endedAt ?? now) - start), 0, Duration) : Duration;
-    internal void Tick(double now) { if (!Ended && Started.HasValue && Remaining(now) <= 0) { Lost = true; endedAt=now; } }
+    internal bool Uploaded(int program)=>Contains(Buffer,Programs[program]);
+    internal bool AllUploaded=>Enumerable.Range(0,Programs.Length).All(Uploaded);
+    void Finish(double now) { Won=Uploaded(2); Lost=!Won; endedAt=now; }
+    internal void Tick(double now) { if (double.IsFinite(now)&&!Ended&&Started.HasValue&&Remaining(now)<=0) Finish(now); }
     internal bool Pick(int row, int col, double now) {
         if (!double.IsFinite(now)) return false;
         Tick(now);
         if (!CanPick(row,col)) return false;
         Started ??= now;
         Picks.Add((row,col)); Buffer.Add(Matrix[row,col]);
-        Won = Contains(Buffer, Sequence);
-        if (!Won && (Buffer.Count >= Capacity || !Enumerable.Range(0,Size).Any(i => SelectRow ? CanPick(ActiveLine,i) : CanPick(i,ActiveLine)))) Lost = true;
-        if (Ended) endedAt=now;
+        // Keep selecting after one match: other independent programs may still
+        // fit the remaining slots. Only the authorization program opens a door.
+        if (AllUploaded||Buffer.Count>=Capacity||!Enumerable.Range(0,Size).Any(i=>SelectRow?CanPick(ActiveLine,i):CanPick(i,ActiveLine))) Finish(now);
         return true;
     }
     internal static bool Contains(IReadOnlyList<string> buffer, IReadOnlyList<string> sequence) {

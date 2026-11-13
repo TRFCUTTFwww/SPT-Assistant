@@ -43,13 +43,12 @@ internal static partial class HackUi {
         BreachPrograms(p);
         DrawCodeFlights();
         BreachSweep(p);
-        opacity*=Ease(OpeningAge,.4f,.25f);
-        BreachControls();
+        BreachShortcuts();
         opacity=savedOpacity;
         if(breachHelp&&!p.Ended) {
             Fill(new Rect(886,645,880,216),new Color(.08f,.07f,.105f,.99f));
             Frame(new Rect(886,645,880,216),Alpha(Lime,.6f));
-            Text(new Rect(910,664,830,175),"从首行开始选择代码，随后交替选择所在列、所在行。\n每格仅可使用一次，缓冲区最多容纳 8 个代码。\n首次选择后开始计时；完成门禁授权序列即可上传魔偶。\n方向键导航，F / Enter 确认，ESC 取消。",Lime,23);
+            Text(new Rect(910,664,830,175),"三条魔偶序列分别匹配，可安排顺序并利用重叠代码。\n从首行开始，交替在所在列、所在行选码，每格仅用一次。\n缓冲区共 8 格；上传门禁授权即可在结算时获得开门权限。\n完成全部序列、缓冲区用尽或计时结束后结算。",Lime,23);
         }
     }
     static void BreachFrame(bool ended) {
@@ -167,11 +166,11 @@ internal static partial class HackUi {
         Image(new Rect(1533,317,75,10),"breach_fluff_header1",Lime,true);
         Image(new Rect(1707,309,52,15),"breach_fluff_text6",Lime,true);
         Line(885,332,1807,332,Alpha(Lime,.65f));
-        // Three genuine stages of this one authorization sequence; no invented loot.
+        // Independent optional programs and the required door authorization.
         for(int i=0;i<3;i++) {
-            int length=p.Sequence.Length-2+i;
-            string[] sequence=p.Sequence.Take(length).ToArray();
-            bool installed=BreachPuzzle.Contains(p.Buffer,sequence);
+            string[] sequence=p.Programs[i];
+            int length=sequence.Length;
+            bool installed=p.Uploaded(i);
             float y=342+i*65;
             float rowReveal=Ease(ResultAge,1.9f+i*.24f,.24f);
             bool result=p.Ended&&rowReveal>0;
@@ -180,7 +179,7 @@ internal static partial class HackUi {
             else Fill(new Rect(904,y,32,64),new Color(.15f,.135f,.19f,.6f));
             if(result) Text(new Rect(930,y+9,350,44),installed?"已安装":"失败",Alpha(ink,rowReveal),24);
             else {
-                int prefix=SequencePrefix(p,length);
+                int prefix=SequencePrefix(p,sequence);
                 float flash=1-Phase(Now-programPulse[i],0,.45f);
                 if(flash>0) Fill(new Rect(904,y,890,64),Alpha(Emerald,flash*.22f));
                 for(int n=0;n<length;n++) {
@@ -193,8 +192,8 @@ internal static partial class HackUi {
                 }
             }
             Image(new Rect(1299,y+3,60,59),"DoorAuthorization",ink);
-            string name=i==0?"门禁握手_V1":i==1?"访问校验_V2":"门禁授权_V3";
-            string desc=i==0?"建立当前门禁的授权上传链路。":i==1?"校验访问请求，等待完整授权。":"上传门禁授权魔偶，取得开门权限。";
+            string name=i==0?"网络诊断":i==1?"访问映射":"门禁授权";
+            string desc=i==0?"辅助目标：提取门禁连接诊断。":i==1?"辅助目标：解析访问节点映射。":"必要目标：取得当前门禁的开门权限。";
             Text(new Rect(1377,y-1,414,31),name,result?ink:Color.white,24);
             Text(new Rect(1377,y+26,414,32),desc,ink,22);
         }
@@ -248,24 +247,10 @@ internal static partial class HackUi {
         if(age>=2.65f&&Click(exit,"exit-breach")) Runtime.ExitBreach();
         opacity=savedOpacity;
     }
-    static void BreachControls() {
-        BreachKey(1247,1000,25,"↑"); BreachKey(1284,1000,25,"↓");
-        Text(new Rect(1315,995,69,34),"导航",Lime,21);
-        BreachKey(1386,1000,25,"↵"); BreachKey(1418,1000,28,"F");
-        Text(new Rect(1457,995,116,34),"选择代码",Lime,21);
-        var help=new Rect(1588,993,94,42);
-        BreachKey(1588,1000,29,"H"); Text(new Rect(1624,995,58,34),"帮助",Lime,21);
-        if(Click(help,"breach-help")) breachHelp=!breachHelp;
-        BreachKey(1690,1000,29,"C"); BreachKey(1727,1000,29,"ESC");
-        Text(new Rect(1763,995,59,34),"关闭",Lime,21);
-        if(Click(new Rect(1690,993,132,42),"close-breach")) Runtime.ExitBreach();
+    static void BreachShortcuts() {
         var e=Event.current;
         if(e.type==EventType.KeyDown&&e.keyCode==KeyCode.H) { breachHelp=!breachHelp; e.Use(); }
         else if(e.type==EventType.KeyDown&&e.keyCode==KeyCode.C) { Runtime.ExitBreach(); e.Use(); }
-    }
-    static void BreachKey(float x,float y,float w,string key) {
-        Frame(new Rect(x,y,w,29),Cyan,2);
-        Text(new Rect(x,y,w,29),key,Cyan,key=="ESC"?11:20,2,TextAnchor.MiddleCenter);
     }
     static void BreachCutFill(Rect r,Color c) {
         const int cut=12;

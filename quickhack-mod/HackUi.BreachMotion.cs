@@ -28,7 +28,7 @@ internal static partial class HackUi {
         codeFlights.RemoveAll(f=>Now-f.Started>.75f);
         if(p.Ended&&resultAt<0) resultAt=Now;
         for(int i=0;i<3;i++) {
-            bool matched=BreachPuzzle.Contains(p.Buffer,p.Sequence.Take(p.Sequence.Length-2+i).ToArray());
+            bool matched=p.Uploaded(i);
             if(matched&&!programMatched[i]) programPulse[i]=Now;
             programMatched[i]=matched;
         }
@@ -75,10 +75,11 @@ internal static partial class HackUi {
             }
         }
     }
-    static int SequencePrefix(BreachPuzzle p,int length) {
+    static int SequencePrefix(BreachPuzzle p,string[] sequence) {
+        int length=sequence.Length;
         for(int n=Math.Min(length,p.Buffer.Count);n>0;n--) {
             bool same=true;
-            for(int i=0;i<n;i++) if(p.Buffer[p.Buffer.Count-n+i]!=p.Sequence[i]) { same=false; break; }
+            for(int i=0;i<n;i++) if(p.Buffer[p.Buffer.Count-n+i]!=sequence[i]) { same=false; break; }
             if(same) return n;
         }
         return 0;
