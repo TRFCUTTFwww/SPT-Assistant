@@ -24,7 +24,7 @@ internal sealed class DoorLease {
     internal bool Valid() {
         var world=Singleton<GameWorld>.Instance;
         var player=world?.MainPlayer;
-        return Runtime.InRaid && Application.isFocused && world?.Pointer==World && Target!=null && Target.Id==Id &&
+        return Runtime.Active && Runtime.InRaid && Application.isFocused && world?.Pointer==World && Target!=null && Target.Id==Id &&
             Owner?.Player?.Pointer==player?.Pointer && player?.IsYourPlayer==true && player.HealthController?.IsAlive==true &&
             Target.gameObject.activeInHierarchy && !Target.NoInteractionsAllowed &&
             Target.DoorState is EDoorState.Locked or EDoorState.Shut &&
@@ -63,7 +63,7 @@ internal static class DoorHacking {
     }
     static void Append(GamePlayerOwner __0, WorldInteractiveObject __1, ref AvailableInteractionState __result) {
         try {
-            if(!Plugin.Enabled.Value||!Runtime.InRaid||__0?.Player?.IsYourPlayer!=true||__1==null||__1.NoInteractionsAllowed||!__1.gameObject.activeInHierarchy||__1.DoorState is not (EDoorState.Locked or EDoorState.Shut)) return;
+            if(!Runtime.Active||!Plugin.Enabled.Value||!Runtime.InRaid||__0?.Player?.IsYourPlayer!=true||__1==null||__1.NoInteractionsAllowed||!__1.gameObject.activeInHierarchy||__1.DoorState is not (EDoorState.Locked or EDoorState.Shut)) return;
             var current=Singleton<GameWorld>.Instance;
             if(world!=current.Pointer) { Reset(); world=current.Pointer; }
             if(!entries.TryGetValue(__1.Pointer,out var lease)||lease.Id!=__1.Id||lease.Owner.Pointer!=__0.Pointer) {

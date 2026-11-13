@@ -1,5 +1,4 @@
-using BepInEx;
-using BepInEx.Unity.IL2CPP;
+using LocalQuickhacks.Hosting;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
@@ -11,38 +10,42 @@ using UnityEngine.EventSystems;
 
 namespace LocalQuickhacks;
 
-[BepInPlugin("local.cp2077.quickhacks", "CP2077 Quickhacks", "0.1.0")]
-public sealed class Plugin : BasePlugin {
+internal static class Plugin {
     internal static ManualLogSource Logger = null!;
     internal static ConfigEntry<KeyCode> ScanKey = null!, PreviewKey = null!;
     internal static ConfigEntry<bool> Enabled = null!;
     internal static ConfigEntry<float> Range = null!, Volume = null!;
-    Harmony? patches;
-    public override void Load() {
-        Logger = Log;
+    internal static void Configure(ConfigFile Config,ManualLogSource log) {
+        Logger = log;
         Enabled = Config.Bind("General", "Enabled", true, "启用独立快速破解 Mod。");
         ScanKey = Config.Bind("Input", "Scanner key", KeyCode.F9, "按住扫描，滚轮选技能，F 上传；不减慢游戏时间。");
         PreviewKey = Config.Bind("Input", "Preview key", KeyCode.F10, "打开界面与无伤害施放预览，支持主菜单。");
         Range = Config.Bind("General", "Range", 60f, new ConfigDescription("AI 扫描与上传距离（米）。", new AcceptableValueRange<float>(5,150)));
         Volume = Config.Bind("Audio", "Volume", .6f, new ConfigDescription("界面和破解音效音量。", new AcceptableValueRange<float>(0,1)));
-        patches = new Harmony("local.cp2077.quickhacks");
+    }
+}
+
+public sealed class RuntimeModule:IQuickhackModule {
+    Harmony? patches;
+    public int ApiVersion=>1;
+    public string Version=>"0.3.0";
+    public bool CanReload=>!Runtime.Uploading&&Runtime.Mode!=UiMode.Breach;
+    public void Initialize(ConfigFile config,ManualLogSource log,string directory) {
+        Plugin.Configure(config,log);
+        Assets.Home=directory;
+        patches = new Harmony("local.cp2077.quickhacks.runtime");
         try {
             Runtime.Start();
             DoorHacking.Install(patches);
             InputHooks.Install(patches);
             AiHacks.Install(patches);
-            AddComponent<QuickhackDriver>();
-            Log.LogInfo("Quickhacks 0.1.0 ready: F9 scanner / F10 preview; native keycard list retains cards and adds 破解");
+            log.LogInfo("Quickhacks 0.3.0 runtime ready: rebuilt scanner / breach UI; F9 scanner / F10 preview; native keycard list retains cards and adds 破解");
         } catch { patches.UnpatchSelf(); Runtime.Stop(); throw; }
     }
-    public override bool Unload() { Runtime.Stop(); patches?.UnpatchSelf(); return true; }
-}
-
-public sealed class QuickhackDriver : MonoBehaviour {
-    public QuickhackDriver(IntPtr pointer) : base(pointer) { }
-    public void Update() => Runtime.Tick();
-    public void LateUpdate() { try { Runtime.KeepCursor(); Effects.Tick(); } catch(Exception e) { Runtime.Warn("Effects",e); Effects.Clear(); } }
-    public void OnGUI() => HackUi.Draw();
+    public void Shutdown() { try { Runtime.Stop(); } finally { patches?.UnpatchSelf(); patches=null; } }
+    public void Tick()=>Runtime.Tick();
+    public void LateTick() { try { Runtime.KeepCursor(); Effects.Tick(); } catch(Exception e) { Runtime.Warn("Effects",e); Effects.Clear(); } }
+    public void Draw()=>HackUi.Draw();
 }
 
 internal static class InputHooks {
@@ -67,7 +70,7 @@ internal static class InputHooks {
 }
 
 public static class QuickhackApi {
-    public static string Version=>"0.1.0";
+    public static string Version=>"0.3.0";
     public static int Frames=>Runtime.Frames;
     public static string Diagnostics()=>System.Text.Json.JsonSerializer.Serialize(new { version=Version,frames=Frames,mode=Runtime.Mode.ToString(),status=Runtime.Status,menuAppends=DoorHacking.MenuCount,aiEffects=AiHacks.ActiveCount,uploading=Runtime.Uploading });
 }

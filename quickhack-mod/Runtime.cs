@@ -18,13 +18,16 @@ internal sealed record ActorRef(IntPtr World, IntPtr Pointer, string Profile) {
 }
 
 internal static class Runtime {
+    internal static bool Active { get; private set; }
     internal static UiMode Mode;
-    internal static bool BlockInput=>Mode!=UiMode.None||Time.frameCount<=releaseFrame;
+    internal static bool BlockInput=>Active&&(Mode!=UiMode.None||Time.frameCount<=releaseFrame);
     internal static bool PreviewBreach;
     internal static BreachPuzzle? Puzzle;
     internal static DoorLease? Door;
     internal static ActorRef? Target;
     internal static HackKind Selected;
+    internal static HackKind PreviewKind;
+    internal static float ModeStarted { get; private set; }
     internal static float Ram=24, PreviewStarted=-100, PreviewProgress;
     internal static string Status="按 F10 预览界面，按住 F9 扫描 AI。";
     internal static Camera? Camera=>CameraManager.Instance?.Camera??UnityEngine.Camera.main;
@@ -44,7 +47,7 @@ internal static class Runtime {
     internal static string UploadName=>HackRules.Name(uploadKind);
     internal static int Frames { get; private set; }
 
-    internal static void Start() { Assets.Initialize(); lastTime=Time.unscaledTime; }
+    internal static void Start() { Assets.Initialize(); lastTime=Time.unscaledTime; Active=true; }
     internal static void SetMode(UiMode mode) {
         if(mode==UiMode.None) {
             if(Mode==UiMode.None&&!cursorOwned) return;
@@ -53,12 +56,13 @@ internal static class Runtime {
             return;
         }
         if(!cursorOwned) { oldLock=Cursor.lockState; oldCursor=Cursor.visible; cursorOwned=true; }
-        Mode=mode; openedFrame=Time.frameCount;
+        Mode=mode; openedFrame=Time.frameCount; ModeStarted=Time.unscaledTime;
         Singleton<GameWorld>.Instance?.MainPlayer?.HandsController?.TryCast<Player.FirearmController>()?.SetTriggerPressed(false);
         KeepCursor();
     }
     internal static void KeepCursor() { if(cursorOwned) { Cursor.lockState=CursorLockMode.None; Cursor.visible=true; } }
     internal static void Tick() {
+        if(!Active) return;
         try {
             Frames++;
             float now=Time.unscaledTime,delta=Math.Clamp(now-lastTime,0,.1f); lastTime=now;
@@ -102,7 +106,7 @@ internal static class Runtime {
                 }
                 if(finishedAt is {} end&&now-end>2.5f) { if(PreviewBreach) { Puzzle=null; SetMode(UiMode.Preview); } else Close(); }
             }
-            PreviewProgress=Math.Clamp((now-PreviewStarted)/HackRules.Upload(Selected),0,1);
+            PreviewProgress=Math.Clamp((now-PreviewStarted)/HackRules.Upload(PreviewKind),0,1);
             KeepCursor();
         } catch(Exception e) { Status=e.Message; Warn("Runtime",e); Close(); uploading=null; }
     }
@@ -135,14 +139,20 @@ internal static class Runtime {
         return best==null?null:ActorRef.Of(best);
     }
     internal static void OpenDoor(DoorLease door) {
-        if(Mode!=UiMode.None||!Plugin.Enabled.Value||!door.Valid()) return;
+        if(!Active||Mode!=UiMode.None||!Plugin.Enabled.Value||!door.Valid()) return;
         Door=door; PreviewBreach=false; BeginPuzzle(2); Assets.Play("open");
     }
     internal static void OpenPreviewBreach() { Door=null; PreviewBreach=true; BeginPuzzle(1); Assets.Play("open"); }
     static void BeginPuzzle(int difficulty) { Puzzle=new BreachPuzzle(System.Random.Shared.Next(),difficulty); puzzleHandled=false; finishedAt=null; SetMode(UiMode.Breach); }
     internal static void Pick(int r,int c) { if(Puzzle?.Pick(r,c,Time.unscaledTime)==true) Assets.Play("press"); else Assets.Play("fail"); }
-    internal static void PreviewCast() { PreviewStarted=Time.unscaledTime; Assets.Play(HackRules.Icon(Selected)); Effects.Preview(Selected); Status="无伤预览 · "+HackRules.Name(Selected); }
+    internal static void PreviewCast() { PreviewKind=Selected; PreviewStarted=Time.unscaledTime; Assets.Play(HackRules.Icon(Selected)); Effects.Preview(Selected); Status="无伤预览 · "+HackRules.Name(Selected); }
     internal static void Close() { if(Mode!=UiMode.None) Assets.Play("close"); SetMode(UiMode.None); Door=null; Puzzle=null; finishedAt=null; PreviewBreach=false; }
     internal static void Warn(string context,Exception e) { if(Time.unscaledTime<nextWarning) return; nextWarning=Time.unscaledTime+5; Plugin.Logger.LogWarning(context+": "+e); }
-    internal static void Stop() { Close(); uploading=null; AiHacks.Reset(); Effects.Clear(); DoorHacking.Reset(); Assets.Clear(); }
+    internal static void Stop() {
+        // Old native action lists can briefly retain callback delegates. Disable
+        // this generation first so those callbacks cannot reopen its UI.
+        Active=false; uploading=null;
+        foreach(Action step in new Action[]{Close,AiHacks.Reset,Effects.Clear,DoorHacking.Reset,Assets.Clear})
+            try {step();} catch(Exception e) {Plugin.Logger?.LogWarning("Quickhack cleanup: "+e);}
+    }
 }

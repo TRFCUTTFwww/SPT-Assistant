@@ -12,11 +12,23 @@ $outputPath=[IO.Path]::GetFullPath($OutputDirectory)
 if((Test-Path -LiteralPath $outputPath) -and @(Get-ChildItem -LiteralPath $outputPath -Force).Count -gt 0) { throw 'Output directory must be new or empty.' }
 & $Dotnet build (Join-Path $repoRoot 'quickhack-mod/Quickhacks.csproj') -c Release "-p:GameRoot=$GameRoot" --nologo
 if($LASTEXITCODE -ne 0) { throw 'Quickhack build failed.' }
+& $Dotnet build (Join-Path $repoRoot 'quickhack-host-tests/Fixture/Fixture.csproj') -c Release --nologo
+if($LASTEXITCODE -ne 0) { throw 'Quickhack host test build failed.' }
+& $Dotnet run --project (Join-Path $repoRoot 'quickhack-host-tests/Tests.csproj') -c Release --no-build -- (Join-Path $repoRoot 'quickhack-host-tests/Fixture/bin/Release/net10.0/Fixture.dll')
+if($LASTEXITCODE -ne 0) { throw 'Quickhack host checks failed.' }
 
 $files=[ordered]@{}
 $iconDir='03_images/base/gameplay/gui/common/icons/quickhacks_icons.inkatlas/2160p'
 foreach($name in @('Cyberpsychosis','BlackwallBreach','GlitchScreenBlind')) { $files["$name.png"]=@($ResourceRoot,"$iconDir/$name.png") }
 $files['DoorAuthorization.png']=@($ResourceRoot,'03_images/base/gameplay/gui/fullscreen/hacking_minigame/atlas_minigame_programs.inkatlas/2160p/DoorAuthorization.png')
+$breachAtlas='03_images/base/gameplay/gui/fullscreen/hacking_minigame/atlas_minigame.inkatlas/2160p'
+foreach($name in @('buffer_empty','buffer_activated','fluff_1','fluff_2','fluff_barcode1','fluff_barcode2','fluff_code1','fluff_header1','fluff_protocol2','fluff_text2','fluff_text6','fluff_pettern','frame_glow_small','ico_programs','logo_nettech')) { $files["breach_$name.png"]=@($ResourceRoot,"$breachAtlas/$name.png") }
+$scannerAtlas='03_images/base/gameplay/gui/widgets/scanning/atlas_scanner.inkatlas/2160p'
+foreach($name in @('outer_brackets','inner_crosshair','ruller','fluff_corner_text','fluff_corner_text2','fluff_top_right','fluff_left','fluff_bottom')) { $files["scan_$name.png"]=@($ResourceRoot,"$scannerAtlas/$name.png") }
+$quickAtlas='03_images/base/gameplay/gui/widgets/quickhacks/atlas_quickhacks.inkatlas/2160p'
+foreach($name in @('memory_small_bg','memory_small_fg','frame_qh_bg','frame_qh_fg','seal','arrow')) { $files["qh_$name.png"]=@($ResourceRoot,"$quickAtlas/$name.png") }
+$quickUi='03_images/base/gameplay/gui/widgets/quickhacks/quickhacks.inkatlas/2160p'
+foreach($name in @('selection_plate','selection_fluff','quickhacks_handle','warning_tiles')) { $files["qh_$name.png"]=@($ResourceRoot,"$quickUi/$name.png") }
 $audioDir='04_audio/WAV_by_event'
 $audioMap=[ordered]@{
     'open'='ui_hacking_open.wav'; 'close'='ui_hacking_close.wav'; 'hover'='ui_hacking_hover.wav';
@@ -44,7 +56,10 @@ foreach($file in $files.GetEnumerator()) {
 $payload=Join-Path $outputPath 'CP2077Quickhacks'
 $assets=Join-Path $payload 'Assets'
 New-Item -ItemType Directory -Path $assets -Force | Out-Null
-Copy-Item -LiteralPath (Join-Path $repoRoot 'quickhack-mod/bin/Release/net10.0/Local.Cp2077.Quickhacks.dll') -Destination $payload
+New-Item -ItemType Directory -Path (Join-Path $payload 'runtime') -Force | Out-Null
+Copy-Item -LiteralPath (Join-Path $repoRoot 'quickhack-host/bin/Release/net10.0/Local.Cp2077.Quickhacks.dll') -Destination $payload
+Copy-Item -LiteralPath (Join-Path $repoRoot 'quickhack-mod/bin/Release/net10.0/Local.Cp2077.Quickhacks.Core.dll') -Destination (Join-Path $payload 'runtime/Local.Cp2077.Quickhacks.Core.module')
+Copy-Item -LiteralPath (Join-Path $repoRoot 'scripts/Install-Quickhacks.ps1') -Destination (Join-Path $outputPath 'Install.ps1')
 Copy-Item -LiteralPath (Join-Path $repoRoot 'quickhack-mod/README.zh-CN.md') -Destination (Join-Path $outputPath 'README.zh-CN.md')
 $packaged=@()
 foreach($file in $files.GetEnumerator()) {
@@ -53,18 +68,15 @@ foreach($file in $files.GetEnumerator()) {
     Copy-Item -LiteralPath $source -Destination $destination
     $packaged+=@{name=$file.Key;bytes=(Get-Item -LiteralPath $destination).Length;sha256=(Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash}
 }
-@{version='0.1.0';target='EFT 48558 / SPT 5.0';files=$packaged} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $payload 'asset-manifest.json') -Encoding UTF8
+@{version='0.3.0';target='EFT 48558 / SPT 5.0';files=$packaged} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $payload 'asset-manifest.json') -Encoding UTF8
+@{
+    version='0.3.0'
+    hostSha256=(Get-FileHash -LiteralPath (Join-Path $payload 'Local.Cp2077.Quickhacks.dll') -Algorithm SHA256).Hash
+    coreSha256=(Get-FileHash -LiteralPath (Join-Path $payload 'runtime/Local.Cp2077.Quickhacks.Core.module') -Algorithm SHA256).Hash
+} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $payload 'release-manifest.json') -Encoding UTF8
 & $Dotnet run --project (Join-Path $repoRoot 'quickhack-tests/Tests.csproj') -c Release "-p:GameRoot=$GameRoot" -- $GameRoot $assets
 if($LASTEXITCODE -ne 0) { throw 'Quickhack checks failed; package has not been installed.' }
 if($Install) {
-    $destination=Join-Path $GameRoot 'BepInEx/plugins/CP2077Quickhacks'
-    if(Test-Path -LiteralPath $destination) {
-        $backup=Join-Path $GameRoot ('mod-backups/quickhacks-'+(Get-Date -Format 'yyyyMMdd-HHmmss'))
-        New-Item -ItemType Directory -Path $backup -Force | Out-Null
-        Copy-Item -LiteralPath $destination -Destination $backup -Recurse
-    }
-    New-Item -ItemType Directory -Path $destination -Force | Out-Null
-    Copy-Item -Path (Join-Path $payload '*') -Destination $destination -Recurse -Force
-    Write-Output "Installed standalone Quickhacks: $destination (loads at next client start)"
+    & (Join-Path $outputPath 'Install.ps1') -GameRoot $GameRoot
 }
 Write-Output "Quickhacks package: $outputPath; $($files.Count) verified assets"

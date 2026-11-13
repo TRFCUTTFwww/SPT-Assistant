@@ -39,5 +39,15 @@ if(args.Length>1) {
         var wave=WavePcm.Read(path);
         Check(wave.Samples.Length>0&&wave.Samples.Length%wave.Channels==0&&wave.Samples.All(float.IsFinite),"Packaged WAV decodes for Unity: "+Path.GetFileName(path));
     }
+    string payload=Directory.GetParent(args[1])!.FullName;
+    string corePath=Path.Combine(payload,"runtime/Local.Cp2077.Quickhacks.Core.module");
+    if(File.Exists(corePath)) {
+        using var core=AssemblyDefinition.ReadAssembly(corePath);
+        using var host=AssemblyDefinition.ReadAssembly(Path.Combine(payload,"Local.Cp2077.Quickhacks.dll"));
+        Check(core.MainModule.Types.Single(t=>t.FullName=="LocalQuickhacks.RuntimeModule").Interfaces.Any(i=>i.InterfaceType.FullName=="LocalQuickhacks.Hosting.IQuickhackModule"),"Core implements the standalone host contract");
+        Check(!core.MainModule.Types.Any(t=>t.CustomAttributes.Any(a=>a.AttributeType.Name=="BepInPlugin"))&&!core.MainModule.Types.Any(t=>t.BaseType?.FullName=="UnityEngine.MonoBehaviour"),"Core registers neither a second plugin nor a per-generation IL2CPP driver");
+        Check(host.MainModule.Types.Count(t=>t.CustomAttributes.Any(a=>a.AttributeType.Name=="BepInPlugin"))==1,"Exactly one standalone host plugin");
+        Check(!core.MainModule.AssemblyReferences.Concat(host.MainModule.AssemblyReferences).Any(a=>a.Name.StartsWith("Local.Spt5.ESP")),"Quickhacks remains independent of SPT Assistant");
+    }
 }
 Console.WriteLine($"PASS {checks} puzzle, authorization, packaged audio and installed EFT 48558 API checks");

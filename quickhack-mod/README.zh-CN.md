@@ -1,14 +1,16 @@
-# CP2077 Quickhacks 独立原型 0.1.0
+# CP2077 Quickhacks 独立原型 0.3.0
 
 目标：SPT 5.0 / EFT 48558，BepInEx IL2CPP / .NET 10。插件名称 CP2077 Quickhacks，配置文件 `BepInEx/config/local.cp2077.quickhacks.cfg`。独立于 SPT Assistant，可与其及其内置黑墙脉冲共存。
 
 本版用于检查扫描界面、上传与施放、门禁入侵交互。采用本地 2077 图标、WAV 和黑墙图集，Unity 重建界面及目标特效。尚未做到原版字体、全部转场、人物动画或材质的一比一复刻。
 
+0.2.0 重做界面：扫描器采用左侧快速破解、中央光学取景、右侧目标数据和上方 RAM 栏；接入原版扫描刻度、内存格、选中底板和技术纹样。门禁采用原版黄绿色、NETTECH 标识、缓冲框、代码矩阵与魔偶序列布局。支持行列联动高亮、下一步轴线预览、缓冲区待选代码、序列匹配进度、选码闪烁和授权结果覆盖层；打开界面渐显，RAM 标示所选破解的预计消耗。无真实目标的 F10 预览使用光学人体轮廓，战局中的锁定框按目标投影尺寸调整。
+
 已有入侵协议图标（DoorAuthorization）和打开、关闭、选码、成功、失败等音效，可用于上传魔偶界面；代码矩阵与交互由插件重建。当前黑墙上传提示临时使用资源包中的突触熔融音效，黑墙死亡音效使用补充包原素材。
 
 ## 操作
 
-- **F10**：界面与无伤施放预览，可在主菜单打开。选择三种技能，点击「预览施放」或按 F；点击「入侵协议 / 门禁授权预览」检查代码矩阵。预览不选择或伤害 AI，不操作任何门。
+- **F10**：界面与无伤施放预览，可在主菜单打开。选择三种技能，点击「执行施放模拟」或按 F；点击右侧「入侵协议 · 门禁授权」检查代码矩阵。预览不选择或伤害 AI，不操作任何门。施放模拟启动后保留当次技能，即使切换列表选项也不会改变已开始的模拟。
 - **按住 F9**：战局内扫描 AI，滚轮或鼠标选技能，**F** 上传。松开 F9 返回游戏。上传结束前目标离开视线、范围、战局，或玩家死亡、失焦会取消。
 - **ESC**：取消当前界面或尚未完成的门禁破解。关闭后恢复原光标状态；不修改时间倍率。
 - 热键、扫描范围、音量可在 BepInEx 配置修改；默认不占用原有黑墙 F11。
@@ -18,6 +20,8 @@
 原生 CardReader / KeycardDoor 的门卡选项列表末尾增加独立的 **「破解」**。原有实体卡选项和原有选中项保留；万能门禁卡功能也可继续提供自己的选项。没有实体卡时也可选择破解。只有点击「破解」才进入入侵协议，不会自动拦截刷卡，不创建门卡物品，不改门的 KeyId 或卡片次数。
 
 小游戏从首行开始，随后交替在所在列、所在行选码；同格不可重复，缓冲区为 7。首个有效选择后开始 30 秒计时。匹配「门禁授权」序列后提交一次授权；失败、取消、离开 4 米交互距离、死亡或战局切换均不授权。生成的每个序列都有合法路径。
+
+鼠标悬停可预览缓冲区中的下一代码，点击选码。也可用方向键在当前可选行或列中循环选择，Enter 确认；静止鼠标不会抢回键盘焦点。
 
 CardReader 按原 `_keyMap` 中唯一的成功触发器向当前战局 `TriggersEmitter` 发出授权，播放原生成功提示；多个不同成功出口的特殊刷卡器会拒绝自动选择。KeycardDoor 调用原生 Unlock。入口依赖原生门禁交互分派，不提供未供电门禁的独立绕过入口。不同地图的供电、门禁、剧情及一次性触发仍需实机逐项验证。
 
@@ -32,11 +36,19 @@ CardReader 按原 `_keyMap` 中唯一的成功触发器向当前战局 `Triggers
 
 ## 构建和安装
 
+0.3.0 使用独立常驻加载器和可替换逻辑模块，不依赖 SPT Assistant 的宿主。配置文件和插件 GUID 保留。
+
+- 默认自动检测 `runtime/Local.Cp2077.Quickhacks.Core.module` 更新；文件稳定约半秒后切换。**Ctrl + F8** 手动重载逻辑和图片、音效缓存，可在配置中更改热键或关闭自动检测。
+- 进行中的 AI 上传或门禁小游戏结束、取消后才切换；重载会关闭扫描界面、释放旧临时 AI 效果及音画对象，恢复输入，重新绑定补丁并加载新逻辑。旧门禁回调在退出该代逻辑后立即失效。
+- 损坏或接口不兼容的模块在停止旧版本之前被拒绝；新版初始化失败时清理候选并尝试恢复上一版。`runtime/hotreload-status.json` 记录当前逻辑版本、代数和错误。
+- 模块从内存加载，不锁住磁盘上的 `.module`。基于 IL2CPP/Harmony 的原生跳板要求，旧程序集元数据保留到客户端退出；每代的补丁、委托入口与 Unity 对象会清理。加载器本身变化仍需要重启。
+- 首次从 0.1 / 0.2 迁移需要重启一次。若客户端正在运行，安装器会验证并排队完整安装包，启动隐藏安装进程等待这个客户端退出，再备份并安装；不会关闭游戏。安装状态见 `mod-updates/quickhacks-install-status.json`。之后使用同一加载器的更新可以在运行中安装。
+
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-Quickhacks.ps1 -GameRoot 'D:\SPT-5.0.0-48558' -ResourceRoot 'D:\CP2077_Quickhack_Resources_20261112' -BlackwallRoot 'D:\CP2077_Blackwall_Supplement_20261112' -Dotnet 'D:\SPT_Mod_Staging_20261027\dotnet-sdk\dotnet.exe' -OutputDirectory 'D:\SPT_Mod_Staging_20261027\quickhacks-0.1.0' -Install
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-Quickhacks.ps1 -GameRoot 'D:\SPT-5.0.0-48558' -ResourceRoot 'D:\CP2077_Quickhack_Resources_20261112' -BlackwallRoot 'D:\CP2077_Blackwall_Supplement_20261112' -Dotnet 'D:\SPT_Mod_Staging_20261027\dotnet-sdk\dotnet.exe' -OutputDirectory 'D:\SPT_Mod_Staging_20261027\quickhacks-0.3.0' -Install
 ```
 
-脚本构建插件、运行离线检查，按本地资源清单逐项验证 SHA256 后打包。输出目录须为空；`-Install` 将已有独立插件备份到 `mod-backups` 后复制新版本。首次安装在下次客户端启动时加载，不要求修改或重装辅助核心。资源只保留在本地安装包，不提交源码仓库。
+脚本构建加载器与逻辑模块，运行离线检查，按本地资源清单逐项验证 SHA256 后打包。输出目录须为空；`-Install` 调用安装器，备份已有独立插件，先复制资源，再原子发布逻辑模块。分发包也可运行 Install.ps1 并指定 GameRoot。资源只保留在本地安装包，不提交源码仓库。
 
 卸载：关闭客户端后移走 `BepInEx/plugins/CP2077Quickhacks`。配置可保留。没有服务端、存档或物品模板修改。
 

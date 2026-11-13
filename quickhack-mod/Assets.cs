@@ -10,7 +10,7 @@ internal static class Assets {
     static readonly HashSet<string> missing=[];
     static GameObject? root;
     static AudioSource? audio;
-    internal static string Home=>Path.Combine(BepInEx.Paths.PluginPath,"CP2077Quickhacks");
+    internal static string Home=Path.Combine(BepInEx.Paths.PluginPath,"CP2077Quickhacks");
     internal static void Initialize() { }
     internal static Texture2D? Texture(string key) {
         if(textures.TryGetValue(key,out var value)) return value;
@@ -40,7 +40,7 @@ internal static class Assets {
             audio!.PlayOneShot(clip,Plugin.Volume.Value);
         } catch(Exception e) { Runtime.Warn("Audio",e); }
     }
-    internal static void Clear() { if(root!=null) UnityEngine.Object.Destroy(root); root=null; audio=null; foreach(var t in textures.Values) UnityEngine.Object.Destroy(t); foreach(var c in clips.Values) UnityEngine.Object.Destroy(c); textures.Clear(); clips.Clear(); missing.Clear(); }
+    internal static void Clear() { HackUi.Clear(); if(root!=null) UnityEngine.Object.Destroy(root); root=null; audio=null; foreach(var t in textures.Values) UnityEngine.Object.Destroy(t); foreach(var c in clips.Values) UnityEngine.Object.Destroy(c); textures.Clear(); clips.Clear(); missing.Clear(); }
 }
 
 internal static class Effects {

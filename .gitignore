@@ -39,3 +39,5 @@
 !/blackwall-tests/
 !/quickhack-mod/
 !/quickhack-tests/
+!/quickhack-host/
+!/quickhack-host-tests/
