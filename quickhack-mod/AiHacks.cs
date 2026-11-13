@@ -50,7 +50,9 @@ internal static class AiHacks {
         // Scope same-squad overrides to the currently evaluating bot.
         Patch(typeof(BotOwner),"UpdateManual",before:nameof(BeforeOwner),final:nameof(AfterOwner));
         h.Patch(AccessTools.Method(typeof(Player.FirearmController),"SetTriggerPressed",[typeof(bool)]),prefix:new HarmonyMethod(typeof(AiHacks),nameof(AllowTrigger)));
-        Patch(typeof(Player.FirearmController),"CanPressTrigger",before:nameof(CanFire));
+        // CanPressTrigger is an IL2CPP shared constant-return body in EFT 48558.
+        // Detouring it also intercepts hundreds of unrelated object types.
+        // SetTriggerPressed has the dedicated native entry point we need.
         foreach(string m in new[]{"ManualUpdate","ManualFixedUpdate"}) Patch(typeof(BotMover),m,before:nameof(KeepMovementLocked));
     }
     static bool Mad(BotOwner? owner)=>owner!=null&&madness.TryGetValue(owner.Pointer,out var m)&&m.Ref.Resolve()!=null&&Time.unscaledTime<m.Until;
@@ -64,7 +66,6 @@ internal static class AiHacks {
     static bool Timed(Dictionary<IntPtr,(ActorRef Ref,float Until)> effects,BotOwner? owner)=>owner!=null&&effects.TryGetValue(owner.Pointer,out var state)&&Time.unscaledTime<state.Until&&state.Ref.Resolve()!=null;
     static bool CannotFire(Player? actor)=>actor!=null&&!actor.IsYourPlayer&&(Timed(jammed,actor.AIData?.BotOwner)||Timed(wiped,actor.AIData?.BotOwner));
     static bool AllowTrigger(Player.FirearmController __instance,bool __0)=>!__0||!CannotFire(__instance._player);
-    static bool CanFire(Player.FirearmController __instance,ref bool __result) { if(!CannotFire(__instance._player)) return true; __result=false; return false; }
     static void KeepMovementLocked(BotMover __instance) {
         foreach(var state in movement.Values) if(state.Mover.Pointer==__instance.Pointer&&Time.unscaledTime<state.Until&&state.Ref.Resolve()!=null) { __instance.Pause=true; __instance._pauseEndTime=float.MaxValue; break; }
     }

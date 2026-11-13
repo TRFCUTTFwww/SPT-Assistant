@@ -1,4 +1,4 @@
-# CP2077 Quickhacks 独立原型 0.4.0
+# CP2077 Quickhacks 独立原型 0.4.1
 
 目标：SPT 5.0 / EFT 48558，BepInEx IL2CPP / .NET 10。插件名称 CP2077 Quickhacks，配置文件 `BepInEx/config/local.cp2077.quickhacks.cfg`。独立于 SPT Assistant，可与其及其内置黑墙脉冲共存。
 
@@ -23,6 +23,8 @@
 
 扫描默认改为左 Ctrl，需单独按住约 0.25 秒；其他按键组合优先，直到松开 Ctrl 才重新允许扫描。扫描期间 F 上传、滚轮选择、鼠标点击仍有效；ESC 关闭后不会因 Ctrl 仍按住而重开。背包或其他有光标的界面不触发。Ctrl + F8 热更新保留。此策略不能使 Ctrl 变成空闲键：本机 Skipper 已使用左 Ctrl，FIKA 右 Ctrl 为聊天，其他 Mod 独立读取键盘的行为仍可能同时发生；可在配置改回 F9。没有改写 EFT 或其他插件的键位。
 
+0.4.1 修复原生补丁导致的访问冲突风险：移除 FirearmController.CanPressTrigger 补丁。EFT 48558 中该方法与 593 个其他方法共用原生函数体，挂钩会将其他对象误当作武器控制器。武器故障保留独立 SetTriggerPressed 入口，上传时释放已有扳机状态；七种破解、头顶标记及 Ctrl 扫描继续保留。打包检查直接检查已编译模块，拒绝重新引入这个共享入口。2026-11-13 本机崩溃日志出现共享函数体警告并伴随 Windows 0xc0000005，修复后的游戏启动与战局仍需实机复测。
+
 ## 操作
 
 - **F10**：界面与无伤施放预览，可在主菜单打开。选择七种技能，点击「执行施放模拟」或按 F；点击右侧「入侵协议 · 门禁授权」检查代码矩阵。预览不选择或伤害 AI，不操作任何门。施放模拟启动后保留当次技能，即使切换列表选项也不会改变已开始的模拟。
@@ -45,7 +47,7 @@ CardReader 按原 `_keyMap` 中唯一的成功触发器向当前战局 `Triggers
 - 重启义眼：10 秒内抑制视觉检测，清除当前视觉追踪，不暂停 AI 移动或听觉。
 - 赛博精神病：20 秒内将附近 AI 作为敌对目标，包含同队 AI；临时覆盖敌我判定并驱动原生敌人记忆，不合并或改写原队伍。结束时移除本插件添加的个人敌人记忆，恢复其原有目标与攻击设置。复杂首领或第三方 AI 的同队开火仍待战局验证。
 - 黑墙网关：上传后施加原生玩家来源伤害，确认死亡后才继续向 8 米内、无遮挡、未访问的 AI 传播，最多 5 个。不会选择人类玩家；不绕过辅助 Mod 的显式 AI 无敌保护。目标使用黑墙图集碎片，音画为 Unity 重建。
-- 武器故障：10 秒内阻止目标扣动扳机与通过开火检查，仍允许观察、移动及换弹；不永久损坏武器或修改物品耐久。
+- 武器故障：10 秒内阻止目标扣动扳机，仍允许观察、移动及换弹；不永久损坏武器或修改物品耐久。
 - 阻碍移动：10 秒内锁住原生移动器 Pause，不暂停 AI 思考、视线或射击；结束、失焦或热更新时恢复此前 Pause 状态。外部 Mod 已接管的暂停值不覆盖。
 - 记忆清除：移除个人战斗目标及敌人记忆，8 秒内阻断视觉重新锁定并清理重新写入的战斗记忆；不删除队伍的敌对关系，结束后可重新发现敌人。与同一目标的赛博精神病互相替换。
 - 请求支援：向 40 米内最近的空闲同队 AI 提交原生 GoToPointRequest，让它前往被破解目标的上传完成位置。仅选择没有战斗目标、没有当前请求、未被本插件锁住移动或发狂的队友，最长 15 秒；不生成新 AI，不修改阵营。不具备队伍控制器、无人可响应或重复呼叫会提示失败并返还 RAM。请求是否被特殊首领或第三方 AI 执行仍需实机验证。
@@ -64,7 +66,7 @@ CardReader 按原 `_keyMap` 中唯一的成功触发器向当前战局 `Triggers
 - 首次从 0.1 / 0.2 迁移需要重启一次。若客户端正在运行，安装器会验证并排队完整安装包，启动隐藏安装进程等待这个客户端退出，再备份并安装；不会关闭游戏。安装状态见 `mod-updates/quickhacks-install-status.json`。之后使用同一加载器的更新可以在运行中安装。
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-Quickhacks.ps1 -GameRoot 'D:\SPT-5.0.0-48558' -ResourceRoot 'D:\CP2077_Quickhack_Resources_20261112' -BlackwallRoot 'D:\CP2077_Blackwall_Supplement_20261112' -Dotnet 'D:\SPT_Mod_Staging_20261027\dotnet-sdk\dotnet.exe' -HostReleaseRevision '3c728b5b0e7b5c8665597048f5c947e295b7ae23' -OutputDirectory 'D:\SPT_Mod_Staging_20261027\quickhacks-0.4.0' -Install
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-Quickhacks.ps1 -GameRoot 'D:\SPT-5.0.0-48558' -ResourceRoot 'D:\CP2077_Quickhack_Resources_20261112' -BlackwallRoot 'D:\CP2077_Blackwall_Supplement_20261112' -Dotnet 'D:\SPT_Mod_Staging_20261027\dotnet-sdk\dotnet.exe' -HostReleaseRevision '3c728b5b0e7b5c8665597048f5c947e295b7ae23' -OutputDirectory 'D:\SPT_Mod_Staging_20261027\quickhacks-0.4.1' -Install
 ```
 
 脚本构建加载器与逻辑模块，运行离线检查，按本地资源清单逐项验证 SHA256 后打包。输出目录须为空；`-Install` 调用安装器，备份已有独立插件，先复制资源，再原子发布逻辑模块。分发包也可运行 Install.ps1 并指定 GameRoot。资源只保留在本地安装包，不提交源码仓库。

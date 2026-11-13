@@ -85,7 +85,7 @@ Check(new[]{"ManualUpdate","ManualFixedUpdate"}.All(n=>mover.Methods.Count(m=>m.
 Check(game.MainModule.Types.Single(t=>t.Name=="BotGroupRequestController").Methods.Any(m=>m.Name=="TryAddRequestByPlayer"&&m.Parameters.Count==3),"Backup uses native directed group requests");
 Check(game.MainModule.Types.Single(t=>t.FullName=="EFT.BotMemory").Methods.Any(m=>m.Name=="DeleteInfoAboutEnemy"&&m.Parameters.Count==1),"Memory wipe uses native personal enemy-memory removal");
 var firearm=game.MainModule.Types.Single(t=>t.FullName=="EFT.Player").NestedTypes.Single(t=>t.Name=="FirearmController");
-Check(firearm.Methods.Count(m=>m.Name=="CanPressTrigger")==1&&firearm.Methods.Any(m=>m.Name=="SetTriggerPressed"&&m.Parameters.Count==1),"Weapon glitch hooks both trigger eligibility and trigger press");
+Check(firearm.Methods.Any(m=>m.Name=="SetTriggerPressed"&&m.Parameters.Count==1&&m.Parameters[0].ParameterType.FullName=="System.Boolean"),"Weapon glitch uses the dedicated trigger-press entry point");
 if(args.Length>1) {
     var sounds=Directory.GetFiles(args[1],"*.wav");
     Check(sounds.Length==16,"Complete packaged UI, seven quickhacks and Blackwall audio set");
@@ -101,6 +101,10 @@ if(args.Length>1) {
     string corePath=Path.Combine(payload,"runtime/Local.Cp2077.Quickhacks.Core.module");
     if(File.Exists(corePath)) {
         using var core=AssemblyDefinition.ReadAssembly(corePath);
+        var aiHacks=core.MainModule.Types.Single(t=>t.FullName=="LocalQuickhacks.AiHacks");
+        var patchStrings=aiHacks.Methods.Where(m=>m.HasBody).SelectMany(m=>m.Body.Instructions).Where(i=>i.OpCode.Code==Mono.Cecil.Cil.Code.Ldstr).Select(i=>i.Operand as string).ToArray();
+        Check(!patchStrings.Contains("CanPressTrigger")&&!aiHacks.Methods.Any(m=>m.Name=="CanFire"),"Regression: shared IL2CPP CanPressTrigger body must never be detoured");
+        Check(patchStrings.Contains("SetTriggerPressed"),"Dedicated trigger hook remains present in the built module");
         using var host=AssemblyDefinition.ReadAssembly(Path.Combine(payload,"Local.Cp2077.Quickhacks.dll"));
         Check(core.MainModule.Types.Single(t=>t.FullName=="LocalQuickhacks.RuntimeModule").Interfaces.Any(i=>i.InterfaceType.FullName=="LocalQuickhacks.Hosting.IQuickhackModule"),"Core implements the standalone host contract");
         Check(!core.MainModule.Types.Any(t=>t.CustomAttributes.Any(a=>a.AttributeType.Name=="BepInPlugin"))&&!core.MainModule.Types.Any(t=>t.BaseType?.FullName=="UnityEngine.MonoBehaviour"),"Core registers neither a second plugin nor a per-generation IL2CPP driver");
