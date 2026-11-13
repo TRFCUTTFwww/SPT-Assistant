@@ -70,6 +70,7 @@ internal static class Runtime {
     internal static float UploadProgress=>Uploads.Current(Target)?.Progress(Time.unscaledTime)??0;
     internal static string UploadName=>HackRules.Name(UploadKind);
     internal static int QueuePosition(HackKind kind)=>Array.FindIndex(Uploads.For(Target),e=>e.Kind==kind);
+    internal static int QueueCount(HackKind kind)=>Uploads.For(Target).Count(e=>e.Kind==kind);
     static void Refund(float paid)=>Ram=Math.Min(24,Ram+paid);
     static void CancelUploads()=>Refund(Uploads.Clear());
     internal static int Frames { get; private set; }
@@ -153,7 +154,7 @@ internal static class Runtime {
         if(target==null||!Visible(target)) { Status="请锁定视线内的存活 AI。"; return; }
         if(!CanAfford(Selected)) { Status="RAM 不足。"; Assets.Play("denied"); return; }
         float paid=Plugin.InfiniteRam.Value?0:HackRules.Cost(Selected);
-        if(!Uploads.TryAdd(Target!,Selected,paid,Time.unscaledTime)) { Status="该破解已在队列中，或队列已满（每目标最多 4 个）。"; Assets.Play("fail"); return; }
+        if(!Uploads.TryAdd(Target!,Selected,paid,Time.unscaledTime)) { Status=$"上传槽位已满（每目标 {UploadQueue<ActorRef>.PerTargetLimit} 个，全局 {UploadQueue<ActorRef>.TotalLimit} 个）。"; Assets.Play("fail"); return; }
         Ram-=paid; Assets.Play("press");
         Status=HackRules.Name(Selected)+(Uploads.For(Target).Length>1?" · 等待上传":" · 上传中");
     }

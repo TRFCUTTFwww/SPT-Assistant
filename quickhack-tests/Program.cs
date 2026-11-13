@@ -72,7 +72,7 @@ Check(HackRules.All.Select(HackRules.Icon).Distinct().Count()==8,"Each quickhack
 var uploads=new UploadQueue<string>();
 Check(uploads.TryAdd("a",HackKind.Overheat,5,10)&&uploads.TryAdd("a",HackKind.WeaponGlitch,3,10)&&uploads.TryAdd("b",HackKind.RebootOptics,2,10),"Different targets upload independently while a target queues multiple programs");
 Check(uploads.Current("a")!.Progress(11)==.5f&&uploads.Current("b")!.Progress(11)>0,"Both targets advance concurrently");
-Check(uploads.For("a")[1].Elapsed(100)==0&&!uploads.TryAdd("a",HackKind.Overheat,5,11),"Waiting entries never upload early; duplicate pending skills are rejected");
+Check(uploads.For("a")[1].Elapsed(100)==0,"Waiting entries never upload early");
 Check(uploads.Complete("a",11)==null&&uploads.Complete("a",12)!.Kind==HackKind.Overheat,"A program cannot execute before its actual upload deadline");
 Check(uploads.Current("a")!.Kind==HackKind.Overheat&&uploads.Current("a")!.Completed==12&&uploads.For("a")[1].Elapsed(12.3f)==0,"Completed program keeps the main icon until the entire original completion track finishes");
 Check(uploads.Complete("a",12.3f)==null&&uploads.Current("a")!.Kind==HackKind.Overheat,"Next upload cannot overlap the previous completion animation");
@@ -86,12 +86,39 @@ Check(uploads.TryAdd("free",HackKind.SynapseBurnout,0,30)&&uploads.Clear()==0,"I
 Check(uploads.TryAdd("outro",HackKind.RebootOptics,2,40)&&uploads.Complete("outro",42)!=null&&uploads.Cancel("outro")==0,"Cancelling a completed but visible icon does not refund an applied effect");
 foreach(float tick in new[]{.016f,.1f,.7f,5f}) {
     var sequence=new UploadQueue<string>();
-    sequence.TryAdd("npc",HackKind.RebootOptics,2,0); sequence.TryAdd("npc",HackKind.WeaponGlitch,3,0); sequence.TryAdd("npc",HackKind.MemoryWipe,6,0);
+    sequence.TryAdd("npc",HackKind.RebootOptics,2,0); sequence.TryAdd("npc",HackKind.WeaponGlitch,3,0);
+    Check(sequence.TryAdd("npc",HackKind.RebootOptics,2,.5f)&&sequence.TryAdd("npc",HackKind.RebootOptics,2,.7f),"Repeated programs can be added while the same program is uploading or waiting");
+    Check(!sequence.TryAdd("npc",HackKind.RebootOptics,2,.8f)&&sequence.Count==4,"Repeated programs retain the per-target slot limit");
     var executed=new List<(HackKind Kind,float At)>();
     for(float now=0;now<40;now+=tick) if(sequence.Complete("npc",now) is {} entry) executed.Add((entry.Kind,now));
-    Check(executed.Select(e=>e.Kind).SequenceEqual(new[]{HackKind.RebootOptics,HackKind.WeaponGlitch,HackKind.MemoryWipe}),"All frame rates execute queued programs exactly once and in order");
+    Check(executed.Select(e=>e.Kind).SequenceEqual(new[]{HackKind.RebootOptics,HackKind.WeaponGlitch,HackKind.RebootOptics,HackKind.RebootOptics}),"All frame rates execute repeated programs exactly once per entry and in order");
     Check(executed[1].At-executed[0].At>=UploadQueue<string>.HandoffDuration+HackRules.Upload(HackKind.WeaponGlitch)-.001f,"Frame stalls cannot skip completion/move animations or upload the next program early");
 }
+var repeated=new UploadQueue<string>();
+for(int i=0;i<4;i++) Check(repeated.TryAdd("same",HackKind.Overheat,5,i*.1f),"Each repeated upload reserves its own slot and payment");
+Check(repeated.Complete("same",2)!=null&&repeated.Complete("same",2)==null,"Repeated queue completes a single entry only once");
+Check(repeated.Cancel("same")==15&&repeated.Cancel("same")==0,"Only the three unapplied repeated entries are refunded, once");
+for(int i=0;i<UploadQueue<string>.TotalLimit;i++) Check(repeated.TryAdd("target"+i,HackKind.Overheat,5,0),"Independent targets fill the global upload capacity");
+Check(!repeated.TryAdd("overflow",HackKind.Overheat,5,0)&&repeated.Count==32&&repeated.Clear()==160,"Global limit and refund accounting still hold with repeatable uploads");
+
+var factions=new Dictionary<string,string[]> {
+    ["黑色军团"]=["blackDivision","bossWedge","bossWedgeLab","followerWedgeLab","bossBullyBlackDiv","followerBullyBlackDiv","pmcBotBlackDiv","pmcBotBlackDivSeason","blackfox"],
+    ["BOSS"]=["bossKilla","bossScourgeEventLab","infectedTagilla","ravangeZryachiyEvent","peacefullZryachiyEvent"],
+    ["保镖"]=["followerBully","bossBoarSniper","tagillaHelperAgro","followerScourgeEventLab","followerBigPipe","followerBirdEye"],
+    ["邪教徒"]=["sectantWarrior","sectantPriest","sectantOni","sectantPredvestnik","sectantPrizrak","sectactPriestEvent"],
+    ["感染者"]=["infectedAssault","infectedPmc","infectedCivil","infectedLaborant","infectedScreamer"],
+    ["掠夺者"]=["pmcBot"], ["游荡者"]=["exUsec","exUsecFree"],
+    ["USEC"]=["pmcUSEC"], ["BEAR"]=["pmcBEAR"],
+    ["Scav"]=["assault","assaultTutorial","assaultGroup","marksman","cursedAssault","crazyAssaultEvent"],
+    ["平民"]=["civilian"], ["BTR 射手"]=["shooterBTR"], ["圣诞老人"]=["gifter"],
+    ["冬季精灵"]=["spiritWinter"], ["春季精灵"]=["spiritSpring"],
+    ["俄军"]=["vsRF","vsRFSniper","vsRFFight"], ["竞技场战士"]=["arenaFighter","arenaFighterEvent"],
+    ["Peacemaker"]=["peacemaker"], ["Skier"]=["skier"], ["哨兵"]=["sentry"]
+};
+foreach(var pair in factions) foreach(string role in pair.Value) foreach(string side in new[]{"Savage","Usec","Bear",""})
+    Check(TargetFaction.Name(role,side)==pair.Key&&TargetFaction.Name(role.ToUpperInvariant(),side)==pair.Key,"Specific role overrides broad or stale native side: "+role);
+Check(TargetFaction.Name(null,"Usec")=="USEC"&&TargetFaction.Name("","Bear")=="BEAR"&&TargetFaction.Name(null,null)=="未知","Missing role uses only known PMC sides");
+Check(TargetFaction.Name("futureSpecialRole","Savage")=="其他/未知"&&TargetFaction.Name("futureSpecialRole","Usec")=="其他/未知"&&TargetFaction.Name("","Savage")=="其他/未知","Unknown special AI is never presented as a confirmed Scav");
 Check(UploadAnimation.QueueMove(0)==0&&UploadAnimation.QueueMove(UploadAnimation.QueueMoveDuration)==1&&UploadAnimation.QueueMove(.1f)>.5f,"Original queue promotion uses its own quartic easing and settles at the main slot");
 foreach(float duration in new[]{.5f,1.2f,2f,5f}) {
     Check(!GatewayTiming.CanExecute(-1,duration,100)&&!GatewayTiming.CanExecute(10,duration,10+duration-.01f)&&GatewayTiming.CanExecute(10,duration,10+duration),"Blackwall damage coincides exactly with the configured animation end; no extra upload or delay");
@@ -123,6 +150,11 @@ for(int i=0;i<=500;i++) {
 }
 
 string root=args.FirstOrDefault()??"D:/SPT-5.0.0-48558";
+string botTypes=Path.Combine(root,"SPT_Runtime/SPT_Data/database/bots/types");
+if(Directory.Exists(botTypes)) foreach(string path in Directory.GetFiles(botTypes,"*.json")) {
+    string role=Path.GetFileNameWithoutExtension(path);
+    Check(TargetFaction.Name(role,"Savage")!="其他/未知","Installed server role has an explicit scanner faction: "+role);
+}
 using var game=AssemblyDefinition.ReadAssembly(Path.Combine(root,"BepInEx/interop/Assembly-CSharp.dll"));
 var helper=game.MainModule.Types.Single(t=>t.FullName=="EFT.InteractionContextHelper");
 foreach(string type in new[]{"CardReader","KeycardDoor"}) Check(helper.Methods.Count(m=>m.Name=="GetAvailableActions"&&m.Parameters.Count==3&&m.Parameters[1].ParameterType.Name==type&&m.Parameters[2].Name=="isProxy")==1,"Exact native "+type+" menu overload");
@@ -160,8 +192,8 @@ if(args.Length>1) {
             var g=property.Value; int x=g.GetProperty("x").GetInt32(),y=g.GetProperty("y").GetInt32(),w=g.GetProperty("width").GetInt32(),h=g.GetProperty("height").GetInt32();
             Check(x>=1&&y>=1&&x+w<width&&y+h<height&&g.GetProperty("advance").GetSingle()>0,"Font glyph fits its atlas with a sampling gutter: "+key);
         }
-        if(key=="font_body") foreach(char c in string.Concat(HackRules.All.Select(HackRules.Name)))
-            Check(font.GetProperty("glyphs").TryGetProperty(((int)c).ToString(),out _),"Original Chinese atlas covers every retained quickhack name");
+        if(key=="font_body") foreach(char c in string.Concat(HackRules.All.Select(HackRules.Name).Concat(factions.Keys).Append("其他/未知上传槽位已满每目标全局正在上传等待上传x")))
+            Check(font.GetProperty("glyphs").TryGetProperty(((int)c).ToString(),out _),"Original Chinese atlas covers quickhack names, all faction labels and repeated-upload status");
     }
     var sounds=Directory.GetFiles(args[1],"*.wav");
     Check(sounds.Length==16,"UI, seven quickhacks and real Blackwall death audio; no borrowed upload sound");

@@ -21,7 +21,7 @@ internal sealed class UploadQueue<T> where T:notnull {
     internal bool TryAdd(T target,HackKind kind,float paid,float now) {
         if(Count>=TotalLimit) return false;
         if(!targets.TryGetValue(target,out var q)) targets[target]=q=[];
-        if(q.Count>=PerTargetLimit||q.Any(e=>e.Kind==kind)) return false;
+        if(q.Count>=PerTargetLimit) return false;
         q.Add(new(target,kind,paid,q.Count==0?now:float.PositiveInfinity));
         return true;
     }

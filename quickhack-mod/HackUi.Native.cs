@@ -168,6 +168,8 @@ internal static partial class HackUi {
             Text(new Rect(row.x+23,y+1,row.width-117,28),HackRules.Name(kind),c,21);
             int queuePosition=Runtime.QueuePosition(kind);
             string state=queuePosition==0?"正在上传":queuePosition>0?"等待上传":enough?"就绪":"可用 RAM 不足";
+            int copies=Runtime.QueueCount(kind);
+            if(copies>1) state+=$" x{copies}";
             float stateWidth=state.Length*14+8;
             Frame(new Rect(row.x+24,y+32,stateWidth,17),Alpha(c,.6f));
             Text(new Rect(row.x+28,y+32,stateWidth-4,18),state,c,13);
@@ -217,7 +219,7 @@ internal static partial class HackUi {
             Text(new Rect(x+20,y+18,w-40,22),"扫描结果",ScanRed,15);
             Text(new Rect(x+20,y+52,w-40,67),preview?"训练目标":actor?.Profile?.Nickname??"未识别目标",Yellow,27);
             Text(new Rect(x+20,y+130,w-40,25),"人物资料",ScanRed,15);
-            string faction=preview?"USEC":actor?.Profile?.Side switch { EFT.EPlayerSide.Bear=>"BEAR", EFT.EPlayerSide.Usec=>"USEC", EFT.EPlayerSide.Savage=>"SCAV（拾荒者）", _=>"未知" };
+            string faction=preview?"USEC":TargetFaction.Name(actor?.Profile?.Info?.Settings?.Role.ToString()??"",actor?.Profile?.Side.ToString()??"");
             Text(new Rect(x+20,y+170,w-40,27),actor!=null||preview?"阵营："+faction:"等待扫描",ScanCyan,20);
             Text(new Rect(x+20,y+224,w-40,23),"距离",ScanRed,15);
             Text(new Rect(x+20,y+261,w-40,29),preview?"—":actor!=null?Vector3.Distance(actor.Position,Runtime.Camera!.transform.position).ToString("F1")+" m":"—",ScanCyan,23,2);

@@ -5,6 +5,8 @@
     <Compile Include="../quickhack-mod/ScannerGesture.cs" Link="ScannerGesture.cs" />
     <Compile Include="../quickhack-mod/UploadAnimation.cs" Link="UploadAnimation.cs" />
     <Compile Include="../quickhack-mod/UploadQueue.cs" Link="UploadQueue.cs" />
+    <Compile Include="../quickhack-mod/TargetFaction.cs" Link="TargetFaction.cs" />
+    <Compile Include="../shared/RaidSpawnRules.cs" Link="RaidSpawnRules.cs" />
     <Compile Include="../quickhack-mod/ScalarLease.cs" Link="ScalarLease.cs" />
     <Compile Include="../quickhack-mod/GatewayTiming.cs" Link="GatewayTiming.cs" />
     <Compile Include="../quickhack-mod/CombatHackRules.cs" Link="CombatHackRules.cs" />
