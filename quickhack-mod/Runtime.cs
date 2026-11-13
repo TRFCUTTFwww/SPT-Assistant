@@ -37,7 +37,6 @@ internal static class Runtime {
     static int releaseFrame=-1,openedFrame;
     static float nextScan,nextWarning,lastTime;
     static bool puzzleHandled;
-    static float? finishedAt;
     static ActorRef? uploading;
     static HackKind uploadKind;
     static float uploadStart;
@@ -96,15 +95,13 @@ internal static class Runtime {
                 else if(UploadProgress>=1) { var actor=uploading; uploading=null; AiHacks.Apply(actor,uploadKind); Status=HackRules.Name(uploadKind)+" · 已上传"; Assets.Play("granted"); }
             }
             if(Mode==UiMode.Breach&&Puzzle!=null) {
-                if(!PreviewBreach&&Door?.Valid()!=true) { Status="门禁已失效，破解取消。"; Close(); return; }
+                if(!puzzleHandled&&!PreviewBreach&&Door?.Valid()!=true) { Status="门禁已失效，破解取消。"; Close(); return; }
                 Puzzle.Tick(now);
                 if(Puzzle.Ended&&!puzzleHandled) {
                     puzzleHandled=true;
                     if(Puzzle.Won) { if(!PreviewBreach) Door!.Authorize(true); Status=PreviewBreach?"预览：门禁授权魔偶上传完成。":"门禁授权已提交。"; Assets.Play("granted"); }
                     else { Status="破解失败：缓冲区已满或时间耗尽。"; Assets.Play("denied"); }
-                    finishedAt=now;
                 }
-                if(finishedAt is {} end&&now-end>2.5f) { if(PreviewBreach) { Puzzle=null; SetMode(UiMode.Preview); } else Close(); }
             }
             PreviewProgress=Math.Clamp((now-PreviewStarted)/HackRules.Upload(PreviewKind),0,1);
             KeepCursor();
@@ -143,10 +140,14 @@ internal static class Runtime {
         Door=door; PreviewBreach=false; BeginPuzzle(2); Assets.Play("open");
     }
     internal static void OpenPreviewBreach() { Door=null; PreviewBreach=true; BeginPuzzle(1); Assets.Play("open"); }
-    static void BeginPuzzle(int difficulty) { Puzzle=new BreachPuzzle(System.Random.Shared.Next(),difficulty); puzzleHandled=false; finishedAt=null; SetMode(UiMode.Breach); }
+    static void BeginPuzzle(int difficulty) { Puzzle=new BreachPuzzle(System.Random.Shared.Next(),difficulty); puzzleHandled=false; SetMode(UiMode.Breach); }
+    internal static void ExitBreach() {
+        if(PreviewBreach) { Assets.Play("close"); Puzzle=null; PreviewBreach=false; SetMode(UiMode.Preview); }
+        else Close();
+    }
     internal static void Pick(int r,int c) { if(Puzzle?.Pick(r,c,Time.unscaledTime)==true) Assets.Play("press"); else Assets.Play("fail"); }
     internal static void PreviewCast() { PreviewKind=Selected; PreviewStarted=Time.unscaledTime; Assets.Play(HackRules.Icon(Selected)); Effects.Preview(Selected); Status="无伤预览 · "+HackRules.Name(Selected); }
-    internal static void Close() { if(Mode!=UiMode.None) Assets.Play("close"); SetMode(UiMode.None); Door=null; Puzzle=null; finishedAt=null; PreviewBreach=false; }
+    internal static void Close() { if(Mode!=UiMode.None) Assets.Play("close"); SetMode(UiMode.None); Door=null; Puzzle=null; PreviewBreach=false; }
     internal static void Warn(string context,Exception e) { if(Time.unscaledTime<nextWarning) return; nextWarning=Time.unscaledTime+5; Plugin.Logger.LogWarning(context+": "+e); }
     internal static void Stop() {
         // Old native action lists can briefly retain callback delegates. Disable

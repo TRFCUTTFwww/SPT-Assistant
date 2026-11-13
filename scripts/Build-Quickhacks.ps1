@@ -3,6 +3,7 @@ param(
     [string]$ResourceRoot='D:/CP2077_Quickhack_Resources_20261112',
     [string]$BlackwallRoot='D:/CP2077_Blackwall_Supplement_20261112',
     [string]$Dotnet='dotnet',
+    [string]$HostReleaseRevision='',
     [Parameter(Mandatory=$true)][string]$OutputDirectory,
     [switch]$Install
 )
@@ -12,6 +13,13 @@ $outputPath=[IO.Path]::GetFullPath($OutputDirectory)
 if((Test-Path -LiteralPath $outputPath) -and @(Get-ChildItem -LiteralPath $outputPath -Force).Count -gt 0) { throw 'Output directory must be new or empty.' }
 & $Dotnet build (Join-Path $repoRoot 'quickhack-mod/Quickhacks.csproj') -c Release "-p:GameRoot=$GameRoot" --nologo
 if($LASTEXITCODE -ne 0) { throw 'Quickhack build failed.' }
+# Reproduce the released loader's informational metadata for a core-only update.
+# Real loader code changes still change its hash and require a client restart.
+if($HostReleaseRevision) {
+    if($HostReleaseRevision -notmatch '^[a-fA-F0-9]{40}$') { throw 'HostReleaseRevision must be a full Git revision.' }
+    & $Dotnet build (Join-Path $repoRoot 'quickhack-host/Host.csproj') -c Release "-p:GameRoot=$GameRoot" "-p:SourceRevisionId=$HostReleaseRevision" --nologo
+    if($LASTEXITCODE -ne 0) { throw 'Released quickhack host build failed.' }
+}
 & $Dotnet build (Join-Path $repoRoot 'quickhack-host-tests/Fixture/Fixture.csproj') -c Release --nologo
 if($LASTEXITCODE -ne 0) { throw 'Quickhack host test build failed.' }
 & $Dotnet run --project (Join-Path $repoRoot 'quickhack-host-tests/Tests.csproj') -c Release --no-build -- (Join-Path $repoRoot 'quickhack-host-tests/Fixture/bin/Release/net10.0/Fixture.dll')
@@ -22,7 +30,7 @@ $iconDir='03_images/base/gameplay/gui/common/icons/quickhacks_icons.inkatlas/216
 foreach($name in @('Cyberpsychosis','BlackwallBreach','GlitchScreenBlind')) { $files["$name.png"]=@($ResourceRoot,"$iconDir/$name.png") }
 $files['DoorAuthorization.png']=@($ResourceRoot,'03_images/base/gameplay/gui/fullscreen/hacking_minigame/atlas_minigame_programs.inkatlas/2160p/DoorAuthorization.png')
 $breachAtlas='03_images/base/gameplay/gui/fullscreen/hacking_minigame/atlas_minigame.inkatlas/2160p'
-foreach($name in @('buffer_empty','buffer_activated','fluff_1','fluff_2','fluff_barcode1','fluff_barcode2','fluff_code1','fluff_header1','fluff_protocol2','fluff_text2','fluff_text6','fluff_pettern','frame_glow_small','ico_programs','logo_nettech')) { $files["breach_$name.png"]=@($ResourceRoot,"$breachAtlas/$name.png") }
+foreach($name in @('buffer_empty','buffer_activated','fluff_1','fluff_2','fluff_3','fluff_barcode1','fluff_barcode2','fluff_code1','fluff_header1','fluff_protocol2','fluff_text2','fluff_text6','fluff_pettern','frame_glow_small','ico_programs','logo_nettech')) { $files["breach_$name.png"]=@($ResourceRoot,"$breachAtlas/$name.png") }
 $scannerAtlas='03_images/base/gameplay/gui/widgets/scanning/atlas_scanner.inkatlas/2160p'
 foreach($name in @('outer_brackets','inner_crosshair','ruller','fluff_corner_text','fluff_corner_text2','fluff_top_right','fluff_left','fluff_bottom')) { $files["scan_$name.png"]=@($ResourceRoot,"$scannerAtlas/$name.png") }
 $quickAtlas='03_images/base/gameplay/gui/widgets/quickhacks/atlas_quickhacks.inkatlas/2160p'
@@ -68,9 +76,9 @@ foreach($file in $files.GetEnumerator()) {
     Copy-Item -LiteralPath $source -Destination $destination
     $packaged+=@{name=$file.Key;bytes=(Get-Item -LiteralPath $destination).Length;sha256=(Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash}
 }
-@{version='0.3.0';target='EFT 48558 / SPT 5.0';files=$packaged} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $payload 'asset-manifest.json') -Encoding UTF8
+@{version='0.3.1';target='EFT 48558 / SPT 5.0';files=$packaged} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $payload 'asset-manifest.json') -Encoding UTF8
 @{
-    version='0.3.0'
+    version='0.3.1'
     hostSha256=(Get-FileHash -LiteralPath (Join-Path $payload 'Local.Cp2077.Quickhacks.dll') -Algorithm SHA256).Hash
     coreSha256=(Get-FileHash -LiteralPath (Join-Path $payload 'runtime/Local.Cp2077.Quickhacks.Core.module') -Algorithm SHA256).Hash
 } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $payload 'release-manifest.json') -Encoding UTF8

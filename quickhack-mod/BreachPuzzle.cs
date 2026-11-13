@@ -12,6 +12,7 @@ internal sealed class BreachPuzzle {
     internal readonly List<string> Buffer = [];
     internal readonly double Duration;
     internal double? Started { get; private set; }
+    double? endedAt;
     internal bool Won { get; private set; }
     internal bool Lost { get; private set; }
     internal bool Ended => Won || Lost;
@@ -20,9 +21,9 @@ internal sealed class BreachPuzzle {
 
     internal BreachPuzzle(int seed, int difficulty = 1) {
         var random = new Random(seed);
-        Size = 5 + Math.Clamp(difficulty - 2, 0, 1);
-        Capacity = 7;
-        Duration = 30;
+        Size = 7;
+        Capacity = 8;
+        Duration = 36;
         Matrix = new string[Size, Size];
         for (int r = 0; r < Size; r++) for (int c = 0; c < Size; c++) Matrix[r,c] = Symbols[random.Next(Symbols.Length)];
         int length = Math.Clamp(3 + difficulty, 4, 6);
@@ -49,8 +50,8 @@ internal sealed class BreachPuzzle {
 
     internal bool Used(int row, int col) => Picks.Contains((row,col));
     internal bool CanPick(int row, int col) => !Ended && row >= 0 && col >= 0 && row < Size && col < Size && !Used(row,col) && (SelectRow ? row : col) == ActiveLine;
-    internal double Remaining(double now) => Started is {} start ? Math.Clamp(Duration - (now - start), 0, Duration) : Duration;
-    internal void Tick(double now) { if (!Ended && Started.HasValue && Remaining(now) <= 0) Lost = true; }
+    internal double Remaining(double now) => Started is {} start ? Math.Clamp(Duration - ((endedAt ?? now) - start), 0, Duration) : Duration;
+    internal void Tick(double now) { if (!Ended && Started.HasValue && Remaining(now) <= 0) { Lost = true; endedAt=now; } }
     internal bool Pick(int row, int col, double now) {
         if (!double.IsFinite(now)) return false;
         Tick(now);
@@ -59,6 +60,7 @@ internal sealed class BreachPuzzle {
         Picks.Add((row,col)); Buffer.Add(Matrix[row,col]);
         Won = Contains(Buffer, Sequence);
         if (!Won && (Buffer.Count >= Capacity || !Enumerable.Range(0,Size).Any(i => SelectRow ? CanPick(ActiveLine,i) : CanPick(i,ActiveLine)))) Lost = true;
+        if (Ended) endedAt=now;
         return true;
     }
     internal static bool Contains(IReadOnlyList<string> buffer, IReadOnlyList<string> sequence) {
