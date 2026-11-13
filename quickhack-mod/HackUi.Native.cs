@@ -47,11 +47,13 @@ internal static partial class HackUi {
         style.padding=new RectOffset(0,0,0,0);
     }
     internal static void Clear() {
+        OriginalFonts.Clear();
         foreach(var font in new[]{body,mono,latin}) if(font!=null) UnityEngine.Object.Destroy(font);
         body=mono=latin=null; style=null; shownPuzzle=null; hovered=""; lastMouse=new(-9999,-9999);
     }
     static void Fill(Rect r,Color c) { GUI.color=Alpha(c,opacity); GUI.DrawTexture(r,Texture2D.whiteTexture); GUI.color=Color.white; }
     static void Text(Rect r,string value,Color c,int size=20,int face=0,TextAnchor align=TextAnchor.UpperLeft) {
+        if(OriginalFonts.Draw(r,value,Alpha(c,opacity),size,face,align)) return;
         style!.font=face==1?mono:face==2?latin:body; style.fontSize=size;
         style.normal.textColor=Alpha(c,opacity); style.alignment=align; GUI.color=Color.white;
         GUI.Label(r,value,style);
@@ -256,7 +258,11 @@ internal static partial class HackUi {
         var r=new Rect(771,258,378,451); Crosshair(r,Alpha(Cyan,.75f));
         float age=Now-Runtime.PreviewStarted; var kind=Runtime.PreviewKind;
         bool active=age>=HackRules.Upload(kind)&&age<HackRules.Upload(kind)+2;
-        if(age>=0&&age<HackRules.Upload(kind)+2) HeadBadge(new Vector2(960,260),1,kind,active?1:Runtime.PreviewProgress,active?HackRules.Duration(kind):0,!active,age:age);
+        if(age>=0&&age<HackRules.Upload(kind)+2) {
+            float activeAge=age-HackRules.Upload(kind);
+            float progress=!active?Runtime.PreviewProgress:activeAge<UploadAnimation.CompleteDuration?1:Math.Clamp(1-activeAge/HackRules.Duration(kind),0,1);
+            HeadBadge(new Vector2(960,260),1,kind,progress,active?HackRules.Duration(kind)-activeAge:0,!active,age:age,completeAge:activeAge);
+        }
         Color color=active?(kind==HackKind.RebootOptics?Cyan:Red):Alpha(Cyan,.6f);
         Vector2[] contour=[new(-19,0),new(-29,12),new(-31,42),new(-24,64),new(-21,77),new(-57,91),new(-76,112),new(-89,183),new(-100,249),new(-91,258),new(-79,246),new(-64,191),new(-53,157),new(-51,227),new(-44,256),new(-47,320),new(-49,383),new(-30,389),new(-21,374),new(-15,314),new(-6,269),new(6,269),new(15,314),new(21,374),new(30,389),new(49,383),new(47,320),new(44,256),new(51,227),new(53,157),new(64,191),new(79,246),new(91,258),new(100,249),new(89,183),new(76,112),new(57,91),new(21,77),new(24,64),new(31,42),new(29,12),new(19,0),new(-19,0)];
         const float cx=960,top=283;

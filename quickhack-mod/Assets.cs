@@ -27,6 +27,9 @@ internal static class Assets {
         return texture;
     }
     internal static void Play(string key) {
+        // Verified bank event vfx_blackwall_hack_npc_upload has zero actions.
+        // Do not keep playing the old Synapse Burnout placeholder on this key.
+        if(key=="BlackwallBreach") return;
         try {
             if(!clips.TryGetValue(key,out var clip)) {
                 string path=Path.Combine(Home,"Assets",key+".wav");

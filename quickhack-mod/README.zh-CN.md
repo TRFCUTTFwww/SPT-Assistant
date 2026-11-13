@@ -1,4 +1,4 @@
-# CP2077 Quickhacks 独立原型 0.5.1
+# CP2077 Quickhacks 独立原型 0.5.2
 
 目标：SPT 5.0 / EFT 48558，BepInEx IL2CPP / .NET 10。插件名称 CP2077 Quickhacks，配置文件 `BepInEx/config/local.cp2077.quickhacks.cfg`。独立于 SPT Assistant，可与其及其内置黑墙脉冲共存。
 
@@ -37,6 +37,14 @@
 头顶动画依据 7.52–7.93 秒与 20.70–20.90 秒：技能图标从标记上方落入原版 `frame_qh_bg/fg` 红色切角底框，约 0.4 秒落位；上传到生效保留同一标记位置，移除青色“正在上传”悬浮条和状态倒计时条。实际上传进度仍在对应技能行下沿显示，数值与中断规则保持 EFT 原型设定。录像下方“正在追踪你的位置”属于敌方追踪，不将该提示挪作上传动画，也未实现敌方追踪系统。F10 与真实目标共用头顶动画。详细依据见 `docs/quickhacks-video-reference.zh-CN.md`，录像只用于本地分析。
 
 这段录像足够校准扫描布局和技能图标落位；中文原版字体、全部技能特效和 REDengine 材质仍不是逐帧复刻。离线构建和热加载状态不代表游戏画面验收。
+
+0.5.2 接入双方协作补包的原版字体与上传控件参数：JingXiHeig 简中、Rajdhani 半粗及 Orbitron regular 在构建时由校验过的 TTF 生成透明字形图集，Unity 直接绘制图集，不安装系统字体。当前静态 UI 字符集由源码生成并校验中文覆盖；NPC/玩家名字若有图集外字形，整条文本回退系统字体。热更新清理字形缓存并重新加载图集。该方式保留源字形形状，不是 REDengine 字体排版器的完整移植。
+
+头顶标记按原 quick_hack_mappin 控件的 80×88 底框、64×64 技能图标比例重建，采用原版纵向填充。上传开场保留 1.5→1 缩放（0.4 秒）及 -100→0 原始坐标平移（0.25 秒，1080p 换算 -50→0），采用 Back/入缓动重建。完成时按原轨道下移、回位并延迟淡出，约 0.416 秒后显示持续状态；该时间不替代技能玩法上传时长。持续状态改为青色，剩余时间通过纵向填充体现。原型仍一次上传一个技能，不虚构原版多技能队列；queue_move_up 资源留作后续队列功能使用。
+
+Batch02 已证实所查 sfx_container.bnk 的 vfx_blackwall_hack_npc_upload 事件 action_count=0。本版停用此前借用的突触熔融声音，保留真实 w_expl_blackwall_npc_death_gameplay 死亡音效。该证据不等于断言整个原版引擎的所有状态均无额外声音。七份 GLB、电弧材质/粒子引用和轨道已验收，本版尚未将整套身体 VFX 转为 Unity；已知共享 blackbody_lit.mt 仍缺失。
+
+新增构建依赖为 Python 3、Pillow、fontTools 及协作 UI 补包，可通过 UiSupplementRoot、Python、PythonModulePath 指定本地位置。原始字体、图集、动画和补包只保留本机，不提交源码。构建、字形检查和热加载不替代游戏画面验收。
 
 ## 操作
 
@@ -78,7 +86,7 @@ CardReader 按原 `_keyMap` 中唯一的成功触发器向当前战局 `Triggers
 - 首次从 0.1 / 0.2 迁移需要重启一次。若客户端正在运行，安装器会验证并排队完整安装包，启动隐藏安装进程等待这个客户端退出，再备份并安装；不会关闭游戏。安装状态见 `mod-updates/quickhacks-install-status.json`。之后使用同一加载器的更新可以在运行中安装。
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-Quickhacks.ps1 -GameRoot 'D:\SPT-5.0.0-48558' -ResourceRoot 'D:\CP2077_Quickhack_Resources_20261112' -BlackwallRoot 'D:\CP2077_Blackwall_Supplement_20261112' -Dotnet 'D:\SPT_Mod_Staging_20261027\dotnet-sdk\dotnet.exe' -HostReleaseRevision '3c728b5b0e7b5c8665597048f5c947e295b7ae23' -OutputDirectory 'D:\SPT_Mod_Staging_20261027\quickhacks-0.5.1-video' -Install
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-Quickhacks.ps1 -GameRoot 'D:\SPT-5.0.0-48558' -ResourceRoot 'D:\CP2077_Quickhack_Resources_20261112' -BlackwallRoot 'D:\CP2077_Blackwall_Supplement_20261112' -Dotnet 'D:\SPT_Mod_Staging_20261027\dotnet-sdk\dotnet.exe' -HostReleaseRevision '3c728b5b0e7b5c8665597048f5c947e295b7ae23' -OutputDirectory 'D:\SPT_Mod_Staging_20261027\quickhacks-0.5.2-original' -Install
 ```
 
 脚本构建加载器与逻辑模块，运行离线检查，按本地资源清单逐项验证 SHA256 后打包。输出目录须为空；`-Install` 调用安装器，备份已有独立插件，先复制资源，再原子发布逻辑模块。分发包也可运行 Install.ps1 并指定 GameRoot。资源只保留在本地安装包，不提交源码仓库。

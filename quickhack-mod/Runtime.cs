@@ -63,7 +63,7 @@ internal static class Runtime {
     internal static string UploadName=>HackRules.Name(uploadKind);
     internal static int Frames { get; private set; }
 
-    internal static void Start() { Assets.Initialize(); lastTime=Time.unscaledTime; Active=true; }
+    internal static void Start() { Assets.Initialize(); OriginalFonts.Initialize(); lastTime=Time.unscaledTime; Active=true; }
     internal static void SetMode(UiMode mode) {
         if(mode==UiMode.None) {
             if(Mode==UiMode.None&&!cursorOwned) return;

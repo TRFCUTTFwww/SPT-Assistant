@@ -69,6 +69,16 @@ Check(gesture.Step(7,true,false,0),"Other configurable scanner keys retain immed
 Check(HackRules.All.Select(HackRules.Name).SequenceEqual(new[]{"重启义眼","武器故障","阻碍移动","记忆清除","赛博精神病","黑墙网关"}),"Six retained quickhacks appear in order after removing backup");
 Check(HackRules.Cycle(HackKind.RebootOptics,-1)==HackKind.BlackwallGateway&&HackRules.Cycle(HackKind.BlackwallGateway,1)==HackKind.RebootOptics,"Scrolling wraps over all six skills");
 Check(HackRules.All.Select(HackRules.Icon).Distinct().Count()==6,"Each quickhack uses its own original icon");
+var introStart=UploadAnimation.Intro(-1); var introEnd=UploadAnimation.Intro(2);
+Check(introStart.Scale==1.5f&&introStart.Y==-50&&introStart.Alpha==0,"Upload starts above the badge at the original 1.5 scale");
+Check(Math.Abs(introEnd.Scale-1)<.0001f&&Math.Abs(introEnd.Y)<.0001f&&introEnd.Alpha==1,"Intro settles independently of gameplay upload duration");
+Check(UploadAnimation.Intro(.125f).Y < -50,"Back easing preserves the initial overshoot instead of smoothstep");
+Check(Math.Abs(UploadAnimation.Complete(.269f).Y-12.5f)<.001f,"Completion reaches half of the 2160p 25px offset");
+Check(UploadAnimation.Complete(0).Alpha==1&&UploadAnimation.Complete(UploadAnimation.CompleteDuration+.001f).Alpha==0,"Completion fades only at its delayed final stage");
+for(int i=0;i<=500;i++) {
+    var pose=UploadAnimation.Complete(i/1000f);
+    Check(float.IsFinite(pose.Y)&&pose.Y>=-.001f&&pose.Y<=12.501f&&pose.Alpha>=0&&pose.Alpha<=1,"Completion is bounded through translation and fade transitions");
+}
 
 string root=args.FirstOrDefault()??"D:/SPT-5.0.0-48558";
 using var game=AssemblyDefinition.ReadAssembly(Path.Combine(root,"BepInEx/interop/Assembly-CSharp.dll"));
@@ -86,11 +96,25 @@ Check(game.MainModule.Types.Single(t=>t.FullName=="EFT.BotMemory").Methods.Any(m
 var firearm=game.MainModule.Types.Single(t=>t.FullName=="EFT.Player").NestedTypes.Single(t=>t.Name=="FirearmController");
 Check(firearm.Methods.Any(m=>m.Name=="SetTriggerPressed"&&m.Parameters.Count==1&&m.Parameters[0].ParameterType.FullName=="System.Boolean"),"Weapon glitch uses the dedicated trigger-press entry point");
 if(args.Length>1) {
+    foreach(string key in new[]{"font_body","font_code","font_latin"}) {
+        using var fontDoc=System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(args[1],key+".json")));
+        var font=fontDoc.RootElement; int width=font.GetProperty("width").GetInt32(),height=font.GetProperty("height").GetInt32();
+        var png=File.ReadAllBytes(Path.Combine(args[1],key+".png"));
+        int PngInt(int start)=>System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(start,4));
+        Check(PngInt(16)==width&&PngInt(20)==height,"Font metrics match the packaged texture dimensions: "+key);
+        Check(font.GetProperty("sourceSha256").GetString()!.Length==64&&font.GetProperty("pixels").GetInt32()==64,"Font atlas records its source hash and raster size: "+key);
+        foreach(var property in font.GetProperty("glyphs").EnumerateObject()) {
+            var g=property.Value; int x=g.GetProperty("x").GetInt32(),y=g.GetProperty("y").GetInt32(),w=g.GetProperty("width").GetInt32(),h=g.GetProperty("height").GetInt32();
+            Check(x>=1&&y>=1&&x+w<width&&y+h<height&&g.GetProperty("advance").GetSingle()>0,"Font glyph fits its atlas with a sampling gutter: "+key);
+        }
+        if(key=="font_body") foreach(char c in string.Concat(HackRules.All.Select(HackRules.Name)))
+            Check(font.GetProperty("glyphs").TryGetProperty(((int)c).ToString(),out _),"Original Chinese atlas covers every retained quickhack name");
+    }
     var sounds=Directory.GetFiles(args[1],"*.wav");
-    Check(sounds.Length==15,"Complete packaged UI, six quickhacks and Blackwall audio set");
+    Check(sounds.Length==14,"UI, five quickhacks and real Blackwall death audio; no borrowed upload sound");
     foreach(var kind in HackRules.All) {
         Check(File.Exists(Path.Combine(args[1],HackRules.Icon(kind)+".png")),"Original quickhack icon packaged: "+kind);
-        Check(File.Exists(Path.Combine(args[1],HackRules.Icon(kind)+".wav")),"Individual quickhack sound packaged: "+kind);
+        Check(File.Exists(Path.Combine(args[1],HackRules.Icon(kind)+".wav"))==(kind!=HackKind.BlackwallGateway),"Only confirmed quickhack sounds packaged: "+kind);
     }
     foreach(var path in sounds) {
         var wave=WavePcm.Read(path);

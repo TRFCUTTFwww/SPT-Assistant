@@ -2,6 +2,9 @@ param(
     [string]$GameRoot='D:/SPT-5.0.0-48558',
     [string]$ResourceRoot='D:/CP2077_Quickhack_Resources_20261112',
     [string]$BlackwallRoot='D:/CP2077_Blackwall_Supplement_20261112',
+    [string]$UiSupplementRoot='D:/aaa/CP2077_Collaboration_20261113/CP2077_Upload_UI_Fonts',
+    [string]$Python='D:/aaa/build/alpha-tools/python/cpython-3.12.16-windows-x86_64-none/python.exe',
+    [string]$PythonModulePath='D:/SPT_Mod_Staging_20261027/quickhack-video-tools',
     [string]$Dotnet='dotnet',
     [string]$HostReleaseRevision='',
     [Parameter(Mandatory=$true)][string]$OutputDirectory,
@@ -44,7 +47,6 @@ $audioMap=[ordered]@{
     'press'='ui_hacking_press.wav'; 'fail'='ui_hacking_press_fail.wav'; 'granted'='ui_hacking_access_granted.wav';
     'denied'='ui_hacking_access_denied.wav'; 'scan'='ui_focus_mode_scanning_open.wav';
     'Cyberpsychosis'='quickhack_cyberpsychosis {r}.wav'; 'GlitchScreenBlind'='quickhack_reboot_optics {r}.wav';
-    'BlackwallBreach'='quickhack_synapse_burnout {r}.wav';
     'WeaponMalfunction'='quickhack_weapon_malfunction {r}.wav'; 'LocomotionMalfunction'='quickhack_locomotion_malfunction {r}.wav';
     'MemoryWipe'='quickhack_memory_wipe {r}.wav'
 }
@@ -79,9 +81,14 @@ foreach($file in $files.GetEnumerator()) {
     Copy-Item -LiteralPath $source -Destination $destination
     $packaged+=@{name=$file.Key;bytes=(Get-Item -LiteralPath $destination).Length;sha256=(Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash}
 }
-@{version='0.5.1';target='EFT 48558 / SPT 5.0';files=$packaged} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $payload 'asset-manifest.json') -Encoding UTF8
+& $Python (Join-Path $repoRoot 'scripts/Rasterize-QuickhackFonts.py') --ui-root $UiSupplementRoot --source-root (Join-Path $repoRoot 'quickhack-mod') --output $assets --module-path $PythonModulePath
+if($LASTEXITCODE -ne 0) { throw 'Original font rasterization failed.' }
+foreach($generated in (Get-ChildItem -LiteralPath $assets -File -Filter 'font_*')) {
+    $packaged+=@{name=$generated.Name;bytes=$generated.Length;sha256=(Get-FileHash -LiteralPath $generated.FullName -Algorithm SHA256).Hash}
+}
+@{version='0.5.2';target='EFT 48558 / SPT 5.0';files=$packaged} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $payload 'asset-manifest.json') -Encoding UTF8
 @{
-    version='0.5.1'
+    version='0.5.2'
     hostSha256=(Get-FileHash -LiteralPath (Join-Path $payload 'Local.Cp2077.Quickhacks.dll') -Algorithm SHA256).Hash
     coreSha256=(Get-FileHash -LiteralPath (Join-Path $payload 'runtime/Local.Cp2077.Quickhacks.Core.module') -Algorithm SHA256).Hash
 } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $payload 'release-manifest.json') -Encoding UTF8
@@ -90,4 +97,4 @@ if($LASTEXITCODE -ne 0) { throw 'Quickhack checks failed; package has not been i
 if($Install) {
     & (Join-Path $outputPath 'Install.ps1') -GameRoot $GameRoot
 }
-Write-Output "Quickhacks package: $outputPath; $($files.Count) verified assets"
+Write-Output "Quickhacks package: $outputPath; $($packaged.Count) verified assets"
