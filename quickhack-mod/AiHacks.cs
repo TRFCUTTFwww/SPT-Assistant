@@ -22,7 +22,6 @@ internal static class AiHacks {
         internal IntPtr World;
         internal float At;
         internal float Started;
-        internal float Completed=-1;
         internal readonly HashSet<string> Visited=[];
     }
     static readonly Dictionary<IntPtr,Madness> madness=[];
@@ -44,7 +43,7 @@ internal static class AiHacks {
     [ThreadStatic] static BotOwner? evaluating;
     static float nextMadness;
     internal static int ActiveCount=>madness.Count+blind.Count+jammed.Count+wiped.Count+movement.Count+chains.Count+heat.Count;
-    internal static IEnumerable<(ActorRef Ref,float Started,float At,float Completed)> GatewayUploads=>chains.Select(c=>(c.Next,c.Started,c.At,c.Completed));
+    internal static IEnumerable<(ActorRef Ref,float Started,float At)> GatewayUploads=>chains.Select(c=>(c.Next,c.Started,c.At));
     internal static bool HasGatewayUploads=>chains.Count>0;
     internal static void Install(Harmony h) {
         void Patch(Type t,string method,string? before=null,string? after=null,string? final=null) {
@@ -128,7 +127,9 @@ internal static class AiHacks {
             Effects.Target(actor,kind,1);
             Hit(actor,EBodyPart.Chest,CombatHackRules.BurnoutDamage(missingRam),EDamageType.Bullet);
         } else if(kind==HackKind.BlackwallGateway) {
-            chains.Add(new Chain { Next=reference,World=reference.World,Started=Time.unscaledTime,At=Time.unscaledTime+.5f });
+            var chain=new Chain { Next=reference,World=reference.World };
+            StartGatewayAnimation(chain,actor);
+            chains.Add(chain);
         }
         Assets.Play(HackRules.Icon(kind));
         if(kind is not HackKind.BlackwallGateway and not HackKind.SynapseBurnout) Effects.Target(actor,kind,kind==HackKind.Overheat?CombatHackRules.OverheatDuration:3);
@@ -233,17 +234,17 @@ internal static class AiHacks {
         var info=new DamageInfo { DamageType=type,Damage=damage,Player=new PlayerBridge(local).Cast<IObserverToPlayerBridge>(),MasterOrigin=local.Position,HitPoint=origin,Direction=(origin-local.Position).normalized,SourceId="cp2077-quickhack" };
         actor.ActiveHealthController.ApplyDamage(part,damage,info);
     }
+    static void StartGatewayAnimation(Chain chain,Player actor) {
+        chain.Next=ActorRef.Of(actor); chain.Started=Time.unscaledTime;
+        float duration=Plugin.GatewayHopTime.Value;
+        chain.At=chain.Started+duration;
+        Effects.Target(actor,HackKind.BlackwallGateway,duration);
+    }
     static bool Step(Chain chain) {
         var world=Singleton<GameWorld>.Instance;
         var actor=chain.Next.Resolve(); var local=world?.MainPlayer;
         if(world?.Pointer!=chain.World||actor==null||local?.HealthController?.IsAlive!=true||Protected(actor)) return false;
-        if(chain.Completed<0) {
-            chain.Completed=Time.unscaledTime;
-            chain.At=chain.Completed+GatewayTiming.ExecutionDuration;
-            Effects.Target(actor,HackKind.BlackwallGateway,GatewayTiming.ExecutionDuration);
-            return true;
-        }
-        if(!GatewayTiming.CanExecute(chain.Completed,Time.unscaledTime)) return true;
+        if(!GatewayTiming.CanExecute(chain.Started,chain.At-chain.Started,Time.unscaledTime)) return true;
         if(!chain.Visited.Add(actor.ProfileId)) return false;
         var origin=actor.PlayerBones?.Ribcage?.Original?.position??actor.Position+Vector3.up;
         float damage=Math.Max(10000,actor.ActiveHealthController.GetBodyPartHealth(EBodyPart.Common,false).Current*10);
@@ -258,7 +259,7 @@ internal static class AiHacks {
             return !Physics.Raycast(origin,delta.normalized,Math.Max(0,delta.magnitude-.2f),mask,QueryTriggerInteraction.Ignore);
         });
         if(next==null) return false;
-        chain.Next=ActorRef.Of(next); chain.Started=Time.unscaledTime; chain.At=chain.Started+Plugin.GatewayHopTime.Value; chain.Completed=-1;
+        StartGatewayAnimation(chain,next);
         return true;
     }
     internal static void Reset() {

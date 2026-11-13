@@ -21,6 +21,7 @@ internal static class Runtime {
     internal static bool Active { get; private set; }
     internal static UiMode Mode;
     internal static bool BlockInput=>Active&&(Mode!=UiMode.None||Time.frameCount<=releaseFrame);
+    internal static bool ScannerLook=>Active&&Mode==UiMode.Scanner;
     internal static bool PreviewBreach;
     internal static BreachPuzzle? Puzzle;
     internal static DoorLease? Door;
@@ -40,6 +41,12 @@ internal static class Runtime {
     static int releaseFrame=-1,openedFrame;
     static float nextScan,nextWarning,lastTime;
     static bool puzzleHandled;
+    static readonly ScalarLease slowMotion=new();
+    static void SyncSlowMotion() {
+        float current=Time.timeScale;
+        float desired=slowMotion.Update(Active&&Mode==UiMode.Scanner&&InRaid&&Application.isFocused,current,Plugin.ScannerSpeed.Value);
+        if(Math.Abs(current-desired)>.000001f) Time.timeScale=desired;
+    }
     internal static readonly UploadQueue<ActorRef> Uploads=new();
     internal static ActorRef? UploadTarget=>Uploads.Current(Target)?.Target;
     internal static HackKind UploadKind=>Uploads.Current(Target)?.Kind??Selected;
@@ -48,7 +55,7 @@ internal static class Runtime {
     static bool ControlScanner=>Plugin.ScanKey.Value is KeyCode.LeftControl or KeyCode.RightControl;
     static bool ScanConflict(bool scanning) {
         foreach(var key in chordKeys) {
-            if(key==Plugin.ScanKey.Value||scanning&&(key==KeyCode.F||key==KeyCode.Escape||key==KeyCode.Mouse0)) continue;
+            if(key==Plugin.ScanKey.Value||scanning&&(key==KeyCode.F||key==KeyCode.Z||key==Plugin.RelicKey.Value||key==KeyCode.Escape||key==KeyCode.Mouse0)) continue;
             if(Input.GetKey(key)) return true;
         }
         return !scanning&&Math.Abs(Input.mouseScrollDelta.y)>.001f;
@@ -70,23 +77,26 @@ internal static class Runtime {
     internal static void Start() { Assets.Initialize(); OriginalFonts.Initialize(); lastTime=Time.unscaledTime; Active=true; }
     internal static void SetMode(UiMode mode) {
         if(mode==UiMode.None) {
-            if(Mode==UiMode.None&&!cursorOwned) return;
+            if(Mode==UiMode.None&&!cursorOwned) { SyncSlowMotion(); return; }
             Mode=mode; releaseFrame=Time.frameCount+2;
             if(cursorOwned) { Cursor.lockState=oldLock; Cursor.visible=oldCursor; cursorOwned=false; }
+            SyncSlowMotion();
             return;
         }
         if(!cursorOwned) { oldLock=Cursor.lockState; oldCursor=Cursor.visible; cursorOwned=true; }
         Mode=mode; openedFrame=Time.frameCount; ModeStarted=Time.unscaledTime;
         Singleton<GameWorld>.Instance?.MainPlayer?.HandsController?.TryCast<Player.FirearmController>()?.SetTriggerPressed(false);
         KeepCursor();
+        SyncSlowMotion();
     }
-    internal static void KeepCursor() { if(cursorOwned) { Cursor.lockState=CursorLockMode.None; Cursor.visible=true; } }
+    internal static void KeepCursor() { if(cursorOwned) { Cursor.lockState=ScannerLook?CursorLockMode.Locked:CursorLockMode.None; Cursor.visible=!ScannerLook; } }
     internal static void Tick() {
         if(!Active) return;
         try {
             Frames++;
             float now=Time.unscaledTime,delta=Math.Clamp(now-lastTime,0,.1f); lastTime=now;
-            if(!Plugin.Enabled.Value||!Application.isFocused) { Close(); CancelUploads(); scanGesture.Cancel(); AiHacks.Reset(); return; }
+            if(!Plugin.Enabled.Value||!Application.isFocused) { RelicNotice.Clear(); Close(); CancelUploads(); scanGesture.Cancel(); AiHacks.Reset(); return; }
+            if(Plugin.RelicKey.Value!=KeyCode.None&&Input.GetKeyDown(Plugin.RelicKey.Value)&&(!Cursor.visible||Mode==UiMode.Preview)) RelicNotice.Show();
             var current=Singleton<GameWorld>.Instance;
             if(!InRaid||current?.MainPlayer?.HealthController?.IsAlive!=true||current.MainPlayer.IsYourPlayer!=true) {
                 CancelUploads(); Target=null;
@@ -101,6 +111,7 @@ internal static class Runtime {
             if(Input.GetKeyDown(Plugin.PreviewKey.Value)) { if(Mode==UiMode.None) { Assets.Play("open"); SetMode(UiMode.Preview); } else Close(); }
             if(Mode!=UiMode.None&&Time.frameCount>openedFrame&&Input.GetKeyDown(KeyCode.Escape)) { Close(); return; }
             CheckScanChord();
+            if(Mode is UiMode.Scanner or UiMode.Preview&&Input.GetKeyDown(KeyCode.Z)) HackUi.ToggleData();
             bool scanReady=scanGesture.Step(now,Input.GetKey(Plugin.ScanKey.Value),!InRaid||Mode is UiMode.Preview or UiMode.Breach||Mode==UiMode.None&&Cursor.visible||ControlScanner&&ScanConflict(Mode==UiMode.Scanner),ControlScanner?.25:0);
             if(Mode==UiMode.None&&InRaid&&!Cursor.visible&&scanReady) { Assets.Play("scan"); SetMode(UiMode.Scanner); nextScan=0; }
             if(Mode==UiMode.Scanner) {
@@ -135,6 +146,7 @@ internal static class Runtime {
             }
             PreviewProgress=Math.Clamp((now-PreviewStarted)/HackRules.Upload(PreviewKind),0,1);
             KeepCursor();
+            SyncSlowMotion();
         } catch(Exception e) { Status=e.Message; Warn("Runtime",e); Close(); CancelUploads(); }
     }
     internal static void Upload() {
@@ -184,7 +196,7 @@ internal static class Runtime {
     internal static void Stop() {
         // Old native action lists can briefly retain callback delegates. Disable
         // this generation first so those callbacks cannot reopen its UI.
-        Active=false; CancelUploads(); scanGesture.Reset();
+        Active=false; CancelUploads(); scanGesture.Reset(); RelicNotice.Clear();
         foreach(Action step in new Action[]{Close,AiHacks.Reset,Effects.Clear,DoorHacking.Reset,Assets.Clear})
             try {step();} catch(Exception e) {Plugin.Logger?.LogWarning("Quickhack cleanup: "+e);}
     }

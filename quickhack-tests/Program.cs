@@ -93,8 +93,17 @@ foreach(float tick in new[]{.016f,.1f,.7f,5f}) {
     Check(executed[1].At-executed[0].At>=UploadQueue<string>.HandoffDuration+HackRules.Upload(HackKind.WeaponGlitch)-.001f,"Frame stalls cannot skip completion/move animations or upload the next program early");
 }
 Check(UploadAnimation.QueueMove(0)==0&&UploadAnimation.QueueMove(UploadAnimation.QueueMoveDuration)==1&&UploadAnimation.QueueMove(.1f)>.5f,"Original queue promotion uses its own quartic easing and settles at the main slot");
-Check(!GatewayTiming.CanExecute(-1,100)&&!GatewayTiming.CanExecute(10,10.4f)&&!GatewayTiming.CanExecute(10,11.24f)&&GatewayTiming.CanExecute(10,11.25f),"Blackwall deaths wait until upload completion and the entire body animation have finished");
-Check(GatewayTiming.ExecutionDuration>UploadAnimation.CompleteDuration,"Blackwall death cannot precede the original head completion track");
+foreach(float duration in new[]{.5f,1.2f,2f,5f}) {
+    Check(!GatewayTiming.CanExecute(-1,duration,100)&&!GatewayTiming.CanExecute(10,duration,10+duration-.01f)&&GatewayTiming.CanExecute(10,duration,10+duration),"Blackwall damage coincides exactly with the configured animation end; no extra upload or delay");
+}
+var timeLease=new ScalarLease();
+Check(timeLease.Update(true,1,.15f)==.15f&&timeLease.Update(true,.15f,.2f)==.2f&&timeLease.Update(false,.2f,1)==1,"Scanner slowdown updates settings and restores its original time scale on exit");
+Check(timeLease.Update(true,.5f,.2f)==.1f&&timeLease.Update(false,.1f,1)==.5f,"Scanner preserves an existing slow time scale");
+Check(timeLease.Update(true,0,.15f)==0&&timeLease.Update(false,0,1)==0,"Scanner cannot unpause an already paused game");
+timeLease.Update(true,1,.15f);
+Check(timeLease.Update(true,0,.15f)==0&&timeLease.Update(false,0,1)==0,"External pause takes ownership and survives scanner close");
+timeLease.Update(true,1,.15f);
+Check(timeLease.Update(true,.7f,.15f)==.7f&&timeLease.Update(false,.7f,1)==.7f,"External speed changes are preserved during scanner activity and shutdown");
 foreach(float step in new[]{.016f,.25f,.7f,3f}) {
     float sum=0,previous=0;
     for(float elapsed=step;previous<10;elapsed+=step) { sum+=CombatHackRules.HeatDamage(elapsed,previous); previous=elapsed; }

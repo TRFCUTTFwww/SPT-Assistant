@@ -1,4 +1,4 @@
-# CP2077 Quickhacks 独立原型 0.6.1
+# CP2077 Quickhacks 独立原型 0.6.2
 
 目标：SPT 5.0 / EFT 48558，BepInEx IL2CPP / .NET 10。插件名称 CP2077 Quickhacks，配置文件 `BepInEx/config/local.cp2077.quickhacks.cfg`。独立于 SPT Assistant，可与其及其内置黑墙脉冲共存。
 
@@ -63,10 +63,19 @@ Batch02 已证实所查 sfx_container.bnk 的 vfx_blackwall_hack_npc_upload 事�
 
 黑墙图集现在仅用于黑墙。其余七项使用各自生成的贴图与运动参数：过热为躯干向上升起的火焰，突触熔融为头部短促扩散电弧，义眼为眼部扫描线，武器故障为武器附近闪烁电弧，阻碍移动为腿部锁框，记忆清除为头部数字碎片，赛博精神病为头部红色脉冲。F10 预览采用同一贴图和参数；这些都是 Unity 重建效果，不是原版粒子的移植。
 
+0.6.2 改为扫描时隐藏并锁定鼠标指针，保留 EFT 原生 TurnX / TurnY / LookX / LookY 视角输入；移动、开火与其他命令仍由扫描器拦截。滚轮选择技能、F 上传、Z 切换右侧数据与破解页。F10 训练预览及门禁小游戏继续使用鼠标指针。
+
+扫描期间默认将打开前的游戏时间速度乘以 0.15；倍率可在配置或趣味功能的独立快速破解设置中调整。松开扫描键、ESC、失焦、死亡、离开战局、禁用与热更新均释放减速；若其他功能已更改时间速度或暂停，则保留外部设置。上传、界面动画和 RAM 回复仍使用真实时间。
+
+小键盘 0 显示四秒的“检测到 Relic 故障”提示，可在 F10 预览中使用，也可修改 Input / Relic notice key，设 None 禁用。提示采用已确认的原版文本、Relic 图标、通知边框和字体；排版与淡入淡出由 Unity 重建，尚缺原提示控件与绑定动画。未附加发作画面、伤害或音效。
+
+黑墙每跳选择目标后立即播放身体动画与红色头顶进度，动画结束同帧结算伤害并将下一目标带入动画，移除前置上传等待和额外 1.25 秒结算阶段。配置 Gameplay / Gateway hop duration 现在控制这一段动画本身的时长，默认 1.2 秒。
+
 ## 操作
 
 - **F10**：界面与无伤施放预览，可在主菜单打开。选择八种技能，点击「执行施放模拟」或按 F；点击右侧「入侵协议 · 门禁授权」检查代码矩阵。预览不选择或伤害 AI，不操作任何门。施放模拟启动后保留当次技能，即使切换列表选项也不会改变已开始的模拟。
-- **单独按住左 Ctrl 约 0.25 秒**：战局内扫描 AI，滚轮或鼠标选技能，**F** 上传。松开左 Ctrl 返回游戏。上传结束前目标离开视线、范围、战局，或玩家死亡、失焦会取消。
+- **单独按住左 Ctrl 约 0.25 秒**：战局内减速扫描 AI，鼠标转动视角，滚轮选技能，**F** 上传，**Z** 切换数据与破解页。松开左 Ctrl 返回游戏。上传结束前目标离开视线、范围、战局，或玩家死亡、失焦会取消。
+- **小键盘 0**：显示“检测到 Relic 故障”提示，约四秒后自动消失。
 - **ESC**：取消当前界面或尚未完成的门禁破解。关闭后恢复原光标状态；不修改时间倍率。
 - 热键、扫描范围、音量可在 BepInEx 配置修改；默认不占用原有黑墙 F11。
 
@@ -103,7 +112,7 @@ CardReader 按原 `_keyMap` 中唯一的成功触发器向当前战局 `Triggers
 - 首次从 0.1 / 0.2 迁移需要重启一次。若客户端正在运行，安装器会验证并排队完整安装包，启动隐藏安装进程等待这个客户端退出，再备份并安装；不会关闭游戏。安装状态见 `mod-updates/quickhacks-install-status.json`。之后使用同一加载器的更新可以在运行中安装。
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-Quickhacks.ps1 -GameRoot 'D:\SPT-5.0.0-48558' -ResourceRoot 'D:\CP2077_Quickhack_Resources_20261112' -BlackwallRoot 'D:\CP2077_Blackwall_Supplement_20261112' -Dotnet 'D:\SPT_Mod_Staging_20261027\dotnet-sdk\dotnet.exe' -HostReleaseRevision '3c728b5b0e7b5c8665597048f5c947e295b7ae23' -OutputDirectory 'D:\SPT_Mod_Staging_20261027\quickhacks-0.6.1-distinct-vfx' -Install
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-Quickhacks.ps1 -GameRoot 'D:\SPT-5.0.0-48558' -ResourceRoot 'D:\CP2077_Quickhack_Resources_20261112' -BlackwallRoot 'D:\CP2077_Blackwall_Supplement_20261112' -Dotnet 'D:\SPT_Mod_Staging_20261027\dotnet-sdk\dotnet.exe' -HostReleaseRevision '3c728b5b0e7b5c8665597048f5c947e295b7ae23' -OutputDirectory 'D:\SPT_Mod_Staging_20261027\quickhacks-0.6.2-scanner-relic' -Install
 ```
 
 脚本构建加载器与逻辑模块，运行离线检查，按本地资源清单逐项验证 SHA256 后打包。输出目录须为空；`-Install` 调用安装器，备份已有独立插件，先复制资源，再原子发布逻辑模块。分发包也可运行 Install.ps1 并指定 GameRoot。资源只保留在本地安装包，不提交源码仓库。

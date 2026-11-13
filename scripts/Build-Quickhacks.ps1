@@ -54,8 +54,10 @@ $audioMap=[ordered]@{
 foreach($pair in $audioMap.GetEnumerator()) { $files["$($pair.Key).wav"]=@($ResourceRoot,"$audioDir/$($pair.Value)") }
 $files['blackwall.png']=@($BlackwallRoot,'03_images/ep1/fx/blackwall/textures/blackwall_atlas.png')
 $files['death.wav']=@($BlackwallRoot,'04_audio/WAV_by_event/w_expl_blackwall_npc_death_gameplay {r}.wav')
+$files['relic_icon.png']=@($UiSupplementRoot,'06_atlas_parts/base/gameplay/gui/quests/assets/personal_link.inkatlas/1/ico_relic.png')
+$files['relic_bracket.png']=@($UiSupplementRoot,'06_atlas_parts/base/gameplay/gui/widgets/notifications/notification_assets.inkatlas/1/notification_bracket_cut_fg.png')
 $manifests=@{}
-foreach($root in @($ResourceRoot,$BlackwallRoot)) {
+foreach($root in @($ResourceRoot,$BlackwallRoot,$UiSupplementRoot)) {
     $lookup=@{}
     foreach($record in (Import-Csv -LiteralPath (Join-Path $root 'RESOURCE_MANIFEST.csv'))) { $lookup[$record.Path.Replace('\','/')]=$record.SHA256 }
     $manifests[$root]=$lookup
@@ -87,9 +89,9 @@ if($LASTEXITCODE -ne 0) { throw 'Original font rasterization failed.' }
 foreach($generated in (Get-ChildItem -LiteralPath $assets -File -Filter 'font_*')) {
     $packaged+=@{name=$generated.Name;bytes=$generated.Length;sha256=(Get-FileHash -LiteralPath $generated.FullName -Algorithm SHA256).Hash}
 }
-@{version='0.6.1';target='EFT 48558 / SPT 5.0';files=$packaged} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $payload 'asset-manifest.json') -Encoding UTF8
+@{version='0.6.2';target='EFT 48558 / SPT 5.0';files=$packaged} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $payload 'asset-manifest.json') -Encoding UTF8
 @{
-    version='0.6.1'
+    version='0.6.2'
     hostSha256=(Get-FileHash -LiteralPath (Join-Path $payload 'Local.Cp2077.Quickhacks.dll') -Algorithm SHA256).Hash
     coreSha256=(Get-FileHash -LiteralPath (Join-Path $payload 'runtime/Local.Cp2077.Quickhacks.Core.module') -Algorithm SHA256).Hash
 } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $payload 'release-manifest.json') -Encoding UTF8

@@ -58,7 +58,7 @@ internal static partial class HackUi {
             if(actor==null||!HeadPosition(actor,out var point,out var size)) continue;
             var queue=Runtime.Uploads.For(reference);
             var chain=infected.FirstOrDefault(c=>c.Ref==reference);
-            bool chainVisible=chain.Ref!=null&&(chain.Completed<0||Now-chain.Completed<UploadAnimation.CompleteDuration);
+            bool chainVisible=chain.Ref!=null;
             int slot=0;
             Vector2 Position(int index)=>index==0?point:point+new Vector2(35*size+(index-1)%8*28*size,(index-1)/8*32*size);
             float Size(int index)=>index==0?size:size*.6f;
@@ -76,10 +76,9 @@ internal static partial class HackUi {
                     wait+=HackRules.Upload(pending.Kind)+UploadQueue<ActorRef>.HandoffDuration;
                 }
             }
-            if(chainVisible) {
-                float completeAge=chain.Completed<0?-1:Now-chain.Completed;
-                float progress=completeAge<0?Math.Clamp((Now-chain.Started)/Math.Max(.01f,chain.At-chain.Started),0,1):1;
-                HeadBadge(Position(slot),Size(slot),HackKind.BlackwallGateway,progress,0,true,age:Now-chain.Started,completeAge:completeAge); slot++;
+            if(chainVisible&&!queue.Any(e=>e.Kind==HackKind.BlackwallGateway&&e.Completed>=0)) {
+                float progress=Math.Clamp((Now-chain.Started)/Math.Max(.01f,chain.At-chain.Started),0,1);
+                HeadBadge(Position(slot),Size(slot),HackKind.BlackwallGateway,progress,0,true,age:Now-chain.Started); slot++;
             }
             var states=Effects.Markers.Where(m=>m.Ref==reference&&!(chainVisible&&m.Kind==HackKind.BlackwallGateway)&&!queue.Any(e=>e.Kind==m.Kind&&e.Completed>=0)).OrderByDescending(m=>m.Start);
             int activeSlot=0;

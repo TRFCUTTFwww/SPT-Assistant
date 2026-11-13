@@ -22,7 +22,7 @@ internal static partial class HackUi {
     static Color Alpha(Color c,float a)=>new(c.r,c.g,c.b,c.a*a);
 
     internal static void Draw() {
-        if(Runtime.Mode==UiMode.None&&!Runtime.Uploading&&Effects.Markers.Count==0&&!AiHacks.HasGatewayUploads) return;
+        if(Runtime.Mode==UiMode.None&&!Runtime.Uploading&&Effects.Markers.Count==0&&!AiHacks.HasGatewayUploads&&!RelicNotice.Visible) return;
         var saved=GUI.matrix; var color=GUI.color; int depth=GUI.depth;
         try {
             GUI.depth=-500;
@@ -35,6 +35,7 @@ internal static partial class HackUi {
             if(Runtime.Mode==UiMode.Breach) Breach();
             else if(Runtime.Mode is UiMode.Scanner or UiMode.Preview) Scanner(Runtime.Mode==UiMode.Preview);
             TargetStatuses();
+            opacity=1; DrawRelicNotice();
         } catch(Exception e) { Runtime.Warn("Quickhack UI",e); }
         finally { GUI.matrix=saved; GUI.color=color; GUI.depth=depth; opacity=1; }
     }
@@ -82,6 +83,7 @@ internal static partial class HackUi {
         Line(r.xMax-cut,r.yMax,r.xMax,r.yMax-cut,accent); Line(r.xMax,r.y,r.xMax,r.yMax-cut,Alpha(accent,.35f));
     }
     static bool Click(Rect r,string id,bool sound=true) {
+        if(Runtime.ScannerLook) return false;
         bool over=r.Contains(Event.current.mousePosition);
         if(over&&Event.current.type==EventType.Repaint&&hovered!=id) {
             hovered=id; if(sound&&Now>=nextHover) { nextHover=Now+.07f; Assets.Play("hover"); }
@@ -104,6 +106,7 @@ internal static partial class HackUi {
     }
     // Measured against the user's 1920x1080 CP2077 recording (6s and 18s).
     static bool showTargetData=true;
+    internal static void ToggleData()=>showTargetData=!showTargetData;
     static readonly Color ScanCyan=new(.369f,.965f,1), ScanRed=new(1,.31f,.29f), ScanPanel=new(.07f,.025f,.06f,.9f);
     static void ScanSurface(bool preview) {
         Fill(canvas,new Color(.015f,.06f,.04f,preview?.96f:.14f));
@@ -208,6 +211,7 @@ internal static partial class HackUi {
         }
         Text(new Rect(x+14,y-36,170,30),"数据",showTargetData?ScanCyan:ScanRed,22);
         Text(new Rect(x+221,y-36,180,30),"破解",showTargetData?ScanRed:ScanCyan,22);
+        Text(new Rect(x+w-34,y-33,26,24),"Z",Alpha(ScanCyan,.65f),14,1,TextAnchor.MiddleCenter);
         if(Click(new Rect(x,y-46,207,46),"data-tab")) showTargetData=true;
         if(Click(new Rect(x+207,y-46,207,46),"hacks-tab")) showTargetData=false;
         if(showTargetData) {
