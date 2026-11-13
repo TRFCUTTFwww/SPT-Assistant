@@ -143,6 +143,7 @@ Check(new[]{"Enemies","Allies","Warns","Neutrals","LastHostilityStatus"}.All(n=>
 Check(hostility.Methods.Any(m=>m.Name=="UpdatePlayerHostilityCollection"&&m.Parameters.Count==2),"Temporary hostility uses the same native transition as Assistant's friend-to-enemy action");
 Check(memoryType.Properties.Single(p=>p.Name=="GoalEnemy").SetMethod.Parameters.Single().ParameterType.Name=="EnemyInfo","Cyberpsychosis can preserve a commanded goal through the native setter");
 Check(memoryType.Methods.Any(m=>m.Name=="AddEnemyInfo"&&m.Parameters.Count==3&&m.Parameters[1].ParameterType.Name=="BotGroupEnemyInfo"),"Cyberpsychosis registers native memory and its shared enemy position");
+Check(game.MainModule.Types.Single(t=>t.Name=="BotEnemiesController").Methods.Any(m=>m.Name=="SetInfo"&&m.Parameters.Count==2&&m.Parameters[0].ParameterType.Name=="IPlayer"&&m.Parameters[1].ParameterType.Name=="EnemyInfo"),"Factory-created squad enemies use the native dictionary/observation registration entry point");
 Check(game.MainModule.Types.Single(t=>t.Name=="BotEnemiesController").Methods.Any(m=>m.Name=="UpdateFor"&&m.Parameters.Count==2&&m.Parameters[1].ParameterType.FullName=="System.Boolean"),"Commanded enemy participates in native observation updates");
 var firearm=game.MainModule.Types.Single(t=>t.FullName=="EFT.Player").NestedTypes.Single(t=>t.Name=="FirearmController");
 Check(firearm.Methods.Any(m=>m.Name=="SetTriggerPressed"&&m.Parameters.Count==1&&m.Parameters[0].ParameterType.FullName=="System.Boolean"),"Weapon glitch uses the dedicated trigger-press entry point");

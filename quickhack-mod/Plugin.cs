@@ -12,7 +12,7 @@ namespace LocalQuickhacks;
 
 internal static class Plugin {
     internal static ManualLogSource Logger = null!;
-    internal static ConfigEntry<KeyCode> ScanKey = null!, PreviewKey = null!, RelicKey = null!;
+    internal static ConfigEntry<KeyCode> ScanKey = null!, PreviewKey = null!;
     internal static ConfigEntry<bool> Enabled = null!;
     internal static ConfigEntry<float> Range = null!, Volume = null!;
     internal static ConfigEntry<float> ScannerSpeed = null!;
@@ -24,7 +24,6 @@ internal static class Plugin {
         Enabled = Config.Bind("General", "Enabled", true, "启用独立快速破解 Mod。");
         ScanKey = Config.Bind("Input", "Scanner key", KeyCode.LeftControl, "按住扫描，鼠标转动视角，滚轮选技能，F 上传。");
         PreviewKey = Config.Bind("Input", "Preview key", KeyCode.F10, "打开界面与无伤害施放预览，支持主菜单。");
-        RelicKey = Config.Bind("Input", "Relic notice key", KeyCode.Keypad0, "显示检测到 Relic 故障提示；默认数字小键盘 0。None 禁用。");
         ScannerSpeed = Config.Bind("Gameplay", "Scanner time factor", .15f, new ConfigDescription("快速破解扫描时的时间倍率（相对于打开前的速度），退出后恢复。1 为正常速度。",new AcceptableValueRange<float>(.02f,1)));
         Range = Config.Bind("General", "Range", 60f, new ConfigDescription("AI 扫描与上传距离（米）。", new AcceptableValueRange<float>(5,150)));
         Volume = Config.Bind("Audio", "Volume", .6f, new ConfigDescription("界面和破解音效音量。", new AcceptableValueRange<float>(0,1)));
@@ -88,7 +87,7 @@ public static class QuickhackApi {
     public static bool Active=>Runtime.Active;
     public static bool IsHostile(BotOwner owner,IPlayer target)=>Runtime.Active&&AiHacks.IsHostile(owner,target);
     // Shared BepInEx types keep the optional Assistant panel independent of this assembly.
-    public static ConfigEntryBase[] GetSettings()=>[Plugin.Enabled,Plugin.InfiniteRam,Plugin.Range,Plugin.ScannerSpeed,Plugin.RelicKey,Plugin.GatewayRange,Plugin.GatewayTargets,Plugin.GatewayHopTime,Plugin.Volume];
+    public static ConfigEntryBase[] GetSettings()=>[Plugin.Enabled,Plugin.InfiniteRam,Plugin.Range,Plugin.ScannerSpeed,Plugin.GatewayRange,Plugin.GatewayTargets,Plugin.GatewayHopTime,Plugin.Volume];
     public static string Version=>"0.6.2";
     public static int Frames=>Runtime.Frames;
     public static string Diagnostics()=>System.Text.Json.JsonSerializer.Serialize(new { version=Version,frames=Frames,mode=Runtime.Mode.ToString(),status=Runtime.Status,menuAppends=DoorHacking.MenuCount,aiEffects=AiHacks.ActiveCount,uploading=Runtime.Uploading });

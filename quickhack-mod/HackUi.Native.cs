@@ -22,7 +22,7 @@ internal static partial class HackUi {
     static Color Alpha(Color c,float a)=>new(c.r,c.g,c.b,c.a*a);
 
     internal static void Draw() {
-        if(Runtime.Mode==UiMode.None&&!Runtime.Uploading&&Effects.Markers.Count==0&&!AiHacks.HasGatewayUploads&&!RelicNotice.Visible) return;
+        if(Runtime.Mode==UiMode.None&&!Runtime.Uploading&&Effects.Markers.Count==0&&!AiHacks.HasGatewayUploads) return;
         var saved=GUI.matrix; var color=GUI.color; int depth=GUI.depth;
         try {
             GUI.depth=-500;
@@ -35,7 +35,6 @@ internal static partial class HackUi {
             if(Runtime.Mode==UiMode.Breach) Breach();
             else if(Runtime.Mode is UiMode.Scanner or UiMode.Preview) Scanner(Runtime.Mode==UiMode.Preview);
             TargetStatuses();
-            opacity=1; DrawRelicNotice();
         } catch(Exception e) { Runtime.Warn("Quickhack UI",e); }
         finally { GUI.matrix=saved; GUI.color=color; GUI.depth=depth; opacity=1; }
     }

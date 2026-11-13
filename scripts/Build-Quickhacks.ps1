@@ -54,8 +54,6 @@ $audioMap=[ordered]@{
 foreach($pair in $audioMap.GetEnumerator()) { $files["$($pair.Key).wav"]=@($ResourceRoot,"$audioDir/$($pair.Value)") }
 $files['blackwall.png']=@($BlackwallRoot,'03_images/ep1/fx/blackwall/textures/blackwall_atlas.png')
 $files['death.wav']=@($BlackwallRoot,'04_audio/WAV_by_event/w_expl_blackwall_npc_death_gameplay {r}.wav')
-$files['relic_icon.png']=@($UiSupplementRoot,'06_atlas_parts/base/gameplay/gui/quests/assets/personal_link.inkatlas/1/ico_relic.png')
-$files['relic_bracket.png']=@($UiSupplementRoot,'06_atlas_parts/base/gameplay/gui/widgets/notifications/notification_assets.inkatlas/1/notification_bracket_cut_fg.png')
 $manifests=@{}
 foreach($root in @($ResourceRoot,$BlackwallRoot,$UiSupplementRoot)) {
     $lookup=@{}

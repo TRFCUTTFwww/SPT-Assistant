@@ -55,7 +55,7 @@ internal static class Runtime {
     static bool ControlScanner=>Plugin.ScanKey.Value is KeyCode.LeftControl or KeyCode.RightControl;
     static bool ScanConflict(bool scanning) {
         foreach(var key in chordKeys) {
-            if(key==Plugin.ScanKey.Value||scanning&&(key==KeyCode.F||key==KeyCode.Z||key==Plugin.RelicKey.Value||key==KeyCode.Escape||key==KeyCode.Mouse0)) continue;
+            if(key==Plugin.ScanKey.Value||scanning&&(key==KeyCode.F||key==KeyCode.Z||key==KeyCode.Escape||key==KeyCode.Mouse0)) continue;
             if(Input.GetKey(key)) return true;
         }
         return !scanning&&Math.Abs(Input.mouseScrollDelta.y)>.001f;
@@ -95,8 +95,7 @@ internal static class Runtime {
         try {
             Frames++;
             float now=Time.unscaledTime,delta=Math.Clamp(now-lastTime,0,.1f); lastTime=now;
-            if(!Plugin.Enabled.Value||!Application.isFocused) { RelicNotice.Clear(); Close(); CancelUploads(); scanGesture.Cancel(); AiHacks.Reset(); return; }
-            if(Plugin.RelicKey.Value!=KeyCode.None&&Input.GetKeyDown(Plugin.RelicKey.Value)&&(!Cursor.visible||Mode==UiMode.Preview)) RelicNotice.Show();
+            if(!Plugin.Enabled.Value||!Application.isFocused) { Close(); CancelUploads(); scanGesture.Cancel(); AiHacks.Reset(); return; }
             var current=Singleton<GameWorld>.Instance;
             if(!InRaid||current?.MainPlayer?.HealthController?.IsAlive!=true||current.MainPlayer.IsYourPlayer!=true) {
                 CancelUploads(); Target=null;
@@ -196,7 +195,7 @@ internal static class Runtime {
     internal static void Stop() {
         // Old native action lists can briefly retain callback delegates. Disable
         // this generation first so those callbacks cannot reopen its UI.
-        Active=false; CancelUploads(); scanGesture.Reset(); RelicNotice.Clear();
+        Active=false; CancelUploads(); scanGesture.Reset();
         foreach(Action step in new Action[]{Close,AiHacks.Reset,Effects.Clear,DoorHacking.Reset,Assets.Clear})
             try {step();} catch(Exception e) {Plugin.Logger?.LogWarning("Quickhack cleanup: "+e);}
     }

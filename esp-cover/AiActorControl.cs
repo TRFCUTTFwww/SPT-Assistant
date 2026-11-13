@@ -86,6 +86,10 @@ internal static partial class AiActorControl {
  static void Goal(BotMemory __instance,ref EnemyInfo __0){if(__0!=null&&Ignored(__instance._owner,__0.Person))__0=null!;}
  internal static BotHostilityStatus? NativeGroupStatus(BotsGroup from,IPlayer target){
   if(HiddenFromAi(target))return BotHostilityStatus.Neutral;
+  // Native squad membership is only the default. Keep the group registry alive
+  // for explicit per-actor enemies; personal checks still protect other members.
+  var members=from._members;
+  if(members!=null)for(int i=0;i<members.Count;i++)if(members[i] is {} member&&member.GetPlayer is {} actor&&actor.Pointer!=target.Pointer&&ForcedEnemy(member,target))return BotHostilityStatus.Enemy;
   if(NativeAiGroups.Same(from,target))return BotHostilityStatus.Ally;
   var to=NativeAiGroups.Group(target);return to!=null&&relations.Teams.TryGetValue((from.Id,to.Id),out bool hostile)?hostile?BotHostilityStatus.Enemy:BotHostilityStatus.Neutral:null;
  }
@@ -93,7 +97,7 @@ internal static partial class AiActorControl {
  static EnemyInfo EnsureEnemy(BotOwner owner,Player target){
   var enemies=owner.EnemiesController??throw new ArgumentException("AI 敌人控制器尚未就绪。");
   var group=owner.BotsGroup??throw new ArgumentException("AI 没有队伍。");
-  AiNativeRelations.EnsureEnemyEntry(group,target);
+  if(ForcedEnemy(owner,target))AiNativeRelations.Set(group,target,true);
   return LocalAiCombat.NativeEnemyMemory.EnsurePersonal(owner,target,AiNativeRelations.EnsureEnemyEntry(group,target));
  }
  internal static void KnowPosition(BotOwner owner,Player target){var info=EnsureEnemy(owner,target);info.PersonalLastPos=target.Position;info.GroupInfo.EnemyLastPosition=target.Position;info.HaveSeenPersonal=true;info.PersonalLastSeenTime=Time.time;}
