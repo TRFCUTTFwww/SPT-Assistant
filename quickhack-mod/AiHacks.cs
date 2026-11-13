@@ -19,6 +19,7 @@ internal static class AiHacks {
         internal ActorRef Next=null!;
         internal IntPtr World;
         internal float At;
+        internal float Started;
         internal readonly HashSet<string> Visited=[];
     }
     static readonly Dictionary<IntPtr,Madness> madness=[];
@@ -35,6 +36,8 @@ internal static class AiHacks {
     [ThreadStatic] static BotOwner? evaluating;
     static float nextMadness;
     internal static int ActiveCount=>madness.Count+blind.Count+jammed.Count+wiped.Count+movement.Count+chains.Count;
+    internal static IEnumerable<(ActorRef Ref,float Started,float At)> GatewayUploads=>chains.Select(c=>(c.Next,c.Started,c.At));
+    internal static bool HasGatewayUploads=>chains.Count>0;
     internal static void Install(Harmony h) {
         void Patch(Type t,string method,string? before=null,string? after=null,string? final=null) {
             var m=AccessTools.Method(t,method); if(m==null) return;
@@ -47,6 +50,8 @@ internal static class AiHacks {
         foreach(string m in new[]{"ShallKnowEnemy","ShallKnowEnemyLate"}) Patch(typeof(EnemyInfo),m,after:nameof(Know));
         // Scope same-squad overrides to the currently evaluating bot.
         Patch(typeof(BotOwner),"UpdateManual",before:nameof(BeforeOwner),final:nameof(AfterOwner));
+        // Run after optional AI management prefixes that reject same-squad goals.
+        h.Patch(AccessTools.PropertySetter(typeof(BotMemory),"GoalEnemy"),prefix:new HarmonyMethod(typeof(AiHacks),nameof(KeepMadGoal)) { priority=Priority.Last });
         h.Patch(AccessTools.Method(typeof(Player.FirearmController),"SetTriggerPressed",[typeof(bool)]),prefix:new HarmonyMethod(typeof(AiHacks),nameof(AllowTrigger)));
         // CanPressTrigger is an IL2CPP shared constant-return body in EFT 48558.
         // Detouring it also intercepts hundreds of unrelated object types.
@@ -56,7 +61,7 @@ internal static class AiHacks {
     static bool Mad(BotOwner? owner)=>owner!=null&&madness.TryGetValue(owner.Pointer,out var m)&&m.Ref.Resolve()!=null&&Time.unscaledTime<m.Until;
     static bool IsAi(IPlayer? player)=>player!=null&&!player.IsYourPlayer&&player.AIData?.BotOwner!=null;
     static bool MadTarget(IPlayer? target)=>target!=null&&Mad(target.AIData?.BotOwner);
-    static void IsEnemy(BotEnemiesController __instance,IPlayer __0,ref bool __result) { if(IsAi(__0)&&(Mad(__instance._owner)||MadTarget(__0))) __result=true; }
+    static void IsEnemy(BotEnemiesController __instance,IPlayer __0,ref bool __result) { if(IsAi(__0)&&__instance._owner?.GetPlayer?.Pointer!=__0.Pointer&&(Mad(__instance._owner)||MadTarget(__0))) __result=true; }
     static bool GroupRule(BotsGroup group,IPlayer target)=>IsAi(target)&&(MadTarget(target)||evaluating?.BotsGroup?.Pointer==group.Pointer&&Mad(evaluating));
     static void GroupEnemy(BotsGroup __instance,IPlayer __0,ref bool __result) { if(GroupRule(__instance,__0)) __result=true; }
     static void GroupAlly(BotsGroup __instance,IPlayer __0,ref bool __result) { if(GroupRule(__instance,__0)) __result=false; }
@@ -69,6 +74,11 @@ internal static class AiHacks {
     }
     static void BeforeOwner(BotOwner __instance,out BotOwner? __state) { __state=evaluating; evaluating=__instance; }
     static void AfterOwner(BotOwner? __state) { evaluating=__state; }
+    static void KeepMadGoal(BotMemory __instance,ref EnemyInfo __0) {
+        var owner=__instance._owner;
+        if(!Mad(owner)||!madness.TryGetValue(owner!.Pointer,out var state)||state.Last?.Person?.TryCast<Player>() is not {} target||target.HealthController?.IsAlive!=true) return;
+        __0=state.Last;
+    }
     static bool Vision(EnemyInfo __instance) {
         var owner=__instance.Owner;
         if(!Timed(blind,owner)&&!Timed(wiped,owner)) return true;
@@ -98,9 +108,11 @@ internal static class AiHacks {
             else madness[owner.Pointer]=new Madness { Ref=reference,Owner=owner,Until=Time.unscaledTime+20,Attack=owner.Memory.AttackImmediately,Peace=owner.Memory.IsPeace,Goal=owner.Memory.GoalEnemy };
             nextMadness=0;
         } else {
-            chains.Add(new Chain { Next=reference,World=reference.World,At=Time.unscaledTime+.5f });
+            chains.Add(new Chain { Next=reference,World=reference.World,Started=Time.unscaledTime,At=Time.unscaledTime+.5f });
         }
-        Assets.Play(HackRules.Icon(kind)); Effects.Target(actor,kind); return result;
+        Assets.Play(HackRules.Icon(kind));
+        if(kind!=HackKind.BlackwallGateway) Effects.Target(actor,kind);
+        return result;
     }
     static void Forget(BotOwner owner) {
         var memory=owner.Memory; if(memory==null) return;
@@ -141,19 +153,26 @@ internal static class AiHacks {
     static void Direct(Madness state) {
         var actor=state.Ref.Resolve(); var owner=state.Owner;
         if(actor==null||owner.Memory==null||owner.BotsGroup==null||owner.EnemiesController==null) return;
-        var target=Bots().Where(p=>p.Pointer!=actor.Pointer).OrderBy(p=>(p.Position-actor.Position).sqrMagnitude).FirstOrDefault();
-        if(target==null||Vector3.Distance(target.Position,actor.Position)>80) return;
+        var target=Bots().Where(p=>p.Pointer!=actor.Pointer&&(p.Position-actor.Position).sqrMagnitude<=80*80)
+            .OrderByDescending(p=>p.AIData?.BotOwner?.BotsGroup?.Pointer==owner.BotsGroup.Pointer)
+            .ThenBy(p=>(p.Position-actor.Position).sqrMagnitude*(state.Last?.Person?.Pointer==p.Pointer?.8f:1f)).FirstOrDefault();
+        if(target==null) { state.Last=null; return; }
         var previous=evaluating; evaluating=owner;
         try {
             EnemyInfo info;
             if(owner.EnemiesController.EnemyInfos.ContainsKey(target)) info=owner.EnemiesController.EnemyInfos[target];
             else {
-                info=owner.EnemiesController.AddNew(owner.BotsGroup,target,new BotGroupEnemyInfo(target,owner.BotsGroup));
+                var shared=new BotGroupEnemyInfo(target,owner.BotsGroup);
+                owner.Memory.AddEnemyInfo(target,shared,false);
+                info=owner.EnemiesController.EnemyInfos.ContainsKey(target)?owner.EnemiesController.EnemyInfos[target]:owner.EnemiesController.AddNew(owner.BotsGroup,target,shared);
                 state.Created.Add((target,info.Pointer));
             }
             info.SetIgnoreState(false); info.IgnoreUntilAggression=false;
             info.PersonalLastPos=target.Position;
-            owner.Memory.IsPeace=false; owner.Memory.AttackImmediately=true; owner.Memory.GoalEnemy=info; state.Last=info;
+            info.GroupInfo.EnemyLastPosition=target.Position;
+            state.Last=info;
+            owner.EnemiesController.UpdateFor(info,true);
+            owner.Memory.IsPeace=false; owner.Memory.AttackImmediately=true; owner.Memory.GoalEnemy=info;
         } finally { evaluating=previous; }
     }
     static void Restore(Madness state) {
@@ -185,18 +204,19 @@ internal static class AiHacks {
         actor.ActiveHealthController.ApplyDamage(EBodyPart.Head,damage,info);
         if(actor.HealthController.IsAlive) return false;
         Assets.Play("death");
-        if(chain.Visited.Count>=5) return false;
+        if(chain.Visited.Count>=Plugin.GatewayTargets.Value) return false;
         int mask=LayerMask.GetMask("HighPolyCollider","Terrain","LowPolyCollider"); if(mask==0) return false;
-        var next=Bots().Where(p=>!chain.Visited.Contains(p.ProfileId)&&Vector3.Distance(p.Position,origin)<8).OrderBy(p=>(p.Position-origin).sqrMagnitude).FirstOrDefault(p=>{
+        var next=Bots().Where(p=>!chain.Visited.Contains(p.ProfileId)&&!Protected(p)&&!chains.Any(c=>c!=chain&&c.Next.Pointer==p.Pointer)&&Vector3.Distance(p.Position,origin)<=Plugin.GatewayRange.Value).OrderBy(p=>(p.Position-origin).sqrMagnitude).FirstOrDefault(p=>{
             var delta=(p.PlayerBones?.Ribcage?.Original?.position??p.Position+Vector3.up)-origin;
             return !Physics.Raycast(origin,delta.normalized,Math.Max(0,delta.magnitude-.2f),mask,QueryTriggerInteraction.Ignore);
         });
         if(next==null) return false;
-        chain.Next=ActorRef.Of(next); chain.At=Time.unscaledTime+.9f;
+        chain.Next=ActorRef.Of(next); chain.Started=Time.unscaledTime; chain.At=chain.Started+Plugin.GatewayHopTime.Value;
         return true;
     }
     internal static void Reset() {
-        foreach(var state in madness.Values.ToArray()) Restore(state);
+        var originals=madness.Values.ToArray(); madness.Clear();
+        foreach(var state in originals) Restore(state);
         foreach(var state in movement.Values.ToArray()) ReleaseMovement(state);
         madness.Clear(); blind.Clear(); jammed.Clear(); wiped.Clear(); movement.Clear(); chains.Clear(); evaluating=null;
         Effects.ForgetAll();

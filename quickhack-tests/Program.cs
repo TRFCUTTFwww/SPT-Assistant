@@ -93,6 +93,10 @@ var mover=game.MainModule.Types.Single(t=>t.Name=="BotMover");
 Check(new[]{"Pause","_pauseEndTime"}.All(n=>mover.Properties.Any(p=>p.Name==n)),"Movement lock has reversible native pause state");
 Check(new[]{"ManualUpdate","ManualFixedUpdate"}.All(n=>mover.Methods.Count(m=>m.Name==n)==1),"Movement patches have unique native entry points");
 Check(game.MainModule.Types.Single(t=>t.FullName=="EFT.BotMemory").Methods.Any(m=>m.Name=="DeleteInfoAboutEnemy"&&m.Parameters.Count==1),"Memory wipe uses native personal enemy-memory removal");
+var memoryType=game.MainModule.Types.Single(t=>t.FullName=="EFT.BotMemory");
+Check(memoryType.Properties.Single(p=>p.Name=="GoalEnemy").SetMethod.Parameters.Single().ParameterType.Name=="EnemyInfo","Cyberpsychosis can preserve a commanded goal through the native setter");
+Check(memoryType.Methods.Any(m=>m.Name=="AddEnemyInfo"&&m.Parameters.Count==3&&m.Parameters[1].ParameterType.Name=="BotGroupEnemyInfo"),"Cyberpsychosis registers native memory and its shared enemy position");
+Check(game.MainModule.Types.Single(t=>t.Name=="BotEnemiesController").Methods.Any(m=>m.Name=="UpdateFor"&&m.Parameters.Count==2&&m.Parameters[1].ParameterType.FullName=="System.Boolean"),"Commanded enemy participates in native observation updates");
 var firearm=game.MainModule.Types.Single(t=>t.FullName=="EFT.Player").NestedTypes.Single(t=>t.Name=="FirearmController");
 Check(firearm.Methods.Any(m=>m.Name=="SetTriggerPressed"&&m.Parameters.Count==1&&m.Parameters[0].ParameterType.FullName=="System.Boolean"),"Weapon glitch uses the dedicated trigger-press entry point");
 if(args.Length>1) {

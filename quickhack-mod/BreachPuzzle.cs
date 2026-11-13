@@ -93,6 +93,8 @@ internal sealed class BreachPuzzle {
 
 internal enum HackKind { RebootOptics, WeaponGlitch, CrippleMovement, MemoryWipe, Cyberpsychosis, BlackwallGateway }
 internal static class HackRules {
+    internal const float GatewayRange=25,GatewayHopTime=1.2f;
+    internal const int GatewayTargets=5;
     internal static readonly HackKind[] All=Enum.GetValues<HackKind>();
     internal static string Name(HackKind kind) => kind switch {
         HackKind.RebootOptics=>"重启义眼", HackKind.WeaponGlitch=>"武器故障", HackKind.CrippleMovement=>"阻碍移动",

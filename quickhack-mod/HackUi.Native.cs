@@ -22,7 +22,7 @@ internal static partial class HackUi {
     static Color Alpha(Color c,float a)=>new(c.r,c.g,c.b,c.a*a);
 
     internal static void Draw() {
-        if(Runtime.Mode==UiMode.None&&!Runtime.Uploading&&Effects.Markers.Count==0) return;
+        if(Runtime.Mode==UiMode.None&&!Runtime.Uploading&&Effects.Markers.Count==0&&!AiHacks.HasGatewayUploads) return;
         var saved=GUI.matrix; var color=GUI.color; int depth=GUI.depth;
         try {
             GUI.depth=-500;
@@ -119,7 +119,7 @@ internal static partial class HackUi {
     }
     static void Scanner(bool preview) {
         ScanSurface(preview);
-        Text(new Rect(746,110,500,29),$"网络接入仓 RAM: {Runtime.Ram:0}/24",Alpha(ScanRed,.72f),22);
+        Text(new Rect(746,110,500,29),Plugin.InfiniteRam.Value?"网络接入仓 RAM: 无限":$"网络接入仓 RAM: {Runtime.Ram:0}/24",Alpha(ScanRed,.72f),22);
         const float cell=14,gap=4;
         const float ramLeft=746;
         Line(720,140,1230,140,Alpha(ScanRed,.3f));
@@ -130,7 +130,7 @@ internal static partial class HackUi {
             if(available) Image(r,"qh_memory_small_bg",Alpha(ScanCyan,reserved?.32f:1),true);
             Image(r,"qh_memory_small_fg",available?Alpha(ScanCyan,.7f):Alpha(ScanRed,.45f),true);
         }
-        if(Runtime.Ram<HackRules.Cost(Runtime.Selected)) {
+        if(!Runtime.CanAfford(Runtime.Selected)) {
             Fill(new Rect(746,207,428,30),Alpha(ScanRed,.16f));
             Text(new Rect(754,207,415,29),"可用 RAM 不足",ScanRed,21);
         }
@@ -149,7 +149,7 @@ internal static partial class HackUi {
             float offset=selected?22:i%3==2?-7:0;
             var row=new Rect(x+offset+(1-reveal)*15,y,w-(selected?22:0),55);
             bool over=row.Contains(Event.current.mousePosition);
-            bool enough=Runtime.Ram>=HackRules.Cost(kind);
+            bool enough=Runtime.CanAfford(kind);
             Color accent=enough?ScanCyan:ScanRed;
             Color c=Alpha(accent,selected?1:over?.9f:.73f);
             Fill(new Rect(row.x+3,row.y+2,row.width-8,row.height-4),enough?new Color(.015f,.045f,.06f,.76f):new Color(.24f,.025f,.035f,.72f));
@@ -160,7 +160,7 @@ internal static partial class HackUi {
                 float flash=Math.Clamp(1-(Now-selectedAt)/.16f,0,1);
                 Fill(row,Alpha(accent,flash*.15f));
             }
-            Text(new Rect(row.x+23,y+1,row.width-117,28),HackRules.Name(kind),c,23);
+            Text(new Rect(row.x+23,y+1,row.width-117,28),HackRules.Name(kind),c,21);
             string state=Runtime.Uploading&&Runtime.UploadKind==kind?"正在上传":enough?"就绪":"可用 RAM 不足";
             float stateWidth=state.Length*14+8;
             Frame(new Rect(row.x+24,y+32,stateWidth,17),Alpha(c,.6f));
@@ -178,7 +178,7 @@ internal static partial class HackUi {
         if(preview&&Event.current.type==EventType.KeyDown&&Event.current.keyCode==KeyCode.F) { Runtime.PreviewCast(); Event.current.Use(); }
         ScanDetails(preview,actor);
         // Ordinary scanner text has no centre-screen upload card in the source HUD.
-        if(!string.IsNullOrEmpty(Runtime.Status)) Text(new Rect(690,877,540,44),Runtime.Status,Alpha(ScanCyan,.7f),15,0,TextAnchor.MiddleCenter);
+        if(!string.IsNullOrEmpty(Runtime.Status)&&Runtime.StatusAlpha>0) Text(new Rect(690,877,540,44),Runtime.Status,Alpha(ScanCyan,.7f*Runtime.StatusAlpha),15,0,TextAnchor.MiddleCenter);
         if(preview) {
             if(Button(new Rect(1380,864,425,42),"01","入侵协议 · 门禁授权",Yellow,"breach-preview")) Runtime.OpenPreviewBreach();
             if(Button(new Rect(1555,964,250,40),"ESC","退出预览",ScanRed,"close-scanner")) Runtime.Close();
@@ -209,14 +209,15 @@ internal static partial class HackUi {
             Text(new Rect(x+20,y+18,w-40,22),"扫描结果",ScanRed,15);
             Text(new Rect(x+20,y+52,w-40,67),preview?"训练目标":actor?.Profile?.Nickname??"未识别目标",Yellow,27);
             Text(new Rect(x+20,y+130,w-40,25),"人物资料",ScanRed,15);
-            Text(new Rect(x+20,y+170,w-40,27),preview?"模拟链路":actor!=null?"本地 AI":"等待扫描",ScanCyan,20);
+            string faction=preview?"USEC":actor?.Profile?.Side switch { EFT.EPlayerSide.Bear=>"BEAR", EFT.EPlayerSide.Usec=>"USEC", EFT.EPlayerSide.Savage=>"SCAV（拾荒者）", _=>"未知" };
+            Text(new Rect(x+20,y+170,w-40,27),actor!=null||preview?"阵营："+faction:"等待扫描",ScanCyan,20);
             Text(new Rect(x+20,y+224,w-40,23),"距离",ScanRed,15);
             Text(new Rect(x+20,y+261,w-40,29),preview?"—":actor!=null?Vector3.Distance(actor.Position,Runtime.Camera!.transform.position).ToString("F1")+" m":"—",ScanCyan,23,2);
         } else {
             Text(new Rect(x+20,y+18,w-70,34),HackRules.Name(Runtime.Selected),ScanRed,23);
             Image(new Rect(x+w-58,y+18,33,33),HackRules.Icon(Runtime.Selected),ScanRed);
             Text(new Rect(x+20,y+68,w-40,22),HackRules.Category(Runtime.Selected)+"快速破解",Alpha(ScanRed,.65f),14);
-            Text(new Rect(x+20,y+112,w-40,25),Runtime.Selected==HackKind.BlackwallGateway?"传播上限：5 个目标":$"持续时间：{HackRules.Duration(Runtime.Selected):0} 秒",new Color(.78f,.76f,.76f),18);
+            Text(new Rect(x+20,y+112,w-40,25),Runtime.Selected==HackKind.BlackwallGateway?$"每跳 {Plugin.GatewayRange.Value:0} 米 · 最多 {Plugin.GatewayTargets.Value} 个目标":$"持续时间：{HackRules.Duration(Runtime.Selected):0} 秒",new Color(.78f,.76f,.76f),18);
             Text(new Rect(x+20,y+143,w-40,25),$"上传时间：{HackRules.Upload(Runtime.Selected):0.0} 秒",new Color(.78f,.76f,.76f),18);
             Line(x+20,y+183,x+w-20,y+183,Alpha(ScanRed,.25f));
             Text(new Rect(x+20,y+205,w-40,92),HackRules.Description(Runtime.Selected),ScanRed,18);

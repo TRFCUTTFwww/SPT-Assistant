@@ -1,4 +1,4 @@
-# CP2077 Quickhacks 独立原型 0.5.2
+# CP2077 Quickhacks 独立原型 0.5.3
 
 目标：SPT 5.0 / EFT 48558，BepInEx IL2CPP / .NET 10。插件名称 CP2077 Quickhacks，配置文件 `BepInEx/config/local.cp2077.quickhacks.cfg`。独立于 SPT Assistant，可与其及其内置黑墙脉冲共存。
 
@@ -46,6 +46,11 @@ Batch02 已证实所查 sfx_container.bnk 的 vfx_blackwall_hack_npc_upload 事�
 
 新增构建依赖为 Python 3、Pillow、fontTools 及协作 UI 补包，可通过 UiSupplementRoot、Python、PythonModulePath 指定本地位置。原始字体、图集、动画和补包只保留本机，不提交源码。构建、字形检查和热加载不替代游戏画面验收。
 
+0.5.3 修复赛博精神病的原生敌人记忆登记，优先选择原队友，并在效果期间维持攻击目标，避免同队友好过滤清空目标。仍由游戏原生视觉和射击逻辑决定开火，不强制穿墙命中。人物资料显示目标实际阵营（USEC / BEAR / SCAV）。六项技能名字号从 23 微调到 21；下方施放状态显示 2.5 秒，再用 0.5 秒淡出。
+
+黑墙每跳传染半径默认从 8 米增至 25 米，默认总计最多 5 个目标，保留墙体阻挡、存活 AI 检查和辅助 Mod 的 AI 无敌保护。每个传染目标在结算前都有独立红色头顶图标及纵向上传动画，默认持续 1.2 秒；头顶状态不再被最初的扫描距离截断。
+
+辅助面板侧边栏新增独立“趣味功能”，包含快速破解、黑墙脉冲、镭射眼。快速破解页通过可选桥接直接编辑独立 Mod 的配置：启用、无限 RAM、扫描距离、黑墙传染半径、总目标数、每跳时长及音量；保存后立即生效。无限 RAM 默认关闭，开启后不消耗且不检查 RAM，关闭后恢复正常消耗和回复。未安装独立 Mod 时显示未就绪提示；没有把快速破解代码编进辅助 Mod。
 ## 操作
 
 - **F10**：界面与无伤施放预览，可在主菜单打开。选择六种技能，点击「执行施放模拟」或按 F；点击右侧「入侵协议 · 门禁授权」检查代码矩阵。预览不选择或伤害 AI，不操作任何门。施放模拟启动后保留当次技能，即使切换列表选项也不会改变已开始的模拟。
@@ -86,7 +91,7 @@ CardReader 按原 `_keyMap` 中唯一的成功触发器向当前战局 `Triggers
 - 首次从 0.1 / 0.2 迁移需要重启一次。若客户端正在运行，安装器会验证并排队完整安装包，启动隐藏安装进程等待这个客户端退出，再备份并安装；不会关闭游戏。安装状态见 `mod-updates/quickhacks-install-status.json`。之后使用同一加载器的更新可以在运行中安装。
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-Quickhacks.ps1 -GameRoot 'D:\SPT-5.0.0-48558' -ResourceRoot 'D:\CP2077_Quickhack_Resources_20261112' -BlackwallRoot 'D:\CP2077_Blackwall_Supplement_20261112' -Dotnet 'D:\SPT_Mod_Staging_20261027\dotnet-sdk\dotnet.exe' -HostReleaseRevision '3c728b5b0e7b5c8665597048f5c947e295b7ae23' -OutputDirectory 'D:\SPT_Mod_Staging_20261027\quickhacks-0.5.2-original' -Install
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-Quickhacks.ps1 -GameRoot 'D:\SPT-5.0.0-48558' -ResourceRoot 'D:\CP2077_Quickhack_Resources_20261112' -BlackwallRoot 'D:\CP2077_Blackwall_Supplement_20261112' -Dotnet 'D:\SPT_Mod_Staging_20261027\dotnet-sdk\dotnet.exe' -HostReleaseRevision '3c728b5b0e7b5c8665597048f5c947e295b7ae23' -OutputDirectory 'D:\SPT_Mod_Staging_20261027\quickhacks-0.5.3-fun-settings' -Install
 ```
 
 脚本构建加载器与逻辑模块，运行离线检查，按本地资源清单逐项验证 SHA256 后打包。输出目录须为空；`-Install` 调用安装器，备份已有独立插件，先复制资源，再原子发布逻辑模块。分发包也可运行 Install.ps1 并指定 GameRoot。资源只保留在本地安装包，不提交源码仓库。

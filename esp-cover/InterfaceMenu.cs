@@ -172,7 +172,7 @@ internal static partial class InterfaceMenu {
  static readonly Dictionary<string,string> rememberedPages=new();static readonly Dictionary<string,(Vector2 Scroll,string Filter)> pageState=new();static bool contextKeys;static ConfigEntryBase[]? visibleEntries;
  static string PageKey=>category+"/"+otherPage;
  internal static void Navigate(string section,string? page=null){
-  if(section=="模型与镜头"&&page is "黑墙脉冲" or "趣味能力"){funFeature=page=="黑墙脉冲"?"黑墙脉冲":"镭射眼";page="趣味功能";}
+  if(section=="模型与镜头"&&page is "黑墙脉冲" or "趣味能力" or "趣味功能"){section="趣味功能";page=page=="黑墙脉冲"?"黑墙脉冲":"镭射眼";}
   (section,page)=(section,page) switch{("战斗与枪械","枪械参数")=>("枪械编辑","枪械参数"),("人物与移动","模型与动作")=>("模型与镜头","人物模型"),("人物与移动","动作锁定")=>("模型与镜头","动作锁定"),("人物与移动","角色管理")=>("开发工具","角色管理"),("镜头与画面","镜头控制")=>("模型与镜头","自由镜头"),("设置与热键","命令控制台")=>("开发工具","命令控制台"),("传送与导航","撤离与过图")=>("传送与导航","撤离定位"),_=>(section,page)};
   if(section=="服务端"&&page=="业力")page="业力与信誉";
   if(page=="刷新规则"&&(section=="服务端"||section=="AI 工作台"))section="战局与物资";if(section=="服务端"&&page=="Scav 装备"){ProfileAdminPanel.OpenScav();section="数据";page="角色管理";}
@@ -204,7 +204,9 @@ internal static partial class InterfaceMenu {
     case ("战斗与枪械","击杀特效"):KillEffects.DrawSettings(content);break;
     case ("人物与移动","Buff 状态"):CharacterBuffs.Draw(content);break;
     case ("模型与镜头","动作锁定"):ModelPoseLock.Draw(content);break;
-    case ("模型与镜头","趣味功能"):DrawFunFeatures(content);break;
+    case ("趣味功能","快速破解"):QuickhackSettingsBridge.Draw(content);break;
+    case ("趣味功能","黑墙脉冲"):BlackwallBridge.Draw(content);break;
+    case ("趣味功能","镭射眼"):DrawFunFeatures(content);break;
     case ("人物与移动","死亡保留"):DeathInventory.Draw(content);break;
     case ("开发工具","编辑模式"):WorldEditor.DrawSettings(content);break;
     case ("开发工具","聊天与命令"):RaidChat.DrawSettings(content);break;
@@ -238,10 +240,8 @@ internal static partial class InterfaceMenu {
   }catch(Exception error){if(Time.unscaledTime>=nextError){nextError=Time.unscaledTime+10;Plugin.Self.Error(error);}}finally{var e=Event.current;if(InputBlocked&&e!=null&&(e.isMouse||e.type==EventType.ScrollWheel))e.Use();}
  }
  static void DrawAppearance(Rect content){float height=960+slots.Count*65;scroll=GUI.BeginScrollView(content,scroll,new Rect(0,0,content.width-20,height));Appearance(new Rect(0,0,content.width-26,height));GUI.EndScrollView();}
- static string funFeature="黑墙脉冲";static Vector2 funScroll;
+ static Vector2 funScroll;
  static void DrawFunFeatures(Rect content){
-  funFeature=Tabs(content,new[]{"镭射眼","黑墙脉冲"},funFeature,out float height);content.y+=height;content.height-=height;
-  if(funFeature=="黑墙脉冲"){BlackwallBridge.Draw(content);return;}
   var entries=config.Select(pair=>pair.Value).Where(e=>MenuSections.Number(e.Definition.Section)==61).ToArray();
   funScroll=GUI.BeginScrollView(content,funScroll,new Rect(0,0,content.width-22,entries.Length*102));try{for(int i=0;i<entries.Length;i++)DrawEntry(entries[i],new Rect(0,i*102,content.width-28,92));}finally{GUI.EndScrollView();}
  }
@@ -257,9 +257,9 @@ internal static partial class InterfaceMenu {
  static CnConfig.ConfigurationManagerAttributes? Metadata(ConfigEntryBase entry)=>entry.Description.Tags.OfType<CnConfig.ConfigurationManagerAttributes>().FirstOrDefault();
  static string Category(ConfigEntryBase entry)=>Metadata(entry)?.Category??entry.Definition.Section;
  static string Name(ConfigEntryBase entry)=>I18n.Text(Metadata(entry)?.DispName??entry.Definition.Key);
- internal static void DrawEntry(ConfigEntryBase entry,Rect rect){
+ internal static void DrawEntry(ConfigEntryBase entry,Rect rect,string? displayName=null){
   Surface(rect,Color.Lerp(Background,Text,.035f),9);rect=new Rect(rect.x+13,rect.y+9,rect.width-26,rect.height-18);
-  Label(new Rect(rect.x,rect.y,rect.width,25),Name(entry),null,13);
+  Label(new Rect(rect.x,rect.y,rect.width,25),displayName??Name(entry),null,13);
   rect.y+=34;rect.height=30;
   var value=entry.BoxedValue;
   if(value is bool flag){if(Button(new Rect(rect.x,rect.y,108,28),flag?"●  已开启":"○  已关闭",flag))entry.BoxedValue=!flag;}

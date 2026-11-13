@@ -6,7 +6,8 @@ internal static partial class HackUi {
     static bool HeadPosition(EFT.Player actor,out Vector2 point,out float size) {
         point=default; size=1;
         var camera=Runtime.Camera;
-        if(camera==null||!Runtime.Visible(actor)) return false;
+        // Status badges follow infected actors even after they leave scanner range.
+        if(camera==null) return false;
         var position=actor.PlayerBones?.Head?.Original?.position??actor.Position+Vector3.up*1.6f;
         int mask=LayerMask.GetMask("HighPolyCollider","Terrain","LowPolyCollider");
         var delta=position-camera.transform.position;
@@ -50,16 +51,23 @@ internal static partial class HackUi {
     static void TargetStatuses() {
         if(Runtime.Mode is UiMode.Preview or UiMode.Breach) return;
         Effects.PruneMarkers();
+        var infected=AiHacks.GatewayUploads.ToArray();
         var upload=Runtime.UploadTarget?.Resolve();
         foreach(var group in Effects.Markers.GroupBy(m=>m.Ref)) {
             var actor=group.Key.Resolve();
             if(actor==null||!HeadPosition(actor,out var point,out var size)) continue;
             var states=group.OrderByDescending(m=>m.Start).ToArray();
-            int slot=upload?.Pointer==actor.Pointer?1:0;
+            int slot=upload?.Pointer==actor.Pointer||infected.Any(c=>c.Ref.Pointer==actor.Pointer)?1:0;
             foreach(var state in states) {
                 float activeAge=Now-state.Start;
                 HeadBadge(point,size,state.Kind,activeAge<UploadAnimation.CompleteDuration?1:Math.Clamp((state.Until-Now)/HackRules.Duration(state.Kind),0,1),state.Until-Now,false,slot++,activeAge+HackRules.Upload(state.Kind),activeAge);
             }
+        }
+        foreach(var pending in infected) {
+            var actor=pending.Ref.Resolve();
+            if(actor==null||!HeadPosition(actor,out var point,out var size)) continue;
+            float age=Now-pending.Started;
+            HeadBadge(point,size,HackKind.BlackwallGateway,Math.Clamp(age/Math.Max(.01f,pending.At-pending.Started),0,1),0,true,age:age);
         }
         if(upload!=null&&HeadPosition(upload,out var head,out var uploadSize)) HeadBadge(head,uploadSize,Runtime.UploadKind,Runtime.UploadProgress,0,true,age:Runtime.UploadElapsed);
     }

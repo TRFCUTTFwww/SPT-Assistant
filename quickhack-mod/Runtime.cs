@@ -29,7 +29,10 @@ internal static class Runtime {
     internal static HackKind PreviewKind;
     internal static float ModeStarted { get; private set; }
     internal static float Ram=24, PreviewStarted=-100, PreviewProgress;
-    internal static string Status="按 F10 预览界面，按住左 Ctrl 扫描 AI。";
+    static string status="";
+    static float statusStarted=-100;
+    internal static string Status { get=>status; set { status=value; statusStarted=Time.unscaledTime; } }
+    internal static float StatusAlpha=>1-Math.Clamp((Time.unscaledTime-statusStarted-2.5f)/.5f,0,1);
     internal static Camera? Camera=>CameraManager.Instance?.Camera??UnityEngine.Camera.main;
     internal static bool InRaid { get { var g=Singleton<AbstractGame>.Instance; return g!=null&&g.InRaid&&g.TryCast<HideoutGame>()==null; } }
     static bool cursorOwned,oldCursor;
@@ -93,7 +96,7 @@ internal static class Runtime {
                 localWorld=current.Pointer;
                 AiHacks.Tick();
             }
-            Ram=Math.Min(24,Ram+delta);
+            Ram=Plugin.InfiniteRam.Value?24:Math.Min(24,Ram+delta);
             if(Input.GetKeyDown(Plugin.PreviewKey.Value)) { if(Mode==UiMode.None) { Assets.Play("open"); SetMode(UiMode.Preview); } else Close(); }
             if(Mode!=UiMode.None&&Time.frameCount>openedFrame&&Input.GetKeyDown(KeyCode.Escape)) { Close(); return; }
             CheckScanChord();
@@ -134,8 +137,9 @@ internal static class Runtime {
         if(uploading!=null) { Status="已有快速破解正在上传。"; return; }
         var target=Target?.Resolve();
         if(target==null||!Visible(target)) { Status="请锁定视线内的存活 AI。"; return; }
-        if(Ram<HackRules.Cost(Selected)) { Status="RAM 不足。"; Assets.Play("denied"); return; }
-        Ram-=HackRules.Cost(Selected); uploading=Target; uploadKind=Selected; uploadStart=Time.unscaledTime; Assets.Play("press");
+        if(!CanAfford(Selected)) { Status="RAM 不足。"; Assets.Play("denied"); return; }
+        if(!Plugin.InfiniteRam.Value) Ram-=HackRules.Cost(Selected);
+        uploading=Target; uploadKind=Selected; uploadStart=Time.unscaledTime; Assets.Play("press");
         Status=HackRules.Name(Selected)+" · 上传中";
     }
     internal static bool Visible(Player actor) {
@@ -145,6 +149,7 @@ internal static class Runtime {
         int mask=LayerMask.GetMask("HighPolyCollider","Terrain","LowPolyCollider");
         return mask!=0&&distance<=Plugin.Range.Value&&!Physics.Raycast(view.transform.position,delta.normalized,Math.Max(0,distance-.2f),mask,QueryTriggerInteraction.Ignore);
     }
+    internal static bool CanAfford(HackKind kind)=>Plugin.InfiniteRam.Value||Ram>=HackRules.Cost(kind);
     static ActorRef? Scan() {
         var view=Camera; var list=Singleton<GameWorld>.Instance?.AllAlivePlayersList;
         if(view==null||list==null) return null;
