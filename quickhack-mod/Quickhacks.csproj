@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Local.Cp2077.Quickhacks</AssemblyName>
+    <Version>0.1.0</Version>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="$(GameRoot)/BepInEx/core/*.dll" Exclude="$(GameRoot)/BepInEx/core/dobby.dll"><Private>false</Private></Reference>
+    <Reference Include="$(GameRoot)/BepInEx/interop/*.dll"><Private>false</Private></Reference>
+    <Compile Include="../blackwall-pulse/WavePcm.cs" Link="WavePcm.cs" />
+  </ItemGroup>
+</Project>
