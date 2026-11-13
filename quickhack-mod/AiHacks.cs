@@ -46,6 +46,7 @@ internal static class AiHacks {
     internal static IEnumerable<(ActorRef Ref,float Started,float At)> GatewayUploads=>chains.Select(c=>(c.Next,c.Started,c.At));
     internal static bool HasGatewayUploads=>chains.Count>0;
     internal static void Install(Harmony h) {
+        ForcedCombatDamage.Install(h,IsHostile);
         void Patch(Type t,string method,string? before=null,string? after=null,string? final=null) {
             var m=AccessTools.Method(t,method); if(m==null) return;
             h.Patch(m,prefix:before==null?null:new HarmonyMethod(typeof(AiHacks),before),postfix:after==null?null:new HarmonyMethod(typeof(AiHacks),after),finalizer:final==null?null:new HarmonyMethod(typeof(AiHacks),final));
@@ -219,13 +220,7 @@ internal static class AiHacks {
         } catch(Exception e) { Runtime.Warn("Restore cyberpsychosis",e); }
     }
     static bool Protected(Player actor) {
-        // Optional coexistence with the Assistant's explicit AI invincibility.
-        foreach(var asm in AppDomain.CurrentDomain.GetAssemblies()) {
-            var type=asm.GetType("LocalSpt5Esp.Plugin"); if(type==null) continue;
-            var method=AccessTools.Method(type,"DamageBlocked");
-            if(method!=null) try { if(method.Invoke(null,[actor.ActiveHealthController]) is true) return true; } catch { return true; }
-        }
-        return false;
+        return AssistantProtection.Protected(actor);
     }
     static void Hit(Player actor,EBodyPart part,float damage,EDamageType type) {
         var local=Singleton<GameWorld>.Instance?.MainPlayer;
@@ -254,7 +249,8 @@ internal static class AiHacks {
         Assets.Play("death");
         if(chain.Visited.Count>=Plugin.GatewayTargets.Value) return false;
         int mask=LayerMask.GetMask("HighPolyCollider","Terrain","LowPolyCollider"); if(mask==0) return false;
-        var next=Bots().Where(p=>!chain.Visited.Contains(p.ProfileId)&&!Protected(p)&&!chains.Any(c=>c!=chain&&c.Next.Pointer==p.Pointer)&&Vector3.Distance(p.Position,origin)<=Plugin.GatewayRange.Value).OrderBy(p=>(p.Position-origin).sqrMagnitude).FirstOrDefault(p=>{
+        var next=Bots().Where(p=>!chain.Visited.Contains(p.ProfileId)&&!chains.Any(c=>c!=chain&&c.Next.Pointer==p.Pointer)&&Vector3.Distance(p.Position,origin)<=Plugin.GatewayRange.Value).OrderBy(p=>(p.Position-origin).sqrMagnitude).FirstOrDefault(p=>{
+            if(Protected(p))return false;
             var delta=(p.PlayerBones?.Ribcage?.Original?.position??p.Position+Vector3.up)-origin;
             return !Physics.Raycast(origin,delta.normalized,Math.Max(0,delta.magnitude-.2f),mask,QueryTriggerInteraction.Ignore);
         });

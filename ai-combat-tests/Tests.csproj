@@ -1,4 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><TargetFramework>net10.0</TargetFramework><OutputType>Exe</OutputType><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
-  <ItemGroup><Compile Include="../shared/NativeEnemyMemory.cs" Link="NativeEnemyMemory.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../shared/NativeEnemyMemory.cs" Link="NativeEnemyMemory.cs" /><Compile Include="../shared/ForcedCombatDamage.cs" Link="ForcedCombatDamage.cs" /><Compile Include="../quickhack-mod/BlackwallPixels.cs" Link="BlackwallPixels.cs" /></ItemGroup>
 </Project>

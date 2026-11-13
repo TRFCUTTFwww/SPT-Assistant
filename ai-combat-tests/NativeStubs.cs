@@ -1,7 +1,11 @@
 // Model the verified EFT 48558 contract: AddNew only constructs; SetInfo
 // registers both the dictionary and the sorted observation collection.
 namespace EFT;
-internal class Player { public int Position=7; }
+internal interface IPlayer { }
+internal class AIData { public BotOwner? BotOwner; }
+internal class Player:IPlayer { static int next; public IntPtr Pointer=new(++next); public int Position=7; public bool IsAI=true,IsYourPlayer; public AIData? AIData; }
+internal enum EBodyPart { Head }
+internal class BotEnemiesMissController { public BotEnemiesController _botEnemies=null!; public bool ShouldApplyDamage(Player target,EFT.Ballistics.DamageInfo damage,EBodyPart part)=>false; }
 internal class BotsGroup { public BotGroupHostility BotGroupHostility=new(); }
 internal class BotGroupHostility {
     public Dictionary<Player,BotGroupEnemyInfo> Enemies=new();
@@ -23,6 +27,7 @@ internal class EnemyInfo {
     public void SetIgnoreState(bool value)=>Ignored=value;
 }
 internal class BotEnemiesController {
+    public BotOwner? _owner;
     public Dictionary<Player,EnemyInfo> EnemyInfos=new();
     public List<EnemyInfo> SortedInfos=new();
     public int Created,Registered;
@@ -41,8 +46,9 @@ internal class BotMemory(BotOwner owner) {
     }
 }
 internal class BotOwner {
+    public Player GetPlayer=new();
     public BotsGroup BotsGroup=new();
     public BotEnemiesController EnemiesController=new();
     public BotMemory Memory;
-    public BotOwner()=>Memory=new(this);
+    public BotOwner(){Memory=new(this);EnemiesController._owner=this;GetPlayer.AIData=new(){BotOwner=this};}
 }

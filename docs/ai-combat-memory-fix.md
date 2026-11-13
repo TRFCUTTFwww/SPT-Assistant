@@ -36,3 +36,37 @@ User verification: select two living nearby AI with clear sight, apply
 Cyberpsychosis or set the pair hostile in Assistant, and verify engagement.
 Also verify the removed keypad-0 notice no longer appears. Temporary combat
 overrides are cleared by hot reload, so apply the command again after updating.
+
+## Follow-up: actual damage, Blackwall stalls and dark laboratory
+
+In-raid reports subsequently confirmed visible targets and firing, but repeated
+impacts had zero health loss while Assistant protection was false. EFT 48558
+`Player.ApplyShot` calls `BotEnemiesMissController.ShouldApplyDamage` before
+armor processing. That controller can deliberately discard AI hits based on
+native squad/role and miss rules. Both mods now permit actual collisions through
+this gate only for their explicitly forced hostile AI pairs. Human targets,
+ordinary AI fights and self damage retain native policy. Armor, health and
+explicit invincibility are still applied downstream; no synthetic damage is
+created and no attacker is impersonated.
+
+Blackwall's 2048x2048 atlas previously normalized each pixel through IL2CPP array
+indexers on first use. It now uses bulk span copies and a managed byte-array
+conversion. The atlas, death audio and first effect are prepared at module
+startup. Blackwall visuals use a bounded reusable pool without primitive
+colliders; effects avoid per-frame list copies and repeated camera lookups.
+Protection checks bind only the live Assistant generation and cache the delegate
+instead of scanning every loaded assembly for every potential chain target.
+The first installed optimized core logged 261.1 ms of resource preparation at
+startup. This is a startup measurement, not a before/after in-raid frame-rate
+benchmark.
+
+Laboratory logs also showed a dark selection followed by loading the normal
+laboratory preset. The scene-load request and local-raid backend request now
+receive the selected variant, in addition to synchronizing the two RaidSettings
+identifiers. Installed dark-map data contains the Black Division boss/spawns.
+Scene changes require the next raid; this does not replace an already loaded map.
+
+Follow-up validation: both cores compile; 10,063 combat/atlas model checks and
+93,465 quickhack rules/native API checks pass. The broader unrelated localization
+failure above remains outside this change. In-game damage, perceived Blackwall
+smoothness, and the next raid's dark scene/spawn result still require user checks.

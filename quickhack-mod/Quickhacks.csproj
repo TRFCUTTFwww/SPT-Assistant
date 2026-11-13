@@ -13,5 +13,6 @@
     <Reference Include="$(GameRoot)/BepInEx/interop/*.dll"><Private>false</Private></Reference>
     <Compile Include="../blackwall-pulse/WavePcm.cs" Link="WavePcm.cs" />
     <Compile Include="../shared/NativeEnemyMemory.cs" Link="NativeEnemyMemory.cs" />
+    <Compile Include="../shared/ForcedCombatDamage.cs" Link="ForcedCombatDamage.cs" />
   </ItemGroup>
 </Project>

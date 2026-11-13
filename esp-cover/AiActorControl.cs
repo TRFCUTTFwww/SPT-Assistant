@@ -73,6 +73,7 @@ internal static partial class AiActorControl {
  internal static bool ScaleDamage(ActiveHealthController controller,DamageInfo info,ref float amount,ref float result){double factor=PlayerDamageControl.Factor;if(factor==1&&healths.Count==0)return true;if(info==null||info.OverDamageFrom.HasValue)return true;var victim=controller.Player;if(victim==null||victim.IsYourPlayer)return true;string localId=localProfile.Length>0?localProfile:Singleton<GameWorld>.Instance?.MainPlayer?.ProfileId??"";if(localId.Length==0||info.Player?.iPlayer?.ProfileId!=localId)return true;if(healths.TryGetValue(controller.Pointer,out var settings)&&settings.Actor?.IsYourPlayer==false&&settings.Actor.ActiveHealthController?.Pointer==controller.Pointer&&identities.GetValueOrDefault(settings.Actor.Pointer)==settings.Actor.ProfileId)factor*=settings.Damage;if(factor==1)return true;if(factor==0){result=0;return false;}float available=controller.GetBodyPartHealth(EBodyPart.Common,false).Current;amount=AiControlRules.Damage(amount,factor,available);return true;}
 
  internal static void Initialize(Plugin plugin){
+  LocalAiCombat.ForcedCombatDamage.Install(plugin.Patches,ForcedEnemy);
   plugin.Patches.Patch(AccessTools.Method(typeof(BotsGroup),"IsAlly"),prefix:new HarmonyMethod(typeof(AiActorControl),nameof(Ally)));
   plugin.Patches.Patch(AccessTools.PropertySetter(typeof(BotMemory),"GoalEnemy"),prefix:new HarmonyMethod(typeof(AiActorControl),nameof(Goal)));
   AiHostilityEvaluation.Initialize(plugin);
