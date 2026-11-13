@@ -1,7 +1,8 @@
 param(
  [Parameter(Mandatory=$true)][string]$GameRoot,
  [Parameter(Mandatory=$true)][string]$OutputDirectory,
- [string]$Dotnet='dotnet'
+ [string]$Dotnet='dotnet',
+ [string]$BlackwallAssetRoot
 )
 $ErrorActionPreference='Stop'
 $repo=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -10,7 +11,7 @@ $OutputDirectory=[IO.Path]::GetFullPath($OutputDirectory)
 if((Test-Path -LiteralPath $OutputDirectory) -and (Get-ChildItem -LiteralPath $OutputDirectory -Force | Select-Object -First 1)){throw 'OutputDirectory must be new or empty'}
 [IO.Directory]::CreateDirectory($OutputDirectory)|Out-Null
 $version=([IO.File]::ReadAllText((Join-Path $repo 'VERSION'))).Trim()
-if($version -ne '2.1'){throw 'Review packaging for the new release version'}
+if($version -ne '2.2'){throw 'Review packaging for the new release version'}
 foreach($project in @('esp-cover/Esp.csproj','gear-admin-module/AdminModule.csproj','raid-controls-server/RaidControls.csproj')){
  & $Dotnet build (Join-Path $repo $project) -c Release --nologo ('-p:GameRoot='+$GameRoot) -p:EftBuild=48558
  if($LASTEXITCODE -ne 0){throw ('Build failed: '+$project)}
@@ -31,7 +32,21 @@ foreach($entry in $components.GetEnumerator()){Copy-Item -LiteralPath (Join-Path
 Copy-Item -LiteralPath (Join-Path $repo 'scripts/Install-Experimental.ps1') -Destination (Join-Path $stage 'Install.ps1')
 foreach($name in @('README.md','README.zh-CN.md','LICENSE')){Copy-Item -LiteralPath (Join-Path $repo $name) -Destination $stage}
 [IO.Directory]::CreateDirectory((Join-Path $stage 'docs'))|Out-Null
-foreach($name in @('INSTALL.md','release-2.1.md','validation-2.1.json','hotkeys.md','world-editor.md')){Copy-Item -LiteralPath (Join-Path $repo ('docs/'+$name)) -Destination (Join-Path $stage 'docs')}
+foreach($name in @('INSTALL.md','release-2.2.md','validation-2.2.json','hotkeys.md','world-editor.md','blackwall-pulse.md','blackwall-assets.json')){Copy-Item -LiteralPath (Join-Path $repo ('docs/'+$name)) -Destination (Join-Path $stage 'docs')}
+# Package only the explicitly inventoried Blackwall runtime resources.
+if(!$BlackwallAssetRoot){
+ $BlackwallAssetRoot=Join-Path $GameRoot 'BepInEx/plugins/LocalSpt5ESP/Blackwall/Assets'
+ if(!(Test-Path -LiteralPath $BlackwallAssetRoot)){$BlackwallAssetRoot=Join-Path $GameRoot 'BepInEx/plugins/BlackwallPulse/Assets'}
+}
+$resourceManifest=Get-Content -LiteralPath (Join-Path $repo 'docs/blackwall-assets.json') -Raw -Encoding UTF8|ConvertFrom-Json
+$assetDestination=Join-Path $payload 'Blackwall/Assets'
+[IO.Directory]::CreateDirectory($assetDestination)|Out-Null
+foreach($entry in $resourceManifest.files){
+ if($entry.name -notmatch '^[a-zA-Z0-9_-]+\.(glb|png|wav)$'){throw 'Invalid Blackwall resource name'}
+ $inputAsset=Join-Path $BlackwallAssetRoot $entry.name
+ if(!(Test-Path -LiteralPath $inputAsset -PathType Leaf) -or (Get-FileHash -LiteralPath $inputAsset -Algorithm SHA256).Hash -ne $entry.sha256){throw ('Missing or modified Blackwall resource: '+$entry.name)}
+ Copy-Item -LiteralPath $inputAsset -Destination (Join-Path $assetDestination $entry.name)
+}
 $checks=[ordered]@{}
 Get-ChildItem -LiteralPath $stage -File -Recurse | Sort-Object FullName | ForEach-Object {
  $relative=$_.FullName.Substring($stage.Length+1).Replace('\','/')

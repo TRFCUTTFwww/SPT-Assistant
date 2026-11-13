@@ -1,6 +1,8 @@
 using System.Numerics;
 namespace LocalBlackwallPulse;
 internal static class PoseRetarget {
+ // Convert the source rest-space rotation into the target bone's local axes.
+ internal static Quaternion MapLocal(Quaternion targetRest,Quaternion sourceRest,Quaternion sourceCurrent,Quaternion axes)=>Quaternion.Normalize(targetRest*axes*Quaternion.Inverse(sourceRest)*sourceCurrent*Quaternion.Inverse(axes));
  internal static Quaternion Map(Quaternion targetReference,Quaternion sourceReference,Quaternion sourceCurrent)=>Quaternion.Normalize(targetReference*Quaternion.Inverse(sourceReference)*sourceCurrent);
  internal static float Flexion(Quaternion reference,Quaternion current,Vector3 axis,float limit=85){
   if(axis.LengthSquared()<.000001f)return 0;

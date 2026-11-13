@@ -7,7 +7,7 @@ internal static class PulseRules {
  internal const float VictimDuration=3.91f;
  internal static bool Target(float distance,float alignment,float range,float cone,bool ai,bool alive,bool local,bool visible,bool walls)=>
   ai&&alive&&!local&&float.IsFinite(distance)&&distance>=0&&distance<=Math.Clamp(range,1,300)&&float.IsFinite(alignment)&&alignment>=MathF.Cos(Math.Clamp(cone,1,180)*MathF.PI/360)&&(walls||visible);
- internal static float Weight(float age)=>Math.Clamp(Math.Min(age/.22f,(CastDuration-age)/.28f),0,1);
+ internal static float Weight(float age){float t=Math.Clamp(Math.Min(age/.3f,(CastDuration-age)/.35f),0,1);return t*t*(3-2*t);}
  internal static bool Release(float age,bool released)=>!released&&age>=ReleaseAt&&age<CastDuration;
 }
 

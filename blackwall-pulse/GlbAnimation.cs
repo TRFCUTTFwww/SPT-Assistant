@@ -42,6 +42,7 @@ internal sealed class GlbAnimation {
   if(count<0||count>100000||start<binary||stride<width*4||(long)start+(long)Math.Max(0,count-1)*stride+width*4>data.Length)throw new InvalidDataException("Animation buffer bounds");
   var values=new float[count*width];for(int i=0;i<count;i++)for(int k=0;k<width;k++){float v=BitConverter.ToSingle(data,start+i*stride+k*4);if(!float.IsFinite(v))throw new InvalidDataException("Non-finite animation");values[i*width+k]=v;}return values;
  }
+ internal void BindPose(Vector3[] positions,Quaternion[] rotations){for(int i=0;i<Bones.Length;i++){positions[i]=Bones[i].Position;rotations[i]=Bones[i].Rotation;}}
  internal void Sample(int clip,float time,Vector3[] positions,Quaternion[] rotations){
   for(int i=0;i<Bones.Length;i++){positions[i]=Bones[i].Position;rotations[i]=Bones[i].Rotation;}
   foreach(var t in Clips[clip%Clips.Length].Tracks){int found=Array.BinarySearch(t.Times,time);int right=Math.Clamp(found<0?~found:found,0,t.Times.Length-1);int left=found>=0||time>=t.Times[^1]?right:Math.Max(0,right-1);float blend=left==right||t.Step?0:Math.Clamp((time-t.Times[left])/(t.Times[right]-t.Times[left]),0,1);int x=left*t.Width,y=right*t.Width;

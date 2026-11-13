@@ -1,6 +1,11 @@
 using System.Text;
 namespace LocalBlackwallPulse;
 internal sealed record WavePcm(int Channels,int Rate,float[] Samples) {
+ internal WavePcm WithGain(float gain){
+  if(!float.IsFinite(gain)||gain<0)throw new ArgumentOutOfRangeException(nameof(gain));
+  var output=new float[Samples.Length];for(int i=0;i<output.Length;i++){float value=Samples[i]*gain,level=Math.Abs(value);output[i]=level<=.8f?value:MathF.CopySign(.8f+.18f*(1-MathF.Exp(-(level-.8f)/.18f)),value);}
+  return new(Channels,Rate,output);
+ }
  internal static WavePcm Read(string path)=>Read(File.ReadAllBytes(path));
  internal static WavePcm Read(byte[] bytes){
   if(bytes.Length<12||Encoding.ASCII.GetString(bytes,0,4)!="RIFF"||Encoding.ASCII.GetString(bytes,8,4)!="WAVE")throw new InvalidDataException("Expected RIFF/WAVE");

@@ -6,12 +6,12 @@ public sealed class RuntimeModule:IRuntimeModule {
  Plugin? plugin;
  Overlay? overlay;
  public int ApiVersion=>1;
- internal const string ReleaseVersion="2.1";
+ internal const string ReleaseVersion="2.2";
  public string Version=>ReleaseVersion;
  // Optional methods are discovered by the 1.5 host. API 1 still loads on older
  // hosts, allowing the core to be installed before the one-time host restart.
  public void PrepareInBackground()=>I18n.Prepare();
- public bool PrepareForReload()=>WorldItemPlacement.PrepareForReload()&&RaidStash.PrepareForReload()&&HideoutCraftControl.PrepareForReload()&&ProfileAdminPanel.PrepareForReload();
+ public bool PrepareForReload(){if(!WorldItemPlacement.PrepareForReload()||!RaidStash.PrepareForReload()||!HideoutCraftControl.PrepareForReload()||!ProfileAdminPanel.PrepareForReload())return false;ReloadInputRecovery.BeforeReload();return true;}
  public void Initialize(IHostServices host){foreach(var step in InitializeSteps(host))step();}
  public IEnumerable<Action> InitializeSteps(IHostServices host){
   yield return ()=>{FeatureRetirement.Apply(host.Config,host.PluginDirectory,host.Log);plugin=new Plugin(host);};
@@ -27,10 +27,11 @@ public sealed class RuntimeModule:IRuntimeModule {
   yield return KillEffects.Initialize;
   yield return ()=>I18n.Initialize(plugin);
   yield return ()=>overlay=new Overlay();
+  yield return ReloadInputRecovery.Arm;
  }
- public void Update(){long stamp=RuntimePerformance.Start();try{RuntimePerformance.Frame();RaidChat.Tick();RaidClock.Tick();WorldEditor.CaptureInput();WorldItemPlacement.Tick();AiFreePlacement.Tick(Comfort.Common.Singleton<EFT.GameWorld>.Instance);AiDifficultyControl.Tick();QuestWaitSync.Tick();HideoutCraftControl.Tick();ProfileAdminPanel.Tick();RaidStash.Tick();GraphicsRepair.Tick();CorpseRevival.Tick(Comfort.Common.Singleton<EFT.GameWorld>.Instance);GrenadeArc.Tick(Comfort.Common.Singleton<EFT.GameWorld>.Instance);KillEffects.Tick(Comfort.Common.Singleton<EFT.GameWorld>.Instance);EventRaidLauncher.Tick();EventRaidDiagnostics.Tick();FloatingStatus.Update();ConfigProfiles.Keys();InterfaceMenu.Update();HomeDashboard.Tick();MiscPanel.Tick();DirectorStage.Update();EntertainmentControl.Update();BlackwallBridge.Tick();LaserEyes.CaptureInput();HitSounds.Tick();long costStamp=RuntimePerformance.Start();overlay?.Update();RuntimeCosts.Mark(ref costStamp,CostStage.Scan);PasscodeHints.Tick();CoordinateReader.Tick();}finally{RuntimePerformance.UpdateDone(stamp);}}
- public void LateUpdate(){long stamp=RuntimePerformance.Start();try{overlay?.LateUpdate();long costStamp=RuntimePerformance.Start();BodyTint.Tick();RuntimeCosts.Mark(ref costStamp,CostStage.Tint);InterfaceMenu.KeepCursor();}finally{RuntimePerformance.LateDone(stamp);}}
- public void OnGUI(){long stamp=RuntimePerformance.Start();try{if(WorldEditor.ModalOpen&&!InterfaceMenu.Open){WorldEditor.Draw();RaidChat.Draw();return;}if(!DirectorStage.HudHidden){overlay?.OnGUI();FloatingStatus.Draw();PerformanceHud.Draw();FeatureToasts.Draw();PasscodeHints.Draw();KillEffects.Draw(EFT.CameraControl.CameraManager.Instance?.Camera);GrenadeArc.Draw(EFT.CameraControl.CameraManager.Instance?.Camera);}WorldEditor.Draw();InterfaceMenu.Draw();RaidChat.Draw();}finally{RuntimePerformance.GuiDone(stamp);}}
+ public void Update(){long stamp=RuntimePerformance.Start();try{ReloadInputRecovery.Tick();RuntimePerformance.Frame();RaidChat.Tick();RaidClock.Tick();WorldEditor.CaptureInput();WorldItemPlacement.Tick();AiFreePlacement.Tick(Comfort.Common.Singleton<EFT.GameWorld>.Instance);AiDifficultyControl.Tick();QuestWaitSync.Tick();HideoutCraftControl.Tick();ProfileAdminPanel.Tick();RaidStash.Tick();GraphicsRepair.Tick();CorpseRevival.Tick(Comfort.Common.Singleton<EFT.GameWorld>.Instance);GrenadeArc.Tick(Comfort.Common.Singleton<EFT.GameWorld>.Instance);KillEffects.Tick(Comfort.Common.Singleton<EFT.GameWorld>.Instance);EventRaidLauncher.Tick();EventRaidDiagnostics.Tick();FloatingStatus.Update();ConfigProfiles.Keys();InterfaceMenu.Update();HomeDashboard.Tick();MiscPanel.Tick();DirectorStage.Update();EntertainmentControl.Update();BlackwallBridge.Tick();LaserEyes.CaptureInput();HitSounds.Tick();long costStamp=RuntimePerformance.Start();overlay?.Update();RuntimeCosts.Mark(ref costStamp,CostStage.Scan);PasscodeHints.Tick();CoordinateReader.Tick();}finally{RuntimePerformance.UpdateDone(stamp);}}
+ public void LateUpdate(){long stamp=RuntimePerformance.Start();try{overlay?.LateUpdate();long costStamp=RuntimePerformance.Start();BodyTint.Tick();BlackwallBridge.Late();RuntimeCosts.Mark(ref costStamp,CostStage.Tint);InterfaceMenu.KeepCursor();}finally{RuntimePerformance.LateDone(stamp);}}
+ public void OnGUI(){long stamp=RuntimePerformance.Start();try{BlackwallBridge.DrawEffects();if(WorldEditor.ModalOpen&&!InterfaceMenu.Open){WorldEditor.Draw();RaidChat.Draw();return;}if(!DirectorStage.HudHidden){overlay?.OnGUI();FloatingStatus.Draw();PerformanceHud.Draw();FeatureToasts.Draw();PasscodeHints.Draw();KillEffects.Draw(EFT.CameraControl.CameraManager.Instance?.Camera);GrenadeArc.Draw(EFT.CameraControl.CameraManager.Instance?.Camera);}WorldEditor.Draw();InterfaceMenu.Draw();RaidChat.Draw();}finally{RuntimePerformance.GuiDone(stamp);}}
  public void Unload(){foreach(var step in UnloadSteps())step();}
  public IEnumerable<Action> UnloadSteps(){
   var actions=new List<Action>{BlackwallBridge.Reset,RaidChat.Reset,WorldEditor.Reset,WorldItemPlacement.Reset,AiFreePlacement.Reset,AiDifficultyControl.Shutdown,I18n.Shutdown,QuestWaitSync.Reset,HideoutCraftControl.Shutdown,ProfileAdminPanel.Reset,HomeDashboard.Reset,MiscPanel.Reset,UniversalKeys.Reset,LaserEyes.Reset,RaidClock.Reset,RaidStash.Shutdown,GrenadeArc.Reset,KillEffects.Reset,PasscodeHints.Reset,CommandoConsole.Reset,RuntimePerformance.Shutdown,FeatureToasts.Shutdown,FloatingStatus.Shutdown,InterfaceMenu.Shutdown};

@@ -53,15 +53,17 @@ internal static class PulseRuntime {
    }
    firearm?.SetTriggerPressed(false);firearm?.SetAim(false);killsBefore=kills;
    cast.Begin(Time.unscaledTime);casts++;Status=harmless?"动作与特效预览（不造成伤害）":$"黑墙脉冲：锁定 {targets.Count} 个 AI";
-   PulseAudio.Cast(camera.transform.position,volume);if(effects)PulseVisuals.Begin(local,targets.Select(t=>t.Actor).ToArray());WriteState();return true;
+   if(effects)PulseVisuals.Begin(local,targets.Select(t=>t.Actor).ToArray());WriteState();return true;
   }catch(Exception error){Fail(error);return false;}
  }
  internal static void Tick(){
   try{
    if(lastTick==Time.frameCount)return;lastTick=Time.frameCount;frames++;
    if(assistant&&Time.unscaledTime-lastAssistant>3){assistant=false;Protection=null;blocked=false;}
+#if !SPT_ASSISTANT
    var p=RuntimeHost.Settings;if(p==null)return;
    if(!assistant){Configure(p.Enabled.Value,p.Range.Value,p.Cone.Value,p.Limit.Value,p.ThroughWalls.Value,p.Effects.Value,p.Filter.Value,p.Volume.Value);if(p.Key.Value!=KeyCode.None&&Input.GetKeyDown(p.Key.Value))Cast();}
+#endif
    PulseAudio.Tick();
    if(cast.Active){
     var current=Singleton<GameWorld>.Instance;
@@ -84,16 +86,21 @@ internal static class PulseRuntime {
   var info=new DamageInfo{DamageType=EDamageType.Bullet,Damage=damage,Player=new PlayerBridge(local).Cast<IObserverToPlayerBridge>(),MasterOrigin=local.Position,HitPoint=point,Direction=(point-local.Position).normalized,SourceId="blackwall-pulse"};
   target.LastAggressor=local;health.ApplyDamage(EBodyPart.Head,damage,info);
   if(health.IsAlive&&Protection?.Invoke(target.Pointer.ToInt64())!=true)health.Kill(EDamageType.Bullet);
-  if(!health.IsAlive){kills++;PulseAudio.Death(point,volume);}
+  if(!health.IsAlive){
+   // Burnout/short-circuit files contain impact audio. Submit them only on
+   // confirmed kills, never empty casts or harmless animation previews.
+   if(kills==killsBefore)PulseAudio.Impact(volume);
+   kills++;PulseAudio.Death(point,volume);
+  }
  }
  internal static bool Owns(Player.FirearmController controller)=>cast.Active&&owner?.HandsController?.Pointer==controller.Pointer;
- internal static void Late(){try{if(cast.Active&&(!Allowed(owner)||Singleton<GameWorld>.Instance?.Pointer!=world)){Cancel();return;}ArmAnimation.Apply(owner,Age);PulseVisuals.Late();}catch(Exception error){Fail(error);}}
+ internal static void Late(bool beforeRender=false){try{if(cast.Active&&(!Allowed(owner)||Singleton<GameWorld>.Instance?.Pointer!=world)){Cancel();return;}ArmAnimation.Apply(owner,Age,beforeRender);PulseVisuals.Late();}catch(Exception error){Fail(error);}}
  internal static void Draw(){try{if(filter&&cast.Active&&effects)PulseVisuals.DrawFilter(Age);}catch(Exception error){Fail(error);}}
  static void Finish(){ArmAnimation.Reset();owner=null;targets.Clear();released=false;Status=preview?"预览完成":$"施放完成，本次已击杀 {kills-killsBefore} 个 AI";killsBefore=kills;WriteState();}
  static int killsBefore;
  static void Cancel(){cast.Cancel();ArmAnimation.Reset();PulseVisuals.Clear();PulseAudio.Stop();targets.Clear();owner=null;released=false;Status="施放已取消";killsBefore=kills;WriteState();}
  static void Fail(Exception error){Cancel();Status="黑墙脉冲错误："+error.Message;if(Time.unscaledTime>=nextError){nextError=Time.unscaledTime+10;Log.LogWarning(error);}WriteState();}
- internal static string Diagnostics()=>JsonSerializer.Serialize(new{version="0.2.0",status=Status,busy=cast.Active,age=Age,frames,casts,kills,assistant,blocked,enabled,range,cone,limit,walls,effects,filter,arm=ArmAnimation.Diagnostics(),rig=ArmAnimation.InspectRig(Singleton<GameWorld>.Instance?.MainPlayer),visuals=PulseVisuals.Diagnostics(),audio=PulseAudio.Diagnostics(),utc=DateTime.UtcNow});
+ internal static string Diagnostics()=>JsonSerializer.Serialize(new{version="0.2.10",status=Status,busy=cast.Active,age=Age,frames,casts,kills,assistant,blocked,enabled,range,cone,limit,walls,effects,filter,arm=ArmAnimation.Diagnostics(),rig=ArmAnimation.InspectRig(Singleton<GameWorld>.Instance?.MainPlayer),visuals=PulseVisuals.Diagnostics(),audio=PulseAudio.Diagnostics(),utc=DateTime.UtcNow});
  internal static bool SoundPreview()=>PulseAudio.Preview(volume);
  static void WriteState(){try{File.WriteAllText(Path.Combine(Home,"blackwall-state.json"),Diagnostics());}catch{}}
  internal static void Shutdown(){Cancel();ArmAnimation.Shutdown();PulseVisuals.Shutdown();PulseAudio.Shutdown();Protection=null;}

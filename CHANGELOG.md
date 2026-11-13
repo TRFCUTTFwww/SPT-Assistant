@@ -1,3 +1,7 @@
+# 2.2 — 内置黑墙脉冲
+
+合并已修复的黑墙 0.2.10 到辅助核心，安装包携带所需动作、贴图和音频；校验并迁移资源后备份停用独立插件。保留快捷键、滤镜开关、单右臂渲染及确认击杀后播放声音规则，黑墙随辅助统一热更新。
+
 # Changelog
 
 ## 2.0.6 — FIKA local command support (2026-11-11)
@@ -81,7 +85,14 @@
 - Align the client, installer and documentation at 2.0.6 and include English translations for the new controls.
 - Validation: EFT 48558 client/admin builds, 121 client Probe groups and 24 mail/admin regression groups passed. Laser GPU output, actual injector use and Fika synchronization still require in-raid verification. Unstable, not broadly tested; backward compatibility is not guaranteed.
 
-# 1.38.7
+## 2.0.0
+
+- Publish the current SPT Assistant feature set as a formal 2.0.0 source release.
+- Add concise English and Chinese READMEs with real in-game home dashboard screenshots.
+- Align the project, module and displayed version at 2.0.0.
+- Keep development and build notes in [docs/development.zh-CN.md](docs/development.zh-CN.md).
+- Validate EFT 48558 and 47888 client builds and 110 Probe checks; two existing nullable warnings remain.
+
 
 - 新增「数据」侧栏：逐项修改技能等级与成就、查看/修改商城 TC 余额、将角色库存实体 TC 等额转入商城钱包，并复用既有角色管理。
 - 新增「剧情」侧栏：查看主线章节及任务状态、重做商人任务、预览相关任务后切换互斥分支、切换当前/展示结局、跳过主线时间门槛。保存前自动备份，禁止战局中写入。

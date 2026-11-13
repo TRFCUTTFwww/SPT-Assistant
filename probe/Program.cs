@@ -10,6 +10,20 @@ using LocalRaidShared;
 var sourceRoot=Path.GetFullPath(Environment.GetEnvironmentVariable("SPT_SOURCE_ROOT")??"_spt5_esp_fix");
 var gameRoot=Environment.GetEnvironmentVariable("SPT_GAME_ROOT");if(!string.IsNullOrWhiteSpace(gameRoot))Directory.SetCurrentDirectory(gameRoot);
 try{
+using(var integrated=AssemblyDefinition.ReadAssembly(Path.Combine(sourceRoot,"esp-cover/bin/Release/net10.0/Local.Spt5.ESP.Core.dll"))){
+ var types=integrated.MainModule.Types;
+ Assert(types.Any(t=>t.FullName=="LocalBlackwallPulse.PulseRuntime")&&types.Any(t=>t.FullName=="LocalBlackwallPulse.ArmAnimation"),"Blackwall runtime and fixed arm renderer are compiled into Assistant");
+ Assert(!integrated.MainModule.AssemblyReferences.Any(r=>r.Name=="Local.BlackwallPulse")&&!types.Any(t=>t.FullName is "LocalBlackwallPulse.Plugin" or "LocalBlackwallPulse.PulseDriver" or "LocalBlackwallPulse.RuntimeHost"),"integrated core contains no standalone Blackwall plugin, driver or assembly dependency");
+ var bridge=types.Single(t=>t.Name=="BlackwallBridge");
+ MethodReference[] Calls(MethodDefinition method)=>method.Body.Instructions.Select(i=>i.Operand).OfType<MethodReference>().ToArray();
+ Assert(Calls(bridge.Methods.Single(m=>m.Name=="Tick")).Any(m=>m.DeclaringType.Name=="PulseRuntime"&&m.Name=="Tick")&&Calls(bridge.Methods.Single(m=>m.Name=="Reset")).Any(m=>m.DeclaringType.Name=="PulseRuntime"&&m.Name=="Shutdown"),"Assistant directly drives and shuts down its integrated Blackwall runtime");
+ var runtime=types.Single(t=>t.Name=="PulseRuntime");
+ Assert(!Calls(runtime.Methods.Single(m=>m.Name=="Cast")).Any(m=>m.DeclaringType.Name=="PulseAudio"),"empty casts and harmless previews do not submit sound");
+ Assert(Calls(runtime.Methods.Single(m=>m.Name=="Hit")).Any(m=>m.DeclaringType.Name=="PulseAudio"&&m.Name=="Death"),"confirmed target hit path retains death audio");
+ var arms=types.Single(t=>t.Name=="ArmAnimation");
+ Assert(Calls(arms.Methods.Single(m=>m.Name=="Apply")).Any(m=>m.Name=="BakeMesh"),"integrated arm retains verified CPU skinning visibility fix");
+}
+Console.WriteLine("PASS integrated Blackwall assembly ownership, direct lifecycle, CPU skinning and hit-only audio");
 WorldEditorChecks.Run();
 Assert(InstantSearchRules.Allowed(true,true,true,false,10,10,"local","local"),"active local search can be instant");
 Assert(!InstantSearchRules.Allowed(false,true,true,false,10,10,"local","local")&&!InstantSearchRules.Allowed(true,false,true,false,10,10,"local","local")&&!InstantSearchRules.Allowed(true,true,false,false,10,10,"local","local")&&!InstantSearchRules.Allowed(true,true,true,true,10,10,"local","local"),"disabled, out-of-raid, dead and terminated searches retain native behavior");
@@ -778,6 +792,7 @@ Assert(!core.MainModule.Types.Any(t=>t.Name is "FlightControl" or "FlightRules")
 var eyeCode=core.MainModule.Types.Single(t=>t.Name=="LaserEyes");var eyeKill=eyeCode.Methods.Single(m=>m.Name=="Kill");var eyeKillCalls=eyeKill.Body.Instructions.Select(i=>i.Operand).OfType<MethodReference>().ToArray();Assert(eyeKillCalls.Any(m=>m.Name=="DamageBlocked")&&eyeKillCalls.Any(m=>m.Name=="ApplyDamage")&&eyeKillCalls.Any(m=>m.Name=="Kill")&&!eyeKillCalls.Any(m=>m.Name is "OnBeenKilledByAggressor" or "Destroy" or "Dispose"),"laser lethal hits retain protection, source-bearing native damage and normal death without manually dispatching callbacks or deleting actors");
 Assert(eyeCode.Methods.Single(m=>m.Name=="Trace").Body.Instructions.Any(i=>i.Operand is MethodReference m&&m.DeclaringType.Name=="CrosshairProbe"&&m.Parameters.Any(p=>p.ParameterType.Name=="Ray")),"each eye independently tests obstruction with its physical ray");
 Assert(MenuSections.Group("61. 镭射眼")=="模型与镜头"&&MenuSections.OnPage("模型与镜头","趣味能力","61. 镭射眼","Laser eyes"),"laser controls have a reachable dedicated page");
+Assert(MenuSections.Pages("模型与镜头").Contains("趣味功能")&&!MenuSections.Pages("模型与镜头").Contains("黑墙脉冲")&&MenuSections.OnPage("模型与镜头","趣味功能","65. 黑墙脉冲","Blackwall pulse enabled"),"Blackwall and laser controls share the fun features page");
 Console.WriteLine("PASS independently obstructed eye rays, protected native death and localized pause/coverage text");
 var contactCode=core.MainModule.Types.Single(t=>t.Name=="CrosshairProbe");var rayRead=contactCode.Methods.Single(m=>m.Name=="Read"&&m.Parameters.Any(p=>p.ParameterType.Name=="Ray"));
 Assert(rayRead.Parameters[^1].Name=="ignoreEnvironment"&&rayRead.Parameters[^1].HasConstant&&Equals(rayRead.Parameters[^1].Constant,false),"environment bypass is opt-in; existing aim, trigger and preview readers keep wall obstruction");

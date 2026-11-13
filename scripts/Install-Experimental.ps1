@@ -31,6 +31,14 @@ if(-not $ClientOnly){
  $files['payload/LocalGearAdmin.module']='SPT_Runtime/user/mods/LocalGearMail/LocalGearAdmin.module'
  $files['payload/LocalRaidControls.dll']='SPT_Runtime/user/mods/LocalRaidControls/LocalRaidControls.dll'
 }
+$resourceManifest=Get-Content -LiteralPath (Join-Path $package 'docs/blackwall-assets.json') -Raw -Encoding UTF8|ConvertFrom-Json
+foreach($entry in $resourceManifest.files){
+ if($entry.name -notmatch '^[a-zA-Z0-9_-]+\.(glb|png|wav)$'){throw 'Invalid Blackwall resource name'}
+ $relative='payload/Blackwall/Assets/'+$entry.name
+ $files[$relative]='BepInEx/plugins/LocalSpt5ESP/Blackwall/Assets/'+$entry.name
+ $asset=Join-Path $package $relative
+ if(!(Test-Path -LiteralPath $asset -PathType Leaf) -or (Get-FileHash -LiteralPath $asset -Algorithm SHA256).Hash -ne $entry.sha256){throw ('Invalid Blackwall resource: '+$entry.name)}
+}
 $checks=Get-Content -LiteralPath (Join-Path $package 'checksums.json') -Raw -Encoding utf8 | ConvertFrom-Json
 foreach($entry in $checks.PSObject.Properties){
  $inputFile=[IO.Path]::GetFullPath((Join-Path $package $entry.Name))
@@ -68,13 +76,15 @@ $generated=@{
  'BepInEx/plugins/LocalSpt5ESP/esp5-prices.json'=($prices|ConvertTo-Json -Depth 3 -Compress)
 }
 if($VerifyOnly){Write-Output 'PASS package hashes, target build/dependencies and local item database. No game files changed.';return}
-foreach($process in Get-Process -Name EscapeFromTarkov,SPT.Server -ErrorAction SilentlyContinue){
+$processNames=@('EscapeFromTarkov');if(-not $ClientOnly){$processNames+='SPT.Server'}
+foreach($process in Get-Process -Name $processNames -ErrorAction SilentlyContinue){
  $processPath=$null
  try{$processPath=$process.Path}catch{}
  if(-not $processPath -or $processPath.StartsWith($prefix,[StringComparison]::OrdinalIgnoreCase)){throw 'Close the target game and SPT server before installation'}
 }
-$backup=Target ('mod-backups/assistant-2.1-'+[DateTime]::Now.ToString('yyyyMMdd-HHmmssfff'))
+$backup=Target ('mod-backups/assistant-2.2-'+[DateTime]::Now.ToString('yyyyMMdd-HHmmssfff'))
 $completed=[Collections.Generic.List[object]]::new()
+$legacyBackup=$null
 function Prepare([string]$relative){
  $destination=Target $relative
  $old=$null
@@ -102,13 +112,21 @@ try{
   try{$rng.GetBytes($random)}finally{$rng.Dispose()}
   [IO.File]::WriteAllText($destination,[BitConverter]::ToString($random).Replace('-',''),$utf8)
  }
+ # Retire the standalone DLL outside the entire BepInEx plugin search tree.
+ $legacy=Target 'BepInEx/plugins/BlackwallPulse'
+ if(Test-Path -LiteralPath $legacy -PathType Container){
+  $legacyBackup=Join-Path $backup 'disabled-standalone-BlackwallPulse'
+  [IO.Directory]::CreateDirectory($backup)|Out-Null
+  Move-Item -LiteralPath $legacy -Destination $legacyBackup
+ }
  $destination=Prepare 'BepInEx/plugins/LocalSpt5ESP/install-manifest.json'
- $manifest=@{version='2.1';hostVersion='1.5.0';targetSpt='5.0 BE';targetEft='1.3.0.1.48558';clientOnly=[bool]$ClientOnly;experimental=$true;inRaidVerified=$false;installedUtc=[DateTime]::UtcNow.ToString('O');backup=$backup;coreSha256=$checks.'payload/Local.Spt5.ESP.Core.module'}
+ $manifest=@{version='2.2';hostVersion='1.5.0';targetSpt='5.0 BE';targetEft='1.3.0.1.48558';clientOnly=[bool]$ClientOnly;blackwallIntegrated=$true;blackwallAssets=$resourceManifest.files.Count;experimental=$true;inRaidVerified=$false;installedUtc=[DateTime]::UtcNow.ToString('O');backup=$backup;coreSha256=$checks.'payload/Local.Spt5.ESP.Core.module'}
  [IO.File]::WriteAllText($destination,($manifest|ConvertTo-Json -Depth 4),$utf8)
- Write-Output ('Installed SPT Assistant 2.1 (EXPERIMENTAL). Backup: '+$backup)
+ Write-Output ('Installed SPT Assistant 2.2 (EXPERIMENTAL). Backup: '+$backup)
  Write-Output 'Start the SPT server, then its client. Press Right Shift. Fika members: connect to the host; do not start a local server.'
 }catch{
  $failure=$_
+ if($legacyBackup -and (Test-Path -LiteralPath $legacyBackup)){Move-Item -LiteralPath $legacyBackup -Destination (Target 'BepInEx/plugins/BlackwallPulse')}
  for($index=$completed.Count-1;$index -ge 0;$index--){
   $entry=$completed[$index]
   if($entry.Old){Copy-Item -LiteralPath $entry.Old -Destination $entry.Destination -Force}else{Remove-Item -LiteralPath $entry.Destination -Force -ErrorAction SilentlyContinue}

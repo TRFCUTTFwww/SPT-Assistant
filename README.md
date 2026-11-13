@@ -4,7 +4,7 @@
 
 An in-game control panel for **SPT**, built with C# and Unity. Manage your character, raid, equipment, quests and server settings from one interface.
 
-**Version 2.1** · **Current target: SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
+**Version 2.2** · **Current target: SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
 
 > **UNSTABLE — EXPERIMENTAL.** This project has not undergone broad testing. Bugs, crashes, multiplayer desynchronization and unexpected profile changes are possible. Back up your profiles and configuration before installing or updating. A successful build or hot reload does not establish that every feature works in a raid.
 >
@@ -25,9 +25,12 @@ An in-game control panel for **SPT**, built with C# and Unity. Manage your chara
 
 The installer copies only Assistant components, generates item-name/price caches from your own SPT database, preserves existing settings and API keys, and backs up replaced files under `mod-backups`. First installation of the full package creates a random local administration API key. **Fika clients:** use `-ClientOnly`; connect to the host and do not start a local server. Server administration features require matching server components and the host's key, and should be enabled only for trusted administrators. This package does not install Fika.
 
-See [the bilingual installation guide](docs/INSTALL.md) for file locations, updates, source builds and removal, and [2.1 release notes](docs/release-2.1.md) for tested boundaries and remaining limitations.
+See [the bilingual installation guide](docs/INSTALL.md) for file locations, updates, source builds and removal, and [2.2 release notes](docs/release-2.2.md) for tested boundaries and remaining limitations.
 
 ## Features
+
+Blackwall Pulse is built into 2.2 under Fun Features. The release package includes its animation, textures and audio; installation backs up and disables the retired standalone plugin. See [Blackwall details](docs/blackwall-pulse.md).
+
 
 The [chat and slash-command system](docs/CHAT.md) adds a configurable T chat overlay, command history, Tab completion and locally entered commands in single-player and supported FIKA scenarios. Text chat between users of the same upgraded server uses mutually verified TLS 1.3 channels with session-level forward secrecy. Read the fingerprint-verification steps and limitations before use. The old multiplayer branch is unchanged; remote game commands are disabled in main.
 

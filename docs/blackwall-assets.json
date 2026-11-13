@@ -1,0 +1,190 @@
+{
+    "sourceVersion":  "0.2.10",
+    "files":  [
+                  {
+                      "name":  "blackwall.png",
+                      "bytes":  4336678,
+                      "sha256":  "f8ad34bf4c642223f80ac44b0ea3c16da8e88511e57ee5b666020b567822571a"
+                  },
+                  {
+                      "name":  "cast.wav",
+                      "bytes":  797120,
+                      "sha256":  "ef1a6cef913b9faba4dac792c26189de5d270ea350d6047e55439b6e6ba4102b"
+                  },
+                  {
+                      "name":  "death.wav",
+                      "bytes":  1224380,
+                      "sha256":  "a8f08853a2e496bc623de7fa24f7150c3f8bf35e77eca6693526474a4618e079"
+                  },
+                  {
+                      "name":  "flare.png",
+                      "bytes":  18898,
+                      "sha256":  "65469f70668316b3e53a4e9fb3f868b387385983f72580399ee58db4ab8335ed"
+                  },
+                  {
+                      "name":  "glow.png",
+                      "bytes":  412,
+                      "sha256":  "06ec0a922e449e3f52d90cd83de723667258875c61d3fb781d7672fe3cd9086f"
+                  },
+                  {
+                      "name":  "noise.png",
+                      "bytes":  495028,
+                      "sha256":  "d938be1a8424cbed5acac6c3354dbb6c5a5f483b1db7291ac425c0aebade99f8"
+                  },
+                  {
+                      "name":  "npc_1039762929.wav",
+                      "bytes":  88092,
+                      "sha256":  "6a97838aad848c22df1f09d8d2e519f81948e81b1ba360230fd01bf567bc2bd2"
+                  },
+                  {
+                      "name":  "npc_1053829965.wav",
+                      "bytes":  610512,
+                      "sha256":  "4000fc31ef30c4a3e1630abea66bd07e2c0e1a50feda247fe44badf090096d49"
+                  },
+                  {
+                      "name":  "npc_192515260.wav",
+                      "bytes":  96044,
+                      "sha256":  "c4ff6d98c59a32eaf546b8e0393b493b5140ae29c2ea6bfad5dbf04e12bf0a67"
+                  },
+                  {
+                      "name":  "npc_198417711.wav",
+                      "bytes":  767648,
+                      "sha256":  "6f1ee63fe25ef7952abd728f8559b6e3e89514da738a1b41c4d4154eafc5744c"
+                  },
+                  {
+                      "name":  "npc_198549883.wav",
+                      "bytes":  136272,
+                      "sha256":  "574d35644498c35eff48c85cb8afa07745003b46ed6ea375b9d35202d0ce7a38"
+                  },
+                  {
+                      "name":  "npc_209456523.wav",
+                      "bytes":  1419888,
+                      "sha256":  "55bdc601df343ec54c7c9e0d2fd95b3e263d1d6f2d9db4c0fdffbc4832f13c26"
+                  },
+                  {
+                      "name":  "npc_22212768.wav",
+                      "bytes":  499470,
+                      "sha256":  "ffb277b8f6e75df21024e607cf2959034c13c1b9e973bf45d0331b7b1aff81e5"
+                  },
+                  {
+                      "name":  "npc_245105235.wav",
+                      "bytes":  1011656,
+                      "sha256":  "53cd6d2edad9a931374a74f478989ece46eb1e477e681a449122fe1d88c2f43b"
+                  },
+                  {
+                      "name":  "npc_295523828.wav",
+                      "bytes":  96044,
+                      "sha256":  "b04613cb8b716e6da705fc8d9f72c3e9ce38b2d4989283de44fd1fdd0ca49ff6"
+                  },
+                  {
+                      "name":  "npc_329011936.wav",
+                      "bytes":  505304,
+                      "sha256":  "f8220a2ab307f58f5e703c023f5a96e777de2f7db261636294e085ab5b55ec6d"
+                  },
+                  {
+                      "name":  "npc_33035252.wav",
+                      "bytes":  90852,
+                      "sha256":  "f58877ca68e776fbd4f24afd1cdfd15b154af98fd0d0b5beb46d9d3fe848553d"
+                  },
+                  {
+                      "name":  "npc_332804055.wav",
+                      "bytes":  96044,
+                      "sha256":  "c8eacbef69902ac06eff40edf308c86a7e11490aee509e356e749cf19442912d"
+                  },
+                  {
+                      "name":  "npc_354156372.wav",
+                      "bytes":  146464,
+                      "sha256":  "0414d8c5e7129d15c6d8e6cd6a07442ff5e2e1c9f45f6b8b51bfdb6a04b2c131"
+                  },
+                  {
+                      "name":  "npc_384243996.wav",
+                      "bytes":  640654,
+                      "sha256":  "ac25ffba4918fd29f4c0c874b623d2a3a8ec887e85ac3c6cb94fc8618837d66e"
+                  },
+                  {
+                      "name":  "npc_402672814.wav",
+                      "bytes":  118380,
+                      "sha256":  "1798d3bc704e253c8ab9c972af805ae720ce30108596225af206191c6af30ad2"
+                  },
+                  {
+                      "name":  "npc_504056792.wav",
+                      "bytes":  105576,
+                      "sha256":  "0abf6c57b14b1369ccacc8af809eadff8fce499a6cd1124ff17d9f3f068f2ad5"
+                  },
+                  {
+                      "name":  "npc_507834237.wav",
+                      "bytes":  1159068,
+                      "sha256":  "f333354a28a32f212a3481aab0e9c155525daf3e2d798c115a845c13a22e0a17"
+                  },
+                  {
+                      "name":  "npc_546145831.wav",
+                      "bytes":  929612,
+                      "sha256":  "8468d09c34345fa2742863e0585a73d080039b0c166f5fb955fbc04c69d06ad0"
+                  },
+                  {
+                      "name":  "npc_616156953.wav",
+                      "bytes":  490060,
+                      "sha256":  "6cb75545f8ae9ff86e6e3e853d100190971d998c508578485da0a34df0512aa7"
+                  },
+                  {
+                      "name":  "npc_648806972.wav",
+                      "bytes":  602172,
+                      "sha256":  "f8fb6a57639fc0cdde7d3962c8757148c74c1b9c6e2781800a7c12c6684923b2"
+                  },
+                  {
+                      "name":  "npc_681900649.wav",
+                      "bytes":  1136432,
+                      "sha256":  "ed16d5f7720de6e6f4b5d741c6a2fd442acb2868f510fdcfe915085ffbb17e7d"
+                  },
+                  {
+                      "name":  "npc_71869785.wav",
+                      "bytes":  617948,
+                      "sha256":  "fce80ad2967214d6d7cd81c24cf7f30ba36eede88195a9ddbb463858c712206b"
+                  },
+                  {
+                      "name":  "npc_79544389.wav",
+                      "bytes":  589222,
+                      "sha256":  "c3bde80e83f396a6c28682633327727185c78b071952eaf9c63a93dd51669938"
+                  },
+                  {
+                      "name":  "npc_848620842.wav",
+                      "bytes":  551254,
+                      "sha256":  "7fd097c8019dd50718d50f7ea86eb986922d8324dac4d35145b63da4f5d35dd0"
+                  },
+                  {
+                      "name":  "npc_888906332.wav",
+                      "bytes":  96044,
+                      "sha256":  "188dc1062ba7f51af614ddf40330e0478999380c317119a0a607e9cd46a1d0ed"
+                  },
+                  {
+                      "name":  "npc_934676726.wav",
+                      "bytes":  1088152,
+                      "sha256":  "f74b128d828a324b844872c7b680507795eba87d42290ebff7f6ed05f952889d"
+                  },
+                  {
+                      "name":  "release.wav",
+                      "bytes":  142354,
+                      "sha256":  "9b0f44c3ca36bf4edf4aa7f74f6749c6ae776d76d8675a9db95b865c30750282"
+                  },
+                  {
+                      "name":  "scream_f.wav",
+                      "bytes":  306620,
+                      "sha256":  "ba719f86b4ed7e0492afc76a02a709fbc4ba3fdfe4dd8aea5a09201101147cbf"
+                  },
+                  {
+                      "name":  "scream_m.wav",
+                      "bytes":  350582,
+                      "sha256":  "ccfb965d56664a64f8e2da773ba6f2d4a25155fa3d7328efca219a3f2e06504b"
+                  },
+                  {
+                      "name":  "sparks.wav",
+                      "bytes":  382936,
+                      "sha256":  "a319926f86f8a7bec22d211f230a29659a485d47e3f6dd0b7fbc34f740b62468"
+                  },
+                  {
+                      "name":  "station-arms.glb",
+                      "bytes":  1583168,
+                      "sha256":  "168de91cfceb9a8edf1feaccb68355ddf306eb8db0fc80f7e077a4c0687280e6"
+                  }
+              ]
+}
