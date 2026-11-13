@@ -29,13 +29,13 @@ internal static partial class HackUi {
         Image(new Rect(140,173,290,8),"breach_fluff_text2",Alpha(Lime,.5f),true);
         Text(new Rect(884,122,366,45),"缓冲",Lime,32);
         Image(new Rect(884,118,196,7),"breach_fluff_barcode2",Lime,true);
-        Frame(new Rect(884,177,366,72),Lime);
+        Frame(new Rect(884,177,42*p.Capacity+30,72),Lime);
         for(int i=0;i<p.Capacity;i++) {
-            var cell=new Rect(905+i*42,197,32,32);
+            var cell=BufferCell(i);
             Image(cell,"breach_buffer_empty",Alpha(Lime,.65f),true);
             if(i<p.Buffer.Count&&BufferLanded(i)) {
                 Image(cell,"breach_buffer_activated",Lime,true);
-                Text(new Rect(cell.x-1,cell.y-4,34,40),p.Buffer[i],Lime,29,2,TextAnchor.MiddleCenter);
+                BufferCode(cell,p.Buffer[i]);
             }
         }
         opacity=savedOpacity;
@@ -48,7 +48,7 @@ internal static partial class HackUi {
         if(breachHelp&&!p.Ended) {
             Fill(new Rect(886,645,880,216),new Color(.08f,.07f,.105f,.99f));
             Frame(new Rect(886,645,880,216),Alpha(Lime,.6f));
-            Text(new Rect(910,664,830,175),"三条魔偶序列分别匹配，可安排顺序并利用重叠代码。\n从首行开始，交替在所在列、所在行选码，每格仅用一次。\n缓冲区共 8 格；上传门禁授权即可在结算时获得开门权限。\n完成全部序列、缓冲区用尽或计时结束后结算。",Lime,23);
+            Text(new Rect(910,664,830,175),"三条魔偶序列分别匹配，可安排顺序并利用重叠代码。\n从首行开始，交替在所在列、所在行选码，每格仅用一次。\n缓冲区共 10 格，限时 60 秒；门禁授权决定开门权限。\n完成全部序列、缓冲区用尽或计时结束后结算。",Lime,23);
         }
     }
     static void BreachFrame(bool ended) {

@@ -42,13 +42,19 @@ internal static partial class HackUi {
         }
     }
     static bool BufferLanded(int index)=>!codeFlights.Any(f=>f.Index==index&&Now-f.Started<.28f);
+    static Rect BufferCell(int index)=>new(905+index*42,197,32,32);
+    static void BufferCode(Rect cell,string code,int size=27) {
+        // Shared optical alignment for resting codes and the arriving flight.
+        Text(new Rect(cell.x,cell.y-3,cell.width,cell.height),code,Lime,size,2,TextAnchor.MiddleCenter);
+    }
     static void DrawCodeFlights() {
         foreach(var flight in codeFlights) {
             float age=Now-flight.Started;
             if(age>=.28f) continue;
             float t=Ease(age,0,.28f);
             float sx=295.25f+flight.Col*64.5f,sy=378.25f+flight.Row*64.5f;
-            float ex=921+flight.Index*42,ey=213;
+            var destination=BufferCell(flight.Index);
+            float ex=destination.center.x,ey=destination.center.y;
             float x=sx+(ex-sx)*t,y=sy+(ey-sy)*t-Mathf.Sin(t*Mathf.PI)*72;
             for(int trail=1;trail<=3;trail++) {
                 float k=Math.Max(0,t-trail*.045f);
@@ -57,7 +63,7 @@ internal static partial class HackUi {
             }
             var cell=new Rect(x-25+t*9,y-27+t*11,50-t*18,54-t*22);
             Fill(cell,Purple); Frame(cell,Alpha(Cyan,.85f),2);
-            Text(new Rect(cell.x-5,cell.y-4,cell.width+10,cell.height+8),flight.Code,Lime,(int)(34-5*t),2,TextAnchor.MiddleCenter);
+            BufferCode(cell,flight.Code,(int)(34-7*t));
         }
     }
     static void BreachSweep(BreachPuzzle p) {

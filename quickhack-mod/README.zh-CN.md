@@ -1,4 +1,4 @@
-# CP2077 Quickhacks 独立原型 0.3.3
+# CP2077 Quickhacks 独立原型 0.3.4
 
 目标：SPT 5.0 / EFT 48558，BepInEx IL2CPP / .NET 10。插件名称 CP2077 Quickhacks，配置文件 `BepInEx/config/local.cp2077.quickhacks.cfg`。独立于 SPT Assistant，可与其及其内置黑墙脉冲共存。
 
@@ -14,6 +14,8 @@
 
 已有入侵协议图标（DoorAuthorization）和打开、关闭、选码、成功、失败等音效，可用于上传魔偶界面；代码矩阵与交互由插件重建。当前黑墙上传提示临时使用资源包中的突触熔融音效，黑墙死亡音效使用补充包原素材。
 
+0.3.4 降低入侵难度：每条独立序列固定三个代码，缓冲区十格、时间六十秒。缓冲字符缩小两像素并上移三像素，落位和飞入动画共用字符对齐，缓冲外框按十格扩展。
+
 ## 操作
 
 - **F10**：界面与无伤施放预览，可在主菜单打开。选择三种技能，点击「执行施放模拟」或按 F；点击右侧「入侵协议 · 门禁授权」检查代码矩阵。预览不选择或伤害 AI，不操作任何门。施放模拟启动后保留当次技能，即使切换列表选项也不会改变已开始的模拟。
@@ -25,7 +27,7 @@
 
 原生 CardReader / KeycardDoor 的门卡选项列表末尾增加独立的 **「破解」**。原有实体卡选项和原有选中项保留；万能门禁卡功能也可继续提供自己的选项。没有实体卡时也可选择破解。只有点击「破解」才进入入侵协议，不会自动拦截刷卡，不创建门卡物品，不改门的 KeyId 或卡片次数。
 
-小游戏从首行开始，随后交替在所在列、所在行选码；同格不可重复，矩阵为 7×7，缓冲区为 8。首个有效选择后开始 36 秒计时。三条魔偶序列独立匹配，长度为 3～4，顺序随每局变化，不是同一序列的逐级前缀。生成器确保存在利用重叠在八格内完成全部序列的合法路径。匹配一条后继续选码；全部完成、缓冲区用尽、无可选格或计时结束时结算。结算时已匹配「门禁授权」才提交一次开门；辅助目标成功不能单独开门。取消、离开 4 米交互距离、死亡或战局切换均不授权。
+小游戏从首行开始，随后交替在所在列、所在行选码；同格不可重复，矩阵为 7×7，缓冲区为 10。首个有效选择后开始 60 秒计时。三条魔偶序列独立匹配，每条长度为 3，顺序随每局变化，不是同一序列的逐级前缀。生成器确保存在利用重叠用七步完成全部序列，留出三格余量的合法路径。匹配一条后继续选码；全部完成、缓冲区用尽、无可选格或计时结束时结算。结算时已匹配「门禁授权」才提交一次开门；辅助目标成功不能单独开门。取消、离开 4 米交互距离、死亡或战局切换均不授权。
 
 鼠标悬停高亮代码，点击选码。也可用方向键在当前可选行或列中循环选择，F / Enter 确认；静止鼠标不会抢回键盘焦点。底部操作提示栏已移除，快捷键保留：H 显示规则，C / ESC 关闭；完成后点击「退出界面」。F10 内的入侵预览退出后返回扫描预览。成功授权改变门锁状态后仍可查看结果。
 
@@ -51,7 +53,7 @@ CardReader 按原 `_keyMap` 中唯一的成功触发器向当前战局 `Triggers
 - 首次从 0.1 / 0.2 迁移需要重启一次。若客户端正在运行，安装器会验证并排队完整安装包，启动隐藏安装进程等待这个客户端退出，再备份并安装；不会关闭游戏。安装状态见 `mod-updates/quickhacks-install-status.json`。之后使用同一加载器的更新可以在运行中安装。
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-Quickhacks.ps1 -GameRoot 'D:\SPT-5.0.0-48558' -ResourceRoot 'D:\CP2077_Quickhack_Resources_20261112' -BlackwallRoot 'D:\CP2077_Blackwall_Supplement_20261112' -Dotnet 'D:\SPT_Mod_Staging_20261027\dotnet-sdk\dotnet.exe' -HostReleaseRevision '3c728b5b0e7b5c8665597048f5c947e295b7ae23' -OutputDirectory 'D:\SPT_Mod_Staging_20261027\quickhacks-0.3.3' -Install
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-Quickhacks.ps1 -GameRoot 'D:\SPT-5.0.0-48558' -ResourceRoot 'D:\CP2077_Quickhack_Resources_20261112' -BlackwallRoot 'D:\CP2077_Blackwall_Supplement_20261112' -Dotnet 'D:\SPT_Mod_Staging_20261027\dotnet-sdk\dotnet.exe' -HostReleaseRevision '3c728b5b0e7b5c8665597048f5c947e295b7ae23' -OutputDirectory 'D:\SPT_Mod_Staging_20261027\quickhacks-0.3.4' -Install
 ```
 
 脚本构建加载器与逻辑模块，运行离线检查，按本地资源清单逐项验证 SHA256 后打包。输出目录须为空；`-Install` 调用安装器，备份已有独立插件，先复制资源，再原子发布逻辑模块。分发包也可运行 Install.ps1 并指定 GameRoot。资源只保留在本地安装包，不提交源码仓库。

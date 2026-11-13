@@ -22,11 +22,11 @@ internal sealed class BreachPuzzle {
     internal BreachPuzzle(int seed, int difficulty = 1) {
         var random = new Random(seed);
         Size = 7;
-        Capacity = 8;
-        Duration = 36;
+        Capacity = 10;
+        Duration = 60;
         Matrix = new string[Size, Size];
         for (int r = 0; r < Size; r++) for (int c = 0; c < Size; c++) Matrix[r,c] = Symbols[random.Next(Symbols.Length)];
-        int length = Capacity;
+        int length = 7;
         // Backtrack rather than retry random walks: every generated sequence has
         // a legal row/column path, even when many cells have already been used.
         var path = new List<(int Row, int Col)>();
@@ -48,8 +48,7 @@ internal sealed class BreachPuzzle {
         // Independent programs share overlapping sections of one valid route.
         // Shuffling the rows makes the best upload order vary between boards.
         // These are never nested prefixes of one authorization sequence.
-        int firstLength=difficulty>=3?4:3, secondLength=difficulty<=1?3:4;
-        var spans=new[]{(Start:0,Length:firstLength),(Start:2,Length:secondLength),(Start:4,Length:4)};
+        var spans=new[]{(Start:0,Length:3),(Start:2,Length:3),(Start:4,Length:3)};
         string[][] programs=[];
         for(int attempt=0;;attempt++) {
             var codes=Solution.Select(p=>Matrix[p.Row,p.Col]).ToArray();

@@ -6,9 +6,10 @@ int checks=0;
 void Check(bool value,string message) { if(!value) throw new Exception(message); checks++; }
 for(int seed=0;seed<1000;seed++) for(int difficulty=1;difficulty<=3;difficulty++) {
     var puzzle=new BreachPuzzle(seed,difficulty);
-    Check(puzzle.Size==7&&puzzle.Capacity==8,"Reference board uses seven rows/columns and eight buffer slots");
-    Check(puzzle.Started==null&&puzzle.Remaining(1000)==36,"Timer starts on first valid cell");
-    Check(puzzle.Programs.Length==3&&puzzle.Programs.All(p=>p.Length is >=3 and <=4),"Three separately matched programs");
+    Check(puzzle.Size==7&&puzzle.Capacity==10,"Board uses seven rows/columns and ten buffer slots");
+    Check(puzzle.Started==null&&puzzle.Remaining(1000)==60,"Timer starts on first valid cell");
+    Check(puzzle.Programs.Length==3&&puzzle.Programs.All(p=>p.Length==3),"Three independent programs need three codes each");
+    Check(puzzle.Solution.Length<=puzzle.Capacity-3,"Full upload route leaves three spare buffer slots");
     Check(Enumerable.Range(0,3).All(a=>Enumerable.Range(0,3).All(b=>a==b||!BreachPuzzle.Contains(puzzle.Programs[a],puzzle.Programs[b]))),"Programs are distinct, not nested versions of one sequence");
     Check(!puzzle.Pick(1,0,10)&&puzzle.Buffer.Count==0&&puzzle.Started==null,"Reject starting outside first row");
     foreach(var cell in puzzle.Solution) {
@@ -19,18 +20,18 @@ for(int seed=0;seed<1000;seed++) for(int difficulty=1;difficulty<=3;difficulty++
     }
     Check(puzzle.Won&&!puzzle.Lost&&puzzle.Buffer.Count<=puzzle.Capacity,"Every generated board is solvable within buffer");
     Check(puzzle.AllUploaded,"One legal route can upload all three independent programs with overlap");
-    Check(puzzle.Remaining(1000)==36,"Result retains the time at completion");
+    Check(puzzle.Remaining(1000)==60,"Result retains the time at completion");
     Check(!puzzle.Pick(0,0,11),"No further input after authorization");
 }
 var timer=new BreachPuzzle(3);
-Check(timer.Pick(0,0,7),"Start timeout board"); timer.Tick(44);
-Check(timer.Lost&&!timer.Won&&timer.Remaining(100)==0&&!timer.Pick(1,0,44),"Timeout cannot authorize or accept input");
+Check(timer.Pick(0,0,7),"Start timeout board"); timer.Tick(68);
+Check(timer.Lost&&!timer.Won&&timer.Remaining(100)==0&&!timer.Pick(1,0,68),"Timeout cannot authorize or accept input");
 var full=new BreachPuzzle(0);
 while(!full.Ended) {
     var cell=Enumerable.Range(0,full.Size*full.Size).Select(i=>(Row:i/full.Size,Col:i%full.Size)).First(p=>full.CanPick(p.Row,p.Col));
     full.Pick(cell.Row,cell.Col,1);
 }
-Check(full.Buffer.Count==8&&full.Lost&&!full.Won,"Unmatched full buffer fails without authorizing");
+Check(full.Buffer.Count==10&&full.Lost&&!full.Won,"Unmatched full buffer fails without authorizing");
 BreachPuzzle FindPartial(bool authorization) {
     for(int seed=0;seed<1000;seed++) {
         var p=new BreachPuzzle(seed,2);
@@ -44,12 +45,12 @@ BreachPuzzle FindPartial(bool authorization) {
 var authorized=FindPartial(true);
 Check(!authorized.Ended&&!authorized.AllUploaded,"Matching authorization alone leaves room for other programs");
 double partialTime=authorized.Remaining(20);
-authorized.Tick(46);
+authorized.Tick(70);
 Check(authorized.Won&&!authorized.Lost&&authorized.Uploaded(2),"Timeout keeps previously uploaded authorization and finishes successfully");
-Check(partialTime<36&&authorized.Remaining(100)==0,"Timer advances until settlement and then freezes");
+Check(partialTime<60&&authorized.Remaining(100)==0,"Timer advances until settlement and then freezes");
 var optional=FindPartial(false);
 Check(Enumerable.Range(0,2).Any(optional.Uploaded)&&!optional.Uploaded(2),"Optional programs can match independently of authorization");
-optional.Tick(46);
+optional.Tick(70);
 Check(optional.Lost&&!optional.Won&&Enumerable.Range(0,2).Any(optional.Uploaded),"Optional uploads remain installed but cannot open a door");
 Check(BreachPuzzle.Contains(new[]{"FF","1C","55","BD"},new[]{"1C","55","BD"}),"Sequence can start inside buffer");
 Check(!BreachPuzzle.Contains(new[]{"1C","FF","55"},new[]{"1C","55"}),"Sequence must be contiguous");
