@@ -53,7 +53,7 @@ public sealed class TableService(TemplateTable templates,SaveServer saves,ItemHe
  }).Where(p=>p.Value>0).GroupBy(x=>x.Id).Select(x=>x.First()).Where(x=>x.Id!=EmcRules.Ruble).Append(new(EmcRules.Ruble,1,500000)).ToArray();
  static string Digest(TableRequest r)=>Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(JsonSerializer.Serialize(r))));
  public async ValueTask<string> Handle(TableRequest request,MongoId session,CancellationToken ct){
-  var gate=Gates.GetOrAdd(session.ToString(),_=>new(1,1));await gate.WaitAsync(ct);
+  var gate=ProfileGates.Get(session.ToString());await gate.WaitAsync(ct);
   try{
    var profile=saves.GetProfile(session)??throw new ArgumentException("请先登录存档。");
    var pmc=profile.CharacterData?.PmcData??throw new ArgumentException("PMC 存档未就绪。");
@@ -73,6 +73,16 @@ public sealed class TableService(TemplateTable templates,SaveServer saves,ItemHe
      if(receipt.InventoryBeforeJson.Length>0){if(json.Serialize(inventory.Items)!=receipt.InventoryAfter)throw new ArgumentException("库存已变化，无法自动撤回。");changed=json.Deserialize<List<Item>>(receipt.InventoryBeforeJson)??throw new ArgumentException("库存快照无效。");}
      wallet.Balance=receipt.Before;if(receipt.NewKnowledge)wallet.Learned.Remove(receipt.Template);receipt.Undone=true;wallet.Revision++;
     }
+   }else if(request.Action=="artifact"){
+    if(wallet.Receipts.TryGetValue(request.Operation,out var previous)){
+     if(previous.Digest!=Digest(request)||previous.Undone)throw new ArgumentException("流水已撤回或请求内容不一致。");
+     return http.GetBody(Reply());
+    }
+    long cost=ArtifactRules.Cost(request.Template,request.Count,request.Quality);
+    long before=wallet.Balance;wallet.Balance=EmcRules.Exchange(before,cost,false);
+    foreach(var older in wallet.Receipts.Values){older.InventoryBeforeJson="";older.InventoryAfter="";}
+    wallet.Receipts.Add(request.Operation,new(){Digest=Digest(request),Before=before,After=wallet.Balance,Revision=++wallet.Revision,Template=request.Template});
+    while(wallet.Receipts.Count>64)wallet.Receipts.Remove(wallet.Receipts.Keys.First());
    }else if(request.Action=="exchange"){
     if(wallet.Receipts.TryGetValue(request.Operation,out var previous)){
      if(previous.Digest!=Digest(request)||previous.Undone)throw new ArgumentException("转换流水已被使用。");

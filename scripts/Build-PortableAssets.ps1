@@ -6,7 +6,7 @@ $assets=Join-Path $repo 'projecte-client/Assets'
 $renderer=Join-Path $repo 'atm-swords-client/Assets'
 $utf8=[Text.UTF8Encoding]::new($false)
 $culture=[Globalization.CultureInfo]::InvariantCulture
-foreach($key in @('tablet','wireless_terminal','totem')){
+foreach($key in @('tablet','wireless_terminal','totem','body_stone','soul_stone','life_stone','time_watch','repair_talisman','white_bag','orange_bag','magenta_bag','light_blue_bag','yellow_bag','lime_bag','pink_bag','gray_bag','light_gray_bag','cyan_bag','purple_bag','blue_bag','brown_bag','green_bag','red_bag','black_bag')){
  $bitmap=[Drawing.Bitmap]::new((Join-Path $assets ($key+'.png')))
  try{
   $vertices=[Collections.Generic.List[string]]::new(); $uvs=[Collections.Generic.List[string]]::new(); $faces=[Collections.Generic.List[string]]::new(); $index=1
@@ -51,8 +51,29 @@ $sources=[ordered]@{
  'totem.ogg'=@{url='https://resources.download.minecraft.net/e7/e7f0337931cdb05c4234d2a9bc1f38ead675db26';sha1='e7f0337931cdb05c4234d2a9bc1f38ead675db26';path='minecraft/sounds/item/totem/use_totem.ogg';license='Mojang/Microsoft copyrighted Minecraft asset'}
  'totem.wav'=@{derivedFrom='totem.ogg';conversion='libsndfile, 16-bit signed PCM, original channels and sample rate'}
 }
+$sources['body_stone.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/rings/body_stone_off.png';license='MIT'}
+$sources['soul_stone.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/rings/soul_stone_off.png';license='MIT'}
+$sources['life_stone.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/rings/life_stone_off.png';license='MIT'}
+$sources['time_watch.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/rings/time_watch_off.png';license='MIT'}
+$sources['repair_talisman.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/repair_talisman.png';license='MIT'}
+$sources['white_bag.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/alchemy_bags/white.png';license='MIT'}
+$sources['orange_bag.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/alchemy_bags/orange.png';license='MIT'}
+$sources['magenta_bag.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/alchemy_bags/magenta.png';license='MIT'}
+$sources['light_blue_bag.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/alchemy_bags/light_blue.png';license='MIT'}
+$sources['yellow_bag.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/alchemy_bags/yellow.png';license='MIT'}
+$sources['lime_bag.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/alchemy_bags/lime.png';license='MIT'}
+$sources['pink_bag.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/alchemy_bags/pink.png';license='MIT'}
+$sources['gray_bag.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/alchemy_bags/gray.png';license='MIT'}
+$sources['light_gray_bag.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/alchemy_bags/light_gray.png';license='MIT'}
+$sources['cyan_bag.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/alchemy_bags/cyan.png';license='MIT'}
+$sources['purple_bag.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/alchemy_bags/purple.png';license='MIT'}
+$sources['blue_bag.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/alchemy_bags/blue.png';license='MIT'}
+$sources['brown_bag.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/alchemy_bags/brown.png';license='MIT'}
+$sources['green_bag.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/alchemy_bags/green.png';license='MIT'}
+$sources['red_bag.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/alchemy_bags/red.png';license='MIT'}
+$sources['black_bag.png']=@{repository='https://github.com/sinkillerj/ProjectE';commit='f432b0c66837759fb0731c9144dc53176b949c5d';path='src/main/resources/assets/projecte/textures/item/alchemy_bags/black.png';license='MIT'}
 foreach($name in @($sources.Keys)){$sources[$name].sha256=(Get-FileHash -LiteralPath (Join-Path $assets $name) -Algorithm SHA256).Hash.ToLowerInvariant()}
 [IO.File]::WriteAllText((Join-Path $assets 'portable-provenance.json'),(($sources | ConvertTo-Json -Depth 8).Replace("`r`n","`n"))+"`n",$utf8)
 [IO.File]::WriteAllText((Join-Path $assets 'Portable-NOTICE.txt'),"Portable tablet: ProjectE MIT. Wireless terminal: Applied Energistics 2, original unmodified sprite, LGPL-3.0; source revision and file path in portable-provenance.json. Totem sprite and original sound: Minecraft 1.21.1, copyright Mojang/Microsoft; not covered by the ProjectE MIT license. Generated meshes retain the source sprite colors and attribution. Animation and gameplay adaptation are local code, not extracted Minecraft implementation.`n",$utf8)
 foreach($name in @('portable-provenance.json','AE2-LICENSE.txt','Portable-NOTICE.txt')){Copy-Item -LiteralPath (Join-Path $assets $name) -Destination $renderer}
-Write-Output 'Built three original-sprite handheld meshes, PCM totem audio and provenance.'
+Write-Output 'Built 24 original-sprite utility meshes, PCM totem audio and provenance.'

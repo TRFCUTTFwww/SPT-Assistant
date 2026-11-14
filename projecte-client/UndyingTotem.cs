@@ -16,17 +16,19 @@ public sealed partial class ProjectModule {
  }
  static bool TotemBeforeKill(ActiveHealthController __instance,EDamageType __0){
   var a=active;var p=RaidPlayer();if(a?.context?.IsActive!=true||!a.totemEnabled.Value||a.savingLife||p==null||__instance.Player?.Pointer!=p.Pointer||__0.ToString() is "Existence" or "Undefined")return true;
-  var item=p.HandsController?.GetItem();if(item==null||!MatterRules.CanSave(true,p.IsYourPlayer,item.StringTemplateId==Gadgets.Totem,a.consumedTotems.Contains(item.Id.ToString()),__instance.IsAlive))return true;
+  var item=CarriedInventory.Items(p).FirstOrDefault(i=>i.StringTemplateId==Gadgets.Totem&&!a.consumedTotems.Contains(i.Id.ToString()));
+  if(item==null||!MatterRules.CanSave(true,p.IsYourPlayer,true,false,__instance.IsAlive))return true;
   try{
    a.savingLife=true;
    var controller=p.InventoryController;if(controller==null||item.CurrentAddress==null)return true;
+   bool held=p.HandsController?.GetItem()?.Id.ToString()==item.Id.ToString();
    var removal=ItemManipulator.Remove(item,controller,false);if(!removal.Succeeded)return true;
    a.consumedTotems.Add(item.Id.ToString());
    removal.Value.RaiseEvents(controller.Cast<IItemOwner>(),CommandStatus.Succeed);
    // Restore before allowing the death method to notify listeners or create a corpse.
    __instance.RemoveNegativeEffects(EBodyPart.Common);
    foreach(var part in bodyParts){__instance.RemoveNegativeEffects(part);var hp=__instance.GetBodyPartHealth(part,false);float before=hp.Current;if(before<=0)__instance.FullRestoreBodyPart(part);hp=__instance.GetBodyPartHealth(part,false);float target=Math.Max(before,MatterRules.RevivalHealth(hp.Maximum));__instance.ChangeHealth(part,target-hp.Current,new DamageInfo());}
-   a.savedPlayer=p.Pointer;a.totemStart=Time.unscaledTime;a.regenUntil=Time.unscaledTime+45;a.fireUntil=Time.unscaledTime+40;a.nextRegen=Time.unscaledTime+1;a.emptyHands=true;
+   a.savedPlayer=p.Pointer;a.totemStart=Time.unscaledTime;a.regenUntil=Time.unscaledTime+45;a.fireUntil=Time.unscaledTime+40;a.nextRegen=Time.unscaledTime+1;a.emptyHands=held;
    try{a.resources!.Play("totem",a.volume.Value);a.Say("不死图腾已消耗 · 再生 45 秒 · 火焰抵抗 40 秒");}catch(Exception e){a.context.Log(Local.ModHost.LogLevel.Warning,"Totem presentation: "+e.Message);}
    return false;
   }catch(Exception e){a.context.Log(Local.ModHost.LogLevel.Error,"Totem rescue failed: "+e);return true;}

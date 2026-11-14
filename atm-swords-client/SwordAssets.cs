@@ -35,8 +35,8 @@ internal sealed class SwordAssets {
   // origin. Keep the width center at the original grip offset.
   float scale=.831764f/(max-min);
   if(Swords.IsUtility(sword.Id)){
-   float width=vertices.Max(v=>v.x)-vertices.Min(v=>v.x),height=vertices.Max(v=>v.y)-vertices.Min(v=>v.y),center=(vertices.Max(v=>v.x)+vertices.Min(v=>v.x))*.5f,bottom=vertices.Min(v=>v.y);scale=.42f/Math.Max(width,height);
-   for(int i=0;i<vertices.Count;i++){var v=vertices[i];vertices[i]=new(v.z*scale,(v.x-center)*scale,(v.y-bottom)*scale-.06f);}
+   float width=vertices.Max(v=>v.x)-vertices.Min(v=>v.x),height=vertices.Max(v=>v.y)-vertices.Min(v=>v.y),center=(vertices.Max(v=>v.x)+vertices.Min(v=>v.x))*.5f,bottom=vertices.Min(v=>v.y);scale=.24f/Math.Max(width,height);
+   for(int i=0;i<vertices.Count;i++){var v=vertices[i];vertices[i]=new(v.z*scale*.5f,(v.x-center)*scale,(v.y-bottom)*scale-.015f);}
   }else for(int i=0;i<vertices.Count;i++){var v=vertices[i];vertices[i]=new(v.z*scale*1.41421356f,(v.x-v.y)*scale-.003738f,(v.x+v.y-min)*scale-.152696f);}
   originalVertices=vertices.ToArray();
   Mesh.vertices=vertices.ToArray();Mesh.uv=uv.ToArray();Mesh.triangles=indices.ToArray();Mesh.RecalculateNormals();Mesh.RecalculateBounds();

@@ -8,16 +8,14 @@ using EFT.InventoryLogic;
 using UnityEngine;
 namespace LocalSpt5Esp;
 internal static partial class WorldEditor {
- static Vector2 scroll;static string query="",lastQuery="",rename="",stack="1",yaw="0";
+ static Vector2 scroll,settingsScroll;static string query="",lastQuery="",rename="",stack="1",yaw="0";
  static bool createAi=true,paused;static int difficulty=1;
  static (string Id,string Name)[] items=Array.Empty<(string,string)>();
  static readonly Dictionary<string,(string Max,string Current)> health=new();
  static ItemComponentEditor? componentEditor;
  internal static void DrawSettings(Rect rect){
-  InterfaceMenu.DrawEntry(enabled!,new Rect(rect.x,rect.y,rect.width,84));InterfaceMenu.DrawEntry(toggleEditor!,new Rect(rect.x,rect.y+94,rect.width,84));InterfaceMenu.DrawEntry(throughWallSelection!,new Rect(rect.x,rect.y+188,rect.width,84));
-  InterfaceMenu.DrawEntry(moveInvincible!,new Rect(rect.x,rect.y+282,rect.width,84));
-  InterfaceMenu.DrawEntry(moveIgnored!,new Rect(rect.x,rect.y+376,rect.width,84));
-  DrawContextSettings(new Rect(rect.x,rect.y+470,rect.width,Math.Max(100,rect.height-470)));
+  settingsScroll=GUI.BeginScrollView(rect,settingsScroll,new Rect(0,0,rect.width-22,480));
+  try{var entries=new BepInEx.Configuration.ConfigEntryBase[]{enabled!,toggleEditor!,throughWallSelection!,moveInvincible!,moveIgnored!};for(int i=0;i<entries.Length;i++)InterfaceMenu.DrawEntry(entries[i],new Rect(0,i*96,rect.width-28,86));}finally{GUI.EndScrollView();}
  }
  internal static void Draw(){
   if(!Active||InterfaceMenu.Open)return;int depth=GUI.depth;bool oldEnabled=GUI.enabled;GUI.depth=-900;

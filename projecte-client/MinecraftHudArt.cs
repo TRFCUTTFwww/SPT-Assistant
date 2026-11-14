@@ -5,10 +5,10 @@ namespace ProjectE.Client;
 
 // Native-size Minecraft 1.8.9 atlas coordinates. All positions use MC GUI pixels.
 internal sealed class MinecraftHudArt {
- readonly Texture2D icons,widgets,font;
+ readonly Texture2D icons,widgets,font,thirst;
  readonly int[] advances;
  internal MinecraftHudArt(ModuleContext context,ProjectResources resources){
-  icons=resources.Texture("mc_icons");widgets=resources.Texture("mc_widgets");font=resources.Texture("mc_ascii");
+  icons=resources.Texture("mc_icons");widgets=resources.Texture("mc_widgets");font=resources.Texture("mc_ascii");thirst=resources.Texture("thirst_icons");
   using var source=JsonDocument.Parse(File.ReadAllText(Path.Combine(context.ModuleDirectory,"Assets","mc-hud-provenance.json")));
   advances=source.RootElement.GetProperty("glyphAdvances").EnumerateArray().Select(x=>x.GetInt32()).ToArray();
  }
@@ -21,6 +21,7 @@ internal sealed class MinecraftHudArt {
   Blit(icons,new(x,y,182,5),0,64,182,5);
   int fill=Math.Clamp((int)(progress*183),0,182);if(fill>0)Blit(icons,new(x,y,fill,5),0,69,fill,5);
  }
+ internal void Hydration(float x,float y,float units){Blit(thirst,new(x,y,9,9),0,0,9,9);if(units>0)Blit(thirst,new(x,y,9,9),units>1?16:8,0,9,9);}
  internal void Hotbar(int slots){
   int original=Math.Min(slots,9)*20+1;
   Blit(widgets,new(0,0,original,22),0,0,original,22);

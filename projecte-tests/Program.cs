@@ -2,8 +2,8 @@ using ProjectE;
 int checks=0;
 void Check(bool valid,string label){if(!valid)throw new Exception(label);checks++;Console.WriteLine("PASS "+label);}
 void Reject(Action action,string label){try{action();}catch(ArgumentException){Check(true,label);return;}catch(OverflowException){Check(true,label);return;}throw new Exception("Accepted invalid operation: "+label);}
-Check(Swords.All.Select(x=>x.Damage).SequenceEqual(new[]{13,17,24}),"original uncharged ProjectE weapon damage");
-Check(Swords.All.Select(x=>x.Id).Distinct().Count()==3&&Swords.All.All(x=>x.Id.Length==24),"three independent stable template IDs");
+Check(Swords.All.Take(3).Select(x=>x.Damage).SequenceEqual(new[]{13,17,24}),"original uncharged ProjectE weapon damage");
+Check(Swords.All.Select(x=>x.Id).Distinct().Count()==4&&Swords.All.All(x=>x.Id.Length==24),"four independent stable weapon template IDs");
 Check(EmcRules.Quote(1,500000)==500000,"one ruble equals one EMC");
 Check(EmcRules.Quote(14000,3)==42000,"stack value uses unit handbook rubles");
 Check(EmcRules.Quote(14000,3,2500)==10500,"used resource value scales by remaining quality");
@@ -37,16 +37,31 @@ Check(!TableProtocol.Read("{\"Ok\":false,\"Error\":\"EMC 不足\"}").Ok,"busines
 foreach(string invalid in new[]{"{}","{\"err\":0,\"data\":null}","{\"err\":1}","{\"Ok\":true,\"Learned\":null}","{\"Ok\":true,\"Balance\":-1}"}){
  try{TableProtocol.Read(invalid);throw new Exception("Accepted invalid table response");}catch(IOException){Check(true,"missing endpoint or malformed wallet cannot appear connected");}
 }
-Check(Gadgets.All.Select(x=>x.Id).Distinct().Count()==3&&Gadgets.All.All(x=>x.Id.Length==24&&!Swords.All.Any(s=>s.Id==x.Id)),"portable devices and totem have unique independent IDs");
-Check(Swords.All.Select(x=>MatterRules.MaxCharge(x.Id)).SequenceEqual(new[]{2,3,4}),"upstream dark sword, red sword and katar charge caps");
+Check(Gadgets.All.Select(x=>x.Id).Distinct().Count()==24&&Gadgets.All.All(x=>x.Id.Length==24&&!Swords.All.Any(s=>s.Id==x.Id)),"portable devices and totem have unique independent IDs");
+Check(Swords.All.Take(3).Select(x=>MatterRules.MaxCharge(x.Id)).SequenceEqual(new[]{2,3,4}),"upstream dark sword, red sword and katar charge caps");
 Check(MatterRules.Step(4,4,false)==4&&MatterRules.Step(0,4,true)==0,"charge cannot overflow or underflow");
 Check(MatterRules.Step(2,4,true)==1&&MatterRules.Step(2,4,false)==3,"charge and discharge move one level");
 Check(MatterRules.MaxCharge(Gadgets.Tablet)==0&&MatterRules.Radius(4)==10&&MatterRules.Radius(0)==0,"utilities cannot charge and maximum katar range is ten meters");
 Check(!MatterRules.EligibleTarget(false,true,true,false,true)&&!MatterRules.EligibleTarget(true,false,true,false,true),"area abilities never target human players or self");
 Check(!MatterRules.EligibleTarget(false,false,true,true,false)&&MatterRules.EligibleTarget(false,false,true,true,true),"friendly AI require explicit all-AI mode");
 Check(!MatterRules.EligibleTarget(false,false,false,false,true),"dead actors are excluded");
-Check(MatterRules.CanSave(true,true,true,false,true),"held unconsumed totem can protect a living local player in raid");
-Check(!MatterRules.CanSave(true,true,false,false,true)&&!MatterRules.CanSave(true,true,true,true,true),"stored or already consumed totem cannot protect");
+Check(MatterRules.CanSave(true,true,true,false,true),"carried unconsumed totem can protect a living local player in raid");
+Check(!MatterRules.CanSave(true,true,false,false,true)&&!MatterRules.CanSave(true,true,true,true,true),"un-carried or already consumed totem cannot protect");
 Check(!MatterRules.CanSave(false,true,true,false,true)&&!MatterRules.CanSave(true,false,true,false,true)&&!MatterRules.CanSave(true,true,true,false,false),"totem cannot resurrect dead actors, remote actors or lobby profiles");
 Check(MatterRules.RevivalHealth(35)==7&&MatterRules.RevivalHealth(1)==1,"totem restores twenty percent with a positive health floor");
+Check(Gadgets.BagIds.Count==16&&Gadgets.BagIds.All(id=>Gadgets.Find(id)!=null&&!Gadgets.Handheld(id)),"sixteen independent native bag templates are not melee tools");
+Check(Swords.Find(Swords.Quantum)!.Damage==999999999&&MatterRules.MaxCharge(Swords.Quantum)==0,"quantum sword uses finite native fallback and no PE charge");
+Check(ArtifactRules.Cost(Gadgets.Body,1)==64&&ArtifactRules.Cost(Gadgets.Soul,2)==64,"body and soul effects each require sixty-four EMC");
+Check(ArtifactRules.Cost(Gadgets.Life,1)==64&&ArtifactRules.Cost(Gadgets.Life,2)==64&&ArtifactRules.Cost(Gadgets.Life,3)==128,"life stone pays only for requested effects");
+Check(Enumerable.Range(0,3).Select(x=>ArtifactRules.Cost(Gadgets.Watch,0,x)).SequenceEqual(new long[]{20,30,40}),"watch fuel follows upstream twenty-tick cost");
+Reject(()=>ArtifactRules.Cost(Gadgets.Body,3),"body stone cannot request unrelated healing");
+Reject(()=>ArtifactRules.Cost(Gadgets.Watch,0,3),"watch cannot exceed its original charge cap");
+Reject(()=>ArtifactRules.Cost(Gadgets.Repair,1),"repair talisman cannot spend arbitrary wallet amounts");
+Check(ArtifactRules.Repair(0,50)==1&&ArtifactRules.Repair(49.5f,50)==50&&ArtifactRules.Repair(50,50)==50,"repair respects damaged ceiling and restores broken equipment");
+Check(ScrollRules.Maximum(36,9,54,216)==0&&ScrollRules.Maximum(37,9,54,216)==54,"inventory scrolling exposes the first row after the old page boundary");
+Check(ScrollRules.Step(0,-5,32,16)==0&&ScrollRules.Step(0,100,32,16)==16,"knowledge scrolling clamps at both ends");
+Check(Enumerable.Range(0,100).All(i=>HudMotion.Offset(1,i%10,0,i*.05f)==0&&HudMotion.Offset(1,i%10,1,i*.05f)==0&&HudMotion.Offset(1,i%10,2,i*.05f)==0),"normal status bars remain stable");
+Check(Enumerable.Range(0,100).Select(i=>HudMotion.Offset(0,i%10,2,i*.05f)).Distinct().Count()>=4,"empty hydration uses continuous vigorous jitter");
+Check(Enumerable.Range(0,100).All(i=>Math.Abs(HudMotion.Offset(0,i%10,1,i*.05f))<=2),"empty hunger jitter stays within two GUI pixels");
+Check(HudMotion.Offset(.1f,2,0,1.25f)==HudMotion.Offset(.1f,2,0,1.25f),"HUD motion is deterministic and does not consume gameplay randomness");
 Console.WriteLine($"Passed {checks} ProjectE rules and protocol checks.");

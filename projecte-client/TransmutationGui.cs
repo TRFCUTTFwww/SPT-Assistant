@@ -8,7 +8,7 @@ internal sealed partial class Transmutation {
  McGui? gui;bool selectingOutput,affordableOnly;
  readonly Dictionary<string,Item> samples=[];
  string query="",inventoryQuery="",quantity="1",selectedItem="",selectedLearned="",tooltip="";
- int backpackPage,knowledgePage;
+ Vector2 inventoryScroll;float knowledgeScroll;
  // ProjectE mc1.21.1 TransmutationContainer: original 228x196 panel and slot coordinates.
  static readonly (int X,int Y)[] inputSlots=[(43,23),(34,41),(52,41),(16,50),(70,50),(34,59),(52,59),(43,77)];
  static readonly (int X,int Y)[] outputSlots=[(158,9),(176,13),(193,30),(199,50),(193,70),(176,87),(158,91),(140,87),(123,70),(116,50),(123,30),(140,13),(158,31),(177,50),(158,69),(139,50)];
@@ -36,18 +36,24 @@ internal sealed partial class Transmutation {
    GUI.DrawTextureWithTexCoords(new(ArtX,ArtY,228*Pixel,196*Pixel),texture,new(0,1-196f/texture.height,228f/texture.width,196f/texture.height));
    gui.Label(new(ArtX+18,ArtY+12,220,30),"消耗 / 学习",null,16);
    string search=gui.Field(new(ArtX+83*Pixel,ArtY+8*Pixel,55*Pixel,27),query);
-   if(search!=query){query=search;knowledgePage=0;}
+   if(search!=query){query=search;knowledgeScroll=0;}
    if(query.Length==0)gui.Label(new(ArtX+83*Pixel+5,ArtY+8*Pixel,155,27),"搜索已学物品",new(.7f,.7f,.7f),12);
    var filtered=items.Where(i=>Matches(i.StringTemplateId,inventoryQuery)).ToArray();
    var known=learned.Where(prices.ContainsKey).Where(id=>Matches(id,query)).Where(id=>!affordableOnly||prices[id].Value<=balance).OrderByDescending(id=>prices[id].Value).ThenBy(Name).ToArray();
-   backpackPage=Math.Clamp(backpackPage,0,Math.Max(0,(filtered.Length-1)/36));knowledgePage=Math.Clamp(knowledgePage,0,Math.Max(0,(known.Length-1)/16));
-   // The left ring offers eight quick inputs from the visible inventory page.
+   inventoryScroll.y=Math.Clamp(inventoryScroll.y,0,ScrollRules.Maximum(filtered.Length,9,54,216));
+   knowledgeScroll=Math.Clamp(knowledgeScroll,0,Math.Max(0,known.Length-16));
+   Rect knowledgeArea=new(ArtX+115*Pixel,ArtY+7*Pixel,98*Pixel,91*Pixel);
+   if(Event.current.type==EventType.ScrollWheel&&knowledgeArea.Contains(Event.current.mousePosition)&&!Busy){knowledgeScroll=ScrollRules.Step(knowledgeScroll,Event.current.delta.y,known.Length,16);Event.current.Use();}
+   bool wasEnabled=GUI.enabled;GUI.enabled=!Busy&&known.Length>16;
+   knowledgeScroll=GUI.VerticalScrollbar(new(ArtX+218*Pixel,ArtY+15*Pixel,16,84*Pixel),knowledgeScroll,16,0,Math.Max(16,known.Length));GUI.enabled=wasEnabled;
+   int firstKnown=(int)knowledgeScroll,firstInput=(int)(inventoryScroll.y/54)*9;
+   // Quick inputs follow the visible inventory rows; the ring scrolls independently.
    for(int n=0;n<inputSlots.Length;n++){
-    int index=backpackPage*36+n;var item=index<filtered.Length?filtered[index]:null;
+    int index=firstInput+n;var item=index<filtered.Length?filtered[index]:null;
     DrawInventorySlot(SlotAt(inputSlots[n].X,inputSlots[n].Y),item);
    }
    for(int n=0;n<outputSlots.Length;n++){
-    int index=knowledgePage*16+n;string id=index<known.Length?known[index]:"";
+    int index=firstKnown+n;string id=index<known.Length?known[index]:"";
     Rect r=SlotAt(outputSlots[n].X,outputSlots[n].Y);
     if(id.Length>0){
      if(selectingOutput&&id==selectedLearned)Highlight(r);
@@ -66,33 +72,30 @@ internal sealed partial class Transmutation {
    if(McGui.Hit(reset,!Busy)){selectedItem=selectedLearned="";quantity="1";}
    gui.Label(new(ArtX+18,ArtY+91*Pixel,225,26),"EMC",new(.2f,.3f,.15f),17);
    gui.Label(new(ArtX+18,ArtY+101*Pixel,225,26),ready?$"{balance:N0}":"—",new(.15f,.32f,.08f),balance>999999999?13:18);
-   if(gui.Button(new(ArtX+125*Pixel,ArtY+100*Pixel,42,42),"<",!Busy&&knowledgePage>0))knowledgePage--;
-   if(gui.Button(new(ArtX+193*Pixel,ArtY+100*Pixel,42,42),">",!Busy&&(knowledgePage+1)*16<known.Length))knowledgePage++;
-   for(int n=0;n<36;n++){
-    int index=backpackPage*36+n;var item=index<filtered.Length?filtered[index]:null;
-    DrawInventorySlot(SlotAt(35+n%9*18,n<27?117+n/9*18:175),item);
-   }
+   var viewport=new Rect(ArtX+35*Pixel,ArtY+117*Pixel,9*54+18,216);
+   McGui.Fill(viewport,new(.12f,.12f,.12f));
+   bool inventoryInput=viewport.Contains(Event.current.mousePosition);
+   inventoryScroll=GUI.BeginScrollView(viewport,inventoryScroll,new Rect(0,0,9*54,Math.Max(216,((filtered.Length+8)/9)*54)),false,true);
+   try{int row=(int)(inventoryScroll.y/54);for(int n=row*9;n<Math.Min(filtered.Length,(row+5)*9);n++){var r=new Rect(n%9*54,n/9*54,48,48);McGui.Slot(r);DrawInventorySlot(r,filtered[n],inventoryInput);}}
+   finally{GUI.EndScrollView();}
    if(filtered.Length==0){McGui.Fill(new(ArtX+102,ArtY+354,486,148),new(.1f,.1f,.1f,.85f));gui.Wrapped(new(ArtX+120,ArtY+366,448,120),access==null?"请先打开 PMC 角色库存，再点击右侧刷新。":inventoryQuery.Length>0?"没有匹配的库存物品，清空筛选后重试。":"背包、弹挂和口袋中没有物品。\n将物品放进这些容器后即可选择。\n大厅还会读取仓库。",Color.white,16);}
    DrawControls(known.Length,filtered.Length);
-   if(gui.Button(new(8,638,36,28),"<",!Busy&&backpackPage>0))backpackPage--;
-   gui.Label(new(50,638,170,28),$"库存 {backpackPage+1}/{Math.Max(1,(filtered.Length+35)/36)} · {filtered.Length} 件",Color.white,13);
-   if(gui.Button(new(224,638,36,28),">",!Busy&&(backpackPage+1)*36<filtered.Length))backpackPage++;
+   gui.Label(new(8,638,252,28),$"库存 {filtered.Length} 件",Color.white,13);
    gui.Label(new(274,638,54,28),"筛选",Color.white,13);
-   string inventorySearch=gui.Field(new(326,638,366,28),inventoryQuery);if(inventorySearch!=inventoryQuery){inventoryQuery=inventorySearch;backpackPage=0;}
-   gui.Label(new(8,674,974,24),"下方库存 → 左侧消耗 / 学习 → 右侧选择已学物品 → 取出   ·   F10 / Esc 关闭",new(.8f,.8f,.8f),13);
+   string inventorySearch=gui.Field(new(326,638,366,28),inventoryQuery);if(inventorySearch!=inventoryQuery){inventoryQuery=inventorySearch;inventoryScroll=Vector2.zero;}
    if(tooltip.Length>0){var mouse=Event.current.mousePosition;var tr=new Rect(Math.Clamp(mouse.x+16,0,CanvasWidth-330),Math.Clamp(mouse.y+18,0,CanvasHeight-116),330,116);McGui.Fill(tr,new(.08f,.02f,.14f,.98f));McGui.Fill(new(tr.x+2,tr.y+2,tr.width-4,2),new(.4f,.2f,.65f));gui.Wrapped(new(tr.x+10,tr.y+6,tr.width-20,tr.height-12),tooltip,Color.white,14);}
    if(Event.current.type is EventType.MouseDown or EventType.MouseUp or EventType.ScrollWheel or EventType.KeyDown or EventType.KeyUp)Event.current.Use();
   }finally{GUI.matrix=oldMatrix;GUI.color=oldColor;GUI.enabled=oldEnabled;GUI.depth=oldDepth;}
  }
- void DrawInventorySlot(Rect r,Item? item){
+ void DrawInventorySlot(Rect r,Item? item,bool interact=true){
   if(item!=null){
    if(!selectingOutput&&item.Id.ToString()==selectedItem)Highlight(r);
    gui!.Icon(r,item,item.StringTemplateId);string reason=ready?Restriction(item):"等待服务端价格";
    if(reason.Length>0)McGui.Fill(r,new(0,0,0,.4f));
    if(item.StackObjectsCount>1){gui.Label(new(r.x+1,r.y+30,r.width,18),item.StackObjectsCount.ToString(),Color.black,12);gui.Label(new(r.x,r.y+29,r.width,18),item.StackObjectsCount.ToString(),Color.white,12);}
-   Hover(r,Name(item.StringTemplateId)+" ×"+item.StackObjectsCount+"\n"+(reason.Length>0?reason:$"{EmcRules.Quote(prices[item.StringTemplateId].Value,1,InventoryAccess.Quality(item)):N0} EMC / 件\n点击选择消耗数量"));
+   if(interact)Hover(r,Name(item.StringTemplateId)+" ×"+item.StackObjectsCount+"\n"+(reason.Length>0?reason:$"{EmcRules.Quote(prices[item.StringTemplateId].Value,1,InventoryAccess.Quality(item)):N0} EMC / 件\n点击选择消耗数量"));
   }
-  if(McGui.Hit(r,item!=null&&!Busy)){selectedItem=item!.Id.ToString();selectingOutput=false;quantity="1";resources.Play("tock",Volume*.5f);}
+  if(McGui.Hit(r,interact&&item!=null&&!Busy)){selectedItem=item!.Id.ToString();selectingOutput=false;quantity="1";resources.Play("tock",Volume*.5f);}
  }
  static void Highlight(Rect r){var c=new Color(1,.9f,.3f);McGui.Fill(new(r.x-2,r.y-2,r.width+4,2),c);McGui.Fill(new(r.x-2,r.y+r.height,r.width+4,2),c);McGui.Fill(new(r.x-2,r.y,2,r.height),c);McGui.Fill(new(r.x+r.width,r.y,2,r.height),c);}
  void Hover(Rect r,string text){if(r.Contains(Event.current.mousePosition))tooltip=text;}
@@ -114,8 +117,8 @@ internal sealed partial class Transmutation {
   gui.Label(new(724,300,242,24),selectingOutput?$"可取上限 {maximum:N0} 件 / 单个堆叠":$"可选 {maximum:N0} 件 / 当前物品",null,12);
   // Re-evaluate after quantity edits in this same GUI event.
   if(gui.Button(new(724,334,242,40),selectingOutput?"取出物品":"消耗并学习",ActionProblem(!selectingOutput).Length==0))Exchange(!selectingOutput);
-  gui.Label(new(724,388,242,24),$"已学 {learned.Count} · 显示 {knownCount} · 页 {knowledgePage+1}/{Math.Max(1,(knownCount+15)/16)}",null,13);
-  if(gui.Button(new(724,418,242,28),affordableOnly?"显示：仅买得起的物品":"显示：全部已学物品",!Busy)){affordableOnly=!affordableOnly;knowledgePage=0;}
+  gui.Label(new(724,388,242,24),$"已学 {learned.Count} · 显示 {knownCount}",null,13);
+  if(gui.Button(new(724,418,242,28),affordableOnly?"显示：仅买得起的物品":"显示：全部已学物品",!Busy)){affordableOnly=!affordableOnly;knowledgeScroll=0;}
   gui.Wrapped(new(724,454,242,48),access?.Raid==true?"库存来源：背包、弹挂、口袋":"库存来源：背包、弹挂、口袋、仓库",null,13);
   McGui.Fill(new(722,510,246,92),new(.17f,.18f,.2f));gui.Wrapped(new(732,516,226,80),Notice,Color.white,13);
   bool recover=owner.Length>0&&File.Exists(journal);

@@ -1,0 +1,1 @@
+Modern Industrialization code is MIT; assets are CC0 according to the pinned upstream README. Original quantum sword sprite is unmodified; mesh is a local extrusion. This local infinite-damage adaptation is not an upstream damage claim.

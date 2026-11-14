@@ -29,7 +29,7 @@ print('PASS all pinned ProjectE upstream hashes')
 portable=json.loads((assets/'portable-provenance.json').read_text(encoding='utf-8-sig'))
 for name,entry in portable.items():
  assert hashlib.sha256((assets/name).read_bytes()).hexdigest()==entry['sha256'],name
-for key in ('tablet','wireless_terminal','totem'):
+for key in [Path(name).stem for name in portable if name.endswith('.png')]:
  vertices=[];uv=[];faces=[]
  mesh=root/'atm-swords-client/Assets'/(key+'_sword.obj')
  for line in mesh.read_text().splitlines():
@@ -54,3 +54,13 @@ for key in ('tablet','wireless_terminal','totem'):
 with wave.open(str(assets/'totem.wav')) as audio:
  assert audio.getsampwidth()==2 and audio.getnchannels() in (1,2) and 0<audio.getnframes()/audio.getframerate()<30
 print('PASS original totem sound and portable asset provenance')
+quantum=json.loads((assets/'quantum-provenance.json').read_text())
+for name,field in [('quantum_sword.png','sha256'),('quantum_sword.obj','meshSha256')]:
+ assert hashlib.sha256((assets/name).read_bytes()).hexdigest()==quantum[field]
+ assert (assets/name).read_bytes()==(root/'atm-swords-client/Assets'/name).read_bytes()
+assert struct.unpack('>II',(assets/'quantum_sword.png').read_bytes()[16:24])==(16,16)
+thirst=json.loads((assets/'thirst-provenance.json').read_text())
+assert hashlib.sha256((assets/'thirst_icons.png').read_bytes()).hexdigest()==thirst['sha256']
+assert struct.unpack('>II',(assets/'thirst_icons.png').read_bytes()[16:24])==(25,9)
+assert (root/'projecte-server/Assets/developer.png').read_bytes().startswith(b'\x89PNG\r\n\x1a\n')
+print('PASS pinned quantum sprite/mesh, original Thirst atlas and Developer PNG')

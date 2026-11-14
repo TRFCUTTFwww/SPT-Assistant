@@ -10,7 +10,7 @@ internal static partial class WorldEditor {
   splitMixedContext=FeatureConfig.Bind("63. 场景编辑","Show both actions for mixed states","混合状态显示两个按钮",true,"开启：状态不一致时同时显示两个明确操作；关闭：只显示一个按钮，先统一暂停、开启无敌或停战（A/B 则统一敌对）。状态一致时始终只显示反向操作。");
  }
  static void OpenContextSettings(){contextSettingsScroll=Vector2.zero;Modal("context-settings");}
- static void DrawContextSettings(Rect rect){
+ internal static void DrawContextSettings(Rect rect){
   var order=EditorContextRules.Read(contextOrder.Value);
   InterfaceMenu.Label(new(rect.x,rect.y,rect.width-130,28),"自定义右键菜单",InterfaceMenu.Accent,16);
   if(InterfaceMenu.Button(new(rect.xMax-124,rect.y,124,28),"恢复默认菜单"))contextOrder.Value=EditorContextRules.Default;

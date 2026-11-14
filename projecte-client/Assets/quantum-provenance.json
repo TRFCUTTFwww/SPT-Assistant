@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/AztechMC/Modern-Industrialization",
+  "commit": "5d64b118bebc92f2f4cf25f4278fa6b6d6093845",
+  "path": "src/main/resources/assets/modern_industrialization/textures/item/quantum_sword.png",
+  "assetLicense": "CC0; see upstream README License section",
+  "sha256": "7492f588f6bb5a49fac400f6cfc4d11fd8599d72631e3a868ec863eb3e053d11",
+  "meshSha256": "a3aa15ee58c6df45c9ace4798a4f33cfc356df22fa925ac523402c3a95747cf3",
+  "damageAdaptation": "Local custom infinite-damage variant: native melee hit kills a local AI; no floating-point infinity."
+}

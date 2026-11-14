@@ -1,0 +1,32 @@
+{
+  "repository": "https://github.com/ghen-git/Thirst-Mod",
+  "commit": "31fb0e2c251b06b3c218785506b467547316cabe",
+  "path": "src/main/resources/assets/thirst/textures/gui/thirst_icons.png",
+  "sha256": "8756ceb7285cd50f6f82984dea499bf6d88f1ca1c14877eefbc2cb58a179b03a",
+  "source": "src/main/java/dev/ghen/thirst/foundation/gui/ThirstBarRenderer.java",
+  "atlas": {
+    "size": [
+      25,
+      9
+    ],
+    "background": [
+      0,
+      0,
+      9,
+      9
+    ],
+    "half": [
+      8,
+      0,
+      9,
+      9
+    ],
+    "full": [
+      16,
+      0,
+      9,
+      9
+    ]
+  },
+  "license": "See Thirst-LICENSE.txt"
+}

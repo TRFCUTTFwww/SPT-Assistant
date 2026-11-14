@@ -39,7 +39,7 @@ internal sealed partial class Transmutation {
   else{Open=false;Cursor.lockState=oldLock;Cursor.visible=oldVisible;}
  }
  internal void KeepCursor(){if(Open){Cursor.lockState=CursorLockMode.None;Cursor.visible=true;}}
- internal float Volume=.65f;
+ internal float Volume=.65f,BurnVolume=.35f;float lastBurnSound=-100;
  internal void Tick(){
   if(locale?.IsCompleted==true){try{foreach(var x in locale.GetAwaiter().GetResult())names[x.Key]=x.Value;}catch{}locale=null;}
   if(pending?.IsCompleted==true){var task=pending;var callback=completed;pending=null;completed=null;try{var reply=task.GetAwaiter().GetResult();if(!reply.Ok)throw new ArgumentException(string.IsNullOrWhiteSpace(reply.Error)?"转换桌接口未就绪，请重启服务端后重试。":reply.Error);balance=reply.Balance;learned=reply.Learned.ToHashSet();foreach(var p in reply.Prices)prices[p.Id]=p;callback?.Invoke(reply);}catch(Exception e){recovering=false;Notice=e.Message+(File.Exists(journal)?" 请点击恢复转换。":" 请点击重新连接。");context.Log(LogLevel.Warning,"Transmutation: "+e);WriteStatus();}}
@@ -57,7 +57,7 @@ internal sealed partial class Transmutation {
   locale=LoadNames();
  }
  static async Task<Dictionary<string,string>> LoadNames(){string response=await SPTushonka.Common.Http.RequestHandler.PostJsonAsync("/client/locale/ch","{}").WaitAsync(TimeSpan.FromSeconds(20));using var doc=JsonDocument.Parse(response);return JsonSerializer.Deserialize<Dictionary<string,string>>((doc.RootElement.TryGetProperty("data",out var d)?d:doc.RootElement).GetRawText())??[];}
- string Name(string id)=>names.GetValueOrDefault(id+" Name")??Swords.Find(id)?.Chinese??id;
+ string Name(string id)=>names.GetValueOrDefault(id+" Name")??Swords.Find(id)?.Chinese??Gadgets.Find(id)?.Chinese??id;
  string Restriction(Item item){if(item.QuestItem)return "任务物品不可转换";if(!prices.ContainsKey(item.StringTemplateId))return "没有卢布参考价";if(InventoryAccess.Children(item).Any())return "请先清空内容物或卸下附件";if(item.CurrentAddress?.TryCast<GridItemAddress>()==null)return "请先放进背包格子";if(InventoryAccess.Quality(item)==0)return "已耗尽物品没有 EMC";return "";}
  void WriteStatus(){try{File.WriteAllText(Path.Combine(context.DataDirectory,"table-status.json"),JsonSerializer.Serialize(new{utc=DateTime.UtcNow,open=Open,ready,raid=access?.Raid,items=items.Length,convertible=ready?items.Count(i=>Restriction(i).Length==0):0,prices=prices.Count,learned=learned.Count,balance,pending=Busy,recovery=File.Exists(journal),notice=Notice}));}catch(Exception e){context.Log(LogLevel.Warning,"Table diagnostics: "+e.Message);}}
  void Exchange(bool burn){
@@ -85,7 +85,9 @@ internal sealed partial class Transmutation {
    var current=InventoryAccess.Current();if(current==null||current.Profile.Id!=request.Profile||current.Controller.Pointer!=access?.Controller.Pointer)throw new ArgumentException("库存会话已变化。");
    if(request.Burn){if(source==null||!current.Items().Any(i=>i.Pointer==source.Pointer)||source.StackObjectsCount<request.Count)throw new ArgumentException("原物品已变化。");changed=true;current.Remove(source,request.Count);}
    else {var factory=Singleton<ItemFactory>.Instance;output=factory.CreateItem(reply.Created,request.Template,null);output.StackObjectsCount=request.Count;output.SpawnedInSession=false;changed=true;current.Add(output,destination!);}
-   File.Delete(journal);Notice=(request.Burn?"已转换为 EMC 并学习：":"已取出：")+Name(request.Template)+" ×"+request.Count;resources.Play(reply.NewKnowledge?"pecharge":request.Burn?"petransmute":"chargetick",Volume);Read();exchange=null;quantity="1";WriteStatus();
+   File.Delete(journal);Notice=(request.Burn?"已转换为 EMC 并学习：":"已取出：")+Name(request.Template)+" ×"+request.Count;
+   if(!request.Burn||Time.unscaledTime-lastBurnSound>=.18f){resources.Play(reply.NewKnowledge?"pecharge":request.Burn?"petransmute":"chargetick",Volume*(request.Burn?BurnVolume:1));if(request.Burn)lastBurnSound=Time.unscaledTime;}
+   Read();exchange=null;quantity="1";WriteStatus();
   }catch(Exception e){
    // Native failures are compensated by the server's idempotent undo operation.
    if(changed&&request.Burn&&source!=null){source.StackObjectsCount=before;if(source.CurrentAddress==null&&originalAddress!=null)access!.Add(source,originalAddress);}

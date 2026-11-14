@@ -32,5 +32,152 @@
                       "derivedFrom":  "totem.ogg",
                       "conversion":  "libsndfile, 16-bit signed PCM, original channels and sample rate",
                       "sha256":  "0d23439ae85ff64991e36703bc18f570248e45d3c47cc41a57d5478487934fc5"
-                  }
+                  },
+    "body_stone.png":  {
+                           "license":  "MIT",
+                           "path":  "src/main/resources/assets/projecte/textures/item/rings/body_stone_off.png",
+                           "sha256":  "aad8752920a74ca2bc319484437015ec2ff44c63b0c6b77176119c5fc4973bd1",
+                           "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                           "repository":  "https://github.com/sinkillerj/ProjectE"
+                       },
+    "soul_stone.png":  {
+                           "license":  "MIT",
+                           "path":  "src/main/resources/assets/projecte/textures/item/rings/soul_stone_off.png",
+                           "sha256":  "b9cbfb2ea2ecac1af76bba19e8b289ab606e15ff5d91eb5145a5f6b4617b92c3",
+                           "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                           "repository":  "https://github.com/sinkillerj/ProjectE"
+                       },
+    "life_stone.png":  {
+                           "license":  "MIT",
+                           "path":  "src/main/resources/assets/projecte/textures/item/rings/life_stone_off.png",
+                           "sha256":  "55e94ff99882c6c9b548f93d7f910587c7b7fd3b3e7500ee5d6d4e9b90bdd436",
+                           "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                           "repository":  "https://github.com/sinkillerj/ProjectE"
+                       },
+    "time_watch.png":  {
+                           "license":  "MIT",
+                           "path":  "src/main/resources/assets/projecte/textures/item/rings/time_watch_off.png",
+                           "sha256":  "d0d2f879dbceb3209e217ec692123de25f6087794c7c0ff59072ea7c267793e6",
+                           "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                           "repository":  "https://github.com/sinkillerj/ProjectE"
+                       },
+    "repair_talisman.png":  {
+                                "license":  "MIT",
+                                "path":  "src/main/resources/assets/projecte/textures/item/repair_talisman.png",
+                                "sha256":  "33b4cca43f03c31f1b9855f062738c7776fcac7155dd84837b0f4156745634d9",
+                                "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                                "repository":  "https://github.com/sinkillerj/ProjectE"
+                            },
+    "white_bag.png":  {
+                          "license":  "MIT",
+                          "path":  "src/main/resources/assets/projecte/textures/item/alchemy_bags/white.png",
+                          "sha256":  "03430e96c6bf4e18c7aed7b01754a3266634cabf4834d7420f88fbe12b9370ab",
+                          "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                          "repository":  "https://github.com/sinkillerj/ProjectE"
+                      },
+    "orange_bag.png":  {
+                           "license":  "MIT",
+                           "path":  "src/main/resources/assets/projecte/textures/item/alchemy_bags/orange.png",
+                           "sha256":  "82b1df8cbd23030a9f1e9475ea0c34bed86c40d0592c94273cec61dc0e0bea29",
+                           "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                           "repository":  "https://github.com/sinkillerj/ProjectE"
+                       },
+    "magenta_bag.png":  {
+                            "license":  "MIT",
+                            "path":  "src/main/resources/assets/projecte/textures/item/alchemy_bags/magenta.png",
+                            "sha256":  "bbab0e9c716d61498789eb009ca5460d11bf516929359bd259c2c18442c68508",
+                            "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                            "repository":  "https://github.com/sinkillerj/ProjectE"
+                        },
+    "light_blue_bag.png":  {
+                               "license":  "MIT",
+                               "path":  "src/main/resources/assets/projecte/textures/item/alchemy_bags/light_blue.png",
+                               "sha256":  "c2513c1c13e6ac07492c419aabffa09622e7ab02b3c354edd5b031bad5c95b10",
+                               "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                               "repository":  "https://github.com/sinkillerj/ProjectE"
+                           },
+    "yellow_bag.png":  {
+                           "license":  "MIT",
+                           "path":  "src/main/resources/assets/projecte/textures/item/alchemy_bags/yellow.png",
+                           "sha256":  "04b07d1bb4d3fef737aa92efacb52c39acfdff1ad5d358eb9cecc7318b2d5f78",
+                           "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                           "repository":  "https://github.com/sinkillerj/ProjectE"
+                       },
+    "lime_bag.png":  {
+                         "license":  "MIT",
+                         "path":  "src/main/resources/assets/projecte/textures/item/alchemy_bags/lime.png",
+                         "sha256":  "8873cb49a8659e6b6884f7fec84929c5ffaffeee4cf652668f8df16c86c4a38a",
+                         "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                         "repository":  "https://github.com/sinkillerj/ProjectE"
+                     },
+    "pink_bag.png":  {
+                         "license":  "MIT",
+                         "path":  "src/main/resources/assets/projecte/textures/item/alchemy_bags/pink.png",
+                         "sha256":  "9932554fbce57bfdde3e69275c3a63365a21d6bc57bbc09d0c0db9cb80aa8d57",
+                         "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                         "repository":  "https://github.com/sinkillerj/ProjectE"
+                     },
+    "gray_bag.png":  {
+                         "license":  "MIT",
+                         "path":  "src/main/resources/assets/projecte/textures/item/alchemy_bags/gray.png",
+                         "sha256":  "c78aad2ed2efa7364c6cbb55620bfc107b8739afd991c237612172c340fba493",
+                         "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                         "repository":  "https://github.com/sinkillerj/ProjectE"
+                     },
+    "light_gray_bag.png":  {
+                               "license":  "MIT",
+                               "path":  "src/main/resources/assets/projecte/textures/item/alchemy_bags/light_gray.png",
+                               "sha256":  "156fd8a00d9ff7b4f5cb4924d320fb03d6668b10aa78e46cbeaa74cb8da15412",
+                               "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                               "repository":  "https://github.com/sinkillerj/ProjectE"
+                           },
+    "cyan_bag.png":  {
+                         "license":  "MIT",
+                         "path":  "src/main/resources/assets/projecte/textures/item/alchemy_bags/cyan.png",
+                         "sha256":  "5f01add7749ade5e8712502d3102de3853d1fe35cc7ee93a4488edb8f4028b0d",
+                         "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                         "repository":  "https://github.com/sinkillerj/ProjectE"
+                     },
+    "purple_bag.png":  {
+                           "license":  "MIT",
+                           "path":  "src/main/resources/assets/projecte/textures/item/alchemy_bags/purple.png",
+                           "sha256":  "8fe0301e8d3a8c952e45856b2fa352ebaf79d97e7951c874842ea5b9893aee6c",
+                           "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                           "repository":  "https://github.com/sinkillerj/ProjectE"
+                       },
+    "blue_bag.png":  {
+                         "license":  "MIT",
+                         "path":  "src/main/resources/assets/projecte/textures/item/alchemy_bags/blue.png",
+                         "sha256":  "ab45ee8c13b101fa9d37ee75f50727deb34e3faa3ce0af3f3a8ef3a318e8a731",
+                         "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                         "repository":  "https://github.com/sinkillerj/ProjectE"
+                     },
+    "brown_bag.png":  {
+                          "license":  "MIT",
+                          "path":  "src/main/resources/assets/projecte/textures/item/alchemy_bags/brown.png",
+                          "sha256":  "cd35426412f4cb462149533fc39038564f393184540084dac4a954b39663bbeb",
+                          "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                          "repository":  "https://github.com/sinkillerj/ProjectE"
+                      },
+    "green_bag.png":  {
+                          "license":  "MIT",
+                          "path":  "src/main/resources/assets/projecte/textures/item/alchemy_bags/green.png",
+                          "sha256":  "ae6c07a3ba1c56a12a1f1278c6c0298bf0d6df331e005f266f4071bceca08ca5",
+                          "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                          "repository":  "https://github.com/sinkillerj/ProjectE"
+                      },
+    "red_bag.png":  {
+                        "license":  "MIT",
+                        "path":  "src/main/resources/assets/projecte/textures/item/alchemy_bags/red.png",
+                        "sha256":  "da62c5c6f5353f34f550fea9914a26733062d6b8d7339b7b98220a63a1c8b737",
+                        "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                        "repository":  "https://github.com/sinkillerj/ProjectE"
+                    },
+    "black_bag.png":  {
+                          "license":  "MIT",
+                          "path":  "src/main/resources/assets/projecte/textures/item/alchemy_bags/black.png",
+                          "sha256":  "1a97a872a03191599ec431072ea15990001b1b4460cd439fdccda41bbd53f3d4",
+                          "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                          "repository":  "https://github.com/sinkillerj/ProjectE"
+                      }
 }

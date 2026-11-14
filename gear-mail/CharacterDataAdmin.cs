@@ -39,7 +39,7 @@ public class CharacterDataService(SaveServer saves,JsonUtil json,HttpResponseUti
    var profile=saves.GetProfile(session)??throw new ArgumentException("当前角色不存在。");var pmc=profile.CharacterData?.PmcData??throw new ArgumentException("当前角色尚未创建。");
    if(request.Action is "raidStash" or "saveRaidStash")return await RaidStashService.Handle(request,session,profile,saves,json,http,ct);
    if(request.Action is "miscStatus" or "miscSave")return await MiscService.Handle(request,session,http,ct);
-   if(request.Action=="status")return Status(profile);
+   if(request.Action is "status" or "healthStatus")return Status(profile);
    if(request.Action=="serverStatus")return ServerSettingsService.Handle(request,http,pmc);
    var location=profile.InraidData?.Location;if(!string.IsNullOrEmpty(location)&&location!="none"&&location!="hideout")throw new ArgumentException("请先退出战局。");
    if(request.Action=="serverSave")return ServerSettingsService.Handle(request,http,pmc);
@@ -53,6 +53,18 @@ public class CharacterDataService(SaveServer saves,JsonUtil json,HttpResponseUti
     case "karma":var bounds=ServerSettingsService.ScavBounds();KarmaRules.Apply(pmc,request.Id,request.Value,request.ExpectedValue,bounds.Min,bounds.Max);break;
     case "deposit":CharacterDataRules.Deposit(pmc,request.ExpectedCoins,request.ExpectedBalance);break;
     case "wallet":if(!double.IsFinite(request.Value)||request.Value!=Math.Truncate(request.Value)||request.Value<0||request.Value>int.MaxValue)throw new ArgumentException("请输入有效的非负整数余额。");CharacterDataRules.Wallet(pmc,(int)request.Value,request.ExpectedBalance);break;
+    case "bodyHealth":{
+     var health=pmc.Health??throw new ArgumentException("当前角色没有生命值数据。");
+     string[] allowed=["Head","Chest","Stomach","LeftArm","RightArm","LeftLeg","RightLeg"];
+     if(request.Settings.Count!=allowed.Length||allowed.Any(part=>!request.Settings.ContainsKey(part)))throw new ArgumentException("必须提供全部七个部位的生命值。");
+     var raw=System.Text.Json.Nodes.JsonNode.Parse(json.Serialize(health)!)!;
+     foreach(string part in allowed){var value=request.Settings[part];double maximum=value.GetProperty("maximum").GetDouble(),current=value.GetProperty("current").GetDouble();
+      if(!double.IsFinite(maximum)||!double.IsFinite(current)||maximum<.01||maximum>100000000||current<0||current>maximum)throw new ArgumentException("血量须满足：0 ≤ 当前值 ≤ 最大值，且最大值大于零。");
+      var state=raw["BodyParts"]![part]!["Health"]!;state["Maximum"]=maximum;state["Current"]=current;
+     }
+     T Decode<T>(string text,T sample)=>json.Deserialize<T>(text)!;
+     pmc.Health=Decode(raw.ToJsonString(),health);break;
+    }
     case "skill":CharacterDataRules.Skill(pmc,request.Id,request.Value);break;
     case "achievement":CharacterDataRules.Achievement(pmc,request.Id,request.Unlocked,(templates.Achievements??[]).Concat(templates.CustomAchievements??[]),DateTimeOffset.UtcNow.ToUnixTimeSeconds());break;
     default:throw new ArgumentException("未知数据操作。");
@@ -63,5 +75,5 @@ public class CharacterDataService(SaveServer saves,JsonUtil json,HttpResponseUti
   }catch(Exception error){if(snapshot!=null&&!committed)saves.GetProfiles()[session]=snapshot;return http.GetBody(new{ok=false},(BackendErrorCodes)228,error is ArgumentException?error.Message:"保存失败，请刷新角色数据后重试。");}
   finally{gate.Release();}
  }
- string Status(SptProfile profile){var pmc=profile.CharacterData!.PmcData!;return http.GetBody(new{ok=true,balance=pmc.TarCoinBalance??0,coins=CharacterDataRules.PhysicalCoins(pmc),skills=pmc.Skills?.Common?.Select(skill=>new{id=skill.Id.ToString(),level=skill.Progress/100}),achievements=(templates.Achievements??[]).Concat(templates.CustomAchievements??[]).DistinctBy(entry=>entry.Id).Select(entry=>new{id=entry.Id.ToString(),unlocked=pmc.Achievements?.ContainsKey(entry.Id)==true})});}
+ string Status(SptProfile profile){var pmc=profile.CharacterData!.PmcData!;return http.GetBody(new{ok=true,balance=pmc.TarCoinBalance??0,coins=CharacterDataRules.PhysicalCoins(pmc),health=pmc.Health,skills=pmc.Skills?.Common?.Select(skill=>new{id=skill.Id.ToString(),level=skill.Progress/100}),achievements=(templates.Achievements??[]).Concat(templates.CustomAchievements??[]).DistinctBy(entry=>entry.Id).Select(entry=>new{id=entry.Id.ToString(),unlocked=pmc.Achievements?.ContainsKey(entry.Id)==true})});}
 }

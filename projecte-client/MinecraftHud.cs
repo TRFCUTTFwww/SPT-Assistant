@@ -12,7 +12,7 @@ internal sealed class MinecraftHud {
  readonly MinecraftHudArt art;readonly ModuleContext context;readonly List<long> thresholds=[0];
  readonly List<QuickSlotView> slots=[],nativeViews=[];
  InventoryScreenQuickAccessPanel? panel;Player? player;float nextScan,nextStats,nextDiagnostics;
- float health,food;int level;float experience;
+ float health,food,water,lastHurt=-100;int level;float experience;
  internal MinecraftHud(ModuleContext context,ProjectResources resources){
   this.context=context;art=new(context,resources);
   string path=Path.Combine(BepInEx.Paths.GameRootPath,"SPT_Runtime","SPT_Data","database","globals.json");
@@ -35,7 +35,8 @@ internal sealed class MinecraftHud {
   slots.Clear();foreach(var view in nativeViews)
    if(view!=null&&view.gameObject.activeInHierarchy&&!slots.Any(v=>v.BoundIndex==view.BoundIndex))slots.Add(view);
   if(Time.unscaledTime<nextStats)return;nextStats=Time.unscaledTime+.1f;
-  var h=player.ActiveHealthController;if(h==null)return;var hp=h.GetBodyPartHealth(EBodyPart.Common,false);health=hp.Maximum>0?Math.Clamp(hp.Current/hp.Maximum,0,1):0;food=h.Energy.Maximum>0?Math.Clamp(h.Energy.Current/h.Energy.Maximum,0,1):0;
+  var h=player.ActiveHealthController;if(h==null)return;var hp=h.GetBodyPartHealth(EBodyPart.Common,false);float currentHealth=hp.Maximum>0?Math.Clamp(hp.Current/hp.Maximum,0,1):0;if(currentHealth<health-.0001f)lastHurt=Time.unscaledTime;health=currentHealth;food=h.Energy.Maximum>0?Math.Clamp(h.Energy.Current/h.Energy.Maximum,0,1):0;
+  water=h.Hydration.Maximum>0?Math.Clamp(h.Hydration.Current/h.Hydration.Maximum,0,1):0;
   long xp=player.Profile.Info.Experience;level=Math.Max(1,player.Profile.Info.Level);experience=level<thresholds.Count-1?EmcRules.Progress(xp,thresholds[level],thresholds[level+1]):1;
   if(Time.unscaledTime>=nextDiagnostics){nextDiagnostics=Time.unscaledTime+5;WriteDiagnostics();}
  }
@@ -58,8 +59,9 @@ internal sealed class MinecraftHud {
   try{
    float stats=(width-182)/2;int hp=(int)Math.Ceiling(health*20),hunger=(int)Math.Ceiling(food*20);
    for(int i=0;i<10;i++){
-    art.Symbol(stats+i*8,-17,false,hp-i*2);
-    art.Symbol(stats+182-i*8-9,-17,true,hunger-i*2);
+    art.Symbol(stats+i*8,-17+HudMotion.Offset(health,i,0,Time.unscaledTime,Time.unscaledTime-lastHurt<.45f),false,hp-i*2);
+    art.Symbol(stats+182-i*8-9,-17+HudMotion.Offset(food,i,1,Time.unscaledTime),true,hunger-i*2);
+    art.Hydration(stats+182-i*8-9,-30+HudMotion.Offset(water,i,2,Time.unscaledTime),(int)Math.Ceiling(water*20)-i*2);
    }
    art.Experience(stats,-7,experience);art.Level(width/2,-13,level);
    if(panel==null||!panel.gameObject.activeInHierarchy||panel.IsDisabled)return;

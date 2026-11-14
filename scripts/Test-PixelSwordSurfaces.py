@@ -1,4 +1,4 @@
-"""Verify vertex-color rendering preserves all seven original pixel surfaces.
+"""Verify vertex-color rendering preserves all registered pixel surfaces.
 Requires Pillow. Checks colors, alpha, UV orientation and outward face winding
 before enabling back-face culling; reads no game or profile files.
 """
@@ -37,4 +37,4 @@ for obj in sorted(assets.glob('*_sword.obj')):
         face_center = [sum(vertices[i][k] for i in face)/len(face) for k in range(3)]
         assert sum(normal[k]*(face_center[k]-center[k]) for k in range(3)) > 0, (obj.name, 'inward face would disappear with culling')
     print(f'PASS {obj.stem}: {len(groups)} original pixels, constant face colors, opaque source, outward winding')
-assert len(list(assets.glob('*_sword.obj'))) == 7
+assert len(list(assets.glob('*_sword.obj'))) == 32
