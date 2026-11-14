@@ -14,7 +14,7 @@ public sealed partial class SwordModule {
   try{
   if(recordedBrightness!=brightnessPercent.Value||recordedOpacity!=opacityPercent.Value){
    recordedBrightness=brightnessPercent.Value;recordedOpacity=opacityPercent.Value;
-   var models=assets.Select(p=>new{template=p.Key,shader=p.Value.Material.shader.name,texture=p.Value.Texture.name,width=p.Value.Texture.width,height=p.Value.Texture.height,blackPixels=p.Value.Texture.GetPixels32().Count(c=>c.a>0&&c.r==0&&c.g==0&&c.b==0)}).ToArray();
+   var models=assets.Select(p=>new{template=p.Key,shader=p.Value.Material.shader.name,texture=p.Value.Texture.name,width=p.Value.Texture.width,height=p.Value.Texture.height,blackPixels=p.Value.Texture.GetPixels32().Count(c=>c.a>0&&c.r==0&&c.g==0&&c.b==0),vertexCount=p.Value.Mesh.vertexCount,colorCount=p.Value.Mesh.colors.Length,blackVertices=p.Value.Mesh.colors.Count(c=>c.a>0&&c.r==0&&c.g==0&&c.b==0),depthWrite=p.Value.Material.GetInt("_ZWrite"),cull=p.Value.Material.GetInt("_Cull"),renderQueue=p.Value.Material.renderQueue}).ToArray();
    File.WriteAllText(Path.Combine(context!.DataDirectory,"appearance-status.json"),JsonSerializer.Serialize(new{version=Version,utc=DateTime.UtcNow,brightness=recordedBrightness,opacity=recordedOpacity,models},new JsonSerializerOptions{WriteIndented=true}));
   }
   if(diagnosticsDirty&&Time.unscaledTime>=nextDiagnostics){nextDiagnostics=Time.unscaledTime+1;diagnosticsDirty=false;File.WriteAllText(Path.Combine(context!.DataDirectory,"model-applications.json"),JsonSerializer.Serialize(new{version=Version,utc=DateTime.UtcNow,modelApplications},new JsonSerializerOptions{WriteIndented=true}));}
