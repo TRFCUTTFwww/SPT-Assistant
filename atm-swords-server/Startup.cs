@@ -14,7 +14,7 @@ namespace AllTheModium.Server;
 public record Metadata:IModMetadata {
  public string ModGuid{get;init;}="local.allthemodium.swords";
  public string Name{get;init;}="AllTheModium Swords";public string Author{get;init;}="Local";public List<string>? Contributors{get;init;}
- public SemanticVersioning.Version Version{get;init;}=new("1.0.1");public SemanticVersioning.Range SptVersion{get;init;}=new("~5.0.0");public bool HasPrepatcher{get;init;}public List<string>? Incompatibilities{get;init;}public Dictionary<string,SemanticVersioning.Range>? ModDependencies{get;init;}public string? Url{get;init;}public string License{get;init;}="MIT";
+ public SemanticVersioning.Version Version{get;init;}=new("1.1.0");public SemanticVersioning.Range SptVersion{get;init;}=new("~5.0.0");public bool HasPrepatcher{get;init;}public List<string>? Incompatibilities{get;init;}public Dictionary<string,SemanticVersioning.Range>? ModDependencies{get;init;}public string? Url{get;init;}public string License{get;init;}="MIT";
 }
 [Injectable(TypePriority=OnLoadOrder.Preload)]
 public sealed class Startup(CustomItemService custom,TemplateTable templates,TradersTable traders,ISptLogger<Startup> log,SPTarkov.Server.Core.Utils.JsonUtil json):IOnLoad {
@@ -29,7 +29,7 @@ public sealed class Startup(CustomItemService custom,TemplateTable templates,Tra
      Name=s.English,ShortName=s.English,Description=s.English,ExaminedByDefault=true,
      KnifeHitSlashDam=s.Damage,KnifeHitStabDam=s.Damage,
      Unlootable=false,UnlootableFromSide=[],DiscardLimit=-1,CanSellOnRagfair=true,
-     Width=1,Height=4
+     Width=1,Height=2
     },
     AddToHandbook=true,AddToFleaPriceDb=true,AddToWeaponShelf=false,HandbookParentId=baseHandbook.ParentId.ToString(),HandbookPriceRoubles=s.Price,FleaPriceRoubles=s.Price,
     Locales=new(){["en"]=new(){Name=s.English,ShortName=s.English,Description=$"AllTheModium pixel sword. Upstream 1.21.x damage: 1 + {s.TierBonus} + {s.SwordBonus} = {s.Damage}. Slash and stab use this base damage; EFT armor and skills still apply."},["ch"]=new(){Name=s.Chinese,ShortName=s.Chinese,Description=$"AllTheModium 独立像素剑。原模组 1.21.x：玩家基础 1 + 材质 {s.TierBonus} + 剑加成 {s.SwordBonus} = {s.Damage}。劈砍、刺击基础伤害均为 {s.Damage}；实际伤害仍受塔科夫护甲、技能影响。"}}
@@ -48,7 +48,7 @@ public sealed class Startup(CustomItemService custom,TemplateTable templates,Tra
    if(p.KnifeHitSlashDam!=s.Damage||p.KnifeHitStabDam!=s.Damage||p.StackMaxSize!=1||p.Prefab?.Path!=source.Prefab?.Path||p.PrimaryDistance!=source.PrimaryDistance)throw new InvalidOperationException("Sword registration validation failed: "+s.Key);
   }
   string folder=Path.Combine(AppContext.BaseDirectory,"user","mods","AllTheModiumSwords");Directory.CreateDirectory(folder);
-  File.WriteAllText(Path.Combine(folder,"registration-status.json"),JsonSerializer.Serialize(new {version="1.0.1",jaeger="5c0647fdd443bc2504c2d371",serverPid=Environment.ProcessId,utc=DateTime.UtcNow,originalGladiusUnchanged=true,swords=Swords.All.Select(s=>new{s.Id,s.English,s.Chinese,s.Damage,s.Price})},new JsonSerializerOptions{WriteIndented=true}));
+  File.WriteAllText(Path.Combine(folder,"registration-status.json"),JsonSerializer.Serialize(new {version="1.1.0",jaeger="5c0647fdd443bc2504c2d371",serverPid=Environment.ProcessId,utc=DateTime.UtcNow,originalGladiusUnchanged=true,swords=Swords.All.Select(s=>new{s.Id,s.English,s.Chinese,s.Damage,s.Price,width=1,height=2})},new JsonSerializerOptions{WriteIndented=true}));
   log.Success("AllTheModium Swords: 4 independent melee items validated; Jaeger LL1; original gladius unchanged");
   return Task.CompletedTask;
  }

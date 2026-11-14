@@ -13,15 +13,19 @@ string file=Directory.GetFiles(Path.Combine(fixture,"user/profiles"),"*.json").F
 var profile=JsonNode.Parse(File.ReadAllText(file))!;string id=profile["characters"]!["pmc"]!["_id"]!.GetValue<string>(),session=Path.GetFileNameWithoutExtension(file);
 using var handler=new HttpClientHandler{ServerCertificateCustomValidationCallback=(_,_,_,_)=>true};using var client=new HttpClient(handler){Timeout=TimeSpan.FromSeconds(30)};
 int checks=0;void Check(bool valid,string label){if(!valid)throw new Exception(label);checks++;Console.WriteLine("PASS "+label);}
-async Task<JsonNode> Call(JsonObject payload){
- payload["Profile"]=id;using var request=new HttpRequestMessage(HttpMethod.Post,"https://127.0.0.1:6968/local/projecte/table");request.Headers.Add("Cookie","PHPSESSID="+session);request.Content=new ByteArrayContent(Pack(Encoding.UTF8.GetBytes(payload.ToJsonString())));request.Content.Headers.ContentType=new("application/json");using var response=await client.SendAsync(request);byte[] bytes=await response.Content.ReadAsByteArrayAsync();if(bytes.Length==0)throw new IOException("Empty shuffled response");bytes=Unpack(bytes);if(bytes.Length>1&&bytes[0]==0x78){using var stream=new System.IO.Compression.ZLibStream(new MemoryStream(bytes),System.IO.Compression.CompressionMode.Decompress);using var output=new MemoryStream();stream.CopyTo(output);bytes=output.ToArray();}
+async Task<JsonNode> Call(JsonObject payload,string path="/local/projecte/table"){
+ payload["Profile"]=id;using var request=new HttpRequestMessage(HttpMethod.Post,"https://127.0.0.1:6968"+path);request.Headers.Add("Cookie","PHPSESSID="+session);request.Content=new ByteArrayContent(Pack(Encoding.UTF8.GetBytes(payload.ToJsonString())));request.Content.Headers.ContentType=new("application/json");using var response=await client.SendAsync(request);byte[] bytes=await response.Content.ReadAsByteArrayAsync();if(bytes.Length==0)throw new IOException("Empty shuffled response");bytes=Unpack(bytes);if(bytes.Length>1&&bytes[0]==0x78){using var stream=new System.IO.Compression.ZLibStream(new MemoryStream(bytes),System.IO.Compression.CompressionMode.Decompress);using var output=new MemoryStream();stream.CopyTo(output);bytes=output.ToArray();}
  var root=JsonNode.Parse(bytes)!;return root["data"]??root;
 }
 bool Ok(JsonNode n)=>n["Ok"]?.GetValue<bool>()??n["ok"]?.GetValue<bool>()??false;
 long Balance(JsonNode n)=>n["Balance"]!.GetValue<long>();
 const string ruble="5449016a4bdc2d6f028b456f";
 var state=await Call(new(){["Action"]="state"});Check(Ok(state),"authenticated state endpoint");long baseline=Balance(state);Check(state["Prices"]!.AsArray().Any(n=>n!["Id"]!.GetValue<string>()==ruble&&n["Value"]!.GetValue<long>()==1),"runtime ruble quote is exactly one EMC");
-Check(state["Prices"]!.AsArray().Count>4000,"original EFT catalog available");Check(state["Prices"]!.AsArray().Count(n=>n!["Id"]!.GetValue<string>().StartsWith("a7e000"))==3,"all three ProjectE templates in runtime catalog");
+Check(state["Prices"]!.AsArray().Count>4000,"original EFT catalog available");Check(state["Prices"]!.AsArray().Count(n=>n!["Id"]!.GetValue<string>().StartsWith("a7e000"))==6,"three weapons and three handheld utilities in runtime catalog");
+var catalog=await Call(new(),"/client/items");
+foreach(string tpl in new[]{"a7e000000000000000000001","a7e000000000000000000002","a7e000000000000000000003","a7a000000000000000000001","a7a000000000000000000002","a7a000000000000000000003","a7a000000000000000000004"}){var p=catalog[tpl]!["_props"]!;Check(p["Width"]!.GetValue<int>()==1&&p["Height"]!.GetValue<int>()==2,"pixel weapon uses one by two inventory cells: "+tpl);}
+// SPT omits numeric default values when serializing templates; absent damage means zero.
+foreach(string tpl in new[]{"a7e000000000000000000101","a7e000000000000000000102","a7e000000000000000000103"}){var p=catalog[tpl]!["_props"]!;Check(p["Width"]!.GetValue<int>()==1&&p["Height"]!.GetValue<int>()==1&&(p["KnifeHitSlashDam"]?.GetValue<double>()??0)==0&&(p["KnifeHitStabDam"]?.GetValue<double>()??0)==0,"handheld utility is one cell and cannot deal native knife damage: "+tpl);}
 string operation=Guid.NewGuid().ToString("N");var raid=new JsonObject{["Action"]="exchange",["Operation"]=operation,["Raid"]=true,["Burn"]=true,["Template"]=ruble,["Count"]=25,["Quality"]=10000};
 var first=await Call(raid);Check(Ok(first)&&Balance(first)==baseline+25,"raid ledger credits exact amount");
 var repeat=await Call(raid);Check(Ok(repeat)&&Balance(repeat)==baseline+25,"duplicate receipt cannot credit twice");

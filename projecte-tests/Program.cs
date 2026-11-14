@@ -37,4 +37,16 @@ Check(!TableProtocol.Read("{\"Ok\":false,\"Error\":\"EMC 不足\"}").Ok,"busines
 foreach(string invalid in new[]{"{}","{\"err\":0,\"data\":null}","{\"err\":1}","{\"Ok\":true,\"Learned\":null}","{\"Ok\":true,\"Balance\":-1}"}){
  try{TableProtocol.Read(invalid);throw new Exception("Accepted invalid table response");}catch(IOException){Check(true,"missing endpoint or malformed wallet cannot appear connected");}
 }
-Console.WriteLine($"Passed {checks} ProjectE economy, item and experience checks.");
+Check(Gadgets.All.Select(x=>x.Id).Distinct().Count()==3&&Gadgets.All.All(x=>x.Id.Length==24&&!Swords.All.Any(s=>s.Id==x.Id)),"portable devices and totem have unique independent IDs");
+Check(Swords.All.Select(x=>MatterRules.MaxCharge(x.Id)).SequenceEqual(new[]{2,3,4}),"upstream dark sword, red sword and katar charge caps");
+Check(MatterRules.Step(4,4,false)==4&&MatterRules.Step(0,4,true)==0,"charge cannot overflow or underflow");
+Check(MatterRules.Step(2,4,true)==1&&MatterRules.Step(2,4,false)==3,"charge and discharge move one level");
+Check(MatterRules.MaxCharge(Gadgets.Tablet)==0&&MatterRules.Radius(4)==10&&MatterRules.Radius(0)==0,"utilities cannot charge and maximum katar range is ten meters");
+Check(!MatterRules.EligibleTarget(false,true,true,false,true)&&!MatterRules.EligibleTarget(true,false,true,false,true),"area abilities never target human players or self");
+Check(!MatterRules.EligibleTarget(false,false,true,true,false)&&MatterRules.EligibleTarget(false,false,true,true,true),"friendly AI require explicit all-AI mode");
+Check(!MatterRules.EligibleTarget(false,false,false,false,true),"dead actors are excluded");
+Check(MatterRules.CanSave(true,true,true,false,true),"held unconsumed totem can protect a living local player in raid");
+Check(!MatterRules.CanSave(true,true,false,false,true)&&!MatterRules.CanSave(true,true,true,true,true),"stored or already consumed totem cannot protect");
+Check(!MatterRules.CanSave(false,true,true,false,true)&&!MatterRules.CanSave(true,false,true,false,true)&&!MatterRules.CanSave(true,true,true,false,false),"totem cannot resurrect dead actors, remote actors or lobby profiles");
+Check(MatterRules.RevivalHealth(35)==7&&MatterRules.RevivalHealth(1)==1,"totem restores twenty percent with a positive health floor");
+Console.WriteLine($"Passed {checks} ProjectE rules and protocol checks.");

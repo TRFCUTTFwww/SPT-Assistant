@@ -20,6 +20,7 @@ internal sealed class McGui {
  internal string Field(Rect r,string text){Fill(r,new(.15f,.15f,.15f));Fill(new(r.x+2,r.y+2,r.width-4,r.height-4),Color.black);Text.normal.textColor=Color.white;Text.alignment=TextAnchor.MiddleLeft;Text.fontSize=14;return GUI.TextField(new(r.x+5,r.y+1,r.width-10,r.height-2),text,Text);}
  internal void Icon(Rect r,Item? item,string template){
   var sword=Swords.Find(template);if(sword!=null){GUI.DrawTexture(r,resources.Texture(sword.Key+"_sword"),ScaleMode.ScaleToFit);return;}
+  var gadget=Gadgets.Find(template);if(gadget!=null){GUI.DrawTexture(r,resources.Texture(gadget.Key),ScaleMode.ScaleToFit);return;}
   if(item==null){Label(r,"?",new(.8f,.8f,.8f),18,true);return;}
   try{
    if(!icons.TryGetValue(template,out var icon)){

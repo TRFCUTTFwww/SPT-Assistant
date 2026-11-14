@@ -11,3 +11,18 @@ public static class Swords {
  ];
  public static Sword? Find(string id)=>Array.Find(All,s=>s.Id==id);
 }
+public sealed record Gadget(string Id,string Key,string English,string Chinese,int Price);
+public static class Gadgets {
+ public const string Tablet="a7e000000000000000000101",Terminal="a7e000000000000000000102",Totem="a7e000000000000000000103";
+ public static readonly Gadget[] All=[new(Tablet,"tablet","Portable Transmutation Tablet","便携转化桌",262144),new(Terminal,"wireless_terminal","AE2 Wireless Terminal","AE2 无线访问终端",65536),new(Totem,"totem","Totem of Undying","不死图腾",131072)];
+ public static Gadget? Find(string id)=>Array.Find(All,x=>x.Id==id);
+}
+public static class MatterRules {
+ public static int MaxCharge(string template)=>Swords.Find(template) is {} sword?sword.Key=="dm"?2:sword.Key=="katar"?4:3:0;
+ public static int Step(int charge,int maximum,bool decrease)=>Math.Clamp(charge+(decrease?-1:1),0,Math.Max(0,maximum));
+ public static float Radius(int charge)=>2.5f*Math.Clamp(charge,0,4);
+ public static float MeleeBonus(int charge)=>Math.Clamp(charge,0,4);
+ public static bool EligibleTarget(bool local,bool human,bool alive,bool friendly,bool all)=>!local&&!human&&alive&&(all||!friendly);
+ public static bool CanSave(bool raid,bool local,bool held,bool consumed,bool alive)=>raid&&local&&held&&!consumed&&alive;
+ public static float RevivalHealth(float maximum)=>Math.Clamp(maximum*.2f,1,Math.Max(1,maximum));
+}

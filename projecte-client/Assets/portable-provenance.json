@@ -1,0 +1,36 @@
+{
+    "tablet.png":  {
+                       "license":  "MIT",
+                       "path":  "src/main/resources/assets/projecte/textures/item/transmutation_tablet.png",
+                       "sha256":  "139aee5a1a61d915db9e9c59c9807f44ca83d54bf6a3079de6e5da83780fa472",
+                       "commit":  "f432b0c66837759fb0731c9144dc53176b949c5d",
+                       "repository":  "https://github.com/sinkillerj/ProjectE"
+                   },
+    "wireless_terminal.png":  {
+                                  "license":  "LGPL-3.0; see AE2-LICENSE.txt",
+                                  "path":  "src/main/resources/assets/ae2/textures/item/wireless_terminal.png",
+                                  "sha256":  "4ce77b74e6a4947a5a3456874ee7f4e491800d827080383db4d7e00898ef6728",
+                                  "commit":  "5a544ce4aa4d51a1e92a21d316bb89c4a5f4a75a",
+                                  "repository":  "https://github.com/AppliedEnergistics/Applied-Energistics-2"
+                              },
+    "totem.png":  {
+                      "url":  "https://piston-data.mojang.com/v1/objects/30c73b1c5da787909b2f73340419fdf13b9def88/client.jar",
+                      "path":  "assets/minecraft/textures/item/totem_of_undying.png",
+                      "version":  "1.21.1",
+                      "license":  "Mojang/Microsoft copyrighted Minecraft asset",
+                      "sha256":  "2ee3ccdd17f0b9acb13bac37b3b9d4db6eac72aa350a2b1ab9cc587e2f02514a",
+                      "clientSha1":  "30c73b1c5da787909b2f73340419fdf13b9def88"
+                  },
+    "totem.ogg":  {
+                      "license":  "Mojang/Microsoft copyrighted Minecraft asset",
+                      "path":  "minecraft/sounds/item/totem/use_totem.ogg",
+                      "url":  "https://resources.download.minecraft.net/e7/e7f0337931cdb05c4234d2a9bc1f38ead675db26",
+                      "sha256":  "9d3a53dd9c6098021e87707a7942502ff35bb529efaed87b602030c201372674",
+                      "sha1":  "e7f0337931cdb05c4234d2a9bc1f38ead675db26"
+                  },
+    "totem.wav":  {
+                      "derivedFrom":  "totem.ogg",
+                      "conversion":  "libsndfile, 16-bit signed PCM, original channels and sample rate",
+                      "sha256":  "0d23439ae85ff64991e36703bc18f570248e45d3c47cc41a57d5478487934fc5"
+                  }
+}

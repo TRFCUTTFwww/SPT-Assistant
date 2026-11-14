@@ -29,7 +29,7 @@ public sealed partial class SwordModule {
  }
  static bool LocalSword(Player.KnifeController? hands){
   var local=Singleton<GameWorld>.Instance?.MainPlayer;
-  return hands!=null&&local!=null&&local.IsYourPlayer&&hands._player?.Pointer==local.Pointer&&Swords.Find(hands.GetItem()?.StringTemplateId??"")!=null;
+  string id=hands?.GetItem()?.StringTemplateId??"";return hands!=null&&local!=null&&local.IsYourPlayer&&hands._player?.Pointer==local.Pointer&&Swords.Find(id)!=null&&!Swords.IsUtility(id);
  }
  static bool Requested(Player player,Player.KnifeController hands){
   bool control=player.IsYourPlayer&&player.HealthController?.IsAlive==true&&!player.IsInventoryOpened&&Application.isFocused&&!Cursor.visible&&Time.timeScale>0;

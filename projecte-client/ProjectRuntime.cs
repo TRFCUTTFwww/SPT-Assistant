@@ -23,6 +23,7 @@ public sealed partial class ProjectModule {
   harmony.Patch(AccessTools.Method(typeof(InputManager),"Update"),prefix:new HarmonyMethod(typeof(ProjectModule),nameof(TableInput)));
   harmony.Patch(AccessTools.Method(typeof(EventSystem),"Update"),prefix:new HarmonyMethod(typeof(ProjectModule),nameof(TableInput)));
   harmony.Patch(AccessTools.Method(typeof(Player.FirearmController),"SetTriggerPressed",[typeof(bool)]),prefix:new HarmonyMethod(typeof(ProjectModule),nameof(TableTrigger)));
+  InitializeTools(harmony);
   context.Log(Local.ModHost.LogLevel.Info,"ProjectE ready: F10 transmutation table, original sounds, MC survival HUD and native hotbar.");
  }
  static bool TableBlocked=>active?.context?.IsActive==true&&(active.table?.Open==true||Time.frameCount<=active.releaseFrame);
@@ -35,9 +36,9 @@ public sealed partial class ProjectModule {
   if(Input.GetKeyDown(tableKey.Value)){if(!table.Open)Singleton<GameWorld>.Instance?.MainPlayer?.HandsController?.TryCast<Player.FirearmController>()?.SetTriggerPressed(false);table.Toggle();releaseFrame=Time.frameCount+2;}
   else if(table.Open&&Input.GetKeyDown(KeyCode.Escape)){table.SetOpen(false);releaseFrame=Time.frameCount+2;}
   if(table.Open||Time.frameCount<=releaseFrame&&(Input.GetMouseButton(0)||Input.GetMouseButton(1)))releaseFrame=Time.frameCount+2;
-  table.Tick();if(hudEnabled.Value)hud?.Tick();
+  table.Tick();TickTools();if(hudEnabled.Value)hud?.Tick();
  }
- void DrawExtra(){if(hudEnabled.Value&&table?.Open!=true)hud?.Draw(hudScale.Value);table?.Draw();}
+ void DrawExtra(){if(hudEnabled.Value&&table?.Open!=true)hud?.Draw(hudScale.Value);DrawTools();table?.Draw();}
 }
 public static class ProjectEApi {
  public static bool Active=>ProjectModule.SettingsActive;
@@ -45,6 +46,6 @@ public static class ProjectEApi {
  public static void ToggleTable()=>ProjectModule.ToggleTable();
 }
 public sealed partial class ProjectModule {
- internal static ConfigEntryBase[] ExtraSettings=>SettingsActive?[active!.hudEnabled,active.hudScale,active.volume,active.tableKey]:[];
+ internal static ConfigEntryBase[] ExtraSettings=>SettingsActive?[active!.hudEnabled,active.hudScale,active.volume,active.tableKey,active.chargeKey,active.skillKey,active.modeKey,active.totemEnabled]:[];
  internal static void ToggleTable()=>active?.table?.Toggle();
 }
