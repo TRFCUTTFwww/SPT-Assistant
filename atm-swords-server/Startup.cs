@@ -14,14 +14,14 @@ namespace AllTheModium.Server;
 public record Metadata:IModMetadata {
  public string ModGuid{get;init;}="local.allthemodium.swords";
  public string Name{get;init;}="AllTheModium Swords";public string Author{get;init;}="Local";public List<string>? Contributors{get;init;}
- public SemanticVersioning.Version Version{get;init;}=new("1.0.0");public SemanticVersioning.Range SptVersion{get;init;}=new("~5.0.0");public bool HasPrepatcher{get;init;}public List<string>? Incompatibilities{get;init;}public Dictionary<string,SemanticVersioning.Range>? ModDependencies{get;init;}public string? Url{get;init;}public string License{get;init;}="MIT";
+ public SemanticVersioning.Version Version{get;init;}=new("1.0.1");public SemanticVersioning.Range SptVersion{get;init;}=new("~5.0.0");public bool HasPrepatcher{get;init;}public List<string>? Incompatibilities{get;init;}public Dictionary<string,SemanticVersioning.Range>? ModDependencies{get;init;}public string? Url{get;init;}public string License{get;init;}="MIT";
 }
 [Injectable(TypePriority=OnLoadOrder.Preload)]
 public sealed class Startup(CustomItemService custom,TemplateTable templates,TradersTable traders,ISptLogger<Startup> log,SPTarkov.Server.Core.Utils.JsonUtil json):IOnLoad {
  public Task OnLoadAsync(CancellationToken cancellationToken){
   var original=json.Serialize(templates.Items[Swords.BaseTemplate]);
   var baseHandbook=(templates.Handbook?.Items ?? throw new InvalidOperationException("Handbook missing")).Single(i=>i.Id==Swords.BaseTemplate);
-  var assort=traders.GetTrader("54cb57776803fa99248b456e")?.Assort ?? throw new InvalidOperationException("Jaeger assort missing"); // Jaeger, LL1.
+  var assort=traders.GetTrader("5c0647fdd443bc2504c2d371")?.Assort ?? throw new InvalidOperationException("Jaeger assort missing"); // Jaeger, LL1.
   foreach(var s in Swords.All){
    var result=custom.CreateItemFromClone(new NewItemFromCloneDetails {
     ItemTplToClone=Swords.BaseTemplate,NewId=s.Id,ParentId=Swords.KnifeParent,NewItemName="atm_"+s.Key+"_sword",
@@ -48,7 +48,7 @@ public sealed class Startup(CustomItemService custom,TemplateTable templates,Tra
    if(p.KnifeHitSlashDam!=s.Damage||p.KnifeHitStabDam!=s.Damage||p.StackMaxSize!=1||p.Prefab?.Path!=source.Prefab?.Path||p.PrimaryDistance!=source.PrimaryDistance)throw new InvalidOperationException("Sword registration validation failed: "+s.Key);
   }
   string folder=Path.Combine(AppContext.BaseDirectory,"user","mods","AllTheModiumSwords");Directory.CreateDirectory(folder);
-  File.WriteAllText(Path.Combine(folder,"registration-status.json"),JsonSerializer.Serialize(new {version="1.0.0",serverPid=Environment.ProcessId,utc=DateTime.UtcNow,originalGladiusUnchanged=true,swords=Swords.All.Select(s=>new{s.Id,s.English,s.Chinese,s.Damage,s.Price})},new JsonSerializerOptions{WriteIndented=true}));
+  File.WriteAllText(Path.Combine(folder,"registration-status.json"),JsonSerializer.Serialize(new {version="1.0.1",jaeger="5c0647fdd443bc2504c2d371",serverPid=Environment.ProcessId,utc=DateTime.UtcNow,originalGladiusUnchanged=true,swords=Swords.All.Select(s=>new{s.Id,s.English,s.Chinese,s.Damage,s.Price})},new JsonSerializerOptions{WriteIndented=true}));
   log.Success("AllTheModium Swords: 4 independent melee items validated; Jaeger LL1; original gladius unchanged");
   return Task.CompletedTask;
  }

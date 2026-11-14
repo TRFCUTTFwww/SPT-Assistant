@@ -1,4 +1,4 @@
-# AllTheModium 四把独立近战剑 1.0.0
+# AllTheModium 四把独立近战剑 1.0.1
 
 目标环境：EFT 48558 / SPT 5.0。每把剑有固定且不同的模板 ID，使用原生近战物品、近战槽、命中判定和存档流程。客户端外观使用 Universal Mod Host 模块，服务端另行注册物品与商人商品。
 
@@ -13,7 +13,7 @@
 
 原始 PNG 是 MC 的 16×16 物品纹理，原始模型继承 `minecraft:item/handheld`。像素轮廓挤出为一像素厚度的三维网格，关闭平滑过滤及 mipmap。保留原图比例，按实测 gladius 网格坐标放置：X 厚度、Y 宽度、Z 剑身，长度约 0.832 米。复用塔科夫 gladius 的拔出、挥砍、刺击、收起、音效和碰撞；素材没有独立骨骼动画。原版 gladius 模板与原始共享网格不被修改。
 
-客户端仅在这四个 ID 对应的模型实例上替换 gladius LOD 网格与材质。同步工厂、异步工厂、近战拔出路径以及现有战局人物都有处理。对象池转给原版 gladius 时恢复原网格和材质；禁用、热更新也恢复所有仍存活的实例。不创建独立 BepInEx 宿主，不注册每代 IL2CPP 类型。
+客户端仅在这四个 ID 对应的模型实例上替换 gladius LOD 网格与材质。同步工厂、异步工厂、近战拔出路径以及现有战局人物都有处理。通过公开工厂和对象池方法捕获实例，不再给 IL2CPP 值类型异步状态机的 `MoveNext` 打补丁。1.0.0 的该补丁会让创建任务停留在 `WaitingForActivation`，同步展示路径因取得空对象而抛出异常。对象池转给原版 gladius 时恢复原网格和材质；禁用、热更新也恢复所有仍存活的实例。工厂任务的观察记录不再阻塞模块热更新，超过 30 秒会移除并记录超时。不创建独立 BepInEx 宿主，不注册每代 IL2CPP 类型。
 
 ## 安装
 
@@ -25,11 +25,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/Install-AllTheModium
 
 服务端目录：`SPT_Runtime/user/mods/AllTheModiumSwords`。客户端模块：`BepInEx/plugins/UniversalModHost/modules/atm-swords`。模块诊断：`state/atm-swords/status.json`。服务端注册成功会生成 `registration-status.json`，包含当前 PID、时间、四把剑的伤害及原版模板未变化的校验结果。
 
-新剑可在耶格一级购买，也可在辅助 MOD 的物品搜索中按中英文名称寻找。第一次进入商店时，游戏若沿用了原版 gladius 的旧图标缓存，可清除客户端图标缓存后重新加载。
+新剑在耶格（`5c0647fdd443bc2504c2d371`）一级购买。1.0.0 错用了医疗商的 ID，旧文档所说的耶格检查有误；1.0.1 已修正，商人商品变更要重启服务端后生效。辅助 MOD 的物品目录现在异步读取运行中服务端的物品和中英文本地化，刷新前及请求失败时继续使用本机原版目录，因此安装模组新增的物品也能被搜索。第一次进入商店时，游戏若沿用了原版 gladius 的旧图标缓存，可清除客户端图标缓存后重新加载。
 
 游戏内检查由用户完成：四把剑分别购买、装备、拔出、左右键攻击、收起、丢出拾取、仓库与检视显示；切回原版 gladius 后模型应恢复。分别测试无甲与有甲目标。编译和服务端数据检查不代表这些画面与命中效果已实际验证。
 
-离线素材检查可执行 `python scripts/Test-AllTheModiumAssets.py`，覆盖原图 SHA-256、尺寸、UV/索引、封闭面、非退化三角形和映射后的坐标范围。客户端、服务端均针对本机依赖编译。2026-11-14 本机实际服务端启动验证：四个物品模板和伤害、中文本地化、耶格一级商品均通过 HTTP 回读；原版 gladius 保留 38/57 伤害。新增物品使用 `OnLoadOrder.Preload`，在存档载入前注册。
+离线素材检查可执行 `python scripts/Test-AllTheModiumAssets.py`，覆盖原图 SHA-256、尺寸、UV/索引、封闭面、非退化三角形和映射后的坐标范围。客户端、服务端均针对本机依赖编译。新增物品使用 `OnLoadOrder.Preload`，在存档载入前注册。
+
+2026-11-14 的 1.0.1 运行验证：在实际 EFT 48558 进程里创建四把剑及原版 gladius，五个异步任务均完成；四把剑的 LOD0/LOD1 网格和材质分别匹配各自的像素剑，原版保持原网格。另行验证 `CreateItem`、`CreateLootPrefab`、`CreateCleanLootPrefab` 共 15 次创建及回池，均得到有效对象。辅助 MOD 的实际物品搜索使用中文、英文、模板 ID 共 12 次查询，均解析到正确的四个独立模板。临时诊断模块已移除，未修改玩家物品。此次没有重启运行中的服务端，因此新耶格商品尚未在重启后的 HTTP 接口复验；持握画面、检视画面和攻击命中仍由用户在游戏中检查。后续实际模型应用记录位于宿主的 `state/atm-swords/data/model-applications.json`，模板资源记录位于同目录 `model-diagnostics.json`。
 
 ## 素材来源
 

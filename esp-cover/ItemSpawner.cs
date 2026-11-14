@@ -21,6 +21,15 @@ internal static class ItemSpawner {
  static readonly Dictionary<string,List<AttachmentSlot>> attachmentSlots=new(StringComparer.Ordinal);
  static List<Entry> compatibleAmmo=new();
  static bool loaded;
+ sealed record RuntimeCatalog(string Items,string English,string Chinese);
+ static Task<RuntimeCatalog>? runtimeCatalogTask;
+ static RuntimeCatalog? runtimeCatalog;
+ static bool runtimeCatalogRequested;
+ static async Task<RuntimeCatalog> FetchRuntimeCatalog(){
+  var values=await Task.WhenAll(new[]{"/client/items","/client/locale/en","/client/locale/ch"}.Select(route=>SPTushonka.Common.Http.RequestHandler.PostJsonAsync(route,"{}").WaitAsync(TimeSpan.FromSeconds(20))));
+  return new(values[0],values[1],values[2]);
+ }
+ static JsonDocument RuntimeData(string json){using var response=JsonDocument.Parse(json);var root=response.RootElement;if(root.TryGetProperty("err",out var error)&&error.GetInt32()!=0)throw new InvalidDataException("Server item catalog rejected");return JsonDocument.Parse((root.TryGetProperty("data",out var data)?data:root).GetRawText());}
  static string query="",previousQuery="",quantity="1",selected="",status="";
  static Vector2 scroll,propertyScroll;
  static string inspected="",ammoQuery="",ammoId="",durability="",maxDurability="",medResource="",foodResource="",keyUses="0",rounds="0";
@@ -48,14 +57,23 @@ internal static class ItemSpawner {
  internal sealed record Values(bool Repairable,float Durability,float MaxDurability,bool Medical,float MedicalAmount,bool Food,float FoodAmount,bool Key,int KeyRemaining,bool LoadMagazine,int Rounds,string AmmoId,int Fir,ItemComponentParameters Extra);
  static string Format(float value)=>value.ToString("0.##",CultureInfo.InvariantCulture);
  static void Load(){
+  if(runtimeCatalogTask?.IsCompleted==true){
+   var task=runtimeCatalogTask;runtimeCatalogTask=null;
+   try{var current=task.GetAwaiter().GetResult();using var check=RuntimeData(current.Items);using var en=RuntimeData(current.English);using var ch=RuntimeData(current.Chinese);if(check.RootElement.ValueKind!=JsonValueKind.Object||en.RootElement.ValueKind!=JsonValueKind.Object||ch.RootElement.ValueKind!=JsonValueKind.Object)throw new InvalidDataException("Invalid runtime item catalog");runtimeCatalog=current;loaded=false;catalog.Clear();parents.Clear();attachmentSlots.Clear();}
+   catch(Exception error){Plugin.Self.Log.LogWarning("Runtime item catalog: "+error.Message);}
+  }
+  if(!runtimeCatalogRequested&&!string.IsNullOrWhiteSpace(SPTushonka.Common.Http.RequestHandler.SessionId)){runtimeCatalogRequested=true;runtimeCatalogTask=FetchRuntimeCatalog();}
   if(loaded)return;loaded=true;
   try{
    string namesPath=Path.Combine(BepInEx.Paths.PluginPath,"LocalSpt5ESP","esp5-names.json");
    var names=JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(namesPath))??new();
    string templates=Path.Combine(BepInEx.Paths.GameRootPath,"SPT_Runtime","SPT_Data","database","templates","items.json");
-   using var items=JsonDocument.Parse(File.ReadAllText(templates));
+   using var items=runtimeCatalog==null?JsonDocument.Parse(File.ReadAllText(templates)):RuntimeData(runtimeCatalog.Items);
    Dictionary<string,string> Locale(string language){string path=Path.Combine(BepInEx.Paths.GameRootPath,"SPT_Runtime","SPT_Data","database","locales","global",language+".json");return File.Exists(path)?JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(path))??new():new();}
-   commandItems=ChatItemSearch.Read(items.RootElement,names,Locale("en"),Locale("ch"));
+   Dictionary<string,string> RuntimeLocale(string json){using var doc=RuntimeData(json);return JsonSerializer.Deserialize<Dictionary<string,string>>(doc.RootElement.GetRawText())??new();}
+   var english=runtimeCatalog==null?Locale("en"):RuntimeLocale(runtimeCatalog.English);var chinese=runtimeCatalog==null?Locale("ch"):RuntimeLocale(runtimeCatalog.Chinese);
+   foreach(var pair in chinese)if(pair.Key.EndsWith(" Name",StringComparison.Ordinal))names.TryAdd(pair.Key[..^5],pair.Value);
+   commandItems=ChatItemSearch.Read(items.RootElement,names,english,chinese);
    foreach(var item in items.RootElement.EnumerateObject()){
     if(item.Value.TryGetProperty("_parent",out var parent))parents[item.Name]=parent.GetString()??"";
     if(!item.Value.TryGetProperty("_type",out var kind)||kind.GetString()!="Item")continue;
