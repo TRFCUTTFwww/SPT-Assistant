@@ -12,5 +12,12 @@ public static class Swords {
         new("a7a000000000000000000003","unobtainium","Unobtainium Sword","难得素剑",35,15,51000),
         new("a7a000000000000000000004","alloy","Alloy Sword","合金剑",65,3,69000)
     ];
-    public static Sword? Find(string id)=>Array.Find(All,s=>s.Id==id);
+    // One renderer owns all pixel melee meshes, so pooled gladius instances
+    // cannot retain another mod's replacement when switching between swords.
+    public static readonly Sword[] Renderable=[..All,
+        new("a7e000000000000000000001","dm","Dark Matter Sword","暗物质剑",3,9,131072),
+        new("a7e000000000000000000002","rm","Red Matter Sword","红物质剑",4,12,786432),
+        new("a7e000000000000000000003","katar","Red Matter Katar","红物质拳剑",4,19,16777216)
+    ];
+    public static Sword? Find(string id)=>Array.Find(Renderable,s=>s.Id==id);
 }

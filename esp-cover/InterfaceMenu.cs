@@ -107,6 +107,7 @@ internal static partial class InterfaceMenu {
   else{RaidEnd.CancelConfirmation();inputGate.SetOpen(false,Time.frameCount);editing=false;capture=null;drag="";windowDrag=false;Cursor.lockState=oldLock;Cursor.visible=oldVisible;config.Save();}
   Plugin.Self.Log.LogInfo("Main menu "+(value?"opened":"closed"));
  }
+ internal static void CloseForExternalPanel()=>SetOpen(false);
  internal static void Shutdown(){SetOpen(false);inputGate.Reset();MenuIcons.Shutdown();slots.Clear();drafts.Clear();ResetGlobalSearch();}
  internal static Rect Place(string id,Rect initial){
   if(!slots.TryGetValue(id,out var slot))return initial;
@@ -206,6 +207,7 @@ internal static partial class InterfaceMenu {
     case ("模型与镜头","动作锁定"):ModelPoseLock.Draw(content);break;
     case ("趣味功能","快速破解"):QuickhackSettingsBridge.Draw(content);break;
     case ("趣味功能","像素剑"):SwordSettingsBridge.Draw(content);break;
+    case ("趣味功能","ProjectE"):ProjectESettingsBridge.Draw(content);break;
     case ("趣味功能","黑墙脉冲"):BlackwallBridge.Draw(content);break;
     case ("趣味功能","镭射眼"):DrawFunFeatures(content);break;
     case ("人物与移动","死亡保留"):DeathInventory.Draw(content);break;

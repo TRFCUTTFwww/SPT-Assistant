@@ -1,0 +1,51 @@
+{
+  "repository": "https://github.com/sinkillerj/ProjectE",
+  "commit": "f432b0c66837759fb0731c9144dc53176b949c5d",
+  "license": "MIT",
+  "sources": {
+    "ProjectE-LICENSE.txt": {
+      "path": "LICENSE",
+      "sha256": "c16196aa7c2337eef3e6e216c36b2cbd5b13e17373da0661ca11799ae3cbf5a6"
+    },
+    "dm_sword.png": {
+      "path": "src/main/resources/assets/projecte/textures/item/dm_tools/sword.png",
+      "sha256": "e987aa39d40dd63687bd14df0853bbe393267f11a66a918a6eae82f0b0877e96"
+    },
+    "rm_sword.png": {
+      "path": "src/main/resources/assets/projecte/textures/item/rm_tools/sword.png",
+      "sha256": "3dcaafd9e1619b6f3aab659776780963eb1cf52787c24a55e975716ce6af9604"
+    },
+    "katar_sword.png": {
+      "path": "src/main/resources/assets/projecte/textures/item/rm_tools/katar.png",
+      "sha256": "be90be08b082c6934fc8ada2cc872bbdefedc810e40d92dc7ec796ef8921b956"
+    },
+    "transmute.png": {
+      "path": "src/main/resources/assets/projecte/textures/gui/transmute.png",
+      "sha256": "d87847e321c6a25b79e174d59122af1235bcbe86d415169109579068c87dd9b9"
+    },
+    "tablet.png": {
+      "path": "src/main/resources/assets/projecte/textures/item/transmutation_tablet.png",
+      "sha256": "139aee5a1a61d915db9e9c59c9807f44ca83d54bf6a3079de6e5da83780fa472"
+    },
+    "petransmute.ogg": {
+      "path": "src/main/resources/assets/projecte/sounds/item/petransmute.ogg",
+      "sha256": "9ae12fccd33520c7d6f59c77ea965bc880143e470329af96748a67e7d5aec566"
+    },
+    "pecharge.ogg": {
+      "path": "src/main/resources/assets/projecte/sounds/item/pecharge.ogg",
+      "sha256": "4e102023e68acc033634583bb12fc9136ed644e3f703d51f63b850ceed40a974"
+    },
+    "peuncharge.ogg": {
+      "path": "src/main/resources/assets/projecte/sounds/item/peuncharge.ogg",
+      "sha256": "60b7094d491068d71b6faf90b21eade206c206ad66480ec3f1b9c0684f5eb99b"
+    },
+    "chargetick.ogg": {
+      "path": "src/main/resources/assets/projecte/sounds/item/chargetick.ogg",
+      "sha256": "eaaafb8e0bbbe6370b44edc6e07f86cf718b91c0b68228c1434689433fe8f6c4"
+    },
+    "tock.ogg": {
+      "path": "src/main/resources/assets/projecte/sounds/item/tock.ogg",
+      "sha256": "9cd9aebfd67d61b412369aa6514b6a540d989b973058e8fd7f08a98d65d80918"
+    }
+  }
+}

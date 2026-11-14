@@ -20,14 +20,14 @@ public sealed partial class SwordModule:IHotModule {
  int failures;
  [ThreadStatic] static string? creating;
  public int ApiVersion=>1;
- public string Version=>"1.1.1";
+ public string Version=>"1.1.2";
  // We only observe factory tasks. They own no module assets or callbacks and
  // must not block unloading if the native factory stalls or a UI request dies.
  public bool CanReload=>true;
  public void Initialize(ModuleContext context){
   this.context=context;context.OnShutdown(Cleanup);active=this;
   InitializeSettings();
-  foreach(var sword in Swords.All){var asset=new SwordAssets(sword,Path.Combine(context.ModuleDirectory,"Assets"),context);asset.SetSize(sizePercent.Value);assets.Add(sword.Id,asset);}
+  foreach(var sword in Swords.Renderable){var asset=new SwordAssets(sword,Path.Combine(context.ModuleDirectory,"Assets"),context);asset.SetSize(sizePercent.Value);assets.Add(sword.Id,asset);}
   var h=new Harmony(context.PatchId);
   foreach(var method in typeof(ObjectsFactory).GetMethods(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance).Where(m=>!m.IsGenericMethod&&m.GetParameters().FirstOrDefault()?.ParameterType==typeof(Item))){
    if(method.ReturnType==typeof(GameObject)&&method.Name is "CreateItem" or "CreateItemUsablePrefab" or "CreateCleanLootPrefab" or "CreateLootPrefab")h.Patch(method,prefix:new HarmonyMethod(typeof(SwordModule),nameof(Creating)),postfix:new HarmonyMethod(typeof(SwordModule),nameof(Created)),finalizer:new HarmonyMethod(typeof(SwordModule),nameof(CreationEnded)));
