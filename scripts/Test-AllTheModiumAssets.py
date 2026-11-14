@@ -41,8 +41,10 @@ for key in ('allthemodium', 'vibranium', 'unobtainium', 'alloy'):
     assert all(n % 2 == 0 for n in edges.values())
     lo, hi = min(v[0]+v[1] for v in vertices), max(v[0]+v[1] for v in vertices)
     scale = .831764/(hi-lo)
-    mapped = [(z*scale*math.sqrt(2), (x-y)*scale-.003738, (x+y-lo)*scale-.152696) for x,y,z in vertices]
-    assert abs(min(v[2] for v in mapped)+.152696) < 1e-6
-    assert abs(max(v[2] for v in mapped)-.679068) < 1e-6
+    model_scale = .65
+    mapped = [(z*scale*math.sqrt(2)*model_scale, (x-y)*scale*model_scale-.003738, ((x+y-lo)*scale-.152696)*model_scale) for x,y,z in vertices]
+    assert abs(min(v[2] for v in mapped)+.0992524) < 1e-6
+    assert abs(max(v[2] for v in mapped)-.4413942) < 1e-6
+    assert abs(max(v[2] for v in mapped)-min(v[2] for v in mapped)-.5406466) < 1e-6
     assert max(abs(v[0]) for v in mapped) < .05
-    print(f'PASS {key}: original PNG hash, 16x16, {len(vertices)} vertices, {len(faces)} nondegenerate closed triangles, gladius coordinate bounds')
+    print(f'PASS {key}: original PNG hash, 16x16, {len(vertices)} vertices, {len(faces)} nondegenerate closed triangles, 0.541m sword bounds')

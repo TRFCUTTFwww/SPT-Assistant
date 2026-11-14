@@ -20,7 +20,7 @@ public sealed partial class SwordModule:IHotModule {
  int failures;
  [ThreadStatic] static string? creating;
  public int ApiVersion=>1;
- public string Version=>"1.0.1";
+ public string Version=>"1.0.2";
  // We only observe factory tasks. They own no module assets or callbacks and
  // must not block unloading if the native factory stalls or a UI request dies.
  public bool CanReload=>true;
