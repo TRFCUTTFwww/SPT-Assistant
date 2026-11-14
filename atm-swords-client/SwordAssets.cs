@@ -9,6 +9,8 @@ internal sealed class SwordAssets {
  internal readonly Mesh Mesh;
  internal readonly Texture2D Texture;
  internal readonly Material Material;
+ Vector3[] originalVertices=[];
+ float appliedSize;
  internal SwordAssets(Sword sword,string directory,ModuleContext context){
   Mesh=new Mesh{name="ATM "+sword.Key};context.OnShutdown(()=>Object.Destroy(Mesh));
   var vertices=new List<Vector3>();var uv=new List<Vector2>();var indices=new List<int>();
@@ -28,13 +30,18 @@ internal sealed class SwordAssets {
   // Start from measured gladius bounds, then shrink around the hand's local
   // origin. Keep the width center at the original grip offset.
   float scale=.831764f/(max-min);
-  const float modelScale=.4f;
-  for(int i=0;i<vertices.Count;i++){var v=vertices[i];vertices[i]=new(v.z*scale*1.41421356f*modelScale,(v.x-v.y)*scale*modelScale-.003738f,((v.x+v.y-min)*scale-.152696f)*modelScale);}
+  for(int i=0;i<vertices.Count;i++){var v=vertices[i];vertices[i]=new(v.z*scale*1.41421356f,(v.x-v.y)*scale-.003738f,(v.x+v.y-min)*scale-.152696f);}
+  originalVertices=vertices.ToArray();
   Mesh.vertices=vertices.ToArray();Mesh.uv=uv.ToArray();Mesh.triangles=indices.ToArray();Mesh.RecalculateNormals();Mesh.RecalculateBounds();
   Texture=new Texture2D(2,2,TextureFormat.RGBA32,false);context.OnShutdown(()=>Object.Destroy(Texture));
   if(!ImageConversion.LoadImage(Texture,File.ReadAllBytes(Path.Combine(directory,sword.Key+"_sword.png")),false))throw new InvalidDataException("Invalid sword texture: "+sword.Key);
   Texture.filterMode=FilterMode.Point;Texture.wrapMode=TextureWrapMode.Clamp;Texture.name="ATM "+sword.Key;
   var shader=Shader.Find("Unlit/Texture")??Shader.Find("Sprites/Default")??throw new InvalidOperationException("Pixel sword shader unavailable");
   Material=new Material(shader){name="ATM "+sword.Key,mainTexture=Texture};context.OnShutdown(()=>Object.Destroy(Material));
+ }
+ internal void SetSize(float percent){
+  float size=(float.IsFinite(percent)?Math.Clamp(percent,20,100):55)/100;if(appliedSize==size)return;appliedSize=size;
+  var grip=new Vector3(0,-.003738f,0);
+  Mesh.vertices=originalVertices.Select(v=>grip+(v-grip)*size).ToArray();Mesh.RecalculateBounds();
  }
 }

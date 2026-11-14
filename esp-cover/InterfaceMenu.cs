@@ -205,6 +205,7 @@ internal static partial class InterfaceMenu {
     case ("人物与移动","Buff 状态"):CharacterBuffs.Draw(content);break;
     case ("模型与镜头","动作锁定"):ModelPoseLock.Draw(content);break;
     case ("趣味功能","快速破解"):QuickhackSettingsBridge.Draw(content);break;
+    case ("趣味功能","像素剑"):SwordSettingsBridge.Draw(content);break;
     case ("趣味功能","黑墙脉冲"):BlackwallBridge.Draw(content);break;
     case ("趣味功能","镭射眼"):DrawFunFeatures(content);break;
     case ("人物与移动","死亡保留"):DeathInventory.Draw(content);break;

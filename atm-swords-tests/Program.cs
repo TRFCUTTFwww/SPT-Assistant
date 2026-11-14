@@ -20,3 +20,16 @@ Check(SwordGuardRules.Damage(80,true,true,false,false)==80,"rear damage remains 
 Check(SwordGuardRules.Damage(0,true,true,false,true)==0,"zero damage stays zero");
 Check(SwordGuardRules.Damage(-5,true,true,false,true)==-5,"non-positive amount remains unchanged");
 Check(float.IsPositiveInfinity(SwordGuardRules.Damage(float.PositiveInfinity,true,true,false,true)),"non-finite amount is not rewritten");
+Check(SwordGuardRules.Eligible(true,false,true),"bullet blocking enabled");
+Check(!SwordGuardRules.Eligible(true,false,false),"bullet blocking disabled leaves bullets unchanged");
+Check(SwordGuardRules.Eligible(false,true,false),"bullet setting leaves melee protection available");
+Check(!SwordGuardRules.Eligible(false,false,true),"other damage types bypass guard");
+Check(SwordGuardRules.Damage(80,true,true,false,true,0)==80,"zero percent disables reduction");
+Check(SwordGuardRules.Damage(80,true,true,false,true,100)==0,"full reduction blocks eligible health damage");
+Check(SwordGuardRules.Damage(80,true,true,false,true,25)==60,"custom reduction applies percentage");
+Check(SwordGuardRules.Damage(80,true,true,false,true,float.NaN)==80,"invalid reduction cannot corrupt health");
+var blade=SwordGuardRules.GuardBlade(Vector3.UnitX,Vector3.UnitY);
+Check(Vector3.Dot(blade,Vector3.UnitX)<0&&Vector3.Dot(blade,Vector3.UnitY)>0&&Math.Abs(blade.Length()-1)<1e-5,"guard blade points to screen upper-left");
+var yaw=Quaternion.CreateFromAxisAngle(Vector3.UnitY,1.5f);
+var turned=SwordGuardRules.GuardBlade(Vector3.Transform(Vector3.UnitX,yaw),Vector3.Transform(Vector3.UnitY,yaw));
+Check(Vector3.Distance(turned,Vector3.Transform(blade,yaw))<1e-5,"guard direction follows the camera instead of weapon local axes");

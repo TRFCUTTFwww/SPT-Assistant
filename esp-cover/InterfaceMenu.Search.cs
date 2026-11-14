@@ -17,6 +17,7 @@ internal static partial class InterfaceMenu {
   var items=new List<SearchItem>();
   foreach(string section in MenuSections.Names)foreach(string page in MenuSections.Pages(section)){
    string extra=(section,page) switch{
+    ("趣味功能","像素剑")=>"格挡 子弹 减伤 大小 AllTheModium sword blocking bullets damage reduction size",
     ("杂项",_)=>MiscPanel.SearchTerms,
     ("服务端","配置参数")=>"保险 投保 回保 藏身处 制作 修理 交易 跳蚤 市场 insurance hideout crafting repair trading flea",
     ("服务端","业力与信誉")=>"Fence 声望 好感 信誉 业力 reputation standing karma",

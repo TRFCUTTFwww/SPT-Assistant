@@ -25,7 +25,7 @@ public sealed partial class SwordModule {
   // Scale the final health amount after armor processing. Do not change a
   // boxed DamageInfo value or detour any native value-type method.
   harmony.Patch(AccessTools.Method(typeof(ActiveHealthController),nameof(ActiveHealthController.ApplyDamage),[typeof(EBodyPart),typeof(float),typeof(DamageInfo)]),prefix:new HarmonyMethod(typeof(SwordModule),nameof(GuardDamage)));
-  context!.Log(LogLevel.Info,"Sword guard: hold right mouse, left mouse swings; frontal bullet/melee health damage reduced by 50%.");
+  context!.Log(LogLevel.Info,"Sword guard settings available: bullet blocking, health damage reduction and model size.");
  }
  static bool LocalSword(Player.KnifeController? hands){
   var local=Singleton<GameWorld>.Instance?.MainPlayer;
@@ -33,10 +33,10 @@ public sealed partial class SwordModule {
  }
  static bool Requested(Player player,Player.KnifeController hands){
   bool control=player.IsYourPlayer&&player.HealthController?.IsAlive==true&&!player.IsInventoryOpened&&Application.isFocused&&!Cursor.visible&&Time.timeScale>0;
-  return SwordGuardRules.CanRaise(control,hands.CurrentOperation?.TryCast<Player.KnifeController.Idling>()!=null,Input.GetMouseButton(1),Input.GetMouseButton(0));
+  return active?.guardEnabled.Value==true&&SwordGuardRules.CanRaise(control,hands.CurrentOperation?.TryCast<Player.KnifeController.Idling>()!=null,Input.GetMouseButton(1),Input.GetMouseButton(0));
  }
  static bool GuardInsteadOfStab(Player.KnifeController __instance,ref bool __result){
-  if(active?.context?.IsActive!=true||!LocalSword(__instance))return true;
+  if(active?.context?.IsActive!=true||!active.guardEnabled.Value||!LocalSword(__instance))return true;
   __result=false;return false;
  }
  static void GuardBeforeSwing(Player.KnifeController __instance){
@@ -50,7 +50,8 @@ public sealed partial class SwordModule {
   if(player==null||!LocalSword(hands)||!Requested(player,hands!))return;
   var direction=__2.Direction;var look=player.LookDirection;
   bool frontal=SwordGuardRules.Frontal(new NumericsVector(look.x,look.y,look.z),new NumericsVector(direction.x,direction.y,direction.z));
-  float reduced=SwordGuardRules.Damage(__1,true,__2.DamageType is EDamageType.Bullet or EDamageType.Melee,__2.OverDamageFrom.HasValue,frontal);
+  bool eligible=SwordGuardRules.Eligible(__2.DamageType==EDamageType.Bullet,__2.DamageType==EDamageType.Melee,a.blockBullets.Value);
+  float reduced=SwordGuardRules.Damage(__1,true,eligible,__2.OverDamageFrom.HasValue,frontal,a.reductionPercent.Value);
   if(reduced==__1)return;
   a.lastGuardDamage=__1;a.lastGuardResult=reduced;a.blockedHits++;a.guardDiagnosticsDirty=true;__1=reduced;
  }
@@ -79,8 +80,15 @@ public sealed partial class SwordModule {
   if(context?.IsActive!=true||guardBlend<=0||!LocalSword(guardHands))return;
   // Rotate only the two sword render meshes around their grip. The native
   // arm rig, camera, and hit collider remain under the game's animation.
-  RestoreGuardPose();var tilt=Quaternion.Slerp(Quaternion.identity,Quaternion.Euler(-55,-30,0),Mathf.SmoothStep(0,1,guardBlend));
-  foreach(var bone in guardMeshes){if(bone==null)continue;var original=bone.localRotation;var applied=original*tilt;bone.localRotation=applied;guardPoses.Add(new(bone,original,applied));}
+  RestoreGuardPose();var camera=EFT.CameraControl.CameraManager.Instance?.Camera;if(camera==null)return;
+  var right=camera.transform.right;var up=camera.transform.up;
+  var blade=SwordGuardRules.GuardBlade(new(right.x,right.y,right.z),new(up.x,up.y,up.z));
+  var direction=new Vector3(blade.X,blade.Y,blade.Z);
+  // Imported blade runs along +Z, thickness along X. Point the blade to
+  // screen upper-left, with its broad face toward the camera. Local Euler
+  // angles are unsuitable because the weapon's animated parent is rotated.
+  var target=Quaternion.LookRotation(direction,Vector3.Cross(direction,camera.transform.forward));
+  foreach(var bone in guardMeshes){if(bone==null)continue;var original=bone.localRotation;var local=bone.parent==null?target:Quaternion.Inverse(bone.parent.rotation)*target;var applied=Quaternion.Slerp(original,local,Mathf.SmoothStep(0,1,guardBlend));bone.localRotation=applied;guardPoses.Add(new(bone,original,applied));}
  }
  void RestoreGuardPose(){
   foreach(var pose in guardPoses)if(pose.Bone!=null&&Quaternion.Angle(pose.Bone.localRotation,pose.Applied)<.01f)pose.Bone.localRotation=pose.Original;
