@@ -1,0 +1,62 @@
+{
+    "branch":  "1.21.x",
+    "files":  [
+                  {
+                      "path":  "README.md",
+                      "sha256":  "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+                      "source":  "https://raw.githubusercontent.com/AllTheMods/AllTheModium/b68d348df1efa129e8288eb170f04cc2543b7514/README.md"
+                  },
+                  {
+                      "path":  "src/main/resources/assets/allthemodium/lang/en_us.json",
+                      "sha256":  "97A78177B9672717184C7E99A60B684BE5192E5559BBD0EA329B5D9A75692D7E",
+                      "source":  "https://raw.githubusercontent.com/AllTheMods/AllTheModium/b68d348df1efa129e8288eb170f04cc2543b7514/src/main/resources/assets/allthemodium/lang/en_us.json"
+                  },
+                  {
+                      "path":  "src/main/resources/assets/allthemodium/lang/zh_cn.json",
+                      "sha256":  "7CB344D6E84F86AA2E430D1946BBC3F3E4685BE008485B92DA7A0489E3E440ED",
+                      "source":  "https://raw.githubusercontent.com/AllTheMods/AllTheModium/b68d348df1efa129e8288eb170f04cc2543b7514/src/main/resources/assets/allthemodium/lang/zh_cn.json"
+                  },
+                  {
+                      "path":  "src/main/resources/assets/allthemodium/models/item/alloy_sword.json",
+                      "sha256":  "E44D785334F4FF4AF087EB35E91FC9F98E8E0A9AB5CE7954F7EA3DDF2C462F48",
+                      "source":  "https://raw.githubusercontent.com/AllTheMods/AllTheModium/b68d348df1efa129e8288eb170f04cc2543b7514/src/main/resources/assets/allthemodium/models/item/alloy_sword.json"
+                  },
+                  {
+                      "path":  "src/main/resources/assets/allthemodium/models/item/allthemodium_sword.json",
+                      "sha256":  "E659B124FF4056549441B7310F49DA968AEE9B495EA6FAB7CA7CD7CF2A035829",
+                      "source":  "https://raw.githubusercontent.com/AllTheMods/AllTheModium/b68d348df1efa129e8288eb170f04cc2543b7514/src/main/resources/assets/allthemodium/models/item/allthemodium_sword.json"
+                  },
+                  {
+                      "path":  "src/main/resources/assets/allthemodium/models/item/unobtainium_sword.json",
+                      "sha256":  "201D93D6B4729BD3372999FC9F020CBB846983B60757DD53E0C8BEC1DB7403D9",
+                      "source":  "https://raw.githubusercontent.com/AllTheMods/AllTheModium/b68d348df1efa129e8288eb170f04cc2543b7514/src/main/resources/assets/allthemodium/models/item/unobtainium_sword.json"
+                  },
+                  {
+                      "path":  "src/main/resources/assets/allthemodium/models/item/vibranium_sword.json",
+                      "sha256":  "4921DA759152BAB098F4BDA1E112E4A39170DA30517AA8B7A4D216B50293FB18",
+                      "source":  "https://raw.githubusercontent.com/AllTheMods/AllTheModium/b68d348df1efa129e8288eb170f04cc2543b7514/src/main/resources/assets/allthemodium/models/item/vibranium_sword.json"
+                  },
+                  {
+                      "path":  "src/main/resources/assets/allthemodium/textures/item/alloy_sword.png",
+                      "sha256":  "1E183858A8C401379384094FBC4516F93BC598621D1707BF2DF2A43A06BF7182",
+                      "source":  "https://raw.githubusercontent.com/AllTheMods/AllTheModium/b68d348df1efa129e8288eb170f04cc2543b7514/src/main/resources/assets/allthemodium/textures/item/alloy_sword.png"
+                  },
+                  {
+                      "path":  "src/main/resources/assets/allthemodium/textures/item/allthemodium_sword.png",
+                      "sha256":  "0A07011BCD7669FD5EE066F383738650C5CED44A83D5FCB034862BEA7EA0C1CF",
+                      "source":  "https://raw.githubusercontent.com/AllTheMods/AllTheModium/b68d348df1efa129e8288eb170f04cc2543b7514/src/main/resources/assets/allthemodium/textures/item/allthemodium_sword.png"
+                  },
+                  {
+                      "path":  "src/main/resources/assets/allthemodium/textures/item/unobtainium_sword.png",
+                      "sha256":  "9FF45D1805F4AB8D2FA25BC21D15630718E18B898C0ECE3E7A75F9C4B8A37489",
+                      "source":  "https://raw.githubusercontent.com/AllTheMods/AllTheModium/b68d348df1efa129e8288eb170f04cc2543b7514/src/main/resources/assets/allthemodium/textures/item/unobtainium_sword.png"
+                  },
+                  {
+                      "path":  "src/main/resources/assets/allthemodium/textures/item/vibranium_sword.png",
+                      "sha256":  "CCB66A485DA5E70DC04C6B76FFE5EF5A0E21DEF7CEE17BA5B79EDD2D9733E8BF",
+                      "source":  "https://raw.githubusercontent.com/AllTheMods/AllTheModium/b68d348df1efa129e8288eb170f04cc2543b7514/src/main/resources/assets/allthemodium/textures/item/vibranium_sword.png"
+                  }
+              ],
+    "commit":  "b68d348df1efa129e8288eb170f04cc2543b7514",
+    "repository":  "https://github.com/AllTheMods/AllTheModium"
+}

@@ -46,3 +46,7 @@
 !/universal-sdk/
 !/universal-example/
 !/universal-host-tests/
+
+!/atm-swords-client/
+!/atm-swords-server/
+!/atm-swords-shared/
