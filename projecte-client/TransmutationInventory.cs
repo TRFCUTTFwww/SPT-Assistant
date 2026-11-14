@@ -38,7 +38,7 @@ internal sealed record InventoryAccess(Profile Profile,InventoryController Contr
  }
  internal void Remove(Item item,int count){
   if(item.StackObjectsCount<count||count<1)throw new ArgumentException("物品数量已变化。");
-  if(count<item.StackObjectsCount)item.StackObjectsCount-=count;
+  if(count<item.StackObjectsCount){item.StackObjectsCount-=count;item.RaiseRefreshEvent(false,true);}
   else {var result=ItemManipulator.Remove(item,Controller,false);if(!result.Succeeded)throw new ArgumentException("原生库存拒绝移除物品。");result.Value.RaiseEvents(Controller.Cast<IItemOwner>(),CommandStatus.Succeed);}
   Refresh();
  }
@@ -46,7 +46,7 @@ internal sealed record InventoryAccess(Profile Profile,InventoryController Contr
   if(!ItemManipulator.Add(item,destination,Controller,true).Succeeded)throw new ArgumentException("背包空间已变化，无法取出。");
   Controller.AddAndRaiseEvents(item,destination);if(item.CurrentAddress==null)throw new InvalidOperationException("物品添加回读失败。");Refresh();
  }
- internal void Refresh()=>Profile.Inventory.Equipment.RaiseRefreshEvent(false,true);
+ internal void Refresh(){Profile.Inventory.Equipment.RaiseRefreshEvent(false,true);if(!Raid)Profile.Inventory.Stash?.RaiseRefreshEvent(false,true);}
  internal static int Quality(Item item){
   float ratio=1;var repair=item.GetItemComponent<RepairableComponent>();if(repair!=null){float maximum=repair.TemplateDurability;if(maximum>0)ratio=Math.Min(ratio,repair.Durability/maximum);}
   var med=item.GetItemComponent<MedKitComponent>();if(med!=null&&med.MaxHpResource>0)ratio=Math.Min(ratio,med.HpResource/med.MaxHpResource);

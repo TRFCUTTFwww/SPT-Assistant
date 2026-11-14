@@ -33,7 +33,7 @@ public sealed partial class ProjectModule {
  void TickExtra(){
   if(table==null)return;table.Volume=volume.Value;
   if(Input.GetKeyDown(tableKey.Value)){if(!table.Open)Singleton<GameWorld>.Instance?.MainPlayer?.HandsController?.TryCast<Player.FirearmController>()?.SetTriggerPressed(false);table.Toggle();releaseFrame=Time.frameCount+2;}
-  else if(table.Open&&Input.GetKeyDown(KeyCode.Escape)&&!table.Busy){table.SetOpen(false);releaseFrame=Time.frameCount+2;}
+  else if(table.Open&&Input.GetKeyDown(KeyCode.Escape)){table.SetOpen(false);releaseFrame=Time.frameCount+2;}
   if(table.Open||Time.frameCount<=releaseFrame&&(Input.GetMouseButton(0)||Input.GetMouseButton(1)))releaseFrame=Time.frameCount+2;
   table.Tick();if(hudEnabled.Value)hud?.Tick();
  }
