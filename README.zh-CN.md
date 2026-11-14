@@ -1,6 +1,8 @@
 黑墙脉冲已内置于 2.2 的“趣味功能”，安装包包含所需动作、贴图与音频，安装时会备份并停用旧独立插件。详见[黑墙说明](docs/blackwall-pulse.md)。
 # SPT Assistant
 
+新独立客户端 MOD 的开发入口：[通用热更新加载器](docs/universal-mod-host.md)。提供稳定接口、示例工程、按模块发布与失败回退；适用于本机 EFT 48558 / SPT 5.0。
+
 [English](README.md) · [简体中文](README.zh-CN.md)
 
 为 **SPT 单机塔科夫**开发的游戏内控制面板，使用 C# 与 Unity 构建。角色、战局、装备、任务与服务端设置，都可以在同一界面中管理。

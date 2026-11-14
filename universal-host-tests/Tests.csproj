@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><OutputType>Exe</OutputType><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Fixture/**;PrivateLibrary/**" />
+    <ProjectReference Include="../universal-sdk/Contracts.csproj" />
+    <Compile Include="../universal-host/Package.cs" Link="Package.cs" />
+    <Compile Include="../universal-host/ModuleSlot.cs" Link="ModuleSlot.cs" />
+    <Compile Include="../universal-host/ModuleManager.cs" Link="ModuleManager.cs" />
+  </ItemGroup>
+</Project>
