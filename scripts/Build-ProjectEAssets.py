@@ -46,21 +46,6 @@ for name in ['petransmute','pecharge','peuncharge','chargetick','tock']:
     with wave.open(str(OUT/(name+'.wav')),'wb') as output:
         output.setnchannels(data.shape[1]); output.setsampwidth(2); output.setframerate(rate); output.writeframes(data.tobytes())
 (OUT/'provenance.json').write_text(json.dumps(dict(repository='https://github.com/sinkillerj/ProjectE',commit=COMMIT,license='MIT',sources=sources),indent=2)+'\n',encoding='utf-8',newline='\n')
-patterns={
- 'drop':(['...#...','..###..','..###..','.#####.','#######','#######','.#####.'],(46,148,255)),
-}
-for name,(rows,color) in patterns.items():
- for state in ('full','half','empty'):
-  icon=Image.new('RGBA',(9,9),(0,0,0,0))
-  for y,row in enumerate(rows):
-   for x,ch in enumerate(row):
-    if ch=='#':
-     for dx,dy in ((-1,0),(1,0),(0,-1),(0,1)):
-      icon.putpixel((x+1+dx,y+1+dy),(0,0,0,255))
-  for y,row in enumerate(rows):
-   for x,ch in enumerate(row):
-    if ch=='#':icon.putpixel((x+1,y+1),(*color,255) if state=='full' or state=='half' and x<3 else (51,51,51,255))
-  icon.save(OUT/f'{name}_{state}.png')
 for name in ['ProjectE-LICENSE.txt']+[key+'_sword.'+ext for key in ('dm','rm','katar') for ext in ('png','obj')]:
  shutil.copyfile(OUT/name,ROOT/'atm-swords-client/Assets'/name)
 shutil.copyfile(OUT/'provenance.json',ROOT/'atm-swords-client/Assets/projecte-provenance.json')

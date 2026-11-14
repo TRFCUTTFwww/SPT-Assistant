@@ -13,7 +13,7 @@ public sealed partial class ProjectModule {
  ConfigEntry<KeyCode> tableKey=null!;
  int releaseFrame;
  void InitializeExtra(Harmony harmony){
-  hudEnabled=settingsFile!.Bind("HUD","Enabled",true,"显示原版 MC 爱心、饱食度、经验条、水分及同步塔科夫快捷栏。");
+  hudEnabled=settingsFile!.Bind("HUD","Enabled",true,"显示原版 MC 爱心、饱食度、经验条及同步塔科夫快捷栏。");
   hudScale=settingsFile.Bind("HUD","Scale",1.35f,new ConfigDescription("底部 HUD 缩放，最终取整为像素倍率，保持原版素材清晰。",new AcceptableValueRange<float>(.6f,2.5f)));
   volume=settingsFile.Bind("Audio","Volume",.65f,new ConfigDescription("ProjectE 原版音效音量。",new AcceptableValueRange<float>(0,1)));
   tableKey=settingsFile.Bind("Table","Open key",KeyCode.F10,"转换桌开关快捷键。");

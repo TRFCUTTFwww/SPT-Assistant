@@ -50,7 +50,6 @@ if args.preview:
                 result.alpha_composite(crop(icons,16,row,9,9),(x,top-17))
                 units=value-i*2
                 if units>0:result.alpha_composite(crop(icons,52 if units>1 else 61,row,9,9),(x,top-17))
-            result.alpha_composite(Image.open(assets/'drop_full.png').convert('RGBA'),(left+stats+173-i*8,top-27))
         result.alpha_composite(crop(icons,0,64,182,5),(left+stats,top-7))
         fill=min(182,int(xp*183))
         if fill:result.alpha_composite(crop(icons,0,69,fill,5),(left+stats,top-7))

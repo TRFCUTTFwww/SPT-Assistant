@@ -11,7 +11,7 @@ internal static class ProjectESettingsBridge {
   try{
    Find();InterfaceMenu.Label(new(rect.x,rect.y,rect.width,30),"ProjectE · 转换桌与 MC HUD",InterfaceMenu.Accent,20);
    if(api?.GetMethod("GetSettings")?.Invoke(null,null) is not ConfigEntryBase[] entries){InterfaceMenu.Paragraph(new(rect.x,rect.y+44,rect.width,80),"启用 ProjectE 热更新模块后，可在这里打开转换桌、调整 MC HUD 和音效。");return;}
-   InterfaceMenu.Paragraph(new(rect.x,rect.y+38,rect.width,55),"F10 打开 MC 风格转换桌。1 卢布 = 1 EMC，物品按手册卢布价转换；爱心、饱食度、水分和经验条读取实际角色数据。",null,13);
+   InterfaceMenu.Paragraph(new(rect.x,rect.y+38,rect.width,55),"F10 打开 MC 风格转换桌。1 卢布 = 1 EMC，物品按手册卢布价转换；爱心、饱食度和经验条读取实际角色数据。",null,13);
    if(InterfaceMenu.Button(new(rect.x,rect.y+98,220,34),"打开 / 关闭转换桌")){InterfaceMenu.CloseForExternalPanel();api.GetMethod("ToggleTable")?.Invoke(null,null);}
    var area=new Rect(rect.x,rect.y+146,rect.width,Math.Max(40,rect.height-146));scroll=GUI.BeginScrollView(area,scroll,new(0,0,rect.width-22,entries.Length*102));
    try{for(int i=0;i<entries.Length;i++)InterfaceMenu.DrawEntry(entries[i],new(0,i*102,rect.width-28,92),Name(entries[i]));}finally{GUI.EndScrollView();}

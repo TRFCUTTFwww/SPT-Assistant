@@ -9,13 +9,12 @@ using Local.ModHost;
 using UnityEngine;
 namespace ProjectE.Client;
 internal sealed class MinecraftHud {
- readonly MinecraftHudArt art;readonly ProjectResources resources;readonly ModuleContext context;readonly List<long> thresholds=[0];
+ readonly MinecraftHudArt art;readonly ModuleContext context;readonly List<long> thresholds=[0];
  readonly List<QuickSlotView> slots=[],nativeViews=[];
  InventoryScreenQuickAccessPanel? panel;Player? player;float nextScan,nextStats,nextDiagnostics;
- float health,food,water;int level;float experience;
+ float health,food;int level;float experience;
  internal MinecraftHud(ModuleContext context,ProjectResources resources){
-  this.context=context;this.resources=resources;art=new(context,resources);
-  foreach(string state in new[]{"empty","half","full"})resources.Texture("drop_"+state);
+  this.context=context;art=new(context,resources);
   string path=Path.Combine(BepInEx.Paths.GameRootPath,"SPT_Runtime","SPT_Data","database","globals.json");
   using var globals=JsonDocument.Parse(File.ReadAllText(path));long total=0;foreach(var entry in globals.RootElement.GetProperty("config").GetProperty("exp").GetProperty("level").GetProperty("exp_table").EnumerateArray()){total+=entry.GetProperty("exp").GetInt64();thresholds.Add(total);}
  }
@@ -36,7 +35,7 @@ internal sealed class MinecraftHud {
   slots.Clear();foreach(var view in nativeViews)
    if(view!=null&&view.gameObject.activeInHierarchy&&!slots.Any(v=>v.BoundIndex==view.BoundIndex))slots.Add(view);
   if(Time.unscaledTime<nextStats)return;nextStats=Time.unscaledTime+.1f;
-  var h=player.ActiveHealthController;if(h==null)return;var hp=h.GetBodyPartHealth(EBodyPart.Common,false);health=hp.Maximum>0?Math.Clamp(hp.Current/hp.Maximum,0,1):0;food=h.Energy.Maximum>0?Math.Clamp(h.Energy.Current/h.Energy.Maximum,0,1):0;water=h.Hydration.Maximum>0?Math.Clamp(h.Hydration.Current/h.Hydration.Maximum,0,1):0;
+  var h=player.ActiveHealthController;if(h==null)return;var hp=h.GetBodyPartHealth(EBodyPart.Common,false);health=hp.Maximum>0?Math.Clamp(hp.Current/hp.Maximum,0,1):0;food=h.Energy.Maximum>0?Math.Clamp(h.Energy.Current/h.Energy.Maximum,0,1):0;
   long xp=player.Profile.Info.Experience;level=Math.Max(1,player.Profile.Info.Level);experience=level<thresholds.Count-1?EmcRules.Progress(xp,thresholds[level],thresholds[level+1]):1;
   if(Time.unscaledTime>=nextDiagnostics){nextDiagnostics=Time.unscaledTime+5;WriteDiagnostics();}
  }
@@ -57,11 +56,10 @@ internal sealed class MinecraftHud {
   var oldMatrix=GUI.matrix;var oldColor=GUI.color;int oldDepth=GUI.depth;GUI.color=Color.white;GUI.depth=100;
   GUI.matrix=Matrix4x4.TRS(new(Mathf.Round((Screen.width-width*pixel)/2),Screen.height-22*pixel,0),Quaternion.identity,new(pixel,pixel,1));
   try{
-   float stats=(width-182)/2;int hp=(int)Math.Ceiling(health*20),hunger=(int)Math.Ceiling(food*20),hydration=(int)Math.Ceiling(water*20);
+   float stats=(width-182)/2;int hp=(int)Math.Ceiling(health*20),hunger=(int)Math.Ceiling(food*20);
    for(int i=0;i<10;i++){
     art.Symbol(stats+i*8,-17,false,hp-i*2);
     art.Symbol(stats+182-i*8-9,-17,true,hunger-i*2);
-    float units=hydration-i*2;GUI.DrawTexture(new(stats+182-i*8-9,-27,9,9),resources.Texture("drop_"+(units>1?"full":units>0?"half":"empty")));
    }
    art.Experience(stats,-7,experience);art.Level(width/2,-13,level);
    if(panel==null||!panel.gameObject.activeInHierarchy||panel.IsDisabled)return;
