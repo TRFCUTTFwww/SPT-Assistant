@@ -1,0 +1,7 @@
+Original Minecraft Java Edition 1.8.9 HUD artwork and bitmap font.
+Copyright Mojang AB / Microsoft. All rights reserved.
+These textures are not covered by the ProjectE MIT license.
+Source: https://launcher.mojang.com/v1/objects/3870888a6c3d349d3771a3e9d16c9bf5e076b908/client.jar
+Client SHA-1: 3870888a6c3d349d3771a3e9d16c9bf5e076b908
+https://www.minecraft.net/eula
+https://www.minecraft.net/usage-guidelines

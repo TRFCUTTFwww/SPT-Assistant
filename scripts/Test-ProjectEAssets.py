@@ -25,7 +25,7 @@ for name in ('petransmute','pecharge','peuncharge','chargetick','tock'):
  with wave.open(str(assets/(name+'.wav'))) as audio:
   assert audio.getsampwidth()==2 and 0<audio.getnframes()/audio.getframerate()<30 and audio.getnchannels() in (1,2)
  print('PASS original ProjectE sound '+name)
-for kind in ('heart','hunger','drop'):
+for kind in ('drop',):
  for state in ('empty','half','full'):
   data=(assets/f'{kind}_{state}.png').read_bytes();assert struct.unpack('>II',data[16:24])==(9,9)
-print('PASS nine cached HUD sprites and all pinned upstream hashes')
+print('PASS three cached water sprites and all pinned ProjectE upstream hashes')

@@ -5,7 +5,7 @@ namespace ProjectE.Client;
 public sealed partial class ProjectModule:IHotModule {
  static ProjectModule? active;ModuleContext? context;ConfigFile? settingsFile;
  public int ApiVersion=>1;
- public string Version=>"1.0.0";
+ public string Version=>"1.0.1";
  public bool CanReload=>table?.Busy!=true;
  public void Initialize(ModuleContext context){this.context=context;active=this;context.OnShutdown(Cleanup);settingsFile=new(Path.Combine(BepInEx.Paths.ConfigPath,"local.projecte.cfg"),true);InitializeExtra(new(context.PatchId));}
  public void Tick(){if(context?.IsActive==true)TickExtra();}

@@ -47,8 +47,6 @@ for name in ['petransmute','pecharge','peuncharge','chargetick','tock']:
         output.setnchannels(data.shape[1]); output.setsampwidth(2); output.setframerate(rate); output.writeframes(data.tobytes())
 (OUT/'provenance.json').write_text(json.dumps(dict(repository='https://github.com/sinkillerj/ProjectE',commit=COMMIT,license='MIT',sources=sources),indent=2)+'\n',encoding='utf-8',newline='\n')
 patterns={
- 'heart':(['.##.##.','#######','#######','.#####.','..###..','...#...'],(242,31,38)),
- 'hunger':(['....##.','...####','..#####','...###.','..##...','.##....','##.....'],(184,89,26)),
  'drop':(['...#...','..###..','..###..','.#####.','#######','#######','.#####.'],(46,148,255)),
 }
 for name,(rows,color) in patterns.items():

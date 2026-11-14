@@ -6,7 +6,7 @@ namespace LocalSpt5Esp;
 internal static class ProjectESettingsBridge {
  static Type? api;static Func<bool>? active;static Vector2 scroll;static float nextLookup;
  static void Find(){if(active?.Invoke()==true)return;api=null;active=null;if(Time.unscaledTime<nextLookup)return;nextLookup=Time.unscaledTime+1;api=AppDomain.CurrentDomain.GetAssemblies().Select(a=>a.GetType("ProjectE.Client.ProjectEApi")).FirstOrDefault(t=>t?.GetProperty("Active")?.GetValue(null) is true);active=api?.GetProperty("Active")?.GetMethod?.CreateDelegate<Func<bool>>();}
- static string Name(ConfigEntryBase e)=>e.Definition.Key switch{"Enabled"=>"MC 生存 HUD 与九格快捷栏","Scale"=>"底部 HUD 缩放","Volume"=>"ProjectE 音效音量","Open key"=>"打开转换桌快捷键",_=>e.Definition.Key};
+ static string Name(ConfigEntryBase e)=>e.Definition.Key switch{"Enabled"=>"原版 MC HUD 与同步快捷栏","Scale"=>"底部 HUD 缩放","Volume"=>"ProjectE 音效音量","Open key"=>"打开转换桌快捷键",_=>e.Definition.Key};
  internal static void Draw(Rect rect){
   try{
    Find();InterfaceMenu.Label(new(rect.x,rect.y,rect.width,30),"ProjectE · 转换桌与 MC HUD",InterfaceMenu.Accent,20);
