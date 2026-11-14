@@ -28,7 +28,7 @@ internal sealed class SwordAssets {
   // Start from measured gladius bounds, then shrink around the hand's local
   // origin. Keep the width center at the original grip offset.
   float scale=.831764f/(max-min);
-  const float modelScale=.65f;
+  const float modelScale=.4f;
   for(int i=0;i<vertices.Count;i++){var v=vertices[i];vertices[i]=new(v.z*scale*1.41421356f*modelScale,(v.x-v.y)*scale*modelScale-.003738f,((v.x+v.y-min)*scale-.152696f)*modelScale);}
   Mesh.vertices=vertices.ToArray();Mesh.uv=uv.ToArray();Mesh.triangles=indices.ToArray();Mesh.RecalculateNormals();Mesh.RecalculateBounds();
   Texture=new Texture2D(2,2,TextureFormat.RGBA32,false);context.OnShutdown(()=>Object.Destroy(Texture));

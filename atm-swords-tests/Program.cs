@@ -1,0 +1,22 @@
+using System.Numerics;
+using AllTheModium.Client;
+void Check(bool condition,string name){if(!condition)throw new Exception(name);Console.WriteLine("PASS "+name);}
+Check(SwordGuardRules.CanRaise(true,true,true,false),"hold right while idle raises guard");
+Check(!SwordGuardRules.CanRaise(true,true,false,false),"release right removes guard");
+Check(!SwordGuardRules.CanRaise(true,true,true,true),"left attack takes priority over guard");
+Check(!SwordGuardRules.CanRaise(true,false,true,false),"drawing, attacking and stowing cannot guard");
+Check(!SwordGuardRules.CanRaise(false,true,true,false),"inventory, death and unfocused input cannot guard");
+Check(SwordGuardRules.Frontal(Vector3.UnitZ,-Vector3.UnitZ*20),"incoming frontal hit uses inverse travel direction");
+Check(!SwordGuardRules.Frontal(Vector3.UnitZ,Vector3.UnitZ),"rear hit bypasses guard");
+Check(!SwordGuardRules.Frontal(Vector3.UnitZ,Vector3.UnitX),"side hit bypasses guard");
+Check(!SwordGuardRules.Frontal(Vector3.UnitZ,Vector3.Zero),"missing source direction does not grant protection");
+Check(!SwordGuardRules.Frontal(Vector3.UnitZ,new(float.NaN,0,0)),"invalid direction does not grant protection");
+Check(SwordGuardRules.Frontal(Vector3.UnitX,-Vector3.UnitX),"protection follows the player's facing");
+Check(SwordGuardRules.Damage(80,true,true,false,true)==40,"frontal bullet or melee loses half its health damage");
+Check(SwordGuardRules.Damage(80,true,true,true,true)==80,"propagated body damage is not reduced twice");
+Check(SwordGuardRules.Damage(80,true,false,false,true)==80,"bleeding, falls and explosions bypass guard");
+Check(SwordGuardRules.Damage(80,false,true,false,true)==80,"unheld guard provides no reduction");
+Check(SwordGuardRules.Damage(80,true,true,false,false)==80,"rear damage remains full strength");
+Check(SwordGuardRules.Damage(0,true,true,false,true)==0,"zero damage stays zero");
+Check(SwordGuardRules.Damage(-5,true,true,false,true)==-5,"non-positive amount remains unchanged");
+Check(float.IsPositiveInfinity(SwordGuardRules.Damage(float.PositiveInfinity,true,true,false,true)),"non-finite amount is not rewritten");

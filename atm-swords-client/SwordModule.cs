@@ -20,7 +20,7 @@ public sealed partial class SwordModule:IHotModule {
  int failures;
  [ThreadStatic] static string? creating;
  public int ApiVersion=>1;
- public string Version=>"1.0.2";
+ public string Version=>"1.1.0";
  // We only observe factory tasks. They own no module assets or callbacks and
  // must not block unloading if the native factory stalls or a UI request dies.
  public bool CanReload=>true;
@@ -37,6 +37,7 @@ public sealed partial class SwordModule:IHotModule {
   // unboxed native this pointer is not a managed object pointer.
   h.Patch(AccessTools.Method(typeof(ObjectsFactory),nameof(ObjectsFactory.PopOrCreate)),postfix:new HarmonyMethod(typeof(SwordModule),nameof(Popped)));
   h.Patch(AccessTools.Method(typeof(Player.KnifeController),"Spawn"),postfix:new HarmonyMethod(typeof(SwordModule),nameof(Spawned)));
+  InstallGuard(h);
   context.Log(LogLevel.Info,"Sword assets loaded; model application is recorded in model-applications.json. Native gladius animation and hit registration retained.");
  }
  static void Creating(Item __0,out string? __state){__state=creating;creating=__0?.StringTemplateId;}
@@ -73,6 +74,7 @@ public sealed partial class SwordModule:IHotModule {
  }
  public void Tick(){
   if(context?.IsActive!=true)return;
+  TickGuard();
   Diagnose();
   for(int i=pending.Count-1;i>=0;i--){var p=pending[i];if(!p.Task.IsCompleted){if(Time.unscaledTime-p.Started>30){pending.RemoveAt(i);context.Log(LogLevel.Warning,"Sword native model request timed out: "+p.Item.StringTemplateId);}continue;}pending.RemoveAt(i);if(!p.Task.IsCanceled&&!p.Task.IsFaulted)TryApply(p.Item,p.Task.Result);else context.Log(LogLevel.Warning,"Sword native model request failed: "+p.Item.StringTemplateId+" "+p.Task.Exception);}
   if(Time.unscaledTime<nextScan)return;nextScan=Time.unscaledTime+.5f;
@@ -81,8 +83,8 @@ public sealed partial class SwordModule:IHotModule {
   var players=Singleton<GameWorld>.Instance?.AllAlivePlayersList;if(players==null)return;
   for(int i=0;i<players.Count;i++){var hands=players[i]?.HandsController?.TryCast<Player.KnifeController>();if(hands!=null)TryApply(hands.GetItem(),hands.ControllerGameObject);}
  }
- public void LateTick(){}
+ public void LateTick(){ApplyGuardPose();}
  public void Draw(){}
  public void Shutdown(){Cleanup();}
- void Cleanup(){if(active==this)active=null;foreach(var swap in swaps.Values)Restore(swap);swaps.Clear();pending.Clear();assets.Clear();modelApplications.Clear();creating=null;context=null;}
+ void Cleanup(){ResetGuard();if(active==this)active=null;foreach(var swap in swaps.Values)Restore(swap);swaps.Clear();pending.Clear();assets.Clear();modelApplications.Clear();creating=null;context=null;}
 }
