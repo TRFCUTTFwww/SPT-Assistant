@@ -18,6 +18,6 @@ if(Test-Path -LiteralPath $target){
 }
 Copy-Item -LiteralPath $source -Destination $target
 if((Get-FileHash -LiteralPath $source).Hash -ne (Get-FileHash -LiteralPath $target).Hash){throw 'Server installation hash mismatch'}
-& (Join-Path $PSScriptRoot 'Publish-HotModule.ps1') -Id atm-swords -Assembly (Join-Path $repo 'atm-swords-client/bin/Release/net10.0/Local.AllTheModium.HotModule.dll') -EntryType AllTheModium.Client.SwordModule -Version 1.1.2 -Name 'AllTheModium Swords' -HostRoot $hostRoot -AssetsDirectory (Join-Path $repo 'atm-swords-client/Assets')
+& (Join-Path $PSScriptRoot 'Publish-HotModule.ps1') -Id atm-swords -Assembly (Join-Path $repo 'atm-swords-client/bin/Release/net10.0/Local.AllTheModium.HotModule.dll') -EntryType AllTheModium.Client.SwordModule -Version 1.1.3 -Name 'AllTheModium Swords' -HostRoot $hostRoot -AssetsDirectory (Join-Path $repo 'atm-swords-client/Assets')
 Copy-Item -LiteralPath (Join-Path $repo 'docs/allthemodium-swords.md') -Destination (Join-Path $serverRoot 'README.md')
 Write-Output 'Installed four independent swords. Restart the server and client to receive new item templates. Later model updates use the universal hot loader.'

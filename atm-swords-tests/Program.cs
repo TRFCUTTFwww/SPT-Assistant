@@ -29,6 +29,15 @@ Check(SwordGuardRules.Damage(80,true,true,false,true,100)==0,"full reduction blo
 Check(SwordGuardRules.Damage(80,true,true,false,true,25)==60,"custom reduction applies percentage");
 Check(SwordGuardRules.Damage(80,true,true,false,true,float.NaN)==80,"invalid reduction cannot corrupt health");
 var blade=SwordGuardRules.GuardBlade(Vector3.UnitX,Vector3.UnitY);
+Check(SwordAppearanceRules.Scale(0,SwordAppearanceRules.Brightness(200))==0,"black source pixels remain black even at maximum brightness");
+Check(SwordAppearanceRules.Scale(53,SwordAppearanceRules.Brightness(100))==53,"default brightness preserves original dark matter gray");
+Check(SwordAppearanceRules.Scale(53,SwordAppearanceRules.Brightness(50))==26,"lower brightness darkens original pixels");
+Check(SwordAppearanceRules.Scale(235,SwordAppearanceRules.Brightness(200))==255,"bright colors saturate without byte overflow");
+Check(SwordAppearanceRules.Scale(255,SwordAppearanceRules.Opacity(0))==0,"zero opacity makes geometry invisible");
+Check(SwordAppearanceRules.Scale(255,SwordAppearanceRules.Opacity(50))==128,"partial opacity reaches alpha channel");
+Check(SwordAppearanceRules.Scale(0,SwordAppearanceRules.Opacity(100))==0,"source transparent pixels remain transparent");
+Check(SwordAppearanceRules.Brightness(float.NaN)==1&&SwordAppearanceRules.Opacity(float.PositiveInfinity)==1,"invalid appearance settings fall back to source colors");
+Check(SwordAppearanceRules.Brightness(-1)==0&&SwordAppearanceRules.Opacity(200)==1,"appearance ranges are clamped");
 Check(Vector3.Dot(blade,Vector3.UnitX)<0&&Vector3.Dot(blade,Vector3.UnitY)>0&&Math.Abs(blade.Length()-1)<1e-5,"guard blade points to screen upper-left");
 var yaw=Quaternion.CreateFromAxisAngle(Vector3.UnitY,1.5f);
 var turned=SwordGuardRules.GuardBlade(Vector3.Transform(Vector3.UnitX,yaw),Vector3.Transform(Vector3.UnitY,yaw));

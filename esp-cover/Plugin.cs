@@ -50,6 +50,7 @@ internal class Plugin {
   IgnoreAIKey=CnConfig.Bind(Config,"3. Keys","AI ignore toggle",KeyCode.F9);
   Patches=new Harmony("local.spt5.esp");
   };
+  yield return ()=>WeaponLifecycleGuard.Initialize(this);
   yield return ()=>Patch("ApplyDamage",nameof(BlockDamage));
   yield return ()=>Patch("Kill",nameof(BlockDeath));
   yield return ()=>PatchAI(typeof(BotsGroup),"IsEnemy",nameof(IgnoreTarget));

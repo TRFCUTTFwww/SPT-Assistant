@@ -33,6 +33,9 @@ internal static class EventRaidDiagnostics {
   else if(action=="blackwall-state")Write("blackwall-state",BlackwallBridge.Diagnostics());
   else if(action=="blackwall-arms-check")Write("blackwall-arms-check",BlackwallBridge.CheckArms());
   else if(action=="input-state")Write("input-state",ReloadInputRecovery.Diagnostics());
+  else if(action=="hands-state")Write("hands-state",WeaponLifecycleGuard.Diagnostics());
+  else if(action=="hands-recover")Write("hands-recover",WeaponLifecycleGuard.Recover());
+  else if(action=="hands-guard-check")Write("hands-guard-check",WeaponLifecycleGuard.Check());
   else if(action=="laser-eyes-state")Write("laser-eyes-state",LaserEyes.Diagnostics());
   else if(action=="world-editor-state")Write("world-editor-state",WorldEditor.Diagnostics());
   else if(action=="airdrop-editor-check")Write("airdrop-editor-check",WorldEditor.CheckAirdrop());

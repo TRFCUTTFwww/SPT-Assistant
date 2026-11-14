@@ -30,6 +30,7 @@ internal static class PlayerVisualGuard {
   else if(player.Destroyed)reason="disposed player";
   else if(player.MovementContext==null)reason="movement context unavailable";
   else if(player.PlayerBones==null)reason="visual skeleton unavailable";
+  else if(player.HandsController?.Destroyed==true)reason="disposed hands controller awaiting replacement";
   else if(!RaidClock.Active&&CameraManager.Instance?.Camera==null)reason="menu/hideout camera unloaded";
   else if(player.PointOfView==EPointOfView.ThirdPerson&&CameraManager.Instance==null)reason="third-person camera manager unavailable";
   else{blocked.Remove(player.Pointer);return true;}

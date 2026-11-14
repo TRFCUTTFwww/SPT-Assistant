@@ -11,6 +11,8 @@ internal sealed class SwordAssets {
  internal readonly Material Material;
  Vector3[] originalVertices=[];
  float appliedSize;
+ Color32[] originalPixels=[];
+ float appliedBrightness=-1,appliedOpacity=-1;
  internal SwordAssets(Sword sword,string directory,ModuleContext context){
   Mesh=new Mesh{name="ATM "+sword.Key};context.OnShutdown(()=>Object.Destroy(Mesh));
   var vertices=new List<Vector3>();var uv=new List<Vector2>();var indices=new List<int>();
@@ -36,8 +38,24 @@ internal sealed class SwordAssets {
   Texture=new Texture2D(2,2,TextureFormat.RGBA32,false);context.OnShutdown(()=>Object.Destroy(Texture));
   if(!ImageConversion.LoadImage(Texture,File.ReadAllBytes(Path.Combine(directory,sword.Key+"_sword.png")),false))throw new InvalidDataException("Invalid sword texture: "+sword.Key);
   Texture.filterMode=FilterMode.Point;Texture.wrapMode=TextureWrapMode.Clamp;Texture.name="ATM "+sword.Key;
-  var shader=Shader.Find("Unlit/Texture")??Shader.Find("Sprites/Default")??throw new InvalidOperationException("Pixel sword shader unavailable");
+  originalPixels=Texture.GetPixels32();
+  // The legacy Unlit/Texture variant applies scene fog to the held blade and
+  // ignores alpha. Sprite shading preserves the original dark pixels without
+  // fog whitening and supports translucency. No camera gamma/exposure changes.
+  var shader=Shader.Find("Sprites/Default")??throw new InvalidOperationException("Alpha pixel sword shader unavailable");
   Material=new Material(shader){name="ATM "+sword.Key,mainTexture=Texture};context.OnShutdown(()=>Object.Destroy(Material));
+  Material.color=Color.white;
+ }
+ internal void SetAppearance(float brightnessPercent,float opacityPercent){
+  float brightness=SwordAppearanceRules.Brightness(brightnessPercent),opacity=SwordAppearanceRules.Opacity(opacityPercent);
+  if(brightness==appliedBrightness&&opacity==appliedOpacity)return;
+  var pixels=new Color32[originalPixels.Length];
+  for(int i=0;i<pixels.Length;i++){
+   var p=originalPixels[i];
+   pixels[i]=p.a==0?new Color32(0,0,0,0):new Color32(SwordAppearanceRules.Scale(p.r,brightness),SwordAppearanceRules.Scale(p.g,brightness),SwordAppearanceRules.Scale(p.b,brightness),SwordAppearanceRules.Scale(p.a,opacity));
+  }
+  Texture.SetPixels32(pixels);Texture.Apply(false,false);
+  appliedBrightness=brightness;appliedOpacity=opacity;
  }
  internal void SetSize(float percent){
   float size=(float.IsFinite(percent)?Math.Clamp(percent,20,100):55)/100;if(appliedSize==size)return;appliedSize=size;

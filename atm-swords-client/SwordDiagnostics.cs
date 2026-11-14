@@ -9,8 +9,14 @@ public sealed partial class SwordModule {
  float nextDiagnostics;
  void RecordApplication(string id,GameObject root,int count){if(count==0)return;modelApplications[id]=new{root=root.name,lods=count,utc=DateTime.UtcNow,mesh=assets[id].Mesh.name,shader=assets[id].Material.shader.name};diagnosticsDirty=true;}
  bool diagnosed;
+ float recordedBrightness=-1,recordedOpacity=-1;
  void Diagnose(){
   try{
+  if(recordedBrightness!=brightnessPercent.Value||recordedOpacity!=opacityPercent.Value){
+   recordedBrightness=brightnessPercent.Value;recordedOpacity=opacityPercent.Value;
+   var models=assets.Select(p=>new{template=p.Key,shader=p.Value.Material.shader.name,texture=p.Value.Texture.name,width=p.Value.Texture.width,height=p.Value.Texture.height,blackPixels=p.Value.Texture.GetPixels32().Count(c=>c.a>0&&c.r==0&&c.g==0&&c.b==0)}).ToArray();
+   File.WriteAllText(Path.Combine(context!.DataDirectory,"appearance-status.json"),JsonSerializer.Serialize(new{version=Version,utc=DateTime.UtcNow,brightness=recordedBrightness,opacity=recordedOpacity,models},new JsonSerializerOptions{WriteIndented=true}));
+  }
   if(diagnosticsDirty&&Time.unscaledTime>=nextDiagnostics){nextDiagnostics=Time.unscaledTime+1;diagnosticsDirty=false;File.WriteAllText(Path.Combine(context!.DataDirectory,"model-applications.json"),JsonSerializer.Serialize(new{version=Version,utc=DateTime.UtcNow,modelApplications},new JsonSerializerOptions{WriteIndented=true}));}
   if(diagnosed||Singleton<ItemFactory>.Instance==null||Singleton<ObjectsFactory>.Instance==null)return;
   diagnosed=true;
