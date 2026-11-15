@@ -12,7 +12,7 @@
 
 ## 同期报错处理
 
-- 可选装备界面可能没有 `SecuredContainer` 视图，改用字典 `TryGetValue` 后再隐藏，避免缺键异常。
+- 可选装备界面可能没有 `SecuredContainer` 视图，改用字典 `TryGetValue` 后再显示，避免缺键异常。
 - 生存辅助在角色销毁、死亡或缺少移动上下文时停止更新负重，不再写入已失效的物理状态。
 - 保留已验证的 `PlayerVisualGuard` 切手镜头修复及 `icon-render-guard` 图标隔离。
 
@@ -27,4 +27,14 @@
 - 辅助核心 generation 3，331 步完成，ready=true，无加载错误。SHA256：`F1551BD7152E167C2ED1D4550212995B93841F74C3D89776D35AC8B94DC8EB66`。
 - 辅助核心备份：游戏目录 `mod-backups/totem-lifecycle-20261115-105537416`；ProjectE 发布器保留 previous-manifest 和旧 release。
 
-实际致命伤后的存活、动画和报错表现仍需用户在游戏内确认。
+用户已确认 1.2.4 的保命及快捷栏正常。实际救援记录为：消耗一枚、角色存活、拦截 3 次后续伤害和 1 次剩余分摊；随后结算出现下述独立协议错误。
+
+## 1.2.5：结算伤害记录类型修复
+
+服务器在 `2026-11-15 03:04:20 UTC` 处理 `/client/match/local/end` 时拒绝 `$.Chest[1].Type`，提示 JSON 值无法转换为字符串。原生 `EDamageType` 从 `Undefined=1` 开始，不定义零值。此前 `new DamageInfo()` 的默认 `DamageType=0` 在恢复部位后下调到目标生命的过程中进入伤害历史，枚举序列化输出数字 `0`，而服务器 `DamageStats.Type` 是字符串。
+
+`HealingDamage()` 现在明确使用原版 `EDamageType.Medicine=256`。图腾恢复、后续再生及生命石治疗统一使用该元数据，保命门控、生命数值和快捷栏规则保持不变。
+
+验证：1.2.5 Release 零警告/错误；25 项图腾/结算检查、68 项 ProjectE 检查、28 项物品回归通过。临时只读模块在运行中的游戏里构造独立的伤害描述对象，使用原生 Newtonsoft `StringEnumConverter` 比较旧、新数据：旧 JSON 为 `"Type":0`，调用实际新版本 `HealingDamage()` 生成的新 JSON 为 `"Type":"Medicine"`。没有对角色施加伤害或更改历史。将这两份原生 JSON 直接交给实际服务器 DTO，可复现旧错误并验证新数据成功回读。`totem-tests` 可接收该只读报告路径作为首个参数，增加 3 项实际数据检查。
+
+1.2.5 已热加载，generation 3，revision `r20261115110953-a34db37f`，ready=true，无加载错误；SHA256 `AD2156086E1E757CE2DAAC6CB1F53CF05B48C58F5B05BB1D219AC700D14E3B13`。61 个资源与上一版一致。完整战局结算仍待用户复测确认。

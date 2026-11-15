@@ -62,7 +62,7 @@ public sealed partial class ProjectModule {
   if(!artifactsEnabled.Value)return;
   if((effect.Count&1)!=0)health.ChangeEnergy(Math.Min(2,Math.Max(0,health.Energy.Maximum-health.Energy.Current)));
   if((effect.Count&2)!=0){float remaining=2;foreach(var part in bodyParts.OrderBy(part=>{var h=health.GetBodyPartHealth(part,false);return h.Maximum>0?h.Current/h.Maximum:1;})){
-   var h=health.GetBodyPartHealth(part,false);if(h.Current<=0||h.Current>=h.Maximum)continue;float amount=Math.Min(remaining,h.Maximum-h.Current);health.ChangeHealth(part,amount,new DamageInfo());remaining-=amount;if(remaining<=0)break;
+   var h=health.GetBodyPartHealth(part,false);if(h.Current<=0||h.Current>=h.Maximum)continue;float amount=Math.Min(remaining,h.Maximum-h.Current);health.ChangeHealth(part,amount,HealingDamage());remaining-=amount;if(remaining<=0)break;
   }}
  }
  static void WatchBeforeMove(Il2CppObjectBase __instance,ref Vector3 __0,out WatchMove? __state){

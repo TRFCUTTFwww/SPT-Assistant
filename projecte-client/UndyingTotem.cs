@@ -13,6 +13,9 @@ public sealed partial class ProjectModule {
  int totemRescues,totemBlockedDamage,totemBlockedSpread,totemBlockedKills;
  bool totemFollowup;
  bool emptyHands;float totemStart=-100,regenUntil,fireUntil,nextRegen;IntPtr savedPlayer;
+ // Zero is not a defined EDamageType. The native enum converter emits numeric
+ // zero, which the server's string DamageStats.Type rejects during settlement.
+ static DamageInfo HealingDamage()=>new(){DamageType=EDamageType.Medicine};
  void InitializeTotem(Harmony harmony){
   harmony.Patch(AccessTools.Method(typeof(ActiveHealthController),nameof(ActiveHealthController.Kill),[typeof(EDamageType)]),prefix:new HarmonyMethod(typeof(ProjectModule),nameof(TotemBeforeKill)){priority=Priority.Last});
   harmony.Patch(AccessTools.Method(typeof(ActiveHealthController),nameof(ActiveHealthController.ApplyDamage),[typeof(EBodyPart),typeof(float),typeof(DamageInfo)]),prefix:new HarmonyMethod(typeof(ProjectModule),nameof(TotemDamage)){priority=Priority.Last},postfix:new HarmonyMethod(typeof(ProjectModule),nameof(TotemDamageFinished)));
@@ -34,7 +37,7 @@ public sealed partial class ProjectModule {
    removal.Value.RaiseEvents(controller.Cast<IItemOwner>(),CommandStatus.Succeed);
    // Restore before allowing the death method to notify listeners or create a corpse.
    __instance.RemoveNegativeEffects(EBodyPart.Common);
-   foreach(var part in bodyParts){__instance.RemoveNegativeEffects(part);var hp=__instance.GetBodyPartHealth(part,false);float before=hp.Current;if(before<=0)__instance.FullRestoreBodyPart(part);hp=__instance.GetBodyPartHealth(part,false);float target=Math.Max(before,MatterRules.RevivalHealth(hp.Maximum));__instance.ChangeHealth(part,target-hp.Current,new DamageInfo());}
+   foreach(var part in bodyParts){__instance.RemoveNegativeEffects(part);var hp=__instance.GetBodyPartHealth(part,false);float before=hp.Current;if(before<=0)__instance.FullRestoreBodyPart(part);hp=__instance.GetBodyPartHealth(part,false);float target=Math.Max(before,MatterRules.RevivalHealth(hp.Maximum));__instance.ChangeHealth(part,target-hp.Current,HealingDamage());}
    if(!__instance.IsAlive||__instance.GetBodyPartHealth(EBodyPart.Head,false).Current<=0||__instance.GetBodyPartHealth(EBodyPart.Chest,false).Current<=0)throw new InvalidOperationException("Native health restoration did not preserve the living critical parts");
    a.totemGate.Commit(Time.frameCount);a.totemRescues++;
    a.savedPlayer=p.Pointer;a.totemStart=Time.unscaledTime;a.regenUntil=Time.unscaledTime+45;a.fireUntil=Time.unscaledTime+40;a.nextRegen=Time.unscaledTime+1;a.emptyHands=held;a.totemFollowup=true;
@@ -66,7 +69,7 @@ public sealed partial class ProjectModule {
   if(totemFollowup){totemFollowup=false;WriteTotemStatus(p,"next-tick");}
   if(emptyHands){emptyHands=false;try{p.Proceed(true,(Action<Result<IEmptyHandsController>>)(_=>{}),false);}catch(Exception e){context!.Log(Local.ModHost.LogLevel.Warning,"Totem hands: "+e.Message);}}
   if(Time.unscaledTime>=regenUntil||Time.unscaledTime<nextRegen)return;nextRegen=Time.unscaledTime+1;
-  foreach(var part in bodyParts){var hp=p.ActiveHealthController.GetBodyPartHealth(part,false);if(hp.Current>0&&hp.Current<hp.Maximum)p.ActiveHealthController.ChangeHealth(part,Math.Min(2,hp.Maximum-hp.Current),new DamageInfo());}
+  foreach(var part in bodyParts){var hp=p.ActiveHealthController.GetBodyPartHealth(part,false);if(hp.Current>0&&hp.Current<hp.Maximum)p.ActiveHealthController.ChangeHealth(part,Math.Min(2,hp.Maximum-hp.Current),HealingDamage());}
  }
  void DrawTotem(){
   float age=Time.unscaledTime-totemStart;if(age<0||age>2.1f||RaidPlayer()?.Pointer!=savedPlayer)return;
