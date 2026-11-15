@@ -16,6 +16,10 @@ using(var integrated=AssemblyDefinition.ReadAssembly(Path.Combine(sourceRoot,"es
  Assert(!integrated.MainModule.AssemblyReferences.Any(r=>r.Name=="Local.BlackwallPulse")&&!types.Any(t=>t.FullName is "LocalBlackwallPulse.Plugin" or "LocalBlackwallPulse.PulseDriver" or "LocalBlackwallPulse.RuntimeHost"),"integrated core contains no standalone Blackwall plugin, driver or assembly dependency");
  var bridge=types.Single(t=>t.Name=="BlackwallBridge");
  MethodReference[] Calls(MethodDefinition method)=>method.Body.Instructions.Select(i=>i.Operand).OfType<MethodReference>().ToArray();
+ var visualGuard=types.Single(t=>t.Name=="PlayerVisualGuard");
+ var visualCalls=Calls(visualGuard.Methods.Single(m=>m.Name=="Ready"));
+ Assert(!visualCalls.Any(m=>m.Name=="get_HandsController"),"visual lifecycle guard never rejects native draw/stow because the outgoing hands are disposed");
+ Assert(visualCalls.Any(m=>m.Name=="get_Destroyed")&&visualCalls.Any(m=>m.Name=="get_MovementContext")&&visualCalls.Any(m=>m.Name=="get_PlayerBones"),"visual lifecycle guard retains disposed-player, missing movement and missing skeleton protection");
  Assert(Calls(bridge.Methods.Single(m=>m.Name=="Tick")).Any(m=>m.DeclaringType.Name=="PulseRuntime"&&m.Name=="Tick")&&Calls(bridge.Methods.Single(m=>m.Name=="Reset")).Any(m=>m.DeclaringType.Name=="PulseRuntime"&&m.Name=="Shutdown"),"Assistant directly drives and shuts down its integrated Blackwall runtime");
  var runtime=types.Single(t=>t.Name=="PulseRuntime");
  Assert(!Calls(runtime.Methods.Single(m=>m.Name=="Cast")).Any(m=>m.DeclaringType.Name=="PulseAudio"),"empty casts and harmless previews do not submit sound");
@@ -24,6 +28,10 @@ using(var integrated=AssemblyDefinition.ReadAssembly(Path.Combine(sourceRoot,"es
  Assert(Calls(arms.Methods.Single(m=>m.Name=="Apply")).Any(m=>m.Name=="BakeMesh"),"integrated arm retains verified CPU skinning visibility fix");
 }
 Console.WriteLine("PASS integrated Blackwall assembly ownership, direct lifecycle, CPU skinning and hit-only audio");
+if(args.Contains("--visual-lifecycle-only")){
+ Console.WriteLine("PASS visual lifecycle native hands transition and retained player/skeleton guards");
+ return;
+}
 WorldEditorChecks.Run();
 Assert(MenuSections.Names.Count(n=>n=="趣味功能")==1&&MenuSections.Pages("趣味功能").SequenceEqual(new[]{"快速破解","黑墙脉冲","镭射眼"})&&!MenuSections.Pages("模型与镜头").Contains("趣味功能")&&MenuSections.Group("61. 镭射眼")=="趣味功能"&&MenuSections.Group("65. 黑墙脉冲")=="趣味功能","fun features have one sidebar workspace and retain laser and Blackwall settings routes");
 Assert(InstantSearchRules.Allowed(true,true,true,false,10,10,"local","local"),"active local search can be instant");
