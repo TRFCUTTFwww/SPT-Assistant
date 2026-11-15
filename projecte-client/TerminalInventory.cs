@@ -94,6 +94,7 @@ internal sealed class TerminalInventory {
    else{revision=data.GetProperty("revision").GetString()!;saved=sent;File.Delete(Journal);Status("");if(!ready&&p?.Pointer==actor&&openUntil>Time.unscaledTime){loading=true;request=Call(new(){Profile=profile});}}
   }
   if(p?.Pointer!=actor||p.HealthController?.IsAlive!=true){if(request==null)Reset();return;}
+  if(ownsScreen&&p.HandsController?.GetItem()?.StringTemplateId!=Gadgets.Terminal)CloseOwnedScreen();
   if(ready&&request==null&&Time.unscaledTime>=nextCheck){nextCheck=Time.unscaledTime+1;Save();}
   if(!conflict&&request==null&&File.Exists(Journal)&&Time.unscaledTime>=retryAt){retryAt=Time.unscaledTime+5;var pending=JsonSerializer.Deserialize<StorageRequest>(File.ReadAllText(Journal))!;sent=pending.Items!.Value.GetRawText();request=Call(pending);loading=false;}
   if(finishStop!=null&&request==null&&ready&&Snapshot()==saved&&p.InventoryController?.HasActiveEvents!=true){var finish=finishStop;finishStop=null;finish();return;}
@@ -107,5 +108,6 @@ internal sealed class TerminalInventory {
  void Status(string error){try{File.WriteAllText(Path.Combine(context.DataDirectory,"terminal-status.json"),JsonSerializer.Serialize(new{utc=DateTime.UtcNow,ready,ownsScreen,pending=request!=null,conflict,error,standalone=true}));}catch{}}
  void Fail(string error){report("无线终端："+error);Status(error);}
  void Reset(){ready=false;stash=null;owner=null;actor=IntPtr.Zero;revision=saved=sent="";openUntil=0;ownsScreen=false;finishStop=null;}
- void Shutdown(){if(active==this)active=null;if(ownsScreen)CommonUI.Instance?.InventoryScreen?.Close();if(ready&&request==null)Save();Reset();}
+ void CloseOwnedScreen(){if(ownsScreen&&Local is {} p&&p.Pointer==actor)InventoryScreenLifecycle.Close(p,owner);}
+ void Shutdown(){if(active==this)active=null;CloseOwnedScreen();if(ready&&request==null)Save();Reset();}
 }

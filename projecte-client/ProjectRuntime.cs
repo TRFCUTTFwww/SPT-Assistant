@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 namespace ProjectE.Client;
 public sealed partial class ProjectModule {
- Transmutation? table;MinecraftHud? hud;ProjectResources? resources;
+ Transmutation? table;MinecraftHud? hud;ProjectResources? resources;InventoryScreenLifecycle? inventoryScreens;
  CatalogSync? catalog;ConfigEntry<bool> catalogEnabled=null!;ConfigEntry<KeyCode> catalogKey=null!;
  ConfigEntry<bool> hudEnabled=null!;
  ConfigEntry<float> hudScale=null!,volume=null!,burnVolume=null!;
@@ -21,7 +21,7 @@ public sealed partial class ProjectModule {
   tableKey=settingsFile.Bind("Table","Open key",KeyCode.F10,"转换桌开关快捷键。");
   catalogEnabled=settingsFile.Bind("Hot update","Catalog sync",true,"服务端逻辑发布后在线同步物品模板、本地化、图鉴与商人，无需重新登录。");
   catalogKey=settingsFile.Bind("Hot update","Sync key",KeyCode.F9,"手动刷新在线模板与商人目录。");
-  resources=new(context!);table=new(context!,resources);hud=new(context!,resources);context!.OnShutdown(()=>{table?.Clear();hud?.Clear();});
+  resources=new(context!);table=new(context!,resources);hud=new(context!,resources);inventoryScreens=new(context!);context!.OnShutdown(()=>{table?.Clear();hud?.Clear();});
   harmony.Patch(AccessTools.Method(typeof(GamePlayerOwner),"TranslateAxes"),prefix:new HarmonyMethod(typeof(ProjectModule),nameof(TableAxes)));
   harmony.Patch(AccessTools.Method(typeof(GamePlayerOwner),"TranslateCommand"),prefix:new HarmonyMethod(typeof(ProjectModule),nameof(TableCommand)));
   harmony.Patch(AccessTools.Method(typeof(InputManager),"Update"),prefix:new HarmonyMethod(typeof(ProjectModule),nameof(TableInput)));
@@ -41,7 +41,7 @@ public sealed partial class ProjectModule {
   if(Input.GetKeyDown(tableKey.Value)){if(!table.Open)Singleton<GameWorld>.Instance?.MainPlayer?.HandsController?.TryCast<Player.FirearmController>()?.SetTriggerPressed(false);table.Toggle();releaseFrame=Time.frameCount+2;}
   else if(table.Open&&Input.GetKeyDown(KeyCode.Escape)){table.SetOpen(false);releaseFrame=Time.frameCount+2;}
   if(table.Open||Time.frameCount<=releaseFrame&&(Input.GetMouseButton(0)||Input.GetMouseButton(1)))releaseFrame=Time.frameCount+2;
-  table.Tick();if(Input.GetKeyDown(catalogKey.Value))catalog?.Refresh();catalog?.Tick(catalogEnabled.Value,table.Busy);TickTools();if(hudEnabled.Value)hud?.Tick();
+  inventoryScreens?.Tick(table.Open);table.Tick();if(Input.GetKeyDown(catalogKey.Value))catalog?.Refresh();catalog?.Tick(catalogEnabled.Value,table.Busy);TickTools();if(hudEnabled.Value)hud?.Tick();
  }
  void DrawExtra(){if(hudEnabled.Value&&table?.Open!=true)hud?.Draw(hudScale.Value);DrawTools();table?.Draw();}
 }
