@@ -1,6 +1,7 @@
 using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
+using EFT.UI.DragAndDrop;
 using UnityEngine;
 namespace ProjectE.Client;
 internal sealed class McGui {
@@ -24,7 +25,7 @@ internal sealed class McGui {
   if(item==null){Label(r,"?",new(.8f,.8f,.8f),18,true);return;}
   try{
    if(!icons.TryGetValue(template,out var icon)){
-    var creator=Singleton<ItemIconCreator>.Instance;if(creator==null)return;var size=new IntVec2();icon=creator.GetItemIcon(item,ref size,false);if(icon!=null)icons[template]=icon;
+    if(Singleton<ItemIconCreator>.Instance==null)return;icon=ItemViewFactory.LoadItemIcon(item,1,false);if(icon!=null)icons[template]=icon;
    }
    var sprite=icon?.Sprite;if(sprite==null)return;var t=sprite.texture;var tr=sprite.textureRect;float ratio=tr.width/tr.height;var rect=r;if(ratio>r.width/r.height){rect.height=r.width/ratio;rect.y+=(r.height-rect.height)/2;}else{rect.width=r.height*ratio;rect.x+=(r.width-rect.width)/2;}
    GUI.DrawTextureWithTexCoords(rect,t,new(tr.x/t.width,tr.y/t.height,tr.width/t.width,tr.height/t.height));
