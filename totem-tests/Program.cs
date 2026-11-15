@@ -15,6 +15,23 @@ gate.Begin(2);gate.End();
 Check(!gate.Blocks(2,100)&&!gate.Blocks(2,-1),"a failed preflight does not commit a free rescue");
 gate.Begin(2);gate.Commit(102);gate.End();gate.Clear();
 Check(!gate.Blocks(2,102),"raid exit or failure releases all protection");
+gate.Begin(10);gate.Commit(300,100,10);gate.End();
+foreach(double now in new[]{100,100.01,100.5,101,105,109.999})Check(gate.Blocks(10,301,now),"separate hits are blocked across the configured ten-second window: "+now);
+Check(!gate.Blocks(10,301,110)&&!gate.Blocks(10,302,120),"protection expires exactly at ten seconds and does not become permanent");
+Check(!gate.Blocks(11,301,105)&&!gate.Blocks(0,301,105),"other players/controllers and missing identities do not inherit the timed shield");
+Check(!gate.Blocks(10,301,99)&&!gate.Blocks(10,301,double.NaN),"clock reversal and invalid time do not create a stale shield");
+Check(gate.Busy(105)&&!gate.Busy(110),"hot reload waits for an active shield to finish");
+Check(gate.Remaining(105)==5&&gate.Remaining(110)==0,"diagnostics show remaining protection and zero after expiry");
+Check(gate.BlocksHealthChange(10,301,105,-2)&&!gate.BlocksHealthChange(10,301,105,2)&&!gate.BlocksHealthChange(10,301,105,0),"direct damage-over-time is blocked while healing and zero changes continue");
+Check(!gate.BlocksHealthChange(11,301,105,-2)&&!gate.BlocksHealthChange(10,301,110,-2),"other actors and expired shields retain direct health changes");
+int burstConsumptions=1;for(int hit=0;hit<600;hit++)if(!gate.Blocks(10,301+hit,100+hit/60d))burstConsumptions++;
+Check(burstConsumptions==1,"ten seconds of automatic fire cannot consume more totems during one rescue");
+gate.Begin(10);gate.Commit(900,200,.25);gate.End();Check(gate.Blocks(10,901,200.249)&&!gate.Blocks(10,902,200.25),"fractional user-configured duration is respected");
+gate.Begin(10);gate.Commit(1000,300,0);gate.End();Check(gate.Blocks(10,1000,300)&&!gate.Blocks(10,1001,300.001),"zero duration keeps same-hit safety and disables the extra timed shield");
+foreach(double value in new[]{-1,double.NaN,double.PositiveInfinity,double.NegativeInfinity})Check(TotemRescueGate.Duration(value)==0,"invalid/negative configuration cannot create infinite protection: "+value);
+Check(TotemRescueGate.Duration(600)==600&&TotemRescueGate.Duration(.5)==.5,"valid durations have no arbitrary small maximum");
+gate.Begin(12);gate.End();Check(!gate.Blocks(12,1001,305),"failed inventory preflight cannot carry over a previous timed shield");
+gate.Begin(10);gate.Commit(1100,400,10);gate.End();gate.Clear();Check(!gate.Blocks(10,1100,401)&&!gate.Busy(401),"raid exit and shutdown immediately clear the timed shield");
 // Model the observed native sequence: critical-part death -> Kill -> excess
 // damage spread -> another Kill. All callbacks use the real gate under test.
 int totems=1,rescues=0,deaths=0;
@@ -32,6 +49,9 @@ using var assembly=AssemblyDefinition.ReadAssembly(Path.Combine(root,"projecte-c
 var type=assembly.MainModule.Types.Single(t=>t.Name=="ProjectModule");
 bool Calls(string method,string callee)=>type.Methods.Single(m=>m.Name==method).Body.Instructions.Any(i=>i.Operand is MethodReference m&&m.Name==callee);
 Check(Calls("TotemDamage","Blocks")&&Calls("TotemSpread","Blocks")&&Calls("TotemBeforeKill","Blocks"),"compiled damage, spread and death hooks all share the rescue gate");
+Check(Calls("TotemHealthChange","BlocksHealthChange")&&Calls("TotemDestroyPart","Blocks"),"compiled effect damage and body-part destruction honor the same timed shield");
+Check(Calls("get_CanReload","Busy")&&Calls("Cleanup","Clear"),"compiled module protects active-shield reload and clears the gate on shutdown");
+Check(type.Methods.Single(m=>m.Name=="get_ExtraSettings").Body.Instructions.Any(i=>i.Operand is FieldReference f&&f.Name=="totemProtectionSeconds"),"the editable totem protection duration is exposed through the actual fun-feature settings API");
 Check(Calls("TotemBeforeKill","Commit")&&Calls("TotemBeforeKill","FullRestoreBodyPart"),"compiled successful rescue restores native body state and commits protection");
 Check(Calls("TotemBindable","Current")&&Calls("TotemBindable","Bindable"),"compiled binding checks current inventory ownership and placement");
 Check(Calls("TotemSlotCommand","GetBoundItem"),"passive hotbar commands resolve the actual native binding");

@@ -51,6 +51,6 @@ public static class ProjectEApi {
  public static void ToggleTable()=>ProjectModule.ToggleTable();
 }
 public sealed partial class ProjectModule {
- internal static ConfigEntryBase[] ExtraSettings=>SettingsActive?[active!.hudEnabled,active.hudScale,active.volume,active.burnVolume,active.tableKey,active.chargeKey,active.skillKey,active.modeKey,active.totemEnabled,active.artifactsEnabled,active.watchEnabled,active.watchCharge,active.repairEnabled,active.catalogEnabled,active.catalogKey]:[];
+ internal static ConfigEntryBase[] ExtraSettings=>SettingsActive?[active!.hudEnabled,active.hudScale,active.volume,active.burnVolume,active.tableKey,active.chargeKey,active.skillKey,active.modeKey,active.totemEnabled,active.totemProtectionSeconds,active.artifactsEnabled,active.watchEnabled,active.watchCharge,active.repairEnabled,active.catalogEnabled,active.catalogKey]:[];
  internal static void ToggleTable()=>active?.table?.Toggle();
 }

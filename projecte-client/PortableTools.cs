@@ -12,11 +12,13 @@ public sealed partial class ProjectModule {
  GamePlayerOwner? gameOwner;float nextToolUse;TerminalInventory? terminal;
  ConfigEntry<KeyCode> chargeKey=null!,skillKey=null!,modeKey=null!;
  ConfigEntry<bool> totemEnabled=null!;
+ ConfigEntry<float> totemProtectionSeconds=null!;
  void InitializeTools(Harmony harmony){
   chargeKey=settingsFile!.Bind("Weapons","Charge key",KeyCode.R,"手持 PE 武器：充能；Shift + 此键降级。");
   skillKey=settingsFile.Bind("Weapons","Ability key",KeyCode.G,"手持 PE 武器：发动范围技能（取代此帧原生按键动作）。");
   modeKey=settingsFile.Bind("Weapons","Mode key",KeyCode.M,"红物质剑/拳剑切换仅敌对 AI / 全部 AI，不攻击玩家。");
   totemEnabled=settingsFile.Bind("Totem","Enabled",true,"随身携带不死图腾可自动消耗一枚抵挡致命伤；口袋或弹挂内可绑定快捷栏，不需要按键使用。");
+  totemProtectionSeconds=settingsFile.Bind("Totem","触发后免伤秒数",10f,"不死图腾成功消耗后，无视后续伤害的实际秒数。默认 10，支持小数；0 关闭额外免伤期。修改用于下一次触发，保留再生和火焰抵抗效果。");
   harmony.Patch(AccessTools.Method(typeof(GamePlayerOwner),nameof(GamePlayerOwner.TranslateCommand)),prefix:new HarmonyMethod(typeof(ProjectModule),nameof(ToolCommands)){priority=Priority.First});
   harmony.Patch(AccessTools.Method(typeof(Player.KnifeController),nameof(Player.KnifeController.MakeAlternativeKick)),prefix:new HarmonyMethod(typeof(ProjectModule),nameof(ToolRightClick)){priority=Priority.First});
   harmony.Patch(AccessTools.Method(typeof(Player.KnifeController),nameof(Player.KnifeController.MakeKnifeKick)),prefix:new HarmonyMethod(typeof(ProjectModule),nameof(ToolLeftClick)){priority=Priority.First});
