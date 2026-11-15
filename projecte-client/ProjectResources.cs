@@ -17,12 +17,29 @@ internal sealed class ProjectResources {
   textures.Add(name,t);return t;
  }
  internal void Play(string name,float volume){
-  if(!clips.TryGetValue(name,out var clip)){
+  clips.TryGetValue(name,out var clip);
+  if(!ProjectAudioRules.ValidClip(clip!=null,clip==null?0:clip.samples,clip==null?0:clip.channels,clip==null?0:clip.frequency,clip!=null&&clip.loadState==AudioDataLoadState.Loaded)){
+   if(clip!=null)Object.Destroy(clip);
+   clips.Remove(name);
    var wave=WavePcm.Read(Path.Combine(context.ModuleDirectory,"Assets",name+".wav"));clip=AudioClip.Create("ProjectE "+name,wave.Samples.Length/wave.Channels,wave.Channels,wave.Rate,false);
-   if(!clip.SetData(new Il2CppStructArray<float>(wave.Samples),0)){Object.Destroy(clip);throw new IOException("Audio upload failed");}clips.Add(name,clip);
+   // One-shot playback releases its native clip reference when the voice ends.
+   // Keep module-owned clips through raid UnloadUnusedAssets, and still recover
+   // if a game/device lifecycle explicitly destroys an object in our cache.
+   clip.hideFlags=HideFlags.HideAndDontSave;
+   if(!clip.SetData(new Il2CppStructArray<float>(wave.Samples),0)){Object.Destroy(clip);throw new IOException("Audio upload failed");}clips[name]=clip;
   }
-  if(root==null){root=new GameObject("ProjectE sound"){hideFlags=HideFlags.HideAndDontSave};Object.DontDestroyOnLoad(root);source=root.AddComponent<AudioSource>();source.playOnAwake=false;source.spatialBlend=0;}
+  EnsureAudioSource();
   source!.PlayOneShot(clip,Mathf.Clamp01(volume));
+ }
+ void EnsureAudioSource(){
+  if(root==null){root=new GameObject("ProjectE sound"){hideFlags=HideFlags.HideAndDontSave};Object.DontDestroyOnLoad(root);source=null;}
+  if(source==null)source=root.GetComponent<AudioSource>()??root.AddComponent<AudioSource>();
+  if(!root.activeSelf)root.SetActive(true);
+  // Native game audio teardown/focus changes can disable surviving sources.
+  // Restore only our owned feedback source on every actual playback request.
+  source.enabled=true;source.playOnAwake=false;source.mute=false;source.volume=1;source.pitch=1;
+  source.spatialBlend=0;source.spatialize=false;source.dopplerLevel=0;source.priority=16;
+  source.ignoreListenerPause=true;source.bypassReverbZones=true;
  }
  void Clear(){if(root!=null)Object.Destroy(root);foreach(var t in textures.Values)Object.Destroy(t);foreach(var c in clips.Values)Object.Destroy(c);textures.Clear();clips.Clear();source=null;root=null;}
 }
