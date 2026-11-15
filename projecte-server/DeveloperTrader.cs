@@ -14,13 +14,16 @@ using SPTarkov.Server.Core.Utils;
 namespace ProjectE.Server;
 [Injectable(TypePriority=OnLoadOrder.TraderRegistration+5)]
 public sealed class DeveloperTrader(TemplateTable templates,TradersTable traders,LocaleTable locales,TraderConfig config,ImageRouter images,JsonUtil json):IOnLoad {
+ bool localeRegistered;
  public const string Id="a7d000000000000000000001";
  static string Offer(string key)=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("Developer:"+key))).ToLowerInvariant()[..24];
  public Task OnLoadAsync(CancellationToken ct){Rebuild();return Task.CompletedTask;}
  public void Rebuild(){
+  Scp3XRegistration.EnsureCatalog(templates);
+  foreach(string id in Scp3X.DisruptorRules.Templates)if(templates.Items.ContainsKey(id)&&!templates.Handbook!.Items!.Any(x=>x.Id.ToString()==id))throw new InvalidOperationException("3-X handbook entry lost before trader rebuild: "+id);
   var source=traders.GetTrader("5c0647fdd443bc2504c2d371")??throw new InvalidOperationException("Trader base missing");
   var baseData=JsonNode.Parse(json.Serialize(source.Base)!)!;
-  baseData["_id"]=Id;baseData["name"]="Developer";baseData["surname"]="Developer";baseData["nickname"]="Developer";baseData["location"]="Development Lab";
+  baseData["_id"]=Id;baseData["name"]="Developer";baseData["surname"]="Developer";baseData["nickname"]="Developer";baseData["location"]="N/A";baseData["description"]="N/A";
   baseData["avatar"]="/files/trader/avatar/developer.png";baseData["unlockedByDefault"]=true;baseData["availableInRaid"]=false;baseData["customization_seller"]=false;baseData["medic"]=false;
   if(baseData["loyaltyLevels"] is JsonArray levels&&levels.Count>0){var first=levels[0]!.DeepClone();first["minLevel"]=1;first["minSalesSum"]=0;first["minStanding"]=0;baseData["loyaltyLevels"]=new JsonArray(first);}
   var previous=traders.GetTrader(Id);
@@ -50,8 +53,8 @@ public sealed class DeveloperTrader(TemplateTable templates,TradersTable traders
   traders[Id]=trader;
   config.UpdateTime.RemoveAll(x=>x.TraderId.ToString()==Id);config.UpdateTime.Add(new(){TraderId=Id,Seconds=new MinMax<int>(3600,3600)});
   images.AddRoute("/files/trader/avatar/developer",System.IO.Path.Combine(AppContext.BaseDirectory,"user","mods","ProjectE","Assets","developer.png"));
-  if(previous==null)foreach(var locale in locales.Global.Values)locale.AddTransformer(data=>{if(data==null)return data;data[Id+" FullName"]="Developer";data[Id+" FirstName"]="Developer";data[Id+" Nickname"]="Developer";data[Id+" Location"]="Development Lab";data[Id+" Description"]="独立 MOD 开发物品商人。";return data;});
+  if(!localeRegistered){foreach(var locale in locales.Global.Values){locale.AddTransformer(data=>{if(data==null)return data;data[Id+" FullName"]="Developer";data[Id+" FirstName"]="Developer";data[Id+" Nickname"]="Developer";data[Id+" Location"]="N/A";data[Id+" Description"]="N/A";return data;});locale.Clear();}localeRegistered=true;}
   string directory=System.IO.Path.Combine(AppContext.BaseDirectory,"user","mods","ProjectE");Directory.CreateDirectory(directory);
-  File.WriteAllText(System.IO.Path.Combine(directory,"developer-status.json"),JsonSerializer.Serialize(new{utc=DateTime.UtcNow,id=Id,name="Developer",templates=custom.Order().ToArray(),offers=trader.Assort!.LoyalLevelItems.Count,vanillaOffers=0}));
+  File.WriteAllText(System.IO.Path.Combine(directory,"developer-status.json"),JsonSerializer.Serialize(new{utc=DateTime.UtcNow,id=Id,name="Developer",templates=custom.Order().ToArray(),offers=trader.Assort!.LoyalLevelItems.Count,vanillaOffers=0,scp3x=Scp3X.DisruptorRules.Templates.Select(t=>new{id=t,exists=templates.Items.ContainsKey(t),quest=templates.Items.GetValueOrDefault(t)?.Properties?.QuestItem,price=prices.GetValueOrDefault(t),vanilla=vanilla.Contains(t),book=templates.Handbook!.Items!.Where(x=>x.Id.ToString()==t).Select(x=>x.Price).ToArray()}).ToArray()}));
  }
 }

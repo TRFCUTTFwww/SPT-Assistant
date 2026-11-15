@@ -81,7 +81,8 @@ public sealed class Startup(CustomItemService custom,TemplateTable templates,Tra
   }
   string folder=Path.Combine(AppContext.BaseDirectory,"user","mods","ProjectE");Directory.CreateDirectory(folder);
   File.WriteAllText(Path.Combine(folder,"registration-status.json"),JsonSerializer.Serialize(new {version="1.2.0",jaeger="5c0647fdd443bc2504c2d371",serverPid=Environment.ProcessId,utc=DateTime.UtcNow,originalGladiusUnchanged=true,swords=Swords.All.Select(s=>new{s.Id,s.English,s.Chinese,s.Damage,s.Price,width=1,height=2}),utilities=Gadgets.All.Select(g=>new{g.Id,g.Key,g.English,g.Chinese,g.Price,width=1,height=1})},new JsonSerializerOptions{WriteIndented=true}));
-  log("ProjectE: 4 two-cell weapons and 24 utilities, artifacts and colored bags; Developer catalog; original gladius unchanged");
+  new Scp3XRegistration(custom,templates,traders,json,owner??Assembly.GetExecutingAssembly()).Register();
+  log("ProjectE and 3-X registered; Developer catalog; original donor templates unchanged");
   return Task.CompletedTask;
  }
 }
