@@ -1,0 +1,23 @@
+using ItemUseGuard;
+using Mono.Cecil;
+int count=0;
+void Check(bool value,string name){if(!value)throw new Exception(name);count++;Console.WriteLine("PASS "+name);}
+Check(UseRules.Orphan(true,true,false,false,true,false,5),"orphan with missing controller and no queued process recovers after 5 seconds");
+for(int mask=0;mask<64;mask++)Check(UseRules.Orphan((mask&1)!=0,(mask&2)!=0,(mask&4)!=0,(mask&8)!=0,(mask&16)!=0,(mask&32)!=0,8)==(mask==19),"local/alive/live-hands/queued-process/status/loader boundary "+mask);
+foreach(float elapsed in new[]{-1,0,1,4.99f})Check(!UseRules.Orphan(true,true,false,false,true,false,elapsed),"normal short transition is preserved "+elapsed);
+Check(UseRules.Resume(1,1,2,2,true,true,true,true),"ready request can resume for the same world/player/owned item/hands/idle state");
+for(int mask=0;mask<16;mask++)Check(UseRules.Resume(1,1,2,2,(mask&1)!=0,(mask&2)!=0,(mask&4)!=0,(mask&8)!=0)==(mask==15),"deferred request lifetime and ownership "+mask);
+Check(!UseRules.Resume(0,0,2,2,true,true,true,true)&&!UseRules.Resume(1,3,2,2,true,true,true,true)&&!UseRules.Resume(1,1,0,0,true,true,true,true)&&!UseRules.Resume(1,1,2,3,true,true,true,true),"missing or replaced worlds and players cannot resume native use");
+using var assembly=AssemblyDefinition.ReadAssembly(args[0]);
+var module=assembly.MainModule.Types.Single(t=>t.Name=="ItemUseModule");
+MethodDefinition Method(string name)=>module.Methods.Single(m=>m.Name==name);
+MethodReference[] Calls(string name)=>Method(name).Body.Instructions.Select(i=>i.Operand).OfType<MethodReference>().ToArray();
+Check(Calls("Load").Any(m=>m.Name=="get_UsePrefab")&&Calls("Load").Any(m=>m.Name=="LoadBundlesAndCreatePools"),"loader explicitly includes the distinct usable prefab and native pool loader");
+Check(Calls("Initialize").Count(m=>m.Name=="Patch")==2,"only native medicine and food Proceed entry points are patched");
+Check(Calls("Gate").Any(m=>m.Name=="Local")&&!Calls("Gate").Any(m=>m.Name=="Proceed"||m.Name=="DestroyHandsController"||m.Name=="set__processStatus"),"admission leaves native hands and scheduling untouched until resources are ready");
+Check(Calls("RecoverOrphan").Any(m=>m.Name=="Orphan")&&Calls("RecoverOrphan").Any(m=>m.Name=="SetEmptyHands")&&!Calls("RecoverOrphan").Any(m=>m.Name=="DestroyHandsController"),"orphan recovery uses native empty hands without double disposal");
+Check(Calls("Update").Any(m=>m.Name=="Resume")&&Calls("Update").Any(m=>m.Name=="Owned")&&Calls("Update").Any(m=>m.Name=="FailRequest"),"deferred native use validates ownership and fails abandoned callbacks");
+Check(!module.Methods.SelectMany(m=>m.HasBody?m.Body.Instructions:[]).Select(i=>i.Operand).OfType<MethodReference>().Any(m=>m.Name is "RemoveItem" or "ThrowItem" or "CreateItem" or "DestroyLoot" or "ApplyDamage" or "FastForwardCurrentOperations"),"guard never consumes/spawns items, applies medical effects, or skips normal animations");
+Check(Calls("CheckModels").Any(m=>m.Name=="CreateItemUsablePrefab")&&Calls("CheckModels").Any(m=>m.Name=="ReturnToPool")&&!Calls("CheckModels").Any(m=>m.Name=="Proceed"),"explicit model diagnostic exercises native factory and pool cleanup without using inventory items");
+Check(Calls("RecoverOrphan").Any(m=>m.Name=="ReleaseInventoryLock")&&Calls("ReleaseInventoryLock").Any(m=>m.Name=="SetNextProcessLocked")&&!Calls("Gate").Any(m=>m.Name=="ReleaseInventoryLock"),"orphan recovery releases leftover inventory lock without bypassing normal inventory use locks");
+Console.WriteLine($"{count} item use regression checks passed.");
