@@ -9,17 +9,24 @@ namespace ProjectE.Client;
 public sealed partial class ProjectModule {
  static readonly EBodyPart[] bodyParts=[EBodyPart.Head,EBodyPart.Chest,EBodyPart.Stomach,EBodyPart.LeftArm,EBodyPart.RightArm,EBodyPart.LeftLeg,EBodyPart.RightLeg];
  readonly HashSet<string> consumedTotems=[];
- bool savingLife,emptyHands;float totemStart=-100,regenUntil,fireUntil,nextRegen;IntPtr savedPlayer;
+ readonly TotemRescueGate totemGate=new();
+ int totemRescues,totemBlockedDamage,totemBlockedSpread,totemBlockedKills;
+ bool totemFollowup;
+ bool emptyHands;float totemStart=-100,regenUntil,fireUntil,nextRegen;IntPtr savedPlayer;
  void InitializeTotem(Harmony harmony){
   harmony.Patch(AccessTools.Method(typeof(ActiveHealthController),nameof(ActiveHealthController.Kill),[typeof(EDamageType)]),prefix:new HarmonyMethod(typeof(ProjectModule),nameof(TotemBeforeKill)){priority=Priority.Last});
-  harmony.Patch(AccessTools.Method(typeof(ActiveHealthController),nameof(ActiveHealthController.ApplyDamage),[typeof(EBodyPart),typeof(float),typeof(DamageInfo)]),prefix:new HarmonyMethod(typeof(ProjectModule),nameof(TotemFire)){priority=Priority.Last});
+  harmony.Patch(AccessTools.Method(typeof(ActiveHealthController),nameof(ActiveHealthController.ApplyDamage),[typeof(EBodyPart),typeof(float),typeof(DamageInfo)]),prefix:new HarmonyMethod(typeof(ProjectModule),nameof(TotemDamage)){priority=Priority.Last},postfix:new HarmonyMethod(typeof(ProjectModule),nameof(TotemDamageFinished)));
+  harmony.Patch(AccessTools.Method(typeof(ActiveHealthController),nameof(ActiveHealthController.SpreadOverDamage)),prefix:new HarmonyMethod(typeof(ProjectModule),nameof(TotemSpread)));
+  InitializeTotemHotbar(harmony);
  }
  static bool TotemBeforeKill(ActiveHealthController __instance,EDamageType __0){
-  var a=active;var p=RaidPlayer();if(a?.context?.IsActive!=true||!a.totemEnabled.Value||a.savingLife||p==null||__instance.Player?.Pointer!=p.Pointer||__0.ToString() is "Existence" or "Undefined")return true;
+  var a=active;var p=RaidPlayer();if(a?.context?.IsActive!=true||p==null||__instance.Player?.Pointer!=p.Pointer||__0.ToString() is "Existence" or "Undefined")return true;
+  if(a.totemGate.Blocks(__instance.Pointer.ToInt64(),Time.frameCount)){a.totemBlockedKills++;return false;}
+  if(!a.totemEnabled.Value)return true;
   var item=CarriedInventory.Items(p).FirstOrDefault(i=>i.StringTemplateId==Gadgets.Totem&&!a.consumedTotems.Contains(i.Id.ToString()));
   if(item==null||!MatterRules.CanSave(true,p.IsYourPlayer,true,false,__instance.IsAlive))return true;
   try{
-   a.savingLife=true;
+   a.totemGate.Begin(__instance.Pointer.ToInt64());
    var controller=p.InventoryController;if(controller==null||item.CurrentAddress==null)return true;
    bool held=p.HandsController?.GetItem()?.Id.ToString()==item.Id.ToString();
    var removal=ItemManipulator.Remove(item,controller,false);if(!removal.Succeeded)return true;
@@ -28,18 +35,35 @@ public sealed partial class ProjectModule {
    // Restore before allowing the death method to notify listeners or create a corpse.
    __instance.RemoveNegativeEffects(EBodyPart.Common);
    foreach(var part in bodyParts){__instance.RemoveNegativeEffects(part);var hp=__instance.GetBodyPartHealth(part,false);float before=hp.Current;if(before<=0)__instance.FullRestoreBodyPart(part);hp=__instance.GetBodyPartHealth(part,false);float target=Math.Max(before,MatterRules.RevivalHealth(hp.Maximum));__instance.ChangeHealth(part,target-hp.Current,new DamageInfo());}
-   a.savedPlayer=p.Pointer;a.totemStart=Time.unscaledTime;a.regenUntil=Time.unscaledTime+45;a.fireUntil=Time.unscaledTime+40;a.nextRegen=Time.unscaledTime+1;a.emptyHands=held;
+   if(!__instance.IsAlive||__instance.GetBodyPartHealth(EBodyPart.Head,false).Current<=0||__instance.GetBodyPartHealth(EBodyPart.Chest,false).Current<=0)throw new InvalidOperationException("Native health restoration did not preserve the living critical parts");
+   a.totemGate.Commit(Time.frameCount);a.totemRescues++;
+   a.savedPlayer=p.Pointer;a.totemStart=Time.unscaledTime;a.regenUntil=Time.unscaledTime+45;a.fireUntil=Time.unscaledTime+40;a.nextRegen=Time.unscaledTime+1;a.emptyHands=held;a.totemFollowup=true;
+   a.WriteTotemStatus(p,"rescued");
    try{a.resources!.Play("totem",a.volume.Value);a.Say("不死图腾已消耗 · 再生 45 秒 · 火焰抵抗 40 秒");}catch(Exception e){a.context.Log(Local.ModHost.LogLevel.Warning,"Totem presentation: "+e.Message);}
    return false;
-  }catch(Exception e){a.context.Log(Local.ModHost.LogLevel.Error,"Totem rescue failed: "+e);return true;}
-  finally{a.savingLife=false;}
+  }catch(Exception e){a.totemGate.Clear();a.context.Log(Local.ModHost.LogLevel.Error,"Totem rescue failed: "+e);a.WriteTotemStatus(p,"failed",e.Message);return true;}
+  finally{a.totemGate.End();}
  }
- static void TotemFire(ActiveHealthController __instance,ref float __1,DamageInfo __2){
-  var a=active;if(a?.context?.IsActive!=true||__2==null||Time.unscaledTime>=a.fireUntil||__instance.Player?.Pointer!=a.savedPlayer)return;
-  if(__2.DamageType.ToString() is "Flame" or "Fire")__1=0;
+ static bool TotemDamage(ActiveHealthController __instance,ref float __1,DamageInfo __2,ref float __result,out int __state){
+  var a=active;__state=-1;if(a?.context?.IsActive!=true||__instance.Player?.IsYourPlayer!=true)return true;
+  __state=a.totemRescues;
+  if(a.totemGate.Blocks(__instance.Pointer.ToInt64(),Time.frameCount)){a.totemBlockedDamage++;__result=0;return false;}
+  if(__2!=null&&Time.unscaledTime<a.fireUntil&&__instance.Player?.Pointer==a.savedPlayer&&__2.DamageType.ToString() is "Flame" or "Fire")__1=0;
+  return true;
+ }
+ static bool TotemSpread(ActiveHealthController __instance){var a=active;if(a?.context?.IsActive!=true||!a.totemGate.Blocks(__instance.Pointer.ToInt64(),Time.frameCount))return true;a.totemBlockedSpread++;return false;}
+ static void TotemDamageFinished(ActiveHealthController __instance,int __state){
+  var a=active;if(a?.context?.IsActive!=true||__state<0||a.totemRescues==__state||__instance.Player?.Pointer!=a.savedPlayer)return;
+  // Native ApplyDamage can append bleeding/pain after Kill was intercepted.
+  __instance.RemoveNegativeEffects(EBodyPart.Common);foreach(var part in bodyParts)__instance.RemoveNegativeEffects(part);
+  if(__instance.Player is {} player)a.WriteTotemStatus(player,"damage-finished");
+ }
+ void WriteTotemStatus(Player p,string stage,string? error=null){
+  try{var health=p.ActiveHealthController;File.WriteAllText(Path.Combine(context!.DataDirectory,"totem-status.json"),System.Text.Json.JsonSerializer.Serialize(new{utc=DateTime.UtcNow,stage,error,version=Version,process=Environment.ProcessId,totemRescues,totemBlockedDamage,totemBlockedSpread,totemBlockedKills,alive=health?.IsAlive,body=bodyParts.Select(part=>new{part=part.ToString(),current=health?.GetBodyPartHealth(part,false).Current,maximum=health?.GetBodyPartHealth(part,false).Maximum}),consumed=consumedTotems.Count}));}catch(Exception e){context?.Log(Local.ModHost.LogLevel.Warning,"Totem status: "+e.Message);}
  }
  void TickTotem(Player? p){
-  if(p==null||p.Pointer!=savedPlayer||p.HealthController?.IsAlive!=true){regenUntil=fireUntil=0;emptyHands=false;return;}
+  if(p==null||p.Pointer!=savedPlayer||p.HealthController?.IsAlive!=true){regenUntil=fireUntil=0;emptyHands=false;totemGate.Clear();totemFollowup=false;return;}
+  if(totemFollowup){totemFollowup=false;WriteTotemStatus(p,"next-tick");}
   if(emptyHands){emptyHands=false;try{p.Proceed(true,(Action<Result<IEmptyHandsController>>)(_=>{}),false);}catch(Exception e){context!.Log(Local.ModHost.LogLevel.Warning,"Totem hands: "+e.Message);}}
   if(Time.unscaledTime>=regenUntil||Time.unscaledTime<nextRegen)return;nextRegen=Time.unscaledTime+1;
   foreach(var part in bodyParts){var hp=p.ActiveHealthController.GetBodyPartHealth(part,false);if(hp.Current>0&&hp.Current<hp.Maximum)p.ActiveHealthController.ChangeHealth(part,Math.Min(2,hp.Maximum-hp.Current),new DamageInfo());}

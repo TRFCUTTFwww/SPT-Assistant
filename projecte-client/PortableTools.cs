@@ -16,7 +16,7 @@ public sealed partial class ProjectModule {
   chargeKey=settingsFile!.Bind("Weapons","Charge key",KeyCode.R,"手持 PE 武器：充能；Shift + 此键降级。");
   skillKey=settingsFile.Bind("Weapons","Ability key",KeyCode.G,"手持 PE 武器：发动范围技能（取代此帧原生按键动作）。");
   modeKey=settingsFile.Bind("Weapons","Mode key",KeyCode.M,"红物质剑/拳剑切换仅敌对 AI / 全部 AI，不攻击玩家。");
-  totemEnabled=settingsFile.Bind("Totem","Enabled",true,"手持不死图腾时，消耗一次以阻止本地 PMC 致命伤。");
+  totemEnabled=settingsFile.Bind("Totem","Enabled",true,"随身携带不死图腾可自动消耗一枚抵挡致命伤；口袋或弹挂内可绑定快捷栏，不需要按键使用。");
   harmony.Patch(AccessTools.Method(typeof(GamePlayerOwner),nameof(GamePlayerOwner.TranslateCommand)),prefix:new HarmonyMethod(typeof(ProjectModule),nameof(ToolCommands)){priority=Priority.First});
   harmony.Patch(AccessTools.Method(typeof(Player.KnifeController),nameof(Player.KnifeController.MakeAlternativeKick)),prefix:new HarmonyMethod(typeof(ProjectModule),nameof(ToolRightClick)){priority=Priority.First});
   harmony.Patch(AccessTools.Method(typeof(Player.KnifeController),nameof(Player.KnifeController.MakeKnifeKick)),prefix:new HarmonyMethod(typeof(ProjectModule),nameof(ToolLeftClick)){priority=Priority.First});

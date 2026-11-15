@@ -44,7 +44,7 @@ if(Test-Path -LiteralPath $atmTarget){$atmBackup=Join-Path $GameRoot ('mod-backu
 Install-ServerAssembly $atmSource $atmTarget
 if((Get-FileHash -LiteralPath $atmSource).Hash -ne (Get-FileHash -LiteralPath $atmTarget).Hash){throw 'ATM server installation hash mismatch'}
 & (Join-Path $PSScriptRoot 'Publish-HotModule.ps1') -Id atm-swords -Assembly (Join-Path $repo 'atm-swords-client/bin/Release/net10.0/Local.AllTheModium.HotModule.dll') -EntryType AllTheModium.Client.SwordModule -Version 1.3.0 -Name 'Pixel Swords and Portable Tools' -HostRoot $hostRoot -AssetsDirectory (Join-Path $repo 'atm-swords-client/Assets')
-& (Join-Path $PSScriptRoot 'Publish-HotModule.ps1') -Id projecte -Assembly (Join-Path $repo 'projecte-client/bin/Release/net10.0/Local.ProjectE.HotModule.dll') -EntryType ProjectE.Client.ProjectModule -Version 1.2.0 -Name 'ProjectE Transmutation, Tools and Abilities' -HostRoot $hostRoot -AssetsDirectory (Join-Path $repo 'projecte-client/Assets')
+& (Join-Path $PSScriptRoot 'Publish-HotModule.ps1') -Id projecte -Assembly (Join-Path $repo 'projecte-client/bin/Release/net10.0/Local.ProjectE.HotModule.dll') -EntryType ProjectE.Client.ProjectModule -Version 1.2.4 -Name 'ProjectE Transmutation, Tools and Abilities' -HostRoot $hostRoot -AssetsDirectory (Join-Path $repo 'projecte-client/Assets')
 Copy-Item -LiteralPath (Join-Path $repo 'docs/projecte.md') -Destination (Join-Path $serverRoot 'README.md')
 Copy-Item -LiteralPath (Join-Path $repo 'projecte-client/Assets/ProjectE-LICENSE.txt') -Destination $serverRoot
 Write-Output 'Installed ProjectE. Initial stable-server-host installation needs one server restart. Later logic modules reload live. Client F9 refreshes templates, handbook, locales and traders without relogin.'

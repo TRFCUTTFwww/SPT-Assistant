@@ -48,7 +48,7 @@ internal static class MiscPanel {
  static bool Sniper(IPlayer __0)=>!SniperProtected(__0);
  static bool SniperEligible(IPlayer __0,ref bool __result){if(!SniperProtected(__0))return true;__result=false;return false;}
  internal static bool SniperDamage(EFT.HealthSystem.ActiveHealthController health,EDamageType type)=>type==EDamageType.Sniper&&SniperProtected(health.Player);
- static void EquipmentShown(EquipmentTab __instance,InventoryEquipment __1){if(__1?.GetSlot(EquipmentSlot.SecuredContainer)?.ContainedItem!=null)__instance.GetSlotView(EquipmentSlot.SecuredContainer)?.gameObject.SetActive(true);}
+ static void EquipmentShown(EquipmentTab __instance,InventoryEquipment __1){if(__1?.GetSlot(EquipmentSlot.SecuredContainer)?.ContainedItem!=null&&__instance._slotViews!=null&&__instance._slotViews.TryGetValue(EquipmentSlot.SecuredContainer,out var view)&&view!=null)view.gameObject.SetActive(true);}
  static void Begin(Dictionary<string,object?> payload){if(request!=null)return;request=CharacterDataPanel.Call("/local/gear/data","characterData",payload);status="处理中…";}
  internal static void Tick(){
   if(syncSecure){status=ScavEquipmentSync.Status;if(!ScavEquipmentSync.Busy)syncSecure=false;}

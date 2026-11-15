@@ -20,6 +20,10 @@ using(var integrated=AssemblyDefinition.ReadAssembly(Path.Combine(sourceRoot,"es
  var visualCalls=Calls(visualGuard.Methods.Single(m=>m.Name=="Ready"));
  Assert(!visualCalls.Any(m=>m.Name=="get_HandsController"),"visual lifecycle guard never rejects native draw/stow because the outgoing hands are disposed");
  Assert(visualCalls.Any(m=>m.Name=="get_Destroyed")&&visualCalls.Any(m=>m.Name=="get_MovementContext")&&visualCalls.Any(m=>m.Name=="get_PlayerBones"),"visual lifecycle guard retains disposed-player, missing movement and missing skeleton protection");
+ var equipmentCalls=Calls(types.Single(t=>t.Name=="MiscPanel").Methods.Single(m=>m.Name=="EquipmentShown"));
+ Assert(!equipmentCalls.Any(m=>m.Name=="GetSlotView")&&equipmentCalls.Any(m=>m.Name=="TryGetValue"),"equipment preview safely handles tabs without a secure-container view");
+ var survivalCalls=Calls(types.Single(t=>t.Name=="SurvivalAssist").Methods.Single(m=>m.Name=="Tick"));
+ Assert(survivalCalls.Any(m=>m.Name=="get_IsAlive")&&survivalCalls.Any(m=>m.Name=="get_MovementContext"),"survival weight updates exclude dead and torn-down player movement state");
  Assert(Calls(bridge.Methods.Single(m=>m.Name=="Tick")).Any(m=>m.DeclaringType.Name=="PulseRuntime"&&m.Name=="Tick")&&Calls(bridge.Methods.Single(m=>m.Name=="Reset")).Any(m=>m.DeclaringType.Name=="PulseRuntime"&&m.Name=="Shutdown"),"Assistant directly drives and shuts down its integrated Blackwall runtime");
  var runtime=types.Single(t=>t.Name=="PulseRuntime");
  Assert(!Calls(runtime.Methods.Single(m=>m.Name=="Cast")).Any(m=>m.DeclaringType.Name=="PulseAudio"),"empty casts and harmless previews do not submit sound");
@@ -28,8 +32,8 @@ using(var integrated=AssemblyDefinition.ReadAssembly(Path.Combine(sourceRoot,"es
  Assert(Calls(arms.Methods.Single(m=>m.Name=="Apply")).Any(m=>m.Name=="BakeMesh"),"integrated arm retains verified CPU skinning visibility fix");
 }
 Console.WriteLine("PASS integrated Blackwall assembly ownership, direct lifecycle, CPU skinning and hit-only audio");
-if(args.Contains("--visual-lifecycle-only")){
- Console.WriteLine("PASS visual lifecycle native hands transition and retained player/skeleton guards");
+if(args.Contains("--visual-lifecycle-only")||args.Contains("--totem-boundaries-only")){
+ Console.WriteLine("PASS visual lifecycle, native hands transitions, optional equipment views and living movement boundaries");
  return;
 }
 WorldEditorChecks.Run();
