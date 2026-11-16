@@ -95,7 +95,7 @@ internal static partial class BtrControl {
   if(InterfaceMenu.Button(new Rect(x+half+12,y,half,36),"立即发车"))Action(()=>btr!.BtrVehicle.MovePauseOff());y+=48;GUI.enabled=enabled;
   y=BtrServices.Draw(x,y,w);
   GUI.enabled=enabled&&!Disabled&&btr?.BtrVehicle!=null;
-  if(InterfaceMenu.Button(new Rect(x,y,w,38),"叫车到离我最近的站点"))Action(()=>CallNearest(current!));y+=50;GUI.enabled=enabled;
+  if(InterfaceMenu.Button(new Rect(x,y,w,38),"派遣 BTR 至最近站点"))Action(()=>CallNearest(current!));y+=50;GUI.enabled=enabled;
   InterfaceMenu.Label(new Rect(x,y,w,30),"选择下一站",InterfaceMenu.Accent,16);y+=40;
   if(stops!=null)foreach(var stop in stops){if(stop==null||string.IsNullOrWhiteSpace(stop.id))continue;if(InterfaceMenu.Button(new Rect(x,y,w,34),BtrDisplay.StopName(current!,stop.id),selected==stop.id))selected=stop.id;y+=42;}
   GUI.enabled=enabled&&!Disabled&&btr?.BtrVehicle!=null&&selected.Length>0;

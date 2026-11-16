@@ -4,7 +4,7 @@
 
 An in-game control panel for **SPT**, built with C# and Unity. Manage your character, raid, equipment, quests and server settings from one interface.
 
-**Version 2.3** · **Current target: SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
+**Version 2.3.1** · **Current target: SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
 
 > **UNSTABLE — EXPERIMENTAL.** This project has not undergone broad testing. Bugs, crashes, multiplayer desynchronization and unexpected profile changes are possible. Back up your profiles and configuration before installing or updating. A successful build or hot reload does not establish that every feature works in a raid.
 >
@@ -12,7 +12,7 @@ An in-game control panel for **SPT**, built with C# and Unity. Manage your chara
 
 ## Installation: double-click Setup
 
-1. Under **Assets** on the [release downloads](https://github.com/TRFCUTTFwww/SPT-Assistant/releases), download **`SPT-Assistant-2.3-Setup.exe`**. The `Source code` downloads are for developers.
+1. Under **Assets** on the [release downloads](https://github.com/TRFCUTTFwww/SPT-Assistant/releases), download **`SPT-Assistant-2.3.1-Setup.exe`**. The `Source code` downloads are for developers.
 2. Double-click the EXE and select **`EscapeFromTarkov.exe` in your SPT game folder**. Setup also tries to find installed games automatically.
 3. Close the game and SPT server, then click **Install now**. Start SPT as usual and press **Right Shift** in game.
 
@@ -21,6 +21,10 @@ Keep the default mode for single-player or hosting friends; choose client only w
 The installer is unsigned and does not bypass Windows protection. Verify that you downloaded the official release asset before handling an unknown-publisher prompt. If Windows denies write access, use Setup's Retry as admin button.
 
 See [installation and troubleshooting](docs/INSTALL.md) for technical details and the retained command-line ZIP option.
+
+## 2.3.1 update
+
+Train schedules, pre-raid duration, BTR stop markers, energy/hydration editing, an independent keycard-hacking toggle, and [SQLite profile backups with cross-character restoration](docs/profile-backup.md). Zero-fare cash checks, boundary-sniper protection and special-AI weapon glitch handling were revised. See [release notes](docs/release-2.3.1.md).
 
 ## Features
 

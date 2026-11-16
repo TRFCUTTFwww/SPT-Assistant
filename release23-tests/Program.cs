@@ -20,6 +20,13 @@ using SPTarkov.Server.Core.Services.InRaid;
 int checks=0;
 void Check(bool ok,string label){if(!ok)throw new Exception(label);checks++;Console.WriteLine("PASS "+label);}
 void Reject(Action action,string label){try{action();}catch(ArgumentException){Check(true,label);return;}throw new Exception(label);}
+Check(MenuSections.Group("4. AI ignore","Enabled")=="人物与移动"&&MenuSections.OnPage("人物与移动","生存防护","4. AI ignore","Enabled"),"AI ignore routes to character protection");
+Check(MenuSections.Group("3. Keys","AI ignore toggle")=="人物与移动"&&MenuSections.OnPage("人物与移动","生存防护","3. Keys","AI ignore toggle"),"AI ignore hotkey follows the same character page");
+Check(MenuSections.Group("17. Force doors")=="人物与移动"&&MenuSections.OnPage("人物与移动","交互能力","17. Force doors","Enabled"),"forced breach routes to character interaction abilities");
+Check(MenuSections.Group("18. BTR","Stop marker enabled")=="镜头与画面"&&MenuSections.OnPage("镜头与画面","BTR 站点","18. BTR","Stop marker enabled"),"BTR stop visibility routes to visual settings");
+Check(MenuSections.Pages("数据").Contains("存档备份")&&MenuSections.Pages("载具与空投").Contains("装甲列车"),"backup and armored-train pages are navigable");
+Check(UpdateCheckRules.Endpoint.EndsWith("/releases?per_page=20")&&UpdateCheckRules.Releases.EndsWith("/releases"),"update checks use the experimental-capable release list");
+Reject(()=>UpdateCheckRules.Proxy("http://user:secret@localhost:7890"),"proxy credentials belong in separate fields");
 Check(UpdateCheckRules.Parse("v2.3")==UpdateCheckRules.Parse("2.3.0"),"equivalent GitHub tag formats do not offer the same release again");
 Check(UpdateCheckRules.IsNewer("2.3","v2.3.1")&&UpdateCheckRules.IsNewer("2.3","v2.10")&&!UpdateCheckRules.IsNewer("2.3","v2.2.9"),"patch/minor updates compare numerically and never downgrade");
 Reject(()=>UpdateCheckRules.Parse("v2.4-beta"),"prerelease tags are not presented as stable updates");
@@ -29,6 +36,11 @@ var edges=new[]{("A","B"),("B","C"),("C","D")};
 Check(BtrRouteRules.Reachable("A","D",edges)&&!BtrRouteRules.Reachable("D","A",edges),"BTR dispatch respects directed roads");
 Check(BtrRouteRules.Plan("A","D",edges).SequenceEqual(new[]{"B","C","D"})&&BtrRouteRules.Plan("A","A",edges).Length==0,"multi-leg dispatch and already-at-stop behavior");
 Check(!new RaidSettings().InstantBtrDelivery,"instant delivery defaults off for existing configurations");
+var generationField=typeof(Patches).GetField("generation",BindingFlags.NonPublic|BindingFlags.Static)!;
+var finishLocation=typeof(Patches).GetMethod("FinishLocation",BindingFlags.NonPublic|BindingFlags.Static)!;
+typeof(Patches).GetField("Log",BindingFlags.NonPublic|BindingFlags.Static)!.SetValue(null,DispatchProxy.Create<ISptLogger<LocalRaidControls.Startup>,QuietLog>());
+var nativeLocation=(SPTarkov.Server.Core.Models.Eft.Common.LocationBase)Activator.CreateInstance(typeof(SPTarkov.Server.Core.Models.Eft.Common.LocationBase))!;nativeLocation=nativeLocation with{Id="woods",EscapeTimeLimit=40,EscapeTimeLimitCoop=40,EscapeTimeLimitPVE=40};
+try{generationField.SetValue(null,new RaidSettings{NextRaidMinutes=90.5});object?[] state={"woods",nativeLocation};finishLocation.Invoke(null,state);var changed=(SPTarkov.Server.Core.Models.Eft.Common.LocationBase)state[1]!;Check(changed.EscapeTimeLimit==90.5&&changed.EscapeTimeLimitCoop==91&&changed.EscapeTimeLimitPVE==91&&nativeLocation.EscapeTimeLimit==40,"pre-raid duration changes detached native map duration for all raid modes");generationField.SetValue(null,new RaidSettings());object?[] stock={"woods",nativeLocation};finishLocation.Invoke(null,stock);Check(((SPTarkov.Server.Core.Models.Eft.Common.LocationBase)stock[1]!).EscapeTimeLimit==40,"zero next-raid minutes restores stock map duration");}finally{generationField.SetValue(null,null);}
 string repo=Path.GetFullPath(args[0]),game=args[1];
 using(var core=AssemblyDefinition.ReadAssembly(Path.Combine(repo,"esp-cover/bin/Release/net10.0/Local.Spt5.ESP.Core.dll"))){
  Check(core.MainModule.Types.Any(t=>t.FullName=="AllTheModium.Client.SwordModule")&&core.MainModule.Types.Any(t=>t.FullName=="ProjectE.Client.ProjectModule"),"both Minecraft clients are compiled into Assistant");

@@ -19,10 +19,23 @@ async Task<JsonNode> Call(JsonObject payload,string path="/local/projecte/table"
 }
 bool Ok(JsonNode n)=>n["Ok"]?.GetValue<bool>()??n["ok"]?.GetValue<bool>()??false;
 long Balance(JsonNode n)=>n["Balance"]!.GetValue<long>();
+var runtime=await Call(new(),"/local/projecte/runtime");
+if(runtime["funItemsEnabled"]?.GetValue<bool>()==false){
+ Check(!Ok(await Call(new(){["Action"]="state"})),"disabled fun items reject transmutation requests");
+ var disabledCatalog=await Call(new(),"/client/items");Check(disabledCatalog["a7e000000000000000000113"]!=null,"disabled mode keeps existing fun-item templates to prevent profile pruning");
+ var disabledAssort=await Call(new(),"/client/trading/api/getTraderAssort/a7d000000000000000000001");Check(!disabledAssort["items"]!.AsArray().Any(i=>i?["_tpl"]?.GetValue<string>() is string tpl&&(tpl.StartsWith("a7e000")||tpl.StartsWith("a7a000"))),"disabled mode removes fun goods from Developer offers");
+ string adminKey=File.ReadAllText(Path.Combine(fixture,"user/mods/LocalGearMail/api-key.txt")).Trim();
+ var misc=await Call(new(){["apiKey"]=adminKey,["action"]="miscStatus"},"/local/gear/data");
+ var change=await Call(new(){["apiKey"]=adminKey,["action"]="miscSave",["revision"]=misc["revision"]!.GetValue<string>(),["settings"]=new JsonObject{["FunItemsEnabled"]=true}},"/local/gear/data");Check(Ok(change),"fun-item preference can be saved through the authenticated misc API");
+ Check((await Call(new(),"/local/projecte/runtime"))["funItemsEnabled"]!.GetValue<bool>()==false&&!Ok(await Call(new(){["Action"]="state"})),"saved fun-item preference remains pending until server restart");
+ Console.WriteLine($"Passed {checks} disabled fun-item server checks.");return;
+}
+Check(runtime["funItemsEnabled"]?.GetValue<bool>()==true,"enabled fun-item state is reported by the running server");
 const string ruble="5449016a4bdc2d6f028b456f";
 var state=await Call(new(){["Action"]="state"});Check(Ok(state),"authenticated state endpoint");long baseline=Balance(state);Check(state["Prices"]!.AsArray().Any(n=>n!["Id"]!.GetValue<string>()==ruble&&n["Value"]!.GetValue<long>()==1),"runtime ruble quote is exactly one EMC");
 Check(state["Prices"]!.AsArray().Count>4000,"original EFT catalog available");Check(state["Prices"]!.AsArray().Count(n=>n!["Id"]!.GetValue<string>().StartsWith("a7e000"))==28,"four weapons and twenty-four utilities in runtime catalog");
 var catalog=await Call(new(),"/client/items");
+Check(catalog["a7e000000000000000000113"]!["_parent"]!.GetValue<string>()=="5447e1d04bdc2dff2f8b4567","time watch is registered as a handheld melee-slot utility");
 Check(new[]{"a73c00000000000000000001","a73c00000000000000000002","a73c00000000000000000003"}.All(tpl=>catalog[tpl]==null),"retired 3-X weapon, magazine and ammunition are absent from the live catalog");
 foreach(string tpl in new[]{"a7e000000000000000000001","a7e000000000000000000002","a7e000000000000000000003","a7e000000000000000000004","a7a000000000000000000001","a7a000000000000000000002","a7a000000000000000000003","a7a000000000000000000004"}){var p=catalog[tpl]!["_props"]!;Check(p["Width"]!.GetValue<int>()==1&&p["Height"]!.GetValue<int>()==2,"pixel weapon uses one by two inventory cells: "+tpl);}
 // SPT omits numeric default values when serializing templates; absent damage means zero.
@@ -64,4 +77,5 @@ take["Operation"]=Guid.NewGuid().ToString("N");Check(Ok(await Call(take)),"outpu
 Check(Balance(await Call(new(){["Action"]="state"}))==baseline,"successful ruble round trip preserves original EMC balance");
 checks+=await RuntimeChecks.Run(Call,fixture,game,id,session,client);
 checks+=await HealthChecks.Run(Call,fixture);
+checks+=await BackupChecks.Run(Call,fixture);
 Console.WriteLine($"Passed {checks} isolated server integration checks.");

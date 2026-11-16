@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 [assembly:AssemblyTitle("SPT Assistant Setup")]
-[assembly:AssemblyDescription("Offline graphical installer for SPT Assistant 2.3")]
+[assembly:AssemblyDescription("Offline graphical installer for SPT Assistant 2.3.1")]
 [assembly:AssemblyCompany("SPT Assistant")]
 [assembly:AssemblyProduct("SPT Assistant Setup")]
-[assembly:AssemblyVersion("2.3.0.1")]
-[assembly:AssemblyFileVersion("2.3.0.1")]
+[assembly:AssemblyVersion("2.3.1.0")]
+[assembly:AssemblyFileVersion("2.3.1.0")]
 namespace SptAssistantSetup {
  internal static class Program {
   [DllImport("user32.dll")]static extern bool SetProcessDPIAware();

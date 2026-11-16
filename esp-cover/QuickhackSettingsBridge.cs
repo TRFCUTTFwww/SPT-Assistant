@@ -25,10 +25,11 @@ internal static class QuickhackSettingsBridge {
   catch { api=null; active=null; hostile=null; nextLookup=Time.unscaledTime+1; return false; }
  }
  static string Name(ConfigEntryBase entry)=>entry.Definition.Key switch {
-  "Enabled"=>"启用独立快速破解", "Infinite RAM"=>"无限 RAM", "Range"=>"扫描与上传距离（米）",
+  "Keycard hacking enabled"=>"门卡破解", "Enabled"=>"启用独立快速破解", "Infinite RAM"=>"无限 RAM", "Range"=>"扫描与上传距离（米）",
   "Gateway spread range"=>"黑墙每跳传染范围（米）", "Gateway target limit"=>"黑墙连锁总目标数",
   "Gateway hop duration"=>"黑墙每跳上传时长（秒）", "Volume"=>"快速破解音量", _=>entry.Definition.Key
  };
+ internal static void DrawDoorToggle(Rect rect){try{FindApi();var entries=api?.GetMethod("GetSettings")?.Invoke(null,null) as ConfigEntryBase[];var entry=entries?.FirstOrDefault(e=>e.Definition.Key=="Keycard hacking enabled");if(entry!=null)InterfaceMenu.DrawEntry(entry,rect,"门卡破解");else InterfaceMenu.Paragraph(rect,"门卡破解开关需要新版网络接入仓模块。",null,13);}catch{InterfaceMenu.Paragraph(rect,"网络接入仓模块尚未就绪。",null,13);}}
  internal static void Draw(Rect rect) {
   try {
    FindApi();

@@ -15,7 +15,7 @@ function Report-Progress([int]$percent,[string]$phase){
 function Stop-Install([string]$code,[string]$message){$errorObject=[InvalidOperationException]::new($message);$errorObject.Data['InstallerCode']=$code;throw $errorObject}
 function Write-Result([bool]$ok,[string]$code,[string]$message){
  if(!$ResultPath){return}
- $value=@{ok=$ok;code=$code;message=$message;version='2.3';backup=$backup;verified=[bool]$VerifyOnly;rollbackSucceeded=[bool]$rollbackSucceeded}
+ $value=@{ok=$ok;code=$code;message=$message;version='2.3.1';backup=$backup;verified=[bool]$VerifyOnly;rollbackSucceeded=[bool]$rollbackSucceeded}
  [IO.File]::WriteAllText($ResultPath,($value|ConvertTo-Json -Depth 4),[Text.UTF8Encoding]::new($false))
 }
 try{
@@ -45,6 +45,11 @@ if(-not $ClientOnly){
  $files['payload/LocalGearMail.dll']='SPT_Runtime/user/mods/LocalGearMail/LocalGearMail.dll'
  $files['payload/LocalGearAdmin.module']='SPT_Runtime/user/mods/LocalGearMail/LocalGearAdmin.module'
  $files['payload/LocalRaidControls.dll']='SPT_Runtime/user/mods/LocalRaidControls/LocalRaidControls.dll'
+}
+# Existing Quickhacks installs receive this compatible core update; installing
+# its separate resource package remains optional.
+if((Test-Path -LiteralPath (Target 'BepInEx/plugins/CP2077Quickhacks/Local.Cp2077.Quickhacks.dll')) -and (Test-Path -LiteralPath (Join-Path $package 'payload/Quickhacks.Core.module'))){
+ $files['payload/Quickhacks.Core.module']='BepInEx/plugins/CP2077Quickhacks/runtime/Local.Cp2077.Quickhacks.Core.module'
 }
 Report-Progress 10 'CHECK_PACKAGE'
 $resourceManifest=Get-Content -LiteralPath (Join-Path $package 'docs/blackwall-assets.json') -Raw -Encoding UTF8|ConvertFrom-Json
@@ -108,7 +113,7 @@ foreach($process in Get-Process -Name $processNames -ErrorAction SilentlyContinu
  try{$processPath=$process.Path}catch{}
  if(-not $processPath -or $processPath.StartsWith($prefix,[StringComparison]::OrdinalIgnoreCase)){Stop-Install 'GAME_RUNNING' 'Close the target game and SPT server, then retry.'}
 }
-$backup=Target ('mod-backups/assistant-2.3-'+[DateTime]::Now.ToString('yyyyMMdd-HHmmssfff'))
+$backup=Target ('mod-backups/assistant-2.3.1-'+[DateTime]::Now.ToString('yyyyMMdd-HHmmssfff'))
 $completed=[Collections.Generic.List[object]]::new()
 $legacyBackup=$null
 $retired=[Collections.Generic.List[object]]::new()
@@ -173,11 +178,11 @@ try{
   Move-Item -LiteralPath $legacy -Destination $legacyBackup
  }
  $destination=Prepare 'BepInEx/plugins/LocalSpt5ESP/install-manifest.json'
- $manifest=@{version='2.3';hostVersion='1.5.0';targetSpt='5.0 BE';targetEft='1.3.0.1.48558';clientOnly=[bool]$ClientOnly;minecraftIntegrated=$true;independentMinecraftHotReload=$false;scp3xRemoved=$true;blackwallIntegrated=$true;blackwallAssets=$resourceManifest.files.Count;experimental=$true;inRaidVerified=$false;installedUtc=[DateTime]::UtcNow.ToString('O');backup=$backup;coreSha256=$checks.'payload/Local.Spt5.ESP.Core.module'}
+ $manifest=@{version='2.3.1';hostVersion='1.5.0';targetSpt='5.0 BE';targetEft='1.3.0.1.48558';clientOnly=[bool]$ClientOnly;minecraftIntegrated=$true;independentMinecraftHotReload=$false;scp3xRemoved=$true;blackwallIntegrated=$true;blackwallAssets=$resourceManifest.files.Count;experimental=$true;inRaidVerified=$false;installedUtc=[DateTime]::UtcNow.ToString('O');backup=$backup;coreSha256=$checks.'payload/Local.Spt5.ESP.Core.module'}
  [IO.File]::WriteAllText($destination,($manifest|ConvertTo-Json -Depth 4),$utf8)
  Report-Progress 100 'COMPLETE'
  Write-Result $true 'OK' 'Installation completed.'
- Write-Output ('Installed SPT Assistant 2.3 (EXPERIMENTAL). Backup: '+$backup)
+ Write-Output ('Installed SPT Assistant 2.3.1 (EXPERIMENTAL). Backup: '+$backup)
  Write-Output 'Start the SPT server, then its client. Press Right Shift. Fika members: connect to the host; do not start a local server.'
  }catch{
  $failure=$_

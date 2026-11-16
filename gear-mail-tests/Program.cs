@@ -336,3 +336,20 @@ sideTables.Quests[mechanicId]=mechanicQuest with{Conditions=new(){AvailableForFi
 if(StoryRules.PromoteExpiredWaits(mechanicSaved,sideTables,[mechanicId],questConfig,sideNow)!=0)throw new Exception("Unknown native gate bypassed");
 sideTables.Quests[mechanicId]=mechanicQuest;
 Console.WriteLine("PASS native Mechanic wait: unlocks acceptance only, preserves progress, rejects unmet/unknown gates, repeated skip is idempotent");
+
+// Cross-account restoration uses the actual SPT profile converter without ever
+// saving or registering the synthetic account in the live SaveServer.
+{
+ var originalProfile=System.Text.Json.Nodes.JsonNode.Parse(diskBefore)!.AsObject();
+ var newProfile=(System.Text.Json.Nodes.JsonObject)originalProfile.DeepClone();
+ string newPmc=new MongoId().ToString(),newScav=new MongoId().ToString();
+ newProfile["characters"]!["pmc"]!["_id"]=newPmc;newProfile["characters"]!["scav"]!["_id"]=newScav;newProfile["characters"]!["pmc"]!["savage"]=newScav;
+ var migrated=ProfileRestoreRules.Build(originalProfile.ToJsonString(),newProfile.ToJsonString(),["all"],_=>true);
+ var native=nativeJson.Deserialize<SPTarkov.Server.Core.Models.Eft.Profile.SptProfile>(migrated)!;
+ if(native.CharacterData!.PmcData!.Id.ToString()!=newPmc||native.CharacterData.ScavData!.Id.ToString()!=newScav)throw new Exception("Native cross-profile restoration lost the new account identities");
+ var stashOnly=ProfileRestoreRules.Build(originalProfile.ToJsonString(),newProfile.ToJsonString(),["stash"],_=>true);
+ var nativeStash=nativeJson.Deserialize<SPTarkov.Server.Core.Models.Eft.Profile.SptProfile>(stashOnly)!;
+ if(nativeStash.CharacterData!.PmcData!.Id.ToString()!=newPmc||nativeStash.CharacterData.PmcData.Inventory!.Items!.Count!=native.CharacterData.PmcData.Inventory!.Items!.Count)throw new Exception("Native cross-profile stash restoration changed inventory count");
+ if(!File.ReadAllBytes(profilePath).SequenceEqual(diskBefore))throw new Exception("Read-only cross-profile test changed a live profile");
+ Console.WriteLine("PASS native SPT cross-account converter: new PMC/Scav identity preserved for full and stash restoration; live files unchanged");
+}

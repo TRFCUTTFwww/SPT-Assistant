@@ -18,6 +18,9 @@ internal static class HealthChecks {
    Check(JsonNode.DeepEquals(values,Values(disk["characters"]!["pmc"]!["Health"]!)),"body health persists in isolated PMC save");
    Check(JsonNode.DeepEquals(original["Hydration"],actual["Hydration"])&&JsonNode.DeepEquals(original["Energy"],actual["Energy"]),"body health edit preserves hydration and energy");
   }finally{Check(Ok(await Send("bodyHealth",Values(original))),"original fixture body health restored");}
+  var full=Values(original);full["Energy"]=new JsonObject{["maximum"]=222,["current"]=123};full["Hydration"]=new JsonObject{["maximum"]=177,["current"]=99};
+  try{var response=await Send("bodyHealth",full.DeepClone().AsObject());Check(Ok(response),"energy and hydration maximum/current save with body health");var actual=(await Send("healthStatus"))["health"]!;Check(actual["Energy"]!["Maximum"]!.GetValue<double>()==222&&actual["Energy"]!["Current"]!.GetValue<double>()==123&&actual["Hydration"]!["Maximum"]!.GetValue<double>()==177&&actual["Hydration"]!["Current"]!.GetValue<double>()==99,"energy and hydration values persist and read back exactly");var invalid=full.DeepClone().AsObject();invalid["Energy"]!["current"]=223;Check(!Ok(await Send("bodyHealth",invalid)),"energy above maximum rejected without partial mutation");Check(JsonNode.DeepEquals(actual,(await Send("healthStatus"))["health"]),"invalid energy does not partially change body parts or hydration");}
+  finally{var restore=Values(original);foreach(string vital in new[]{"Energy","Hydration"})restore[vital]=new JsonObject{["maximum"]=original[vital]!["Maximum"]!.DeepClone(),["current"]=original[vital]!["Current"]!.DeepClone()};Check(Ok(await Send("bodyHealth",restore)),"original energy and hydration restored in isolated fixture");}
   return count;
  }
 }

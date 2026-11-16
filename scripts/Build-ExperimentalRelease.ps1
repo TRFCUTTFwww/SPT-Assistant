@@ -11,8 +11,8 @@ $OutputDirectory=[IO.Path]::GetFullPath($OutputDirectory)
 if((Test-Path -LiteralPath $OutputDirectory) -and (Get-ChildItem -LiteralPath $OutputDirectory -Force | Select-Object -First 1)){throw 'OutputDirectory must be new or empty'}
 [IO.Directory]::CreateDirectory($OutputDirectory)|Out-Null
 $version=([IO.File]::ReadAllText((Join-Path $repo 'VERSION'))).Trim()
-if($version -ne '2.3'){throw 'Review packaging for the new release version'}
-foreach($project in @('esp-cover/Esp.csproj','gear-admin-module/AdminModule.csproj','raid-controls-server/RaidControls.csproj')){
+if($version -ne '2.3.1'){throw 'Review packaging for the new release version'}
+foreach($project in @('esp-cover/Esp.csproj','gear-admin-module/AdminModule.csproj','raid-controls-server/RaidControls.csproj','quickhack-mod/Quickhacks.csproj')){
  & $Dotnet build (Join-Path $repo $project) -c Release --nologo ('-p:GameRoot='+$GameRoot) -p:EftBuild=48558
  if($LASTEXITCODE -ne 0){throw ('Build failed: '+$project)}
 }
@@ -20,6 +20,7 @@ $stage=Join-Path $OutputDirectory 'package'
 $payload=Join-Path $stage 'payload'
 [IO.Directory]::CreateDirectory($payload)|Out-Null
 $components=@{
+ 'quickhack-mod/bin/Release/net10.0/Local.Cp2077.Quickhacks.Core.dll'='Quickhacks.Core.module'
  'esp-host/bin/Release/net10.0/Local.Spt5.ESP.dll'='Local.Spt5.ESP.dll'
  'esp-cover/bin/Release/net10.0/Local.Spt5.ESP.Core.dll'='Local.Spt5.ESP.Core.module'
  'gear-mail/bin/Release/net10.0/LocalGearMail.dll'='LocalGearMail.dll'
@@ -32,7 +33,7 @@ foreach($entry in $components.GetEnumerator()){Copy-Item -LiteralPath (Join-Path
 Copy-Item -LiteralPath (Join-Path $repo 'scripts/Install-Experimental.ps1') -Destination (Join-Path $stage 'Install.ps1')
 foreach($name in @('README.md','README.zh-CN.md','LICENSE')){Copy-Item -LiteralPath (Join-Path $repo $name) -Destination $stage}
 [IO.Directory]::CreateDirectory((Join-Path $stage 'docs'))|Out-Null
-foreach($name in @('INSTALL.md','release-2.3.md','validation-2.3.json','installer-validation-2.3.json','hotkeys.md','world-editor.md','blackwall-pulse.md','blackwall-assets.json','minecraft-assets.json')){Copy-Item -LiteralPath (Join-Path $repo ('docs/'+$name)) -Destination (Join-Path $stage 'docs')}
+foreach($name in @('INSTALL.md','profile-backup.md','release-2.3.1.md','validation-2.3.1.json','release-2.3.md','validation-2.3.json','installer-validation-2.3.json','hotkeys.md','world-editor.md','blackwall-pulse.md','blackwall-assets.json','minecraft-assets.json')){Copy-Item -LiteralPath (Join-Path $repo ('docs/'+$name)) -Destination (Join-Path $stage 'docs')}
 # Package only the explicitly inventoried Blackwall runtime resources.
 if(!$BlackwallAssetRoot){
  $BlackwallAssetRoot=Join-Path $GameRoot 'BepInEx/plugins/LocalSpt5ESP/Blackwall/Assets'

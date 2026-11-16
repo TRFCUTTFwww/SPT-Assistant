@@ -131,6 +131,7 @@ internal class Plugin {
   yield return ()=>SceneTemplates.Initialize();
   yield return ()=>ToyDeveloper.Initialize(this);
   yield return ()=>BtrControl.Initialize(this);
+  yield return ()=>FreeVehicleExit.Initialize(this);
   yield return ()=>CorpseCleanup.Initialize();
   yield return ()=>EntertainmentControl.Initialize(this);
   yield return LaserEyes.Initialize;
@@ -432,7 +433,7 @@ internal class Overlay {
     var m=entry.Marker;var point=entry.Screen;var color=LootColor(m.Color,opacity);
     Box(new Rect(point.x-4,point.y-4,8,8),color);
     string title=m.Name.Split('\n')[0];
-    
+
     float width=Math.Min(520,style.CalcSize(new GUIContent(I18n.Text(title))).x+12);
     var rect=new Rect(point.x+10,point.y-lastFont/2f,width,lastFont+8);
     // Keep the anchor exact. Suppress crowded titles instead of moving their positions.

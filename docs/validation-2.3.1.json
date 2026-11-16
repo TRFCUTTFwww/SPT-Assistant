@@ -1,0 +1,42 @@
+{
+  "version": "2.3.1",
+  "date": "2026-11-16",
+  "target": "SPT 5.0 BE / EFT 1.3.0.1.48558",
+  "builds": "Client, integrated server, admin, raid controls and Quickhacks compile; client retains two pre-existing nullable warnings.",
+  "offlineChecks": {
+    "profileBackup": 41,
+    "releaseBoundariesAndRouting": 34,
+    "quickhackExistingSuite": 93806,
+    "projecteRules": 68,
+    "raidControls": "native generation/inventory/repair check groups passed",
+    "gearMail": "native rules, immutable live-profile bytes and cross-account SPT converter passed",
+    "clientProbe": "existing binary/source regression suite passed"
+  },
+  "isolatedServer": {
+    "enabledChecks": 108,
+    "disabledFunItemChecks": 5,
+    "coverage": [
+      "SQLite snapshots and actual native profile persistence",
+      "stash restore and complete restore",
+      "stale revision and mismatched preview rejection",
+      "pre-restore automatic rollback snapshot",
+      "new-account identity preservation and item remapping",
+      "energy/hydration maximum and current value persistence",
+      "fun-item templates retained while acquisition disabled",
+      "restart required before saved fun-item preference takes effect",
+      "handheld time-watch native registration"
+    ]
+  },
+  "installerChecks": 33,
+  "installerChecksStatus": "passed",
+  "productionModified": false,
+  "inRaidVerified": false,
+  "remainingInRaidValidation": [
+    "Armored train movement, timing, sounds and extraction",
+    "Boundary sniper protection in actual trigger zones",
+    "Zero-cash vehicle extraction and BTR services",
+    "Zryachiy weapon-glitch behavior",
+    "BTR stop-marker placement and live hydration/energy maxima"
+  ],
+  "broadTestingCompleted": false
+}

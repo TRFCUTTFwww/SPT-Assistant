@@ -162,6 +162,7 @@ internal static partial class InterfaceMenu {
   var old=GUI.color;GUI.color=selected?Accent:Text;button!.wordWrap=I18n.English;button.fontSize=14;if(I18n.English){var content=new GUIContent(value);while(button.fontSize>10&&button.CalcHeight(content,Math.Max(1,rect.width))>rect.height)button.fontSize--;}
   bool clicked=GUI.Button(rect,value,button);GUI.color=old;return clicked;
  }
+ internal static string PasswordField(Rect rect,string value){Styles();Surface(rect,Color.Lerp(Background,Text,.085f),6);var old=GUI.color;GUI.color=Text;var result=GUI.PasswordField(rect,value,'●',field);GUI.color=old;return result;}
  internal static string Field(Rect rect,string value){Styles();Surface(rect,Color.Lerp(Background,Text,.085f),6);var old=GUI.color;GUI.color=Text;var result=GUI.TextField(rect,value,field);GUI.color=old;return result;}
  internal static float ButtonHeight(string value,float width,float minimum=44){value=I18n.Text(value);Styles();return Math.Max(minimum,wrappedButton!.CalcHeight(new GUIContent(I18n.Text(value)),Math.Max(1,width)));}
  internal static float ParagraphHeight(string value,float width,int size=14){value=I18n.Text(value);Styles();wrappedLabel!.fontSize=size;return wrappedLabel.CalcHeight(new GUIContent(I18n.Text(value)),Math.Max(1,width));}
@@ -195,7 +196,7 @@ internal static partial class InterfaceMenu {
    if(contextKeys){HotkeyPage.Draw(content,category);return;}
    if(category=="主页面"){HomeDashboard.Draw(content);return;}if(category=="杂项"){MiscPanel.Draw(content);return;}
    var pages=MenuSections.Pages(category);if(!pages.Contains(otherPage))otherPage=pages[0];string next=Tabs(content,pages,otherPage,out float tabsHeight);if(next!=otherPage)Navigate(category,next);content.y+=tabsHeight;content.height-=tabsHeight;
-   if(category=="服务端"){ServerControlPanel.Draw(content,otherPage);return;}if(category=="剧情"){StoryPanel.Draw(content,otherPage);return;}if(category=="数据"&&otherPage!="角色管理"){CharacterDataPanel.Draw(content,otherPage);return;}if(category=="AI 工作台"){AiWorkspace.Draw(content,otherPage);return;}if(category=="玩具枪工具"){ToyDeveloper.DrawWorkspace(content,otherPage);return;}if(category=="战局与物资"&&otherPage=="活动控制"){SeasonalEventControls.Draw(content);return;}
+   if(category=="服务端"){ServerControlPanel.Draw(content,otherPage);return;}if(category=="剧情"){StoryPanel.Draw(content,otherPage);return;}if(category=="数据"&&otherPage is not ("角色管理" or "存档备份")){CharacterDataPanel.Draw(content,otherPage);return;}if(category=="AI 工作台"){AiWorkspace.Draw(content,otherPage);return;}if(category=="玩具枪工具"){ToyDeveloper.DrawWorkspace(content,otherPage);return;}if(category=="战局与物资"&&otherPage=="活动控制"){SeasonalEventControls.Draw(content);return;}
    if(category=="战局与物资"&&otherPage=="地图模式"){EventRaidLauncher.Draw(content);return;}
    switch((category,otherPage)){
     case ("枪械编辑","枪械参数"):WeaponEditor.Draw(content);break;
@@ -220,7 +221,7 @@ internal static partial class InterfaceMenu {
     case ("开发工具","角色管理"):ProfileAdminPanel.Draw(content);break;
     case ("模型与镜头","自由镜头"):DirectorStage.Draw(content);break;
     case ("镜头与画面","界面布局"):DrawAppearance(content);break;
-    case ("战局与物资","时间与环境"):scroll=GUI.BeginScrollView(content,scroll,new Rect(0,0,content.width-20,980));RaidClock.DrawPanel(new Rect(4,4,content.width-32,964));GUI.EndScrollView();break;
+    case ("战局与物资","时间与环境"):scroll=GUI.BeginScrollView(content,scroll,new Rect(0,0,content.width-20,1160));RaidClock.DrawPanel(new Rect(4,4,content.width-32,1144));GUI.EndScrollView();break;
     case ("战局与物资","本局物资"):RaidLoot.Draw(content);break;
     case ("战局与物资","范围拾取"):ForceLoot.Draw(content);break;
     case ("物品与装备","修理与耐久"):ArmorCare.Draw(content);break;
@@ -229,13 +230,16 @@ internal static partial class InterfaceMenu {
     case ("战局与物资","任务物资"):TaskNeeds.Draw(content);break;
     case ("传送与导航","任务定位"):QuestLocations.Draw(content);break;
     case ("载具与空投","BTR 控制"):BtrControl.Draw(content);break;
+    case ("载具与空投","装甲列车"):TrainControl.Draw(content);break;
     case ("载具与空投","空投控制"):AirdropControl.Draw(content);break;
     case ("传送与导航","角色传送"):TeleportControl.Draw(content);break;
     case ("传送与导航","路面导航"):GroundNavigation.Draw(content);break;
     case ("传送与导航","撤离定位"):ExfilDisplay.DrawQuickActions(new Rect(content.x,content.y,content.width,46));DrawSettings(new Rect(content.x,content.y+58,content.width,content.height-58));break;
+    case ("人物与移动","交互能力"):DrawSettings(new Rect(content.x,content.y,content.width,Math.Max(100,content.height-120)));QuickhackSettingsBridge.DrawDoorToggle(new Rect(content.x,content.yMax-110,content.width,100));break;
     case ("物品与装备","添加物品"):ItemSpawner.Draw(content);break;
     case ("物品与装备","玩家枪械预设"):PlayerWeaponPresets.Draw(content);break;
     case ("物品与装备","整套装备"):LoadoutPlans.Draw(content);break;
+    case ("数据","存档备份"):ProfileBackupPanel.Draw(content);break;
     case ("设置与热键","全部热键"):HotkeyPage.Draw(content);break;
     case ("设置与热键","版本更新"):UpdateChecker.Draw(content);break;
     case ("设置与热键","配置方案"):ConfigProfiles.Draw(content);break;
@@ -290,7 +294,7 @@ internal static partial class InterfaceMenu {
    if(Button(new Rect(rect.x+108,rect.y,55,30),"应用")){object? requested=null;if(value is int&&int.TryParse(raw,NumberStyles.Integer,CultureInfo.InvariantCulture,out int integer))requested=integer;else if(value is float&&float.TryParse(raw,NumberStyles.Float,CultureInfo.InvariantCulture,out float real)&&float.IsFinite(real))requested=real;if(requested!=null&&(range==null||range.IsValid(requested))){entry.BoxedValue=requested;drafts.Remove(entry);}else FeatureToasts.Show("数值无效或超出该参数的实际约束，请检查输入。 ");}
    float chosen=Slider(new Rect(rect.x+180,rect.y+8,Math.Max(30,rect.width-180),20),(float)Math.Clamp(number,low,high),(float)low,(float)high);
    if(Math.Abs(chosen-Math.Clamp(number,low,high))>Math.Max(.0001,(high-low)/2000)){entry.BoxedValue=value is int?(object)(int)Math.Round(chosen):chosen;drafts.Remove(entry);}
-  }else if(value is string str){var raw=Field(new Rect(rect.x,rect.y,rect.width-70,30),drafts.TryGetValue(entry,out var draft)?draft:str);drafts[entry]=raw;if(Button(new Rect(rect.xMax-62,rect.y,62,30),"应用"))entry.BoxedValue=raw;}
+  }else if(value is string str){var raw=(entry.Definition.Key=="Update proxy password"?(Func<Rect,string,string>)PasswordField:Field)(new Rect(rect.x,rect.y,rect.width-70,30),drafts.TryGetValue(entry,out var draft)?draft:str);drafts[entry]=raw;if(Button(new Rect(rect.xMax-62,rect.y,62,30),"应用"))entry.BoxedValue=raw;}
   else Label(rect,value.ToString()??"");
  }
  static ConfigEntryBase? capture;

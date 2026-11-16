@@ -62,6 +62,9 @@ internal static class AiHacks {
         // Run after optional AI management prefixes that reject same-squad goals.
         h.Patch(AccessTools.PropertySetter(typeof(BotMemory),"GoalEnemy"),prefix:new HarmonyMethod(typeof(AiHacks),nameof(KeepMadGoal)) { priority=Priority.Last });
         h.Patch(AccessTools.Method(typeof(Player.FirearmController),"SetTriggerPressed",[typeof(bool)]),prefix:new HarmonyMethod(typeof(AiHacks),nameof(AllowTrigger)));
+        h.Patch(AccessTools.Method(typeof(Player.FirearmController),"Shot",[typeof(EFT.InventoryLogic.Weapon),typeof(EFT.InventoryLogic.Ammo),typeof(int),typeof(bool)]),prefix:new HarmonyMethod(typeof(AiHacks),nameof(AllowShot)));
+        h.Patch(AccessTools.Method(typeof(Player.FirearmController),"InitiateShot"),prefix:new HarmonyMethod(typeof(AiHacks),nameof(AllowShot)));
+        Patch(typeof(ShootData),"Shoot",before:nameof(AllowBotShot));
         // CanPressTrigger is an IL2CPP shared constant-return body in EFT 48558.
         // Detouring it also intercepts hundreds of unrelated object types.
         // SetTriggerPressed has the dedicated native entry point we need.
@@ -83,7 +86,9 @@ internal static class AiHacks {
     static void Know(EnemyInfo __instance,ref bool __result) { if(Timed(wiped,__instance.Owner)) __result=false; else if(IsHostile(__instance.Owner,__instance.Person)) __result=true; }
     static bool Timed(Dictionary<IntPtr,(ActorRef Ref,float Until)> effects,BotOwner? owner)=>owner!=null&&effects.TryGetValue(owner.Pointer,out var state)&&Time.unscaledTime<state.Until&&state.Ref.Resolve()!=null;
     static bool CannotFire(Player? actor)=>actor!=null&&!actor.IsYourPlayer&&(Timed(jammed,actor.AIData?.BotOwner)||Timed(wiped,actor.AIData?.BotOwner));
-    static bool AllowTrigger(Player.FirearmController __instance,bool __0)=>!__0||!CannotFire(__instance._player);
+    static void AllowTrigger(Player.FirearmController __instance,ref bool __0){if(__0&&CannotFire(__instance._player))__0=false;}
+    static bool AllowShot(Player.FirearmController __instance)=>!CannotFire(__instance._player);
+    static bool AllowBotShot(ShootData __instance,ref bool __result){if(!CannotFire(__instance._player))return true;__instance.EndShoot();__result=false;return false;}
     static void KeepMovementLocked(BotMover __instance) {
         foreach(var state in movement.Values) if(state.Mover.Pointer==__instance.Pointer&&Time.unscaledTime<state.Until&&state.Ref.Resolve()!=null) { __instance.Pause=true; __instance._pauseEndTime=float.MaxValue; break; }
     }

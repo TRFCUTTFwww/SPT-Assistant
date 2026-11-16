@@ -13,7 +13,7 @@ namespace LocalQuickhacks;
 internal static class Plugin {
     internal static ManualLogSource Logger = null!;
     internal static ConfigEntry<KeyCode> ScanKey = null!, PreviewKey = null!;
-    internal static ConfigEntry<bool> Enabled = null!;
+    internal static ConfigEntry<bool> Enabled = null!,DoorHackingEnabled=null!;
     internal static ConfigEntry<float> Range = null!, Volume = null!;
     internal static ConfigEntry<float> ScannerSpeed = null!;
     internal static ConfigEntry<bool> InfiniteRam = null!;
@@ -22,6 +22,7 @@ internal static class Plugin {
     internal static void Configure(ConfigFile Config,ManualLogSource log) {
         Logger = log;
         Enabled = Config.Bind("General", "Enabled", true, "启用独立快速破解 Mod。");
+        DoorHackingEnabled=Config.Bind("Gameplay","Keycard hacking enabled",true,"允许在原生门卡交互菜单中显示破解；关闭后取消破解入口和尚未完成的授权。");
         ScanKey = Config.Bind("Input", "Scanner key", KeyCode.LeftControl, "按住扫描，鼠标转动视角，滚轮选技能，F 上传。");
         PreviewKey = Config.Bind("Input", "Preview key", KeyCode.F10, "打开界面与无伤害施放预览，支持主菜单。");
         ScannerSpeed = Config.Bind("Gameplay", "Scanner time factor", .15f, new ConfigDescription("快速破解扫描时的时间倍率（相对于打开前的速度），退出后恢复。1 为正常速度。",new AcceptableValueRange<float>(.02f,1)));
@@ -87,7 +88,7 @@ public static class QuickhackApi {
     public static bool Active=>Runtime.Active;
     public static bool IsHostile(BotOwner owner,IPlayer target)=>Runtime.Active&&AiHacks.IsHostile(owner,target);
     // Shared BepInEx types keep the optional Assistant panel independent of this assembly.
-    public static ConfigEntryBase[] GetSettings()=>[Plugin.Enabled,Plugin.InfiniteRam,Plugin.Range,Plugin.ScannerSpeed,Plugin.GatewayRange,Plugin.GatewayTargets,Plugin.GatewayHopTime,Plugin.Volume];
+    public static ConfigEntryBase[] GetSettings()=>[Plugin.Enabled,Plugin.DoorHackingEnabled,Plugin.InfiniteRam,Plugin.Range,Plugin.ScannerSpeed,Plugin.GatewayRange,Plugin.GatewayTargets,Plugin.GatewayHopTime,Plugin.Volume];
     public static string Version=>"0.6.2";
     public static int Frames=>Runtime.Frames;
     public static string Diagnostics()=>System.Text.Json.JsonSerializer.Serialize(new { version=Version,frames=Frames,mode=Runtime.Mode.ToString(),status=Runtime.Status,menuAppends=DoorHacking.MenuCount,aiEffects=AiHacks.ActiveCount,uploading=Runtime.Uploading });

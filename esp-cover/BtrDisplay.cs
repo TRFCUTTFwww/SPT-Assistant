@@ -10,7 +10,8 @@ using UnityEngine;
 namespace LocalSpt5Esp;
 internal static class BtrDisplay {
  internal static ConfigEntry<bool> Enabled=null!;
- internal static ConfigEntry<bool> Esp=null!;
+ internal static ConfigEntry<bool> Esp=null!,StopMarkers=null!;
+ static ConfigEntry<int> stopDistance=null!;
  internal static string Status {get;private set;}="";
  internal static int Revision {get;private set;}
  static IntPtr worldPointer;
@@ -18,6 +19,8 @@ internal static class BtrDisplay {
  static string lastStopId="",requestedId="",incomingId="",lastDiagnostic="";
  internal static void Initialize(Plugin plugin){
   Enabled=CnConfig.Bind(plugin.Config,"18. BTR","Enabled",true);
+  StopMarkers=FeatureConfig.Bind("18. BTR","Stop marker enabled","显示 BTR 站点位置",false,"在视觉 → BTR 站点开启，显示当前地图原生站点名称、距离与空间位置。");
+  stopDistance=FeatureConfig.Bind("18. BTR","Stop marker distance","BTR 站点最远显示距离",2000,"单位：米。",new AcceptableValueRange<int>(50,10000));
   Esp=FeatureConfig.Bind("18. BTR","BTR ESP","BTR 透视定位",true,"显示 BTR 的方框、位置、距离和当前路线状态，独立于路线信息窗。");
   Hook(plugin,typeof(BtrController),"MoveToDestination",new[]{typeof(string),typeof(int)},nameof(AfterMove));
   Hook(plugin,typeof(BtrController),"OnIncomingToDestination",new[]{typeof(PathDestination),typeof(bool),typeof(bool),typeof(bool)},nameof(AfterIncoming));
@@ -52,6 +55,9 @@ internal static class BtrDisplay {
  static string NearestStop(BtrController controller,Vector3 position){var destinations=controller.MapPathsConfiguration?.PathDestinations;if(destinations==null)return "";float best=70f*70f;string id="";foreach(var destination in destinations){if(destination==null||string.IsNullOrWhiteSpace(destination.id))continue;var delta=destination.transform.position-position;float distance=delta.x*delta.x+delta.z*delta.z;if(distance>=best)continue;best=distance;id=destination.id;}return id;}
  internal static void DrawMarker(Camera camera,Player player){
   foreach(var marker in Markers(player))VehicleEsp.Draw(camera,marker);
+  if(!StopMarkers.Value||!RaidClock.Active)return;var current=Singleton<GameWorld>.Instance;var stops=current?.BtrController?.MapPathsConfiguration?.PathDestinations;if(stops==null)return;
+  foreach(var stop in stops){if(stop==null||string.IsNullOrWhiteSpace(stop.id))continue;var position=stop.transform.position;float distance=Vector3.Distance(player.Position,position);if(distance>stopDistance.Value)continue;var screen=OverlayProjection.ScreenPoint(camera,position+Vector3.up*1.5f);if(screen.z<=.1f)continue;InterfaceMenu.Label(new Rect(screen.x-130,Screen.height-screen.y,260,42),"BTR 站点 · "+StopName(current!,stop.id)+" · "+distance.ToString("F0")+" m",new Color(.35f,.85f,1),13,outline:true);}
+
  }
  internal static IEnumerable<VehicleEsp.Marker> Markers(Player player){
   if(!Esp.Value||BtrControl.Disabled)yield break;var controller=Singleton<GameWorld>.Instance?.BtrController;var view=controller?.BtrView;if(view==null||!view.gameObject.activeInHierarchy)yield break;

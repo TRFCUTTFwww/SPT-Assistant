@@ -33,7 +33,14 @@ public sealed class DeveloperTrader(TemplateTable templates,TradersTable traders
   var prices=templates.Handbook!.Items!.Where(x=>x.Price>0).GroupBy(x=>x.Id.ToString()).ToDictionary(x=>x.Key,x=>x.First().Price!.Value);
   var custom=templates.Items.Where(x=>!vanilla.Contains(x.Key.ToString())&&prices.ContainsKey(x.Key.ToString())&&x.Value.Properties?.QuestItem!=true).Select(x=>x.Key.ToString()).ToHashSet();
   var all=traders.Values.Where(t=>t.Assort!=null).ToArray();
-  foreach(string template in custom.Order()){
+  bool FunAvailable(string id){
+#if SPT_ASSISTANT_SERVER
+   return LocalGearMail.FunItemPolicy.EnabledAtStartup||!LocalGearMail.FunItemPolicy.IsFunTemplate(id);
+#else
+   return true;
+#endif
+  }
+  foreach(string template in custom.Where(FunAvailable).Order()){
    var original=all.SelectMany(t=>t.Assort.Items.Select(item=>(Trader:t,Item:item))).FirstOrDefault(x=>x.Item.Template.ToString()==template&&x.Item.ParentId=="hideout");
    var origin=original.Trader;var rootItem=original.Item;
    MongoId rootOffer=Offer(template);

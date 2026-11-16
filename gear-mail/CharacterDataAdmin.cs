@@ -15,6 +15,8 @@ using SPTarkov.Server.Core.Utils;
 namespace LocalGearMail;
 
 public class CharacterDataRequest:IRequestData {
+ [JsonPropertyName("categories")] public string[] Categories{get;set;}=[];
+ [JsonPropertyName("preview")] public string Preview{get;set;}="";
  [JsonPropertyName("settings")] public Dictionary<string,System.Text.Json.JsonElement> Settings{get;set;}=[];
  [JsonPropertyName("revision")] public string Revision{get;set;}="";
  [JsonPropertyName("expectedValue")] public double? ExpectedValue{get;set;}
@@ -42,6 +44,7 @@ public class CharacterDataService(SaveServer saves,JsonUtil json,HttpResponseUti
    if(request.Action is "status" or "healthStatus")return Status(profile);
    if(request.Action=="serverStatus")return ServerSettingsService.Handle(request,http,pmc);
    var location=profile.InraidData?.Location;if(!string.IsNullOrEmpty(location)&&location!="none"&&location!="hideout")throw new ArgumentException("请先退出战局。");
+   if(request.Action is "backupList" or "backupCreate" or "backupPreview" or "backupRestore")return await ProfileBackupService.Handle(request,session,profile,saves,json,http,templates,ct);
    if(request.Action=="serverSave")return ServerSettingsService.Handle(request,http,pmc);
    if(request.Action is "finishCrafts" or "craftStatus")return await HideoutCraftService.Handle(request,session,profile,saves,json,http,ct);
    if(request.Action=="repairRaidStash")return await RaidStashService.Handle(request,session,profile,saves,json,http,ct);
@@ -56,11 +59,16 @@ public class CharacterDataService(SaveServer saves,JsonUtil json,HttpResponseUti
     case "bodyHealth":{
      var health=pmc.Health??throw new ArgumentException("当前角色没有生命值数据。");
      string[] allowed=["Head","Chest","Stomach","LeftArm","RightArm","LeftLeg","RightLeg"];
-     if(request.Settings.Count!=allowed.Length||allowed.Any(part=>!request.Settings.ContainsKey(part)))throw new ArgumentException("必须提供全部七个部位的生命值。");
+     if(request.Settings.Count is not (7 or 9)||allowed.Any(part=>!request.Settings.ContainsKey(part))||request.Settings.Keys.Any(key=>!allowed.Contains(key)&&key is not ("Energy" or "Hydration")))throw new ArgumentException("必须提供全部七个部位的生命值。");
      var raw=System.Text.Json.Nodes.JsonNode.Parse(json.Serialize(health)!)!;
      foreach(string part in allowed){var value=request.Settings[part];double maximum=value.GetProperty("maximum").GetDouble(),current=value.GetProperty("current").GetDouble();
       if(!double.IsFinite(maximum)||!double.IsFinite(current)||maximum<.01||maximum>100000000||current<0||current>maximum)throw new ArgumentException("血量须满足：0 ≤ 当前值 ≤ 最大值，且最大值大于零。");
       var state=raw["BodyParts"]![part]!["Health"]!;state["Maximum"]=maximum;state["Current"]=current;
+     }
+     foreach(string vital in new[]{"Energy","Hydration"})if(request.Settings.TryGetValue(vital,out var value)){
+      double maximum=value.GetProperty("maximum").GetDouble(),current=value.GetProperty("current").GetDouble();
+      if(!double.IsFinite(maximum)||!double.IsFinite(current)||maximum<.01||maximum>100000000||current<0||current>maximum)throw new ArgumentException("能量和水分须满足 0 ≤ 当前值 ≤ 最大值，最大值大于零。");
+      if(raw[vital] is not System.Text.Json.Nodes.JsonObject state)throw new ArgumentException("存档缺少能量或水分数据。");state["Maximum"]=maximum;state["Current"]=current;
      }
      T Decode<T>(string text,T sample)=>json.Deserialize<T>(text)!;
      pmc.Health=Decode(raw.ToJsonString(),health);break;
@@ -72,7 +80,7 @@ public class CharacterDataService(SaveServer saves,JsonUtil json,HttpResponseUti
    await saves.SaveProfileAsync(session);committed=true;
    if(request.Action is "deposit" or "wallet")try{await notifications.SendMessageAsync(session,new WsExpansionsBalance{EventType=NotificationEventType.UpdateAccountTarcoinBalance,Balance=pmc.TarCoinBalance??0});}catch{/* The durable balance is returned even if the client disconnected. */}
    return Status(profile);
-  }catch(Exception error){if(snapshot!=null&&!committed)saves.GetProfiles()[session]=snapshot;return http.GetBody(new{ok=false},(BackendErrorCodes)228,error is ArgumentException?error.Message:"保存失败，请刷新角色数据后重试。");}
+  }catch(Exception error){if(snapshot!=null&&!committed)saves.GetProfiles()[session]=snapshot;return http.GetBody(new{ok=false},(BackendErrorCodes)228,error is ArgumentException||request.Action.StartsWith("backup",StringComparison.Ordinal)&&error is IOException?error.Message:"保存失败，请刷新角色数据后重试。");}
   finally{gate.Release();}
  }
  string Status(SptProfile profile){var pmc=profile.CharacterData!.PmcData!;return http.GetBody(new{ok=true,balance=pmc.TarCoinBalance??0,coins=CharacterDataRules.PhysicalCoins(pmc),health=pmc.Health,skills=pmc.Skills?.Common?.Select(skill=>new{id=skill.Id.ToString(),level=skill.Progress/100}),achievements=(templates.Achievements??[]).Concat(templates.CustomAchievements??[]).DistinctBy(entry=>entry.Id).Select(entry=>new{id=entry.Id.ToString(),unlocked=pmc.Achievements?.ContainsKey(entry.Id)==true})});}
