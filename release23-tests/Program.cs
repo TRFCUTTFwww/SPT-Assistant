@@ -20,6 +20,10 @@ using SPTarkov.Server.Core.Services.InRaid;
 int checks=0;
 void Check(bool ok,string label){if(!ok)throw new Exception(label);checks++;Console.WriteLine("PASS "+label);}
 void Reject(Action action,string label){try{action();}catch(ArgumentException){Check(true,label);return;}throw new Exception(label);}
+Check(TrainTimeRules.Parse("1","2","3")==3723,"train HMS input preserves hour/minute/second units");
+Check(TrainTimeRules.Parse("168","0","0")==604800&&TrainTimeRules.Parse("0","0","0")==0,"train duration retains original zero and seven-day bounds");
+foreach(var value in new[]{("0","60","0"),("0","0","60"),("-1","0","0"),("1.5","0","0"),("168","0","1")})Reject(()=>TrainTimeRules.Parse(value.Item1,value.Item2,value.Item3),"train rejects invalid HMS input "+value);
+Check(TrainTimeRules.Clock(3661.1)=="01:01:02"&&TrainTimeRules.Clock(-1)=="00:00:00"&&TrainTimeRules.Clock(double.NaN)=="--:--:--","train display keeps total hours, rounds remaining seconds up and handles missing timings");
 Check(MenuSections.Group("4. AI ignore","Enabled")=="人物与移动"&&MenuSections.OnPage("人物与移动","生存防护","4. AI ignore","Enabled"),"AI ignore routes to character protection");
 Check(MenuSections.Group("3. Keys","AI ignore toggle")=="人物与移动"&&MenuSections.OnPage("人物与移动","生存防护","3. Keys","AI ignore toggle"),"AI ignore hotkey follows the same character page");
 Check(MenuSections.Group("17. Force doors")=="人物与移动"&&MenuSections.OnPage("人物与移动","交互能力","17. Force doors","Enabled"),"forced breach routes to character interaction abilities");

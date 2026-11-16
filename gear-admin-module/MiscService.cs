@@ -30,7 +30,7 @@ public static class MiscService {
  public static bool Install(SaveServer server,JsonUtil serializer,TemplateTable templates){
   saves=server;json=serializer;Options=File.Exists(FilePath)?JsonSerializer.Deserialize<MiscSettings>(File.ReadAllText(FilePath))??new():new();
   secureTemplates=templates.Items.Values.Where(t=>t.Type=="Item"&&t.Parent.ToString()=="5448bf274bdc2dfc2f8b456a"&&t.Properties?.Grids?.Any()==true).Select(t=>t.Id.ToString()).OrderBy(id=>id==ScavSecureRules.Alpha?0:1).ThenBy(id=>id).ToArray();
-  var h=new Harmony("local.spt5.misc");h.UnpatchSelf();FleaAutomation.Install(h);
+  var h=new Harmony("local.spt5.misc");h.UnpatchSelf();FleaAutomation.Install(h);ClearanceSales.Install(h);
   void Patch(Type type,string name,string? prefix=null,string? postfix=null){var method=AccessTools.Method(type,name)??throw new MissingMethodException(type.Name,name);h.Patch(method,prefix:prefix==null?null:new HarmonyMethod(typeof(MiscService),prefix),postfix:postfix==null?null:new HarmonyMethod(typeof(MiscService),postfix));}
   Patch(typeof(InsuranceService),"GetRoublePriceToInsureItemWithTrader",postfix:nameof(Premium));
   Patch(typeof(InsuranceController),"FindItemsToDelete",nameof(KeepInsured));
@@ -90,7 +90,7 @@ public static class MiscService {
   }finally{Gate.Release();}
  }
  static void Premium(ref double __result){if(Options.FreeInsurance)__result=0;}
- static void TraderSupply(ref TraderAssort __result){if(Options.UnlimitedTraderPurchases&&__result!=null)__result=TraderSupplyRules.Copy(__result,json);}
+ static void TraderSupply(ref TraderAssort __result){if((Options.UnlimitedTraderPurchases||ClearanceSales.CheapTrader)&&__result!=null)__result=TraderSupplyRules.Copy(__result,json,Options.UnlimitedTraderPurchases,ClearanceSales.CheapTrader);}
  static bool ConsumeFenceStock()=>!Options.UnlimitedTraderPurchases;
  static bool PurchaseLimit()=>!Options.UnlimitedTraderPurchases;
  static void FleaTax(ref double __result){if(Options.FreeFlea)__result=0;}

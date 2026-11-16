@@ -3772,5 +3772,16 @@
   "诚信经营 · 免手续费": "Honest business · No flea fees",
   "Scav 出战时，普通 Scav 与 BOSS（含保镖）将你视为中立；攻击或击杀后不因报复而转为敌对。PMC 和其他真人玩家不受影响。不修改 Fence 好感，与背叛者独立。": "During player-Scav raids, AI Scavs, bosses and followers stay neutral even after attacks or kills. Does not affect PMCs, human players or Fence reputation. Independent of Traitor.",
   "跳蚤市场上架报价与最终扣款均为 0，包括客户端缓存的手续费；已打开的上架窗口会自动刷新。": "Zero flea listing quotes and final fees, including cached client tax. Open listing windows refresh automatically.",
-  "成功上架的玩家跳蚤挂单立即全部售出，购买者显示为 Assistant；货款通过原生 Ragman 邮件结算，正常更新跳蚤信誉。关闭后新挂单恢复原生出售速度。": "Immediately sell successful new player flea listings. Buyer: Assistant. Payment uses native Ragman mail and updates flea reputation. Disable to restore normal sales for new offers."
+  "成功上架的玩家跳蚤挂单立即全部售出，购买者显示为 Assistant；货款通过原生 Ragman 邮件结算，正常更新跳蚤信誉。关闭后新挂单恢复原生出售速度。": "Immediately sell successful new player flea listings. Buyer: Assistant. Payment uses native Ragman mail and updates flea reputation. Disable to restore normal sales for new offers.",
+  "清仓甩卖（商人）": "Clearance sale (traders)",
+  "清仓甩卖（市场）": "Clearance sale (market)",
+  "添加战局内发现标记": "Add found-in-raid status",
+  "移除战局内发现标记": "Remove found-in-raid status",
+  "已添加战局内发现标记": "Found-in-raid status added",
+  "已移除战局内发现标记": "Found-in-raid status removed",
+  "读取当前倒计时": "Read current countdowns",
+  "距离到站": "Time until arrival",
+  "距离发车": "Time until departure",
+  "商人在售商品的每项需求数量改为 1，保留原币种及物物交换需求物品。仅改变购买价；库存、限购、解锁及回收价不变。关闭后刷新商人恢复原价。": "Set each trader offer requirement to one unit, keeping its original currency or barter item. Purchase price only; stock, limits, unlocks and buyback prices stay unchanged. Disable and refresh the trader to restore original prices.",
+  "跳蚤市场在售商品的每项需求数量改为 1，保留原币种及物物交换需求物品。玩家自己和其他真人的挂单售价不变；关闭后刷新市场恢复原价。": "Set market offer requirements to one unit, keeping the original currency or barter item. Real-player listings keep their chosen sale prices. Disable and refresh the market to restore original prices."
 }

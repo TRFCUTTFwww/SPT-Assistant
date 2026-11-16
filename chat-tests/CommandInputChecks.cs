@@ -36,6 +36,10 @@ internal static class CommandInputChecks {
   Check(Current("/msg Friend a multi word message ").Contains("消息"),"freeform chat remains on the message parameter");
   Check(ChatCommandHints.For("hello",5).Syntax==""&&ChatCommandHints.For("//time",6).Syntax=="","plain and escaped chat hide command previews");
   Check(ChatCommandHints.For("/tp \"unfinished",15).Syntax.Length>0&&ChatCommandHints.For("/tp ]",5).Syntax.Contains("格式"),"incomplete typing and malformed selectors do not throw from hints");
+  Check(Current("/misc ClearanceMarket ").Contains("on|off|status"),"misc rule commands expose toggle choices after the feature key");
+  Check(Current("/fir abc ").Contains("on|off"),"FIR command exposes the native flag toggle");
+  Check(Current("/train arrival ").Contains("HH:MM:SS"),"train command previews the same HMS input as its panel");
+  foreach(var command in new[]{("misc",new[]{"ClearanceTraders","on"}),("fir",new[]{"abc","off"}),("train",new[]{"departure","00:05:00"})}){ChatCommandSyntax.ValidateArguments(command.Item1,command.Item2);bool denied=false;try{ChatCommandSyntax.ValidateArguments(command.Item1,command.Item2.Append("extra").ToArray());}catch(ArgumentException){denied=true;}Check(denied,"assistant feature command rejects surplus arguments: "+command.Item1);}
   foreach(string command in ChatCommandHints.Usage.Keys)Check(ChatCommandHints.For("/"+command+" ",command.Length+2).Syntax.StartsWith("/"+command),"catalog hint available: "+command);
  }
 }

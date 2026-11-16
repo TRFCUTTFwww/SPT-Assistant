@@ -13,6 +13,8 @@ public sealed record MiscSettings {
  public string ScavSecureTemplate {get;init;}="544a11ac4bdc2d470e8b456a";
  public bool FreeFlea {get;init;}
  public bool InstantFleaSales {get;init;}
+ public bool ClearanceTraders {get;init;}
+ public bool ClearanceMarket {get;init;}
  public bool DiplomaticImmunity {get;init;}
  public bool ExpressInsurance {get;init;}
  public bool UnlimitedTraderPurchases {get;init;}

@@ -17,6 +17,7 @@ namespace LocalSpt5Esp;
 internal static class MiscPanel {
  internal static MiscSettings Options=new();
  static Task<string>? request;static Task<MiscSettings>? reading;static float nextRead;
+ static bool commandRequest;
  static bool requested,syncSecure;static string revision="",status="";static Vector2 scroll;
  static string[] secureTemplates=Array.Empty<string>();static bool choosingSecure;
  static readonly MenuRowLayout layout=new();
@@ -33,9 +34,21 @@ internal static class MiscPanel {
   ("ScavSecure","违禁品","Scav 使用独立安全箱，默认 Alpha，可选择箱型；一键售卖、撤离、阵亡和下一名 Scav 保留箱子及其内容，与 PMC 完全分开。更换箱型前须清空。开启后自动同步当前 Scav，重新打开装备页面查看。"),
   ("FreeFlea","诚信经营 · 免手续费","跳蚤市场上架报价与最终扣款均为 0，包括客户端缓存的手续费；已打开的上架窗口会自动刷新。"),
   ("InstantFleaSales","供不应求","成功上架的玩家跳蚤挂单立即全部售出，购买者显示为 Assistant；货款通过原生 Ragman 邮件结算，正常更新跳蚤信誉。关闭后新挂单恢复原生出售速度。"),
+  ("ClearanceTraders","清仓甩卖（商人）","商人在售商品的每项需求数量改为 1，保留原币种及物物交换需求物品。仅改变购买价；库存、限购、解锁及回收价不变。关闭后刷新商人恢复原价。"),
+  ("ClearanceMarket","清仓甩卖（市场）","跳蚤市场在售商品的每项需求数量改为 1，保留原币种及物物交换需求物品。玩家自己和其他真人的挂单售价不变；关闭后刷新市场恢复原价。"),
   ("ExpressInsurance","加急件","新产生的保险无需等待回送；在服务端下一次保险检查时发信，不改变领取期限。"),
   ("UnlimitedTraderPurchases","供大于求","商人购买无上限")
  };
+ internal static System.Collections.Generic.IEnumerable<(string Key,string Name)> CommandRows=>rows.Select(r=>(r.Key,r.Name));
+ internal static void Command(string[] args){
+  if(args.Length==1&&args[0]=="status"){foreach(var r in rows)RaidChat.Output(r.Key+" · "+r.Name+" = "+typeof(MiscSettings).GetProperty(r.Key)!.GetValue(Options));return;}
+  var row=rows.FirstOrDefault(r=>r.Key.Equals(args[0],StringComparison.OrdinalIgnoreCase)||r.Name==args[0]);if(row.Key==null)throw new ArgumentException("未知杂项规则，请用 /misc 后按 Tab 选择。");
+  if(args.Length==1||args[1]=="status"){RaidChat.Output(row.Name+" = "+typeof(MiscSettings).GetProperty(row.Key)!.GetValue(Options));return;}
+  if(args.Length!=2||args[1] is not ("on" or "off"))throw new ArgumentException("/misc <规则> on|off|status");
+  if(ItemSpawner.InRaid())throw new ArgumentException("请退出战局后修改杂项规则。");if(request!=null)throw new ArgumentException("上一项设置仍在保存。");
+  async Task<string> Save(){using var first=JsonDocument.Parse(await CharacterDataPanel.Call("/local/gear/data","characterData",new(){{"action","miscStatus"}}));var state=CharacterDataPanel.Data(first.RootElement);return await CharacterDataPanel.Call("/local/gear/data","characterData",new(){{"action","miscSave"},{"revision",state.GetProperty("revision").GetString()},{"settings",new Dictionary<string,bool>{{row.Key,args[1]=="on"}}}});}
+  request=Save();commandRequest=true;status="正在保存杂项规则…";
+ }
  internal static string SearchTerms=>string.Join(" ",rows.Select(row=>row.Key+" "+row.Name+" "+row.Help));
  internal static void Initialize(Plugin plugin){
   MiscNativeProtection.Initialize(plugin);FleaFees.Initialize(plugin);
@@ -63,13 +76,13 @@ internal static class MiscPanel {
   try{using var doc=JsonDocument.Parse(request.GetAwaiter().GetResult());var root=doc.RootElement;
    if(root.TryGetProperty("err",out var err)&&err.GetInt32()!=0)status=root.TryGetProperty("errmsg",out var message)?message.GetString()??"操作失败":"操作失败";
    else{var data=CharacterDataPanel.Data(root);Options=JsonSerializer.Deserialize<MiscSettings>(data.GetProperty("settings").GetRawText())!;revision=data.GetProperty("revision").GetString()!;if(data.TryGetProperty("secureTemplates",out var list))secureTemplates=list.EnumerateArray().Select(i=>i.GetString()!).ToArray();status="杂项规则已同步；地图与装备变更请重新登录角色。";if(data.TryGetProperty("scavSecureSync",out var template)&&template.ValueKind==JsonValueKind.String){ScavEquipmentSync.BeginSecure(template.GetString()!);syncSecure=true;status=ScavEquipmentSync.Status;}}
-  }catch{status="杂项模块尚未就绪，请重载管理模块后刷新。";}request=null;ApplyScavCooldown();
+  }catch{status="杂项模块尚未就绪，请重载管理模块后刷新。";}if(commandRequest){RaidChat.Output(status);commandRequest=false;}request=null;ApplyScavCooldown();
  }
  static void ApplyScavCooldown(){
   if(!Options.ScavNoCooldown)return;
   ScavEquipmentSync.ClearCooldown();
  }
- internal static void Reset(){request=null;reading=null;Options=new();requested=syncSecure=false;revision="";secureTemplates=Array.Empty<string>();choosingSecure=false;}
+ internal static void Reset(){request=null;reading=null;Options=new();requested=syncSecure=commandRequest=false;revision="";secureTemplates=Array.Empty<string>();choosingSecure=false;}
  internal static void Draw(Rect rect){
   if(!requested){requested=true;Begin(new(){{"action","miscStatus"}});}
   bool enabled=GUI.enabled;GUI.enabled=enabled&&request==null&&!ScavEquipmentSync.Busy;

@@ -164,7 +164,8 @@ if(!AdminModuleHost.Ready||LoadModule(modulePath))throw new Exception("Failed re
 File.WriteAllBytes(tempModule,File.ReadAllBytes(modulePath).Concat(new byte[]{0}).ToArray());if(!LoadModule(tempModule))throw new Exception("Changed valid module was not swapped");File.Delete(tempModule);
 Console.WriteLine("PASS collectible server module swap, unchanged hash, corrupt candidate preservation and live-generation replacement");
 
-var profilePath=Directory.GetFiles(System.IO.Path.Combine(gameRoot,"SPT_Runtime","user","profiles"),"*.json").First();var diskBefore=File.ReadAllBytes(profilePath);
+var profileSource=Environment.GetEnvironmentVariable("SPT_TEST_PROFILE")??Directory.GetFiles(System.IO.Path.Combine(gameRoot,"SPT_Runtime","user","profiles"),"*.json").First();
+var profilePath=System.IO.Path.Combine(System.IO.Path.GetTempPath(),"assistant-readonly-profile-"+Guid.NewGuid().ToString("N")+".json");File.Copy(profileSource,profilePath);var diskBefore=File.ReadAllBytes(profilePath);
 var clone=nativeJson.Deserialize<SPTarkov.Server.Core.Models.Eft.Profile.SptProfile>(System.Text.Encoding.UTF8.GetString(diskBefore))!;var clonedPmc=clone.CharacterData!.PmcData!;
 long physical=CharacterDataRules.PhysicalCoins(clonedPmc);int walletBefore=clonedPmc.TarCoinBalance??0;string questsBefore=nativeJson.Serialize(clonedPmc.Quests)!;
 if(physical>0&&physical<=int.MaxValue-(long)walletBefore){CharacterDataRules.Deposit(clonedPmc,physical,walletBefore);if(CharacterDataRules.PhysicalCoins(clonedPmc)!=0||clonedPmc.TarCoinBalance!=walletBefore+physical||nativeJson.Serialize(clonedPmc.Quests)!=questsBefore)throw new Exception("Real profile clone deposit changed quests or lost value");}
@@ -351,7 +352,11 @@ Console.WriteLine("PASS native Mechanic wait: unlocks acceptance only, preserves
  var nativeStash=nativeJson.Deserialize<SPTarkov.Server.Core.Models.Eft.Profile.SptProfile>(stashOnly)!;
  if(nativeStash.CharacterData!.PmcData!.Id.ToString()!=newPmc||nativeStash.CharacterData.PmcData.Inventory!.Items!.Count!=native.CharacterData.PmcData.Inventory!.Items!.Count)throw new Exception("Native cross-profile stash restoration changed inventory count");
  if(!File.ReadAllBytes(profilePath).SequenceEqual(diskBefore))throw new Exception("Read-only cross-profile test changed a live profile");
- Console.WriteLine("PASS native SPT cross-account converter: new PMC/Scav identity preserved for full and stash restoration; live files unchanged");
+ Console.WriteLine("PASS native SPT cross-account converter: new PMC/Scav identity preserved for full and stash restoration; immutable profile snapshot unchanged");
 }
 
 Console.WriteLine("Passed "+NativeFleaChecks.Run()+" native flea and diplomacy checks.");
+
+Console.WriteLine("Passed "+ClearanceChecks.Run()+" clearance and FIR checks.");
+
+File.Delete(profilePath);

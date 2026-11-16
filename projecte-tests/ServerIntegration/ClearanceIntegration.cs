@@ -1,0 +1,44 @@
+using System.Text.Json.Nodes;
+internal static class ClearanceIntegration {
+ static readonly string[] Currency=["5449016a4bdc2d6f028b456f","5696686a4bdc2da3298b456a","569668774bdc2da2298b4568"];
+ static string CashId(int i)=>"a231c1ea000000000000"+i.ToString("x4");
+ internal static void Prepare(string fixture){
+  FleaChecks.Prepare(fixture);
+  string file=Directory.GetFiles(Path.Combine(fixture,"user/profiles"),"*.json").Single();var root=JsonNode.Parse(File.ReadAllText(file))!;var pmc=root["characters"]!["pmc"]!;
+  foreach(var trader in pmc["TradersInfo"]!.AsObject()){trader.Value!["loyaltyLevel"]=4;trader.Value["salesSum"]=2000000000;trader.Value["standing"]=10;trader.Value["unlocked"]=true;}
+  var inventory=pmc["Inventory"]!;var items=inventory["items"]!.AsArray();string stash=inventory["stash"]!.GetValue<string>();
+  var db=JsonNode.Parse(File.ReadAllText(Path.Combine(fixture,"SPT_Data/database/templates/items.json")))!;var stashItem=items.Single(i=>i?["_id"]?.GetValue<string>()==stash)!;var grid=db[stashItem["_tpl"]!.GetValue<string>()]!["_props"]!["Grids"]![0]!;int width=grid["_props"]!["cellsH"]!.GetValue<int>(),height=grid["_props"]!["cellsV"]!.GetValue<int>();string slot=grid["_name"]!.GetValue<string>();var taken=new bool[width,height];
+  foreach(var item in items.Where(n=>n?["parentId"]?.GetValue<string>()==stash&&n?["location"] is JsonObject)){var loc=item!["location"]!;int x=loc["x"]!.GetValue<int>(),y=loc["y"]!.GetValue<int>();var props=db[item["_tpl"]!.GetValue<string>()]!["_props"]!;int w=props["Width"]!.GetValue<int>(),h=props["Height"]!.GetValue<int>();if(loc["r"]?.ToString() is "1" or "Vertical")(w,h)=(h,w);for(int xx=x;xx<Math.Min(width,x+w);xx++)for(int yy=y;yy<Math.Min(height,y+h);yy++)if(xx>=0&&yy>=0)taken[xx,yy]=true;}
+  for(int i=0;i<3;i++){int fx=-1,fy=-1;for(int y=0;y<height&&fx<0;y++)for(int x=0;x<width;x++)if(!taken[x,y]){fx=x;fy=y;break;}if(fx<0)throw new Exception("No fixture cash cell");taken[fx,fy]=true;items.Add(new JsonObject{["_id"]=CashId(i),["_tpl"]=Currency[i],["parentId"]=stash,["slotId"]=slot,["location"]=new JsonObject{["x"]=fx,["y"]=fy,["r"]=0},["upd"]=new JsonObject{["StackObjectsCount"]=100,["SpawnedInSession"]=false}});}
+  File.WriteAllText(file,root.ToJsonString());Console.WriteLine("Prepared isolated clearance/FIR fixture with all three currencies.");
+ }
+ internal static async Task<int> Run(Func<JsonObject,string,Task<JsonNode>> call,string fixture){
+  int checks=0;void Check(bool ok,string label){if(!ok)throw new Exception(label);checks++;Console.WriteLine("PASS "+label);}
+  string file=Directory.GetFiles(Path.Combine(fixture,"user/profiles"),"*.json").Single();JsonNode Read()=>JsonNode.Parse(File.ReadAllText(file))!;
+  Check(File.Exists(Path.Combine(fixture,"flea-test-original-profile.json"))&&Read()["characters"]!["pmc"]!["Inventory"]!["items"]!.AsArray().Any(i=>i?["_id"]?.GetValue<string>()==CashId(0)),"clearance tests use prepared isolated profile");
+  string key=File.ReadAllText(Path.Combine(fixture,"user/mods/LocalGearMail/api-key.txt")).Trim();
+  async Task<JsonNode> Admin(string action,JsonObject? values=null){var p=new JsonObject{["apiKey"]=key,["action"]=action};if(values!=null)foreach(var v in values)p[v.Key]=v.Value?.DeepClone();return await call(p,"/local/gear/data");}
+  bool Ok(JsonNode n)=>n["ok"]?.GetValue<bool>()??false;
+  var first=await Admin("miscStatus");var original=first["settings"]!.DeepClone();
+  async Task Save(bool traders,bool market){var current=await Admin("miscStatus");Check(Ok(await Admin("miscSave",new(){["revision"]=current["revision"]!.DeepClone(),["settings"]=new JsonObject{["ClearanceTraders"]=traders,["ClearanceMarket"]=market}})),"clearance switches save independently: "+traders+"/"+market);}
+  async Task Flush(){var current=await Admin("miscStatus");if(!Ok(await Admin("miscSave",new(){["revision"]=current["revision"]!.DeepClone(),["settings"]=new JsonObject()})))throw new Exception("Fixture save failed");}
+  JsonArray Items()=>Read()["characters"]!["pmc"]!["Inventory"]!["items"]!.AsArray();
+  long Money(string currency)=>Items().Where(i=>i?["_tpl"]?.GetValue<string>()==currency).Sum(i=>(long)(i!["upd"]?["StackObjectsCount"]?.GetValue<double>()??1));
+  async Task Move(JsonObject request,string label){var result=await call(new(){["data"]=new JsonArray(request),["tm"]=0},"/client/game/profile/items/moving");Check((result["warnings"]?.AsArray().Count??0)==0&&result["err"]==null,label+" "+result.ToJsonString()[..Math.Min(100,result.ToJsonString().Length)]);await Flush();}
+  string[] traders=["54cb57776803fa99248b456e","5935c25fb3acc3127c3d8cd9","58330581ace78e27b8b10cee"];
+  var quotes=new List<(string Trader,string Id,string Currency,double Price)>();
+  try{
+   await Save(false,false);
+   for(int c=0;c<3;c++){var assort=await call(new(),"/client/trading/api/getTraderAssort/"+traders[c]);var match=assort["barter_scheme"]!.AsObject().FirstOrDefault(p=>p.Value?[0] is JsonArray a&&a.Count==1&&a[0]?["_tpl"]?.GetValue<string>()==Currency[c]&&(a[0]?["count"]?.GetValue<double>()??0)>1);Check(match.Key!=null,"native trader has an original-price offer in currency "+c);quotes.Add((traders[c],match.Key,Currency[c],match.Value![0]![0]!["count"]!.GetValue<double>()));}
+   await Save(true,false);
+   for(int c=0;c<3;c++){var q=quotes[c];var assort=await call(new(),"/client/trading/api/getTraderAssort/"+q.Trader);var req=assort["barter_scheme"]![q.Id]![0]![0]!;Check(req["_tpl"]!.GetValue<string>()==q.Currency&&req["count"]!.GetValue<double>()==1,"native trader quote keeps currency and prices one unit: "+c);long before=Money(q.Currency);await Move(new(){["Action"]="TradingConfirm",["type"]="buy_from_trader",["tid"]=q.Trader,["item_id"]=q.Id,["count"]=1,["scheme_id"]=0,["scheme_items"]=new JsonArray(new JsonObject{["id"]=CashId(c),["count"]=1})},"native trader purchase succeeds in currency "+c);Check(before-Money(q.Currency)==1,"native trader purchase actually deducts one original currency unit: "+c);}
+   await Save(false,true);
+   var restored=await call(new(),"/client/trading/api/getTraderAssort/"+quotes[0].Trader);Check(restored["barter_scheme"]![quotes[0].Id]![0]![0]!["count"]!.GetValue<double>()==quotes[0].Price,"trader clearance off restores exact original price while market clearance remains on");
+   JsonObject Search()=>new(){["page"]=0,["limit"]=100,["sortType"]=5,["sortDirection"]=0,["currency"]=0,["priceFrom"]=0,["priceTo"]=0,["quantityFrom"]=0,["quantityTo"]=0,["conditionFrom"]=0,["conditionTo"]=100,["removeBartering"]=true,["offerOwnerType"]=2,["onlyFunctional"]=false,["handbookId"]="544fb25a4bdc2dfb738b4567",["linkedSearchId"]="",["neededSearchId"]="",["buildItems"]=new JsonObject(),["buildCount"]=0};
+   var market=await call(Search(),"/client/ragfair/find");var offer=market["offers"]!.AsArray().FirstOrDefault(o=>o?["requirements"]?[0]?["_tpl"]?.GetValue<string>()==Currency[0]&&o?["sellInOnePiece"]?.GetValue<bool>()!=true);Check(offer!=null,"native flea search returns purchasable cash offer");Check(offer!["requirements"]![0]!["count"]!.GetValue<double>()==1,"native market quote uses one original currency unit");long beforeMarket=Money(Currency[0]);await Move(new(){["Action"]="RagFairBuyOffer",["offers"]=new JsonArray(new JsonObject{["id"]=offer["_id"]!.DeepClone(),["count"]=1,["items"]=new JsonArray(new JsonObject{["id"]=CashId(0),["count"]=1})})},"native market purchase succeeds");Check(beforeMarket-Money(Currency[0])==1,"native market payment actually deducts one currency unit");
+   await Save(false,false);var normal=await call(Search(),"/client/ragfair/find");Check(normal["offers"]!.AsArray().Any(o=>(o?["requirements"]?[0]?["count"]?.GetValue<double>()??0)>1),"market switch off restores original prices");
+   var mark=new JsonObject{["id"]=CashId(0),["categories"]=new JsonArray("pmc"),["unlocked"]=true,["expectedValue"]=0};Check(Ok(await Admin("itemFoundInRaid",mark)),"authenticated FIR add saves through native profile service");Check(Items().Single(i=>i?["_id"]?.GetValue<string>()==CashId(0))!["upd"]!["SpawnedInSession"]!.GetValue<bool>(),"added FIR flag persists in actual fixture profile");Check(!Ok(await Admin("itemFoundInRaid",mark)),"stale FIR request is rejected");mark["unlocked"]=false;mark["expectedValue"]=1;Check(Ok(await Admin("itemFoundInRaid",mark)),"authenticated FIR removal saves");Check(Items().Single(i=>i?["_id"]?.GetValue<string>()==CashId(0))!["upd"]?["SpawnedInSession"]?.GetValue<bool>()!=true,"removed FIR flag persists");mark["categories"]=new JsonArray("scav");Check(!Ok(await Admin("itemFoundInRaid",mark)),"FIR endpoint cannot change item belonging to a different character");
+  }finally{var current=await Admin("miscStatus");Check(Ok(await Admin("miscSave",new(){["revision"]=current["revision"]!.DeepClone(),["settings"]=original})),"original fixture settings restored");}
+  return checks;
+ }
+}

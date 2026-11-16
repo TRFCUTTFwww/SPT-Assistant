@@ -37,6 +37,7 @@ internal static class ChatCommandSyntax {
    "attribute"=>Count(4,5)&&(a[3]=="get"?a.Length==4:a.Length==5),
    "time"=>a.Length==2&&(first!="query"||a[1]=="daytime"),"weather"=>Count(1,2),"gamerule"=>Count(0,2),
    "raid"=>first=="extract"?a.Length==2:Count(2,3)&&first=="time"&&(a[1]=="query"?a.Length==2:a.Length==3),
+   "misc"=>a.Length is 1 or 2,"fir"=>a.Length==2,"train"=>a.Length is 1 or 2,
    "btr"=>first=="route"?a.Length==2:a.Length==1,"airdrop"=>a.Length==1,
    "marker"=>first=="list"?a.Length==1:first=="remove"?a.Length==2:first=="set"&&a.Length is 2 or 5,
    "navigate"=>a.Length is 1 or 3,"experience" or "xp"=>first=="query"&&Count(2,3)&&(a.Length==2||a[2] is "points" or "levels"),

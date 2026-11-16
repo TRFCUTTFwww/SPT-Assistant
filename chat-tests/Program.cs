@@ -10,6 +10,7 @@ CommandInputChecks.Run();
 CommandOptionsChecks.Run();
 NamedArgumentChecks.Run();
 ItemSearchChecks.Run();
+if(args.Length==1&&args[0]=="--commands"){Console.WriteLine("PASS all command authority, input, options, named arguments and item-search checks");return;}
 static void Check(bool value,string message){if(!value)throw new Exception(message);Console.WriteLine("PASS "+message);}
 using var a=ChatCertificates.Create();using var b=ChatCertificates.Create();
 bool revoked=false;using var broker=new ChatRelayBroker((profile,_)=>revoked&&profile=="b"?Array.Empty<string>():new[]{"chat.send"});

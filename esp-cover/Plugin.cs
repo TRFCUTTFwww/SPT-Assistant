@@ -132,6 +132,7 @@ internal class Plugin {
   yield return ()=>ToyDeveloper.Initialize(this);
   yield return ()=>BtrControl.Initialize(this);
   yield return ()=>FreeVehicleExit.Initialize(this);
+  yield return ()=>ItemFirContext.Initialize(this);
   yield return ()=>CorpseCleanup.Initialize();
   yield return ()=>EntertainmentControl.Initialize(this);
   yield return LaserEyes.Initialize;

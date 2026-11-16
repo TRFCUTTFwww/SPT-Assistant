@@ -5,13 +5,15 @@
   "builds": "Client, integrated server, admin, raid controls and Quickhacks compile; client retains two pre-existing nullable warnings.",
   "offlineChecks": {
     "profileBackup": 41,
-    "releaseBoundariesAndRouting": 34,
+    "releaseBoundariesAndRouting": 42,
     "quickhackExistingSuite": 93806,
     "projecteRules": 68,
     "raidControls": "native generation/inventory/repair check groups passed",
     "gearMail": "native rules, immutable live-profile bytes and cross-account SPT converter passed",
     "clientProbe": "existing binary/source regression suite passed",
-    "fleaAndDiplomacy": 40
+    "fleaAndDiplomacy": 40,
+    "clearanceAndFir": 28,
+    "chatInput": "new misc/FIR/train syntax and hints checked"
   },
   "isolatedServer": {
     "enabledChecks": 108,
@@ -28,8 +30,12 @@
       "restart required before saved fun-item preference takes effect",
       "handheld time-watch native registration",
       "no-cash native flea listings, exact single/pack/multiple Ragman payouts and Assistant buyer",
-      "instant-sale toggle restoration and original flea item/category restrictions"
-    ]
+      "instant-sale toggle restoration and original flea item/category restrictions",
+      "Native trader purchases deduct exactly one ruble, one dollar and one euro",
+      "Native flea purchase deducts one original currency unit; disabled toggles restore original prices",
+      "FIR add/remove persists and stale/wrong-character requests are rejected"
+    ],
+    "clearanceAndFirChecks": 30
   },
   "liveFleaHotfix": {
     "hotReloadConfirmed": true,

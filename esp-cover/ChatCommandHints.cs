@@ -11,6 +11,7 @@ internal static class ChatCommandHints {
  ["edit"]="on|off",["copy"]="[AI|@selected]",["paste"]="[x y z]",["remove"]="<AI|@selected>",["data"]="get entity <目标> [字段] | modify entity <AI> <字段> set value <值>",
  ["give"]="<玩家或AI> <物品名称或item:模板ID或preset:预设> [数量] [edit]",["clear"]="<目标> [物品名称或item:模板ID] [最大数量]",["item"]="replace entity <目标> <装备槽> with <物品> [数量] | modify entity <目标> <槽/附件路径> <参数> <值> | inspect entity <目标> <槽/附件路径>",["loot"]="spawn <x y z> <物品> [数量] | give <目标> loadout:<场景名>",["repair"]="<目标> [装备槽]",["reload"]="<目标> [装备槽] [弹药名称或item:模板ID]",
  ["time"]="set day|noon|night|midnight|<ticks> | add <ticks> | query daytime",["weather"]="clear|rain|thunder [持续秒数]",["gamerule"]="[规则] [值]",["raid"]="time query|set|add [时长] | extract @s",["airdrop"]="summon",["btr"]="status|route <站点ID>|stop",["marker"]="set <名称> [x y z] | remove <名称> | list",["navigate"]="<目标标签|x y z>|stop",
+ ["misc"]="status | <规则> on|off|status",["fir"]="<物品实例ID> on|off",["train"]="status | arrival <now|HH:MM:SS> | departure <now|HH:MM:SS>",
  ["experience"]="query <玩家> [points|levels]",["xp"]="query <玩家> [points|levels]",["attribute"]="<目标> <属性> base get|set [数值]"};
  internal sealed record Preview(string Syntax,string Current);
  internal static bool HasArgument(string command,string[] args,int at)=>Usage.ContainsKey(command)&&at>=0&&(at<Parts(Pattern(command,args)).Length||ChatCommandOptions.KeysFor(command,args).Length>0&&at<=Parts(Pattern(command,args)).Length);
@@ -57,6 +58,8 @@ internal static class ChatCommandHints {
     "relation"=>"relation <AI> <neutral|hostile|default>",
     "anchor"=>"anchor <AI> [on|off]",_=>Usage[command]};
    case "raid":return Arg(0)=="extract"?"extract @s":Arg(1)=="query"?"time query":Arg(1) is "set" or "add"?"time "+Arg(1)+" <时长:15m|900s|hh:mm:ss>":"time|extract [query|set|add|@s] [时长]";
+   case "misc":return Arg(0)=="status"?"status":"<规则> <on|off|status>";
+   case "train":return Arg(0) is "arrival" or "departure"?Arg(0)+" <now|HH:MM:SS>":"status|arrival|departure";
    case "btr":return Arg(0)=="route"?"route <站点ID>":"status|route|stop";
    case "attribute":return Arg(3)=="get"?"<目标> <属性> base get":"<目标> <属性> base get|set [数值]";
   }

@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 if(args.Length is <2 or >3)throw new ArgumentException("Expected isolated fixture server directory and game directory");
 string fixture=Path.GetFullPath(args[0]),game=Path.GetFullPath(args[1]);
 if(!fixture.Contains("fixture",StringComparison.OrdinalIgnoreCase)||fixture.StartsWith(game,StringComparison.OrdinalIgnoreCase))throw new InvalidOperationException("Integration mutations must use an isolated fixture.");
+if(args.Length==3&&args[2]=="--prepare-clearance"){ClearanceIntegration.Prepare(fixture);return;}
 if(args.Length==3&&args[2]=="--prepare-flea"){FleaChecks.Prepare(fixture);return;}
 AssemblyLoadContext.Default.Resolving+=(context,name)=>{string p=Path.Combine(game,"BepInEx/core",name.Name+".dll");return File.Exists(p)?context.LoadFromAssemblyPath(p):null;};
 var common=Assembly.LoadFrom(Path.Combine(game,"BepInEx/plugins/sptushonka/SPTushonka.Common.dll"));var shuffle=common.GetType("SPTushonka.Common.Http.Shuffle",true)!;var flags=BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic;
@@ -20,6 +21,7 @@ async Task<JsonNode> Call(JsonObject payload,string path="/local/projecte/table"
 }
 bool Ok(JsonNode n)=>n["Ok"]?.GetValue<bool>()??n["ok"]?.GetValue<bool>()??false;
 long Balance(JsonNode n)=>n["Balance"]!.GetValue<long>();
+if(args.Length==3&&args[2]=="--clearance"){Console.WriteLine("Passed "+await ClearanceIntegration.Run(Call,fixture)+" native clearance/FIR integration checks.");return;}
 if(args.Length==3&&args[2]=="--flea"){Console.WriteLine("Passed "+await FleaChecks.Run(Call,fixture)+" native flea integration checks.");return;}
 var runtime=await Call(new(),"/local/projecte/runtime");
 if(runtime["funItemsEnabled"]?.GetValue<bool>()==false){

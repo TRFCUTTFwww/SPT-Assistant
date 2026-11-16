@@ -169,3 +169,24 @@ Input tests cover live previews, completion cycles, arrow-selection acceptance, 
 `dotnet run --project chat-tests/Tests.csproj -c Release` 检查签名、防重放、档案绑定、双向核验、游标确认、撤销、队列上限、TLS 指纹失败关闭、加密上下文绑定、重新握手、Unicode 往返和命令语法。可选的 `-- --http <本机档案ID>` 使用 curl 和 EFT 48558 原生帧格式验证本机 `https://127.0.0.1:6969` 的真实中继，不修改档案。端到端消息仍通过固定指纹的双向 TLS；测试的外层 localhost 自签名 HTTPS 使用 `--insecure`。本机实际接口和双向加密消息测试已通过。
 
 The test project covers signed requests, replay/profile isolation, mutual verification, acknowledgements, revocation, bounded queues, certificate/context rejection, fresh handshakes, Unicode round trips and syntax validation. Optional `-- --http <local-profile-id>` uses curl with EFT 48558 framing against the live local relay, without save changes. Only that test's outer localhost HTTPS ignores its self-signed certificate; the inner mutual TLS still pins both identities. The live endpoint and bidirectional encrypted messages have passed locally. In-game visual/input and command effects remain manual checks.
+
+## 2.3.1 新增功能命令
+
+所有杂项独立开关都可以通过 `/misc` 操作，规则名支持配置键或菜单中文名；Tab 显示可用规则与中文名称。`status` 可在战局中查询，保存规则要求退出战局。趣味物品规则仍须重启服务端才生效。
+
+```text
+/misc status
+/misc ClearanceTraders on
+/misc ClearanceMarket on
+/misc DiplomaticImmunity on
+/misc InstantFleaSales on
+/misc FreeFlea on
+/fir <物品实例ID> on
+/fir <物品实例ID> off
+/train status
+/train arrival 00:02:30
+/train departure 00:05:00
+/train arrival now
+```
+
+`/fir` 的 Tab 候选是当前角色库存物品的名称及实例 ID；大厅保存到服务端，单人战局修改本地库存标记。FIKA 战局库存标记写入尚未接入同步。列车命令沿用面板的原生到站、停站和发车限制，不能倒回已经发车的列车。

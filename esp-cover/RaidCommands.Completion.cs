@@ -35,6 +35,9 @@ internal static partial class RaidCommands {
    case "gamerule":if(at==0)candidates.AddRange(Rules().Keys);else Add("true","false");break;
    case "raid":if(at==0)Add("time","extract");else if(Arg(0)=="time"&&at==1)Add("query","set","add");else if(Arg(0)=="extract")Add("@s");break;
    case "airdrop":Add("summon");break;
+   case "misc":if(at==0){Add("status");foreach(var row in MiscPanel.CommandRows){candidates.Add(row.Key);details[row.Key]=(row.Name,"杂项独立开关");}}else Add("on","off","status");break;
+   case "fir":if(at==0)foreach(var item in ItemFirContext.Items()){candidates.Add(item.Id);details[item.Id]=(item.Name,"库存物品实例");}else Add("on","off");break;
+   case "train":if(at==0)Add("status","arrival","departure");else Add("now","00:01:00","00:05:00");break;
    case "btr":if(at==0)Add("status","route","stop");break;
    case "edit":Add("on","off");break;
    case "marker":if(at==0)Add("set","remove","list");else if(at==1)candidates.AddRange(markers.Keys);else if(Arg(0)=="set")Add("~","^");break;
