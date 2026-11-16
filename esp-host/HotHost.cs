@@ -100,7 +100,7 @@ public sealed partial class RuntimeReloader:IHostServices,IDisposable {
   yield return ()=>{loadedHash=selected.Hash;lastGood=selected.Bytes;phase="已恢复上一版本，正在保存结果…";};
  }
  void EndPause(){var previous=pause;pause=null;previous?.Dispose();}
- byte[] StatusBytes(string? error)=>JsonSerializer.SerializeToUtf8Bytes(new{apiVersion=1,hostVersion="1.6.0",coreVersion=module?.Version,generation,sha256=loadedHash,ready=module!=null&&!SafetyBlocked,error,rollback=rollingBack,suspended=SafetyBlocked,cleanupUnsafe,updatedUtc=DateTime.UtcNow,steps=stepCount,peakStepMs=peakMs});
+ byte[] StatusBytes(string? error)=>JsonSerializer.SerializeToUtf8Bytes(new{apiVersion=1,hostVersion="1.6.1",coreVersion=module?.Version,generation,sha256=loadedHash,ready=module!=null&&!SafetyBlocked,error,rollback=rollingBack,suspended=SafetyBlocked,cleanupUnsafe,updatedUtc=DateTime.UtcNow,steps=stepCount,peakStepMs=peakMs});
  static void AtomicWrite(string path,byte[] bytes){string temporary=path+"."+Guid.NewGuid().ToString("N")+".tmp";File.WriteAllBytes(temporary,bytes);File.Move(temporary,path,true);}
  void Report(Exception error){if(DateTime.UtcNow<nextError)return;nextError=DateTime.UtcNow.AddSeconds(10);Log.LogWarning(error);}
  public void Dispose(){disposed=true;try{sequence?.Dispose();module?.Unload();}finally{StopSafety();EndPause();module=null;context?.Release();}}

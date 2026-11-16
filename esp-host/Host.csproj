@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
- <PropertyGroup><TargetFramework>net10.0</TargetFramework><AssemblyName>Local.Spt5.ESP</AssemblyName><Nullable>enable</Nullable><Version>1.6.0</Version><AssemblyVersion>1.0.0.0</AssemblyVersion></PropertyGroup>
+ <PropertyGroup><TargetFramework>net10.0</TargetFramework><AssemblyName>Local.Spt5.ESP</AssemblyName><Nullable>enable</Nullable><Version>1.6.1</Version><AssemblyVersion>1.0.0.0</AssemblyVersion></PropertyGroup>
  <ItemGroup>
   <Reference Include="$(GameRoot)/BepInEx/core/*.dll" Exclude="$(GameRoot)/BepInEx/core/dobby.dll"><Private>false</Private></Reference>
   <Reference Include="$(GameRoot)/BepInEx/interop/*.dll"><Private>false</Private></Reference>
  </ItemGroup>
-<ItemGroup><Compile Include="../diagnostics-shared/LogBundle.cs" Link="LogBundle.cs"/></ItemGroup></Project>
+<ItemGroup><Compile Include="../diagnostics-shared/LogBundle.cs" Link="LogBundle.cs"/></ItemGroup><ItemGroup><Compile Include="../safety-ui/*.cs" Link="SafetyUi/%(Filename)%(Extension)"/></ItemGroup></Project>

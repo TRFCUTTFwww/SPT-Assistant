@@ -92,6 +92,7 @@ internal class Plugin {
   yield return ()=>MovementAssist.Initialize(this);
   yield return ()=>MagazineDisplay.Initialize(this);
   yield return ()=>ArmorAnalysis.Initialize(this);
+  yield return ()=>SafetyUiBridge.Initialize(host,Patches);
   yield return ()=>AggroDisplay.Initialize(this);
   yield return ()=>RaidClock.Initialize(this);
   yield return RaidStartClock.Initialize;

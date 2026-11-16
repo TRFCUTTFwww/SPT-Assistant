@@ -43,7 +43,9 @@ public sealed partial class RuntimeReloader {
  void RequestRollback(){if(cleanupUnsafe||rollbackPreparing!=null||sequence!=null||persistence!=null)return;var bytes=candidate!=null||swapStage!="idle"?lastGood:previousGood??lastGood;if(bytes==null){phase="没有可回退的正常版本。";return;}phase="正在后台校验回退版本…";rollbackPreparing=Task.Run(()=>Prepare(bytes));}
  void ContinueRollback(){if(rollbackPreparing?.IsCompleted!=true)return;var pendingRollback=rollbackPreparing;rollbackPreparing=null;try{var prepared=pendingRollback.GetAwaiter().GetResult();rollingBack=true;candidate=prepared;painted=stepCount=0;peakMs=0;phase="正在清理当前模块并回退…";sequence=new ReloadSequence(Swap(prepared));}catch(Exception e){SafetyFailure(e);}}
  bool RecoveryBusy=>!simulation&&rescueAttempted&&module?.GetType().GetProperty("EmergencyBusy")?.GetValue(module) is true;
- void DrawSafety(){
+ public bool FriendlyErrorUi=>true;
+ void DrawSafety(){if(Event.current.type==EventType.Repaint)painted++;try{DrawFriendlySafety();}catch(Exception e){Diagnostics.Record("WARNING","Error UI",e.Message);DrawLegacySafety();}}
+ void DrawLegacySafety(){
   if(Event.current.type==EventType.Repaint)painted++;Diagnostics.Tick();int oldDepth=GUI.depth;var oldColor=GUI.color;GUI.depth=-100000;
   try{Color tint=new(.10f,.23f,.30f,.92f);try{if(Config.TryGetEntry<string>("24. Interface","Panel accent",out var accent)&&ColorUtility.TryParseHtmlString(accent.Value,out var color))tint=Color.Lerp(new Color(.03f,.06f,.10f,.92f),color,.24f);}catch{}tint.a=.90f;GUI.color=tint;GUI.DrawTexture(new Rect(0,0,Screen.width,Screen.height),Texture2D.whiteTexture);GUI.color=Color.white;
    float width=Math.Min(1000,Screen.width-80),x=(Screen.width-width)/2,y=Math.Max(25,Screen.height*.10f);var title=new GUIStyle(GUI.skin.label){fontSize=90};var text=new GUIStyle(GUI.skin.label){fontSize=18,wordWrap=true};var small=new GUIStyle(text){fontSize=14};

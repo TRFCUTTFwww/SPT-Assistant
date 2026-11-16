@@ -179,7 +179,7 @@ try{
   Move-Item -LiteralPath $legacy -Destination $legacyBackup
  }
  $destination=Prepare 'BepInEx/plugins/LocalSpt5ESP/install-manifest.json'
- $manifest=@{version='2.3.2';hostVersion='1.6.0';targetSpt='5.0 BE';targetEft='1.3.0.1.48558';clientOnly=[bool]$ClientOnly;minecraftIntegrated=$true;independentMinecraftHotReload=$false;scp3xRemoved=$true;blackwallIntegrated=$true;blackwallAssets=$resourceManifest.files.Count;experimental=$true;inRaidVerified=$false;installedUtc=[DateTime]::UtcNow.ToString('O');backup=$backup;coreSha256=$checks.'payload/Local.Spt5.ESP.Core.module'}
+ $manifest=@{version='2.3.2';hostVersion='1.6.1';targetSpt='5.0 BE';targetEft='1.3.0.1.48558';clientOnly=[bool]$ClientOnly;minecraftIntegrated=$true;independentMinecraftHotReload=$false;scp3xRemoved=$true;blackwallIntegrated=$true;blackwallAssets=$resourceManifest.files.Count;experimental=$true;inRaidVerified=$false;installedUtc=[DateTime]::UtcNow.ToString('O');backup=$backup;coreSha256=$checks.'payload/Local.Spt5.ESP.Core.module'}
  [IO.File]::WriteAllText($destination,($manifest|ConvertTo-Json -Depth 4),$utf8)
  Report-Progress 100 'COMPLETE'
  Write-Result $true 'OK' 'Installation completed.'

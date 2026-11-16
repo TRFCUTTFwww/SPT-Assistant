@@ -2,7 +2,7 @@
   "version": "2.3.2",
   "date": "2026-11-17",
   "target": "SPT 5.0 BE / EFT 48558",
-  "hostVersion": "1.6.0",
+  "hostVersion": "1.6.1",
   "builds": "Client host/core, integrated server, admin module, raid controls, Quickhacks, standalone crash monitor and installer passed.",
   "checks": {
     "hostSafety": "Passed background preparation, transaction deferral, paused failed initialization, manual rollback, repaired replacement, five controlled error simulations, deadline compensation, unsafe-unload refusal.",
@@ -34,5 +34,13 @@
     "After a native process crash, the independent monitor can show an error and export logs, but cannot perform in-game settlement.",
     "Equipment rescue snapshots are durable backups; the UI does not equate a backup receipt or an extraction request with a completed server settlement.",
     "Performance snapshots measure Assistant callback CPU time; they cannot independently attribute the engine, other mods or GPU costs."
-  ]
+  ],
+  "uiFirHotfix": {
+    "validation": "build only; additional tests and visual checks skipped at user request",
+    "activation": "client was closed; installed for next startup",
+    "changes": [
+      "friendly themed error screen with expandable technical details",
+      "native pooled FIR menu button cleanup and stale-click guard"
+    ]
+  }
 }
