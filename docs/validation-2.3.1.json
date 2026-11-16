@@ -31,6 +31,14 @@
       "instant-sale toggle restoration and original flea item/category restrictions"
     ]
   },
+  "liveFleaHotfix": {
+    "hotReloadConfirmed": true,
+    "nativeRestrictions": "SuccessfulResult",
+    "feeRubles": 0,
+    "addOfferButtonBefore": false,
+    "addOfferButtonAfter": true,
+    "automaticallySubmittedPlayerOffer": false
+  },
   "installerChecks": 33,
   "installerChecksStatus": "passed",
   "productionModified": false,
