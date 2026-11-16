@@ -25,12 +25,15 @@ internal static class TrainControl {
   var train=Current();double elapsed=Elapsed(train);float arrived=Timing(train,Locomotive.ETravelState.Arrived),leaving=Timing(train,Locomotive.ETravelState.Departing);
   if(elapsed>=leaving)throw new ArgumentException("列车已经发车，不能再次发车或倒回。");
   if(elapsed+seconds<arrived)throw new ArgumentException("发车时间必须晚于到站；立即发车请先让列车到站。");
-  var curves=Capture(train);var timing=train._travelStateTiming;var previous=new float[timing.Length];for(int i=0;i<previous.Length;i++)previous[i]=timing[i];
+  var oldEpoch=train._depart;var curves=Capture(train);var timing=train._travelStateTiming;var previous=new float[timing.Length];for(int i=0;i<previous.Length;i++)previous[i]=timing[i];
   try{
   float dwell=(float)Math.Max(.1,elapsed+seconds-arrived);train.SetBoardingTime(dwell);
   float actual=Timing(train,Locomotive.ETravelState.Departing);if(Math.Abs(actual-(elapsed+seconds))>2)throw new InvalidOperationException("原生列车未接受发车时间，请重新读取后重试。");
-  train.UpdateTravelState();notice=seconds==0?"已请求列车发车。":"发车倒计时已设为 "+TrainTimeRules.Clock(seconds)+"。";
-  }catch{for(int i=0;i<previous.Length;i++)timing[i]=previous[i];train._travelStateTiming=timing;foreach(var state in curves){state.Platform.MovementCurve=state.Curve;state.Platform._routeDuration=state.Duration;}throw;}
+  // The movement clock and carriage interpolators cache their departure epoch.
+  // Rebuilding the dwell curve alone leaves an already parked train stationary.
+  if(seconds==0){var epoch=EFT.DateTimeExtensions.UtcNow.AddSeconds(-actual-.2);train._depart=epoch;if(train.Carriage!=null)foreach(var car in train.Carriage)if(car!=null)car._depart=epoch;}
+  train.Move(true);if(train.Carriage!=null)foreach(var car in train.Carriage)car?.Move(true);train.UpdateTravelState();notice=seconds==0?"已请求列车发车。":"发车倒计时已设为 "+TrainTimeRules.Clock(seconds)+"。";
+  }catch{train._depart=oldEpoch;if(train.Carriage!=null)foreach(var car in train.Carriage)if(car!=null)car._depart=oldEpoch;for(int i=0;i<previous.Length;i++)timing[i]=previous[i];train._travelStateTiming=timing;foreach(var state in curves){state.Platform.MovementCurve=state.Curve;state.Platform._routeDuration=state.Duration;}throw;}
 
  }
  static void Run(Action action){try{action();}catch(Exception e){notice=e.Message;}}

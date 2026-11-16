@@ -7,8 +7,11 @@ public class RuntimeModule:IRuntimeModule {
  public bool PrepareForReload()=>TestState.CanReload;
  public IEnumerable<Action> InitializeSteps(IHostServices host){yield return ()=>TestState.Init++;yield return ()=>{if(TestState.FailNextInit){TestState.FailNextInit=false;throw new Exception("fixture init failure");}TestState.Init++;};yield return ()=>TestState.Init++;}
  public void Initialize(IHostServices host){foreach(var step in InitializeSteps(host))step();}
- public IEnumerable<Action> UnloadSteps(){yield return ()=>TestState.Unload++;yield return ()=>TestState.Unload++;}
+ public IEnumerable<Action> UnloadSteps(){yield return ()=>{TestState.Unload++;if(TestState.FailNextUnload){TestState.FailNextUnload=false;throw new Exception("fixture unload failure");}};yield return ()=>{TestState.Unload++;if(TestState.FailNextUnload){TestState.FailNextUnload=false;throw new Exception("fixture unload failure");}};}
  public void Unload(){foreach(var step in UnloadSteps())step();}
+ public string EmergencySurvive(){TestState.Rescues++;return "fixture rescue";}
+ public void EmergencyTick(){}
+ public bool EmergencyBusy=>false;
  public void Update()=>TestState.Updates++;
  public void LateUpdate(){}
  public void OnGUI(){}

@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 if(args.Length is <2 or >3)throw new ArgumentException("Expected isolated fixture server directory and game directory");
 string fixture=Path.GetFullPath(args[0]),game=Path.GetFullPath(args[1]);
 if(!fixture.Contains("fixture",StringComparison.OrdinalIgnoreCase)||fixture.StartsWith(game,StringComparison.OrdinalIgnoreCase))throw new InvalidOperationException("Integration mutations must use an isolated fixture.");
+if(args.Length==3&&args[2].Contains("quarantine")){FunCycleChecks.Run(fixture,args[2]);return;}
 if(args.Length==3&&args[2]=="--prepare-clearance"){ClearanceIntegration.Prepare(fixture);return;}
 if(args.Length==3&&args[2]=="--prepare-flea"){FleaChecks.Prepare(fixture);return;}
 AssemblyLoadContext.Default.Resolving+=(context,name)=>{string p=Path.Combine(game,"BepInEx/core",name.Name+".dll");return File.Exists(p)?context.LoadFromAssemblyPath(p):null;};
@@ -23,11 +24,12 @@ bool Ok(JsonNode n)=>n["Ok"]?.GetValue<bool>()??n["ok"]?.GetValue<bool>()??false
 long Balance(JsonNode n)=>n["Balance"]!.GetValue<long>();
 if(args.Length==3&&args[2]=="--clearance"){Console.WriteLine("Passed "+await ClearanceIntegration.Run(Call,fixture)+" native clearance/FIR integration checks.");return;}
 if(args.Length==3&&args[2]=="--flea"){Console.WriteLine("Passed "+await FleaChecks.Run(Call,fixture)+" native flea integration checks.");return;}
+if(args.Length==3&&args[2]=="--safety"){Console.WriteLine("Passed "+await SafetyChecks.Run(Call,fixture)+" emergency backup checks.");return;}
 var runtime=await Call(new(),"/local/projecte/runtime");
 if(runtime["funItemsEnabled"]?.GetValue<bool>()==false){
  Check(!Ok(await Call(new(){["Action"]="state"})),"disabled fun items reject transmutation requests");
- var disabledCatalog=await Call(new(),"/client/items");Check(disabledCatalog["a7e000000000000000000113"]!=null,"disabled mode keeps existing fun-item templates to prevent profile pruning");
- var disabledAssort=await Call(new(),"/client/trading/api/getTraderAssort/a7d000000000000000000001");Check(!disabledAssort["items"]!.AsArray().Any(i=>i?["_tpl"]?.GetValue<string>() is string tpl&&(tpl.StartsWith("a7e000")||tpl.StartsWith("a7a000"))),"disabled mode removes fun goods from Developer offers");
+ var disabledCatalog=await Call(new(),"/client/items");Check(disabledCatalog["a7e000000000000000000113"]==null&&!disabledCatalog.AsObject().Any(p=>p.Key.StartsWith("a7e000")||p.Key.StartsWith("a7a000")),"disabled mode omits fun-item templates entirely");
+ var disabledTraders=await Call(new(),"/client/trading/api/traderSettings");Check(!disabledTraders.AsArray().Any(i=>i?["_id"]?.GetValue<string>()=="a7d000000000000000000001"),"disabled mode does not register Developer trader");
  string adminKey=File.ReadAllText(Path.Combine(fixture,"user/mods/LocalGearMail/api-key.txt")).Trim();
  var misc=await Call(new(){["apiKey"]=adminKey,["action"]="miscStatus"},"/local/gear/data");
  var change=await Call(new(){["apiKey"]=adminKey,["action"]="miscSave",["revision"]=misc["revision"]!.GetValue<string>(),["settings"]=new JsonObject{["FunItemsEnabled"]=true}},"/local/gear/data");Check(Ok(change),"fun-item preference can be saved through the authenticated misc API");

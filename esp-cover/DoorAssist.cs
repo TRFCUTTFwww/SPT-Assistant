@@ -9,7 +9,7 @@ using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using UnityEngine;
 namespace LocalSpt5Esp;
 internal static class DoorAssist {
- static ConfigEntry<bool> Enabled=null!;static bool ready;static float nextScan,nextError;
+ internal static ConfigEntry<bool> Enabled=null!;static bool ready;static float nextScan,nextError;
  sealed record Flags(Door Door,bool Breachable,bool Interactable);
  static readonly Dictionary<IntPtr,Flags> changed=new();
  static readonly Il2CppStructArray<RaycastHit> hits=new(32);

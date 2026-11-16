@@ -19,6 +19,7 @@ internal class Plugin {
  readonly BepInEx.Logging.ManualLogSource log;
  internal Plugin(LocalSpt5Esp.HotReload.IHostServices host){this.host=host;const string key="LocalSpt5Esp.AssistantLog";log=host.Log.SourceName=="SPT Assistant"?host.Log:AppDomain.CurrentDomain.GetData(key) as BepInEx.Logging.ManualLogSource??BepInEx.Logging.Logger.CreateLogSource("SPT Assistant");AppDomain.CurrentDomain.SetData(key,log);}
  internal ConfigFile Config=>host.Config;
+ internal object Host=>host;
  internal BepInEx.Logging.ManualLogSource Log=>log;
  internal static Plugin Self=null!;
  internal ConfigEntry<bool> People=null!,Loot=null!,God=null!,Containers=null!,ShowHealth=null!;
@@ -93,11 +94,13 @@ internal class Plugin {
   yield return ()=>ArmorAnalysis.Initialize(this);
   yield return ()=>AggroDisplay.Initialize(this);
   yield return ()=>RaidClock.Initialize(this);
+  yield return RaidStartClock.Initialize;
   yield return ()=>RaidLoot.Initialize();
   yield return ()=>TaskNeeds.Initialize();
   yield return ()=>RaidEnvironment.Initialize();
   yield return ()=>WeaponComfort.Initialize(this);
   yield return ()=>SurvivalAssist.Initialize(this);
+  yield return ()=>PlayerRicochet.Initialize(this);
   yield return ()=>GrenadeAlert.Initialize(this);
   yield return ()=>GrenadeArc.Initialize(this);
   yield return ()=>FloatingStatus.Initialize();
@@ -156,7 +159,7 @@ internal class Plugin {
   if(!RaidClock.Active)return false;if(WorldEditor.ProtectMoving(h.Player)||AiActorControl.IndividuallyProtected(h))return true;if(!Self.AIGod.Value)return false;var owner=h.Player;return ProtectionRules.Protect(health.Pointer.ToInt64(),h.Pointer.ToInt64(),Self.God.Value,Self.AIGod.Value,owner?.AIData?.BotOwner!=null,owner==null||owner.Pointer==local.Pointer||owner.ProfileId==local.ProfileId);
  }catch{return false;}}
  internal static bool DamageBlocked(ActiveHealthController health)=>Protected(health);
- static bool BlockDamage(ActiveHealthController __instance,ref float __1,EFT.Ballistics.DamageInfo __2,ref float __result){if(Protected(__instance)||__2!=null&&MiscPanel.SniperDamage(__instance,__2.DamageType)){__result=0;return false;}try{return AiActorControl.ScaleDamage(__instance,__2!,ref __1,ref __result);}catch(Exception e){Self.Error(e);return true;}}
+ static bool BlockDamage(ActiveHealthController __instance,ref float __1,EFT.Ballistics.DamageInfo __2,ref float __result){if(Protected(__instance)||__2!=null&&PlayerRicochet.Blocks(__instance,__2)||__2!=null&&MiscPanel.SniperDamage(__instance,__2.DamageType)){__result=0;return false;}try{return AiActorControl.ScaleDamage(__instance,__2!,ref __1,ref __result);}catch(Exception e){Self.Error(e);return true;}}
  static bool BlockDeath(ActiveHealthController __instance,EDamageType __0)=>!Protected(__instance)&&!MiscPanel.SniperDamage(__instance,__0);
  void PatchAI(Type type,string method,string prefix){
   try{

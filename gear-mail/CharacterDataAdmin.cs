@@ -39,6 +39,7 @@ public class CharacterDataService(SaveServer saves,JsonUtil json,HttpResponseUti
    var key=File.ReadAllText(System.IO.Path.Combine(AppContext.BaseDirectory,"user","mods","LocalGearMail","api-key.txt")).Trim();
    if(!CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(key),Encoding.UTF8.GetBytes(request.ApiKey??"")))throw new ArgumentException("认证失败。");
    var profile=saves.GetProfile(session)??throw new ArgumentException("当前角色不存在。");var pmc=profile.CharacterData?.PmcData??throw new ArgumentException("当前角色尚未创建。");
+   if(request.Action=="emergencyBackup")return EmergencyBackupService.Handle(request,session,profile,json,http,templates);
    if(request.Action is "raidStash" or "saveRaidStash")return await RaidStashService.Handle(request,session,profile,saves,json,http,ct);
    if(request.Action is "miscStatus" or "miscSave")return await MiscService.Handle(request,session,http,ct);
    if(request.Action is "status" or "healthStatus")return Status(profile);

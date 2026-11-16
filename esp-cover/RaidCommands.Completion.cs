@@ -36,6 +36,10 @@ internal static partial class RaidCommands {
    case "raid":if(at==0)Add("time","extract");else if(Arg(0)=="time"&&at==1)Add("query","set","add");else if(Arg(0)=="extract")Add("@s");break;
    case "airdrop":Add("summon");break;
    case "misc":if(at==0){Add("status");foreach(var row in MiscPanel.CommandRows){candidates.Add(row.Key);details[row.Key]=(row.Name,"杂项独立开关");}}else Add("on","off","status");break;
+   case "logs":if(at==0)Add("export","level");else Add("ALL","TRACE","DEBUG","INFO","WARNING","ERROR","FATAL","OFF");break;
+   case "debug":Add("on","off","null","bounds","stack","access","reload");break;
+   case "nexttime":Add("06:00:00","12:00:00","18:00:00","00:00:00","off");break;
+   case "ricochet":Add("on","off");break;
    case "fir":if(at==0)foreach(var item in ItemFirContext.Items()){candidates.Add(item.Id);details[item.Id]=(item.Name,"库存物品实例");}else Add("on","off");break;
    case "train":if(at==0)Add("status","arrival","departure");else Add("now","00:01:00","00:05:00");break;
    case "btr":if(at==0)Add("status","route","stop");break;

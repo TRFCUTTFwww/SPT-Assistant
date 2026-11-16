@@ -37,6 +37,7 @@ foreach($relative in @('BepInEx/core/BepInEx.Unity.IL2CPP.dll','BepInEx/interop/
  if(-not(Test-Path -LiteralPath (Target $relative) -PathType Leaf)){Stop-Install 'DEPENDENCIES_MISSING' ('Start the matching SPT game once to generate required files: '+$relative)}
 }
 $files=@{
+ 'payload/Assistant.CrashMonitor.exe'='BepInEx/plugins/LocalSpt5ESP/Assistant.CrashMonitor.exe'
  'payload/Local.Spt5.ESP.dll'='BepInEx/plugins/LocalSpt5ESP/Local.Spt5.ESP.dll'
  'payload/Local.Spt5.ESP.Core.module'='BepInEx/plugins/LocalSpt5ESP/runtime/Local.Spt5.ESP.Core.module'
 }
@@ -178,11 +179,11 @@ try{
   Move-Item -LiteralPath $legacy -Destination $legacyBackup
  }
  $destination=Prepare 'BepInEx/plugins/LocalSpt5ESP/install-manifest.json'
- $manifest=@{version='2.3.1';hostVersion='1.5.0';targetSpt='5.0 BE';targetEft='1.3.0.1.48558';clientOnly=[bool]$ClientOnly;minecraftIntegrated=$true;independentMinecraftHotReload=$false;scp3xRemoved=$true;blackwallIntegrated=$true;blackwallAssets=$resourceManifest.files.Count;experimental=$true;inRaidVerified=$false;installedUtc=[DateTime]::UtcNow.ToString('O');backup=$backup;coreSha256=$checks.'payload/Local.Spt5.ESP.Core.module'}
+ $manifest=@{version='2.3.2';hostVersion='1.6.0';targetSpt='5.0 BE';targetEft='1.3.0.1.48558';clientOnly=[bool]$ClientOnly;minecraftIntegrated=$true;independentMinecraftHotReload=$false;scp3xRemoved=$true;blackwallIntegrated=$true;blackwallAssets=$resourceManifest.files.Count;experimental=$true;inRaidVerified=$false;installedUtc=[DateTime]::UtcNow.ToString('O');backup=$backup;coreSha256=$checks.'payload/Local.Spt5.ESP.Core.module'}
  [IO.File]::WriteAllText($destination,($manifest|ConvertTo-Json -Depth 4),$utf8)
  Report-Progress 100 'COMPLETE'
  Write-Result $true 'OK' 'Installation completed.'
- Write-Output ('Installed SPT Assistant 2.3.1 (EXPERIMENTAL). Backup: '+$backup)
+ Write-Output ('Installed SPT Assistant 2.3.2 (EXPERIMENTAL). Backup: '+$backup)
  Write-Output 'Start the SPT server, then its client. Press Right Shift. Fika members: connect to the host; do not start a local server.'
  }catch{
  $failure=$_

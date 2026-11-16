@@ -1,0 +1,38 @@
+{
+  "version": "2.3.2",
+  "date": "2026-11-17",
+  "target": "SPT 5.0 BE / EFT 48558",
+  "hostVersion": "1.6.0",
+  "builds": "Client host/core, integrated server, admin module, raid controls, Quickhacks, standalone crash monitor and installer passed.",
+  "checks": {
+    "hostSafety": "Passed background preparation, transaction deferral, paused failed initialization, manual rollback, repaired replacement, five controlled error simulations, deadline compensation, unsafe-unload refusal.",
+    "diagnosticExportAndQuarantineRules": 19,
+    "emergencySqliteIntegration": 5,
+    "funItemsDisabledServer": 5,
+    "actualQuarantineAndMailRestore": 2,
+    "existingServerIntegration": 108,
+    "releaseBoundaries": 42,
+    "profileBackup": 41,
+    "installer": 33,
+    "clearanceAndFir": 28,
+    "clientRegressionProbe": "passed",
+    "commandAuthorityAndCompletionSuite": "passed"
+  },
+  "inRaidVerified": false,
+  "clientStartupVerified": false,
+  "manualChecks": [
+    "Actual armored train departure and timetable changes",
+    "Full-body native ricochet visuals and behavior",
+    "Map time of day on a new raid",
+    "Diplomatic immunity against Scavs and bosses",
+    "Frame-rate outcome and performance attribution during a real raid",
+    "In-game fatal overlay and completed native survived settlement"
+  ],
+  "limitations": [
+    "Compilation and isolated native-server tests do not establish in-raid behavior.",
+    "A managed load/init failure can be rolled back after successful cleanup; unsafe cleanup requires restarting.",
+    "After a native process crash, the independent monitor can show an error and export logs, but cannot perform in-game settlement.",
+    "Equipment rescue snapshots are durable backups; the UI does not equate a backup receipt or an extraction request with a completed server settlement.",
+    "Performance snapshots measure Assistant callback CPU time; they cannot independently attribute the engine, other mods or GPU costs."
+  ]
+}

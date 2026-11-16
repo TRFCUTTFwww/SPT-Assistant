@@ -12,7 +12,7 @@ using BepInEx.Logging;
 using UnityEngine;
 namespace LocalSpt5Esp.HotReload;
 
-public sealed class RuntimeReloader:IHostServices,IDisposable {
+public sealed partial class RuntimeReloader:IHostServices,IDisposable {
  readonly Action refreshMenu;
  public BepInEx.Configuration.ConfigFile Config {get;}
  public ManualLogSource Log {get;}
@@ -36,13 +36,14 @@ public sealed class RuntimeReloader:IHostServices,IDisposable {
  public RuntimeReloader(BepInEx.Configuration.ConfigFile config,ManualLogSource log,string directory,Action? refresh=null){Config=config;Log=log;PluginDirectory=directory;refreshMenu=refresh??(()=>{});}
  public void Start(){
   string directory=Path.Combine(PluginDirectory,"runtime");Directory.CreateDirectory(directory);
-  payload=Path.Combine(directory,"Local.Spt5.ESP.Core.module");request=Path.Combine(directory,"reload.request");status=Path.Combine(directory,"hotreload-status.json");fallback=Path.Combine(directory,"last-good.module");autoSave=Config.SaveOnConfigSet;
+  payload=Path.Combine(directory,"Local.Spt5.ESP.Core.module");request=Path.Combine(directory,"reload.request");status=Path.Combine(directory,"hotreload-status.json");fallback=Path.Combine(directory,"last-good.module");autoSave=Config.SaveOnConfigSet;StartSafety();
  }
  public void RequestReload(){manual=true;nextPoll=DateTime.MinValue;}
- public void Update(){if(disposed)return;try{Poll();}catch(Exception e){Failed(e);}if(pause!=null){pause.Tick();return;}try{module?.Update();}catch(Exception e){Report(e);}}
- public void LateUpdate(){if(pause!=null)return;try{module?.LateUpdate();}catch(Exception e){Report(e);}}
+ public void Update(){if(disposed)return;SafetyTick();try{if(SafetyBlocked&&sequence==null&&persistence==null)SuspendedPoll();else Poll();}catch(Exception e){Failed(e);}if(pause!=null){pause.Tick();return;}try{module?.Update();}catch(Exception e){ReportFatal(e.GetType().Name,e.ToString());}}
+ public void LateUpdate(){if(pause!=null)return;try{module?.LateUpdate();}catch(Exception e){ReportFatal(e.GetType().Name,e.ToString());}}
  public void Draw(){
-  if(pause==null){try{module?.OnGUI();}catch(Exception e){Report(e);}return;}
+  if(SafetyBlocked){DrawSafety();return;}
+  if(pause==null){try{module?.OnGUI();}catch(Exception e){ReportFatal(e.GetType().Name,e.ToString());}return;}
   int oldDepth=GUI.depth;GUI.depth=-10000;var oldColor=GUI.color;
   try{
    GUI.color=new Color(0,0,0,.8f);GUI.DrawTexture(new Rect(0,0,Screen.width,Screen.height),Texture2D.whiteTexture);GUI.color=Color.white;
@@ -79,22 +80,16 @@ public sealed class RuntimeReloader:IHostServices,IDisposable {
  static byte[] ReadPayload(string path){using var stream=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.ReadWrite|FileShare.Delete);if(stream.Length<1024||stream.Length>64*1024*1024)throw new InvalidDataException("功能文件不完整");using var buffer=new MemoryStream();stream.CopyTo(buffer);return buffer.ToArray();}
  Prepared Prepare(byte[] bytes,string? hash=null){var loaded=new PayloadContext();try{using var stream=new MemoryStream(bytes,false);var assembly=loaded.LoadFromStream(stream);var type=assembly.GetType("LocalSpt5Esp.RuntimeModule",true)!;var result=(IRuntimeModule)Activator.CreateInstance(type)!;if(result.ApiVersion!=1)throw new InvalidOperationException("热更新接口版本不兼容");type.GetMethod("PrepareInBackground")?.Invoke(result,null);return new(loaded,result,bytes,hash??Convert.ToHexString(SHA256.HashData(bytes)));}catch{loaded.Release();throw;}}
  static IEnumerable<Action> Steps(IRuntimeModule target,string name,Action fallback,IHostServices? host=null)=>target.GetType().GetMethod(name)?.Invoke(target,host==null?null:new object[]{host}) as IEnumerable<Action>??new[]{fallback};
- void Begin(Prepared selected){candidate=selected;autoSave=Config.SaveOnConfigSet;pause=new ReloadPause();painted=stepCount=0;peakMs=0;failure="";rollingBack=false;phase="正在保存设置并准备切换…";persistence=Task.Run(()=>Config.Save());sequence=new ReloadSequence(Swap(selected));}
+ void Begin(Prepared selected){candidate=selected;autoSave=Config.SaveOnConfigSet;pause??=new ReloadPause();reloadFault=false;cleanupUnsafe=false;simulation=false;rescueAttempted=false;painted=stepCount=0;peakMs=0;failure="";rollingBack=false;phase="正在保存设置并准备切换…";persistence=Task.Run(()=>Config.Save());sequence=new ReloadSequence(Swap(selected));}
  IEnumerable<Action> Swap(Prepared selected){
-  var previous=module;if(previous!=null)foreach(var step in Steps(previous,"UnloadSteps",previous.Unload))yield return ()=>{phase="正在释放旧功能…";step();};
-  yield return ()=>{module=null;context?.Release();context=selected.Context;Config.SaveOnConfigSet=false;Config.Clear();Config.Reload();phase="正在启用新功能…";};
+  var previous=module;if(previous!=null)foreach(var step in Steps(previous,"UnloadSteps",previous.Unload))yield return ()=>{swapStage="unloading";phase="正在释放旧功能…";step();};
+  yield return ()=>{module=null;context?.Release();context=selected.Context;Config.SaveOnConfigSet=false;Config.Clear();Config.Reload();Diagnostics.Rebind(Config);swapStage="initializing";phase="正在启用新功能…";};
   yield return ()=>module=selected.Module;
   foreach(var step in Steps(selected.Module,"InitializeSteps",()=>selected.Module.Initialize(this),this))yield return step;
-  yield return ()=>{loadedHash=selected.Hash;lastGood=selected.Bytes;generation++;candidate=null;phase="正在保存更新结果…";};
+  yield return ()=>{if(!rollingBack&&lastGood!=null&&loadedHash!=selected.Hash)previousGood=lastGood;loadedHash=selected.Hash;lastGood=selected.Bytes;generation++;candidate=null;failure="";swapStage="idle";CrashWatchClient.ClearFatal();phase="正在保存更新结果…";};
  }
- void Finish(){Config.SaveOnConfigSet=autoSave;try{refreshMenu();}catch(Exception error){Report(error);}byte[]? bytes=lastGood;byte[] state=StatusBytes(failure.Length==0?null:failure);persistence=Task.Run(()=>{Config.Save();if(bytes!=null)AtomicWrite(fallback,bytes);AtomicWrite(status,state);});Log.LogInfo($"热更新切换完成: version={module?.Version}, steps={stepCount}, peakStep={peakMs:F1}ms, rollback={rollingBack}");}
- void Failed(Exception error){
-  Report(error);nextPoll=DateTime.UtcNow.AddSeconds(3);
-  if(pause==null){var state=StatusBytes(error.ToString());_ = Task.Run(()=>AtomicWrite(status,state));return;}
-  sequence?.Dispose();sequence=null;persistence=null;failure=error.Message;phase="更新失败，正在恢复上一版本…";
-  if(rollingBack){phase="自动恢复失败，请重启游戏。";Config.SaveOnConfigSet=autoSave;return;}
-  rollingBack=true;sequence=new ReloadSequence(Rollback());
- }
+ void Finish(){Config.SaveOnConfigSet=autoSave;try{refreshMenu();}catch(Exception error){Report(error);}byte[]? bytes=lastGood;byte[] state=StatusBytes(failure.Length==0?null:failure);persistence=Task.Run(()=>{Config.Save();if(bytes!=null)AtomicWrite(fallback,bytes);if(previousGood!=null)AtomicWrite(Path.Combine(PluginDirectory,"runtime","previous-good.module"),previousGood);AtomicWrite(status,state);});Log.LogInfo($"热更新切换完成: version={module?.Version}, steps={stepCount}, peakStep={peakMs:F1}ms, rollback={rollingBack}");}
+ void Failed(Exception error)=>SafetyFailure(error);
  IEnumerable<Action> Rollback(){
   if(module!=null)foreach(var step in Steps(module,"UnloadSteps",module.Unload))yield return ()=>{try{step();}catch(Exception error){Report(error);}};
   Task<Prepared>? restore=null;
@@ -105,10 +100,10 @@ public sealed class RuntimeReloader:IHostServices,IDisposable {
   yield return ()=>{loadedHash=selected.Hash;lastGood=selected.Bytes;phase="已恢复上一版本，正在保存结果…";};
  }
  void EndPause(){var previous=pause;pause=null;previous?.Dispose();}
- byte[] StatusBytes(string? error)=>JsonSerializer.SerializeToUtf8Bytes(new{apiVersion=1,hostVersion="1.5.0",coreVersion=module?.Version,generation,sha256=loadedHash,ready=module!=null,error,updatedUtc=DateTime.UtcNow,steps=stepCount,peakStepMs=peakMs});
- static void AtomicWrite(string path,byte[] bytes){string temporary=path+".tmp";File.WriteAllBytes(temporary,bytes);File.Move(temporary,path,true);}
+ byte[] StatusBytes(string? error)=>JsonSerializer.SerializeToUtf8Bytes(new{apiVersion=1,hostVersion="1.6.0",coreVersion=module?.Version,generation,sha256=loadedHash,ready=module!=null&&!SafetyBlocked,error,rollback=rollingBack,suspended=SafetyBlocked,cleanupUnsafe,updatedUtc=DateTime.UtcNow,steps=stepCount,peakStepMs=peakMs});
+ static void AtomicWrite(string path,byte[] bytes){string temporary=path+"."+Guid.NewGuid().ToString("N")+".tmp";File.WriteAllBytes(temporary,bytes);File.Move(temporary,path,true);}
  void Report(Exception error){if(DateTime.UtcNow<nextError)return;nextError=DateTime.UtcNow.AddSeconds(10);Log.LogWarning(error);}
- public void Dispose(){disposed=true;try{sequence?.Dispose();module?.Unload();}finally{EndPause();module=null;context?.Release();}}
+ public void Dispose(){disposed=true;try{sequence?.Dispose();module?.Unload();}finally{StopSafety();EndPause();module=null;context?.Release();}}
  sealed class PayloadContext:AssemblyLoadContext {
   // Harmony's native trampolines require non-collectible metadata.
   internal PayloadContext():base("SPT5-"+Guid.NewGuid().ToString("N"),false){}

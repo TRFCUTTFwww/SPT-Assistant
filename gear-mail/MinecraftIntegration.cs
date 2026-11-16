@@ -17,11 +17,11 @@ namespace LocalGearMail;
 public sealed class MinecraftRequest:IRequestData {[JsonExtensionData]public Dictionary<string,JsonElement> Fields{get;set;}=[];}
 [Injectable]
 public sealed class MinecraftService {
- readonly ProjectE.Server.HotEntry entry;readonly HttpResponseUtil http;
- public MinecraftService(CustomItemService custom,TemplateTable templates,TradersTable traders,SaveServer saves,ItemHelper helper,JsonUtil json,HttpResponseUtil http,LocaleTable locales,TraderConfig config,ImageRouter images,ISptLogger<MinecraftService> log){this.http=http;entry=new(custom,templates,traders,saves,helper,json,http,locales,config,images,s=>log.Info(s),typeof(MinecraftService).Assembly);}
- public Task Initialize(CancellationToken ct)=>entry.Initialize(ct);
- public void Rebuild()=>entry.Rebuild();
- public async ValueTask<string> Handle(string route,MinecraftRequest request,MongoId session,CancellationToken ct){try{if(route=="runtime")return http.GetBody(new{ok=true,ready=true,integrated=true,hotReload=false,generation=1,sha256="assistant-2.3.1",version="2.3.1",funItemsEnabled=FunItemPolicy.EnabledAtStartup,error=""});if(!FunItemPolicy.EnabledAtStartup)return http.GetBody(new{ok=false,error="趣味物品已停用；修改开关并重启服务端后启用。"});return await entry.Handle(route,JsonSerializer.Serialize(request.Fields),session,ct);}catch(Exception error){return http.GetBody(new{ok=false,error=error.GetBaseException().Message});}}
+ readonly ProjectE.Server.HotEntry? entry;readonly HttpResponseUtil http;
+ public MinecraftService(CustomItemService custom,TemplateTable templates,TradersTable traders,SaveServer saves,ItemHelper helper,JsonUtil json,HttpResponseUtil http,LocaleTable locales,TraderConfig config,ImageRouter images,ISptLogger<MinecraftService> log,SPTarkov.Server.Core.Services.Commerce.MailSendService mail){this.http=http;FunItemQuarantine.Install(saves,json,templates,mail);if(FunItemPolicy.EnabledAtStartup)entry=new(custom,templates,traders,saves,helper,json,http,locales,config,images,s=>log.Info(s),typeof(MinecraftService).Assembly);}
+ public async Task Initialize(CancellationToken ct){if(entry!=null)await entry.Initialize(ct);await FunItemQuarantine.ProcessAll();}
+ public void Rebuild()=>entry?.Rebuild();
+ public async ValueTask<string> Handle(string route,MinecraftRequest request,MongoId session,CancellationToken ct){try{if(route=="runtime")return http.GetBody(new{ok=true,ready=true,integrated=true,hotReload=false,generation=1,sha256="assistant-2.3.2",version="2.3.2",funItemsEnabled=FunItemPolicy.EnabledAtStartup,error=""});if(!FunItemPolicy.EnabledAtStartup)return http.GetBody(new{ok=false,error="趣味物品已停用；修改开关并重启服务端后启用。"});return await entry!.Handle(route,JsonSerializer.Serialize(request.Fields),session,ct);}catch(Exception error){return http.GetBody(new{ok=false,error=error.GetBaseException().Message});}}
 }
 [Injectable(TypePriority=OnLoadOrder.Preload+10)]
 public sealed class MinecraftBootstrap(MinecraftService service):IOnLoad {public Task OnLoadAsync(CancellationToken ct)=>service.Initialize(ct);}

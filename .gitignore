@@ -65,3 +65,6 @@
 !/installer-ui/
 
 !/profile-backup-tests/
+!/crash-monitor/
+!/diagnostics-shared/
+!/diagnostics-tests/

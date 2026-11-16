@@ -1,6 +1,9 @@
 黑墙脉冲已内置于 2.3 的“趣味功能”，安装包包含所需动作、贴图与音频，安装时会备份并停用旧独立插件。详见[黑墙说明](docs/blackwall-pulse.md)。
 # SPT Assistant
 
+2.3.2：[错误保护、日志与恢复说明](docs/release-2.3.2.md)。
+
+
 新独立客户端 MOD 的开发入口：[通用热更新加载器](docs/universal-mod-host.md)。提供稳定接口、示例工程、按模块发布与失败回退；适用于本机 EFT 48558 / SPT 5.0。
 
 [English](README.md) · [简体中文](README.zh-CN.md)

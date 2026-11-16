@@ -6,7 +6,7 @@ using BepInEx;
 using BepInEx.Unity.IL2CPP;
 using UnityEngine;
 namespace LocalSpt5Esp.HotReload;
-[BepInPlugin("local.spt5.esp","SPT Assistant","1.5.0")]
+[BepInPlugin("local.spt5.esp","SPT Assistant","1.6.0")]
 public sealed class HostPlugin:BasePlugin {
  internal static HostPlugin? Instance;
  internal RuntimeReloader? Runtime;
@@ -30,4 +30,5 @@ public sealed class RuntimeDriver:MonoBehaviour {
  public void Update()=>HostPlugin.Instance?.Update();
  public void LateUpdate()=>HostPlugin.Instance?.Runtime?.LateUpdate();
  public void OnGUI()=>HostPlugin.Instance?.Runtime?.Draw();
+ public void OnApplicationQuit()=>CrashWatchClient.MarkNormal();
 }

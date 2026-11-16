@@ -21,6 +21,9 @@ public record Metadata:IModMetadata {
 [Injectable(TypePriority=OnLoadOrder.Preload)]
 public sealed class Startup(CustomItemService custom,TemplateTable templates,TradersTable traders,ISptLogger<Startup> log,SPTarkov.Server.Core.Utils.JsonUtil json):IOnLoad {
  public Task OnLoadAsync(CancellationToken cancellationToken){
+#if SPT_ASSISTANT_SERVER
+  if(!LocalGearMail.FunItemPolicy.EnabledAtStartup)return Task.CompletedTask;
+#endif
   var original=json.Serialize(templates.Items[Swords.BaseTemplate]);
   var baseHandbook=(templates.Handbook?.Items ?? throw new InvalidOperationException("Handbook missing")).Single(i=>i.Id==Swords.BaseTemplate);
   var assort=traders.GetTrader("5c0647fdd443bc2504c2d371")?.Assort ?? throw new InvalidOperationException("Jaeger assort missing"); // Jaeger, LL1.

@@ -8,7 +8,7 @@ namespace LocalSpt5Esp;
 internal static class RaidClock {
  internal static ConfigEntry<bool> PreventTimeout=null!,ShowClock=null!,PauseRemaining=null!;
  static ConfigEntry<int> hudWidth=null!,hudHeight=null!,hudFont=null!;
- static string nextRaidMinutes="60";static bool nextRaidLoaded;
+
  static string minutes="60",hoursPart="1",minutesPart="0",secondsPart="0",notice="";static bool useHms=true;
  static bool scenarioHook,stopHook;
  static float nextError,nextPauseSync;static readonly RaidPauseState pause=new();
@@ -58,14 +58,7 @@ internal static class RaidClock {
   DrawNextRaid(new Rect(rect.x,rect.y+686,rect.width,165));
   RaidEnd.Draw(new Rect(rect.x,rect.y+870,rect.width,260));
  }
- static void DrawNextRaid(Rect rect){
-  if(!nextRaidLoaded){try{nextRaidMinutes=NextRaidLoot.Read().NextRaidMinutes.ToString(System.Globalization.CultureInfo.InvariantCulture);nextRaidLoaded=true;}catch(Exception e){notice=e.Message;}}
-  InterfaceMenu.Label(new Rect(rect.x,rect.y,rect.width,28),"行动前设置战局时长",InterfaceMenu.Accent,17);
-  InterfaceMenu.Paragraph(new Rect(rect.x,rect.y+34,rect.width,40),"分钟数，0 使用地图默认；保存后用于下一次进入战局，当前战局不受影响。",null,12);
-  nextRaidMinutes=InterfaceMenu.Field(new Rect(rect.x,rect.y+82,140,34),nextRaidMinutes);
-  if(InterfaceMenu.Button(new Rect(rect.x+154,rect.y+82,160,34),"保存下次战局时长"))Action(()=>{if(!double.TryParse(nextRaidMinutes,System.Globalization.NumberStyles.Float,System.Globalization.CultureInfo.InvariantCulture,out double value))throw new ArgumentException("请输入有效分钟数。");var settings=NextRaidLoot.Read();settings.NextRaidMinutes=value;NextRaidLoot.Save(settings);notice="下次战局时长已保存："+(value==0?"地图默认":value+" 分钟");});
-  InterfaceMenu.Paragraph(new Rect(rect.x,rect.y+124,rect.width,35),notice,null,12);
- }
+ static void DrawNextRaid(Rect rect)=>RaidStartClock.Draw(rect);
  internal static Rect DefaultBounds(){float width=Math.Min(hudWidth.Value,Math.Max(120,Screen.width-24)),height=Math.Min(hudHeight.Value,Math.Max(40,Screen.height-24));return new Rect(Math.Max(12,(Screen.width-width)/2),Math.Max(12,Screen.height-height-25),width,height);}
  internal static void Resize(float width,float height){var size=RaidRules.HudSize(width,height);hudWidth.Value=size.Width;hudHeight.Value=size.Height;}
  internal static void DrawHud(){

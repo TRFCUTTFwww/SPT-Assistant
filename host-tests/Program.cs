@@ -16,10 +16,17 @@ Pump(()=>Ready(1));Check(TestState.Init==3&&TestState.Prepares==1,"staged startu
 Console.WriteLine("PASS background prepare, modal presentation, one lifecycle action per frame and prior pause/cursor/audio/background restoration");
 TestState.CanReload=false;host.RequestReload();int before=TestState.Updates;Pump(()=>TestState.Prepares==2&&TestState.Updates>before+5);Check(Time.timeScale==.75f&&TestState.Unload==0,"blocked native transactions were interrupted");TestState.CanReload=true;Pump(()=>Ready(2));
 Console.WriteLine("PASS transaction deferral keeps old module updating, then reloads after native work completes");
-TestState.FailNextInit=true;host.RequestReload();Pump(()=>Status().ValueKind==JsonValueKind.Object&&Status().GetProperty("error").ValueKind==JsonValueKind.String&&Time.timeScale==.75f);Check(host.CurrentVersion=="fixture"&&config.SaveOnConfigSet,"failed init did not restore last good module and config mode");
-Console.WriteLine("PASS partial candidate cleanup, rollback, persisted failure and automatic resume");
-File.WriteAllBytes(payload,new byte[2048]);host.RequestReload();int live=TestState.Updates;Pump(()=>TestState.Updates>live+5&&Status().GetProperty("error").GetString()!.Contains("Bad IL format"));Check(host.CurrentVersion=="fixture"&&Time.timeScale==.75f,"corrupt module stopped old runtime");
-Console.WriteLine("PASS invalid candidate leaves old module and game running");
+TestState.FailNextInit=true;host.RequestReload();Pump(()=>host.SafetyBlocked);Check(Time.timeScale==0&&config.SaveOnConfigSet,"failed init did not hold pause and restore config mode");
+int live=TestState.Updates;for(int i=0;i<20;i++){host.Update();host.Draw();}Check(TestState.Updates==live&&TestState.Rescues==0,"failed reload ran partial code or settled a real raid");
+host.RollbackPreviousVersion();Pump(()=>Ready(3));Check(host.CurrentVersion=="fixture"&&!host.SafetyBlocked,"manual rollback did not restore last good module");
+Console.WriteLine("PASS failed init holds pause; partial candidate cleanup and manual rollback restore game");
+var valid=File.ReadAllBytes(payload);File.WriteAllBytes(payload,new byte[2048]);host.RequestReload();Pump(()=>host.SafetyBlocked);Check(host.CurrentVersion=="fixture"&&Time.timeScale==0&&TestState.Rescues==0,"corrupt candidate ran code or triggered a raid rescue");
+File.WriteAllBytes(payload,valid);host.RequestReload();Pump(()=>Ready(4));
+Console.WriteLine("PASS corrupt candidate holds pause and repaired replacement resumes safely");
+host.SetDiagnosticOption("debug","true");foreach(string kind in new[]{"null","bounds","stack","access","reload"}){host.SimulateError(kind);Pump(()=>host.SafetyBlocked);Check(Time.timeScale==0&&TestState.Rescues==0,"debug simulation changed a real raid");TestState.Click="结束调试模拟并继续";host.Draw();Pump(()=>!host.SafetyBlocked&&Time.timeScale==.75f);}
+Console.WriteLine("PASS all five controlled error simulations preserve the real raid and permit debug exit");
 var game=new EFT.AbstractGame{GameTimer=new()};Comfort.Common.Singleton<EFT.AbstractGame>.Instance=game;var oldStart=game.GameTimer._start.Value.Value;using(var pause=new ReloadPause()){Thread.Sleep(20);pause.Tick();Check(Time.timeScale==0&&game.GameTimer._start.Value.Value>oldStart,"raid clock was not compensated");}Check(Time.timeScale==.75f,"pause dispose did not restore time scale");
 Console.WriteLine("PASS wall-clock raid deadline compensation and exact original time scale restoration");
+Comfort.Common.Singleton<EFT.AbstractGame>.Instance=null;TestState.FailNextUnload=true;host.RequestReload();Pump(()=>host.SafetyBlocked);host.RollbackPreviousVersion();for(int i=0;i<20;i++){host.Update();host.Draw();}Check(host.SafetyBlocked&&Time.timeScale==0,"unsafe unload allowed rollback or automatic resume");
+Console.WriteLine("PASS failed unload prevents unsafe rollback and retains pause");
 // Test files remain in an isolated temporary directory for inspection.

@@ -2,6 +2,8 @@ using System;
 namespace LocalSpt5Esp;
 internal static partial class RaidCommands {
  static bool AssistantCommand(string name,string[] args){
+  if(name is "logs" or "debug" or "nexttime"){DiagnosticsPanel.Command(name,args);return true;}
+  if(name=="ricochet"){PlayerRicochet.Command(args);return true;}
   if(name=="misc"){MiscPanel.Command(args);return true;}
   if(name!="fir")return false;
   if(args.Length!=2||args[1] is not ("on" or "off" or "add" or "remove"))throw new ArgumentException("/fir <物品实例ID> on|off");

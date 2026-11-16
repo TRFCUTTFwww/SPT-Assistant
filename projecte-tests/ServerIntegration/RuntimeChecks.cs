@@ -66,7 +66,7 @@ internal static class RuntimeChecks {
   var drain=await Table(new(){["Action"]="exchange",["Operation"]=Guid.NewGuid().ToString("N"),["Raid"]=true,["Burn"]=false,["Template"]=ruble,["Count"]=936});Check(Ok(drain)&&Balance(drain)==baseline,"artifact test wallet returned to baseline");
   var runtime=await call(new(),"/local/projecte/runtime");Check(Ok(runtime)&&runtime["ready"]!.GetValue<bool>(),"stable server host reports ready");
   if(runtime["integrated"]?.GetValue<bool>()==true){
-   Check(runtime["hotReload"]?.GetValue<bool>()==false&&runtime["version"]?.GetValue<string>()=="2.3.1","Minecraft server belongs to Assistant and independent hot loading is disabled");
+   Check(runtime["hotReload"]?.GetValue<bool>()==false&&runtime["version"]?.GetValue<string>()=="2.3.2","Minecraft server belongs to Assistant and independent hot loading is disabled");
    Check(!File.Exists(Path.Combine(fixture,"user/mods/ProjectE/Local.ProjectE.Logic.module")),"old standalone MC logic module is absent");
    Check(Ok(await Table(new(){["Action"]="state"})),"table remains available without a standalone module");
    return checks;

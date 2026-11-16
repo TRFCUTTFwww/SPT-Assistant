@@ -9,6 +9,7 @@ internal static class MinecraftBridge {
  static ModuleContext? swordContext,projectContext;static float nextInitialize;
  internal static bool CanReload=>(swords?.CanReload??true)&&(project?.CanReload??true);
  internal static void Initialize(){
+  if(!FunItemClient.Known||!FunItemClient.Enabled)return;
   ModuleContext Context(string id,string folder){string root=Path.Combine(BepInEx.Paths.PluginPath,"LocalSpt5ESP","Minecraft",folder),data=Path.Combine(BepInEx.Paths.PluginPath,"LocalSpt5ESP","Minecraft","state",id);Directory.CreateDirectory(data);return new(id,root,data,Plugin.Self.Patches.Id,(level,message)=>{if(level==LogLevel.Error)Plugin.Self.Log.LogError(message);else if(level==LogLevel.Warning)Plugin.Self.Log.LogWarning(message);else Plugin.Self.Log.LogInfo(message);});}
   try{swordContext=Context("atm-swords","AllTheModium");swords=new();swords.Initialize(swordContext);projectContext=Context("projecte","ProjectE");project=new();project.Initialize(projectContext);}catch{Reset();throw;}
  }

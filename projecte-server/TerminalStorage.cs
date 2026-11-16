@@ -17,7 +17,9 @@ public sealed class TerminalRouter:StaticRouter {
 }
 // Copied from the assistant's RaidStashService. This module owns its route,
 // authentication, normalization, revision checks, backup and persistence.
+#if !SPT_ASSISTANT_SERVER
 [Injectable]
+#endif
 public sealed class TerminalStorage(SaveServer saves,JsonUtil json,HttpResponseUtil http) {
  public async ValueTask<string> Handle(StorageRequest request,MongoId session,CancellationToken ct){
   var gate=ProfileGates.Get(session.ToString());await gate.WaitAsync(ct);

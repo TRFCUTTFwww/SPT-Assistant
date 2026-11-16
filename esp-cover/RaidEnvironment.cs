@@ -31,7 +31,7 @@ internal static class RaidEnvironment {
    // Pause owns the clock even while system synchronization is enabled.
    // Preserve both settings so resuming returns to the selected clock mode.
    if(freeze.Value){SetClockRate(current,0,originalMod,true);nextSystemSync=0;}
-   else if(syncSystem.Value){SetClockRate(current,1,1,false);if(Time.unscaledTime>=nextSystemSync){nextSystemSync=Time.unscaledTime+1;var systemNow=Il2CppSystem.DateTime.Now;if(Math.Abs((current.Calculate()-systemNow).TotalSeconds)>.5)current.ResetForce(systemNow);}}
+   else if(syncSystem.Value&&!RaidStartClock.SessionOverride){SetClockRate(current,1,1,false);if(Time.unscaledTime>=nextSystemSync){nextSystemSync=Time.unscaledTime+1;var systemNow=Il2CppSystem.DateTime.Now;if(Math.Abs((current.Calculate()-systemNow).TotalSeconds)>.5)current.ResetForce(systemNow);}}
    else{float factor=originalFactor*(overrideSpeed.Value?speed.Value:1);if(float.IsFinite(factor))SetClockRate(current,factor,originalMod,originalLocked);}
   }else RestoreClock();
   var owner=WeatherController.Instance;
@@ -51,7 +51,7 @@ internal static class RaidEnvironment {
  internal static void Reset(){try{RestoreClock();}catch(Exception e){Plugin.Self.Error(e);}try{RestoreWeather();}catch(Exception e){Plugin.Self.Error(e);}}
  internal static void Draw(Rect rect){
   InterfaceMenu.Label(new Rect(rect.x,rect.y,rect.width,28),"昼夜与天气",InterfaceMenu.Accent,17);
-  if(InterfaceMenu.Button(new Rect(rect.x,rect.y+38,rect.width,32),syncSystem.Value?"同步系统时钟 · 开启":"同步系统时钟 · 关闭",syncSystem.Value)){syncSystem.Value=!syncSystem.Value;nextSystemSync=0;}
+  if(InterfaceMenu.Button(new Rect(rect.x,rect.y+38,rect.width,32),syncSystem.Value?"同步系统时钟 · 开启":"同步系统时钟 · 关闭",syncSystem.Value)){syncSystem.Value=!syncSystem.Value;RaidStartClock.AllowSystemSync();nextSystemSync=0;}
   rect.y+=46;
   InterfaceMenu.Label(new Rect(rect.x,rect.y+38,120,30),"游戏小时 0～24");hour=InterfaceMenu.Field(new Rect(rect.x+130,rect.y+38,90,30),hour);
   if(InterfaceMenu.Button(new Rect(rect.x+230,rect.y+38,110,30),"设置时刻"))try{if(!RaidClock.Active)throw new ArgumentException("请先进入战局。");if(syncSystem.Value)throw new ArgumentException("先关闭系统时间同步，再手动设置时刻。");float h=ItemSpawnRules.Number(hour,0,23.999f,"小时");var date=Singleton<GameWorld>.Instance.GameDateTime??throw new ArgumentException("时间未同步。");date.ResetForce(date.Calculate().Date.AddHours(h));status="游戏时间已更新";}catch(Exception e){status=e.Message;}

@@ -24,7 +24,7 @@ public record Metadata:IModMetadata{
  public string Name{get;init;}="Local Gear Mail API";
  public string Author{get;init;}="Local";
  public List<string>? Contributors{get;init;}
- public SemanticVersioning.Version Version{get;init;}=new("2.3.1");
+ public SemanticVersioning.Version Version{get;init;}=new("2.3.2");
  public SemanticVersioning.Range SptVersion{get;init;}=new("~5.0.0");
  public bool HasPrepatcher{get;init;}
  public List<string>? Incompatibilities{get;init;}

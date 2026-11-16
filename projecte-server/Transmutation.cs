@@ -42,7 +42,9 @@ public sealed class Receipt {
  public string InventoryBeforeJson{get;set;}="";
  public string InventoryAfter{get;set;}="";
 }
+#if !SPT_ASSISTANT_SERVER
 [Injectable]
+#endif
 public sealed class TableService(TemplateTable templates,SaveServer saves,ItemHelper helper,JsonUtil json,HttpResponseUtil http) {
  const string Key="localProjectETransmutation";
  static readonly ConcurrentDictionary<string,SemaphoreSlim> Gates=new();

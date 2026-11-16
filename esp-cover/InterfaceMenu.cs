@@ -194,7 +194,7 @@ internal static partial class InterfaceMenu {
    var content=new Rect(window.x+236,window.y+99,window.width-260,window.height-123);
    DrawGlobalSearchBar(ref content);if(!string.IsNullOrWhiteSpace(globalQuery)){DrawGlobalResults(content);return;}
    if(contextKeys){HotkeyPage.Draw(content,category);return;}
-   if(category=="主页面"){HomeDashboard.Draw(content);return;}if(category=="杂项"){MiscPanel.Draw(content);return;}
+   if(category=="调试"){DiagnosticsPanel.DrawDebug(content);return;}if(category=="主页面"){HomeDashboard.Draw(content);return;}if(category=="杂项"){MiscPanel.Draw(content);return;}
    var pages=MenuSections.Pages(category);if(!pages.Contains(otherPage))otherPage=pages[0];string next=Tabs(content,pages,otherPage,out float tabsHeight);if(next!=otherPage)Navigate(category,next);content.y+=tabsHeight;content.height-=tabsHeight;
    if(category=="服务端"){ServerControlPanel.Draw(content,otherPage);return;}if(category=="剧情"){StoryPanel.Draw(content,otherPage);return;}if(category=="数据"&&otherPage is not ("角色管理" or "存档备份")){CharacterDataPanel.Draw(content,otherPage);return;}if(category=="AI 工作台"){AiWorkspace.Draw(content,otherPage);return;}if(category=="玩具枪工具"){ToyDeveloper.DrawWorkspace(content,otherPage);return;}if(category=="战局与物资"&&otherPage=="活动控制"){SeasonalEventControls.Draw(content);return;}
    if(category=="战局与物资"&&otherPage=="地图模式"){EventRaidLauncher.Draw(content);return;}
@@ -235,7 +235,7 @@ internal static partial class InterfaceMenu {
     case ("传送与导航","角色传送"):TeleportControl.Draw(content);break;
     case ("传送与导航","路面导航"):GroundNavigation.Draw(content);break;
     case ("传送与导航","撤离定位"):ExfilDisplay.DrawQuickActions(new Rect(content.x,content.y,content.width,46));DrawSettings(new Rect(content.x,content.y+58,content.width,content.height-58));break;
-    case ("人物与移动","交互能力"):DrawSettings(new Rect(content.x,content.y,content.width,Math.Max(100,content.height-120)));QuickhackSettingsBridge.DrawDoorToggle(new Rect(content.x,content.yMax-110,content.width,100));break;
+    case ("人物与移动","交互能力"):InteractionAbilities.Draw(content);break;
     case ("物品与装备","添加物品"):ItemSpawner.Draw(content);break;
     case ("物品与装备","玩家枪械预设"):PlayerWeaponPresets.Draw(content);break;
     case ("物品与装备","整套装备"):LoadoutPlans.Draw(content);break;
@@ -243,7 +243,8 @@ internal static partial class InterfaceMenu {
     case ("设置与热键","全部热键"):HotkeyPage.Draw(content);break;
     case ("设置与热键","版本更新"):UpdateChecker.Draw(content);break;
     case ("设置与热键","配置方案"):ConfigProfiles.Draw(content);break;
-    case ("设置与热键","主题与布局"):DrawAppearance(content);break;
+    case ("设置与热键","日志与诊断"):DiagnosticsPanel.DrawLogs(content);break;
+     case ("设置与热键","主题与布局"):DrawAppearance(content);break;
     case ("开发工具","命令控制台"):CommandoConsole.Draw(content);break;
     default:DrawSettings(content);break;
    }

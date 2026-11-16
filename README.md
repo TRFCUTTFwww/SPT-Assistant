@@ -1,5 +1,8 @@
 # SPT Assistant
 
+2.3.2: [Error protection, logging and recovery](docs/release-2.3.2.md).
+
+
 [English](README.md) · [简体中文](README.zh-CN.md)
 
 An in-game control panel for **SPT**, built with C# and Unity. Manage your character, raid, equipment, quests and server settings from one interface.
