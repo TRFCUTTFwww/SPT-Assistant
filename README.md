@@ -12,7 +12,7 @@ An in-game control panel for **SPT**, built with C# and Unity. Manage your chara
 
 ## Installation: double-click Setup
 
-1. Under **Assets** on the [latest release](https://github.com/TRFCUTTFwww/SPT-Assistant/releases/latest), download **`SPT-Assistant-2.3-Setup.exe`**. The `Source code` downloads are for developers.
+1. Under **Assets** on the [release downloads](https://github.com/TRFCUTTFwww/SPT-Assistant/releases), download **`SPT-Assistant-2.3-Setup.exe`**. The `Source code` downloads are for developers.
 2. Double-click the EXE and select **`EscapeFromTarkov.exe` in your SPT game folder**. Setup also tries to find installed games automatically.
 3. Close the game and SPT server, then click **Install now**. Start SPT as usual and press **Right Shift** in game.
 

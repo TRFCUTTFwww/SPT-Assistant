@@ -15,7 +15,7 @@
 
 ## 安装：双击即可
 
-1. 在 [最新版下载页](https://github.com/TRFCUTTFwww/SPT-Assistant/releases/latest) 的 **Assets / 资源** 中，下载 **`SPT-Assistant-2.3-Setup.exe`**。不要下载 `Source code`，那是开发者用的源码。
+1. 在 [发布下载页](https://github.com/TRFCUTTFwww/SPT-Assistant/releases) 的 **Assets / 资源** 中，下载 **`SPT-Assistant-2.3-Setup.exe`**。不要下载 `Source code`，那是开发者用的源码。
 2. 双击安装 EXE，选择你平时使用的 **SPT 游戏目录中的 `EscapeFromTarkov.exe`**。安装器也会尝试自动找到游戏位置。
 3. 关闭游戏和 SPT 服务端，点击 **开始安装**。完成后照常打开 SPT，进入游戏按 **右 Shift** 打开辅助菜单。
 

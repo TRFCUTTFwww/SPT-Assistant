@@ -4,7 +4,7 @@
 
 ## 最简单的安装方法
 
-1. 打开 [Releases](https://github.com/TRFCUTTFwww/SPT-Assistant/releases/latest)，在 **Assets（资源）** 中下载 `SPT-Assistant-2.3-Setup.exe`。
+1. 打开 [Releases](https://github.com/TRFCUTTFwww/SPT-Assistant/releases)，在 **Assets（资源）** 中下载 `SPT-Assistant-2.3-Setup.exe`。
 2. 双击 EXE，不需要先解压，也不需要安装 .NET SDK。安装器使用 Windows 自带的 .NET Framework 和 PowerShell，全部模组资源都在 EXE 内。
 3. 选择 **SPT 目录里的 EscapeFromTarkov.exe**。可以拖入游戏文件夹或 EXE；误选 `SPT_Runtime` 等子目录时会尝试定位上一级的游戏。
 4. 单人 / 房主用默认模式；连接朋友的服务器时选择“仅安装客户端”。Fika 仍需另行安装。
