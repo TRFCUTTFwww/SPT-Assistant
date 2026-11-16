@@ -1,0 +1,25 @@
+{
+  "modVersion": "2.3",
+  "installerVersion": "2.3.0.1",
+  "date": "2026-11-16",
+  "runtime": "Windows built-in .NET Framework / Windows PowerShell; no user SDK required",
+  "payload": "Embedded offline package, SHA-256 verified before extraction and file-level checks before writes",
+  "checks": 30,
+  "coverage": [
+    "Literal path quoting with spaces, Chinese, apostrophes and dollar syntax",
+    "Archive traversal and sibling-prefix rejection",
+    "EXE and server-subdirectory game-root detection",
+    "Full install, client-only install and repeated install",
+    "Existing profiles, settings and admin-key preservation",
+    "Recoverable backups and legacy MC module retirement",
+    "Read-only verification",
+    "Corrupted payload rejection before game writes",
+    "A real exclusive destination-file lock and restoration of every pre-existing file",
+    "Invalid location and unsupported game version rejection",
+    "Actionable Chinese errors",
+    "Native Windows Forms control layout and rendered Chinese preview"
+  ],
+  "productionGameModifiedByTests": false,
+  "beginnerUserAcceptanceTest": false,
+  "codeSigned": false
+}

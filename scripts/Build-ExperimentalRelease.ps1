@@ -32,7 +32,7 @@ foreach($entry in $components.GetEnumerator()){Copy-Item -LiteralPath (Join-Path
 Copy-Item -LiteralPath (Join-Path $repo 'scripts/Install-Experimental.ps1') -Destination (Join-Path $stage 'Install.ps1')
 foreach($name in @('README.md','README.zh-CN.md','LICENSE')){Copy-Item -LiteralPath (Join-Path $repo $name) -Destination $stage}
 [IO.Directory]::CreateDirectory((Join-Path $stage 'docs'))|Out-Null
-foreach($name in @('INSTALL.md','release-2.3.md','validation-2.3.json','hotkeys.md','world-editor.md','blackwall-pulse.md','blackwall-assets.json','minecraft-assets.json')){Copy-Item -LiteralPath (Join-Path $repo ('docs/'+$name)) -Destination (Join-Path $stage 'docs')}
+foreach($name in @('INSTALL.md','release-2.3.md','validation-2.3.json','installer-validation-2.3.json','hotkeys.md','world-editor.md','blackwall-pulse.md','blackwall-assets.json','minecraft-assets.json')){Copy-Item -LiteralPath (Join-Path $repo ('docs/'+$name)) -Destination (Join-Path $stage 'docs')}
 # Package only the explicitly inventoried Blackwall runtime resources.
 if(!$BlackwallAssetRoot){
  $BlackwallAssetRoot=Join-Path $GameRoot 'BepInEx/plugins/LocalSpt5ESP/Blackwall/Assets'
@@ -66,4 +66,9 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archive=Join-Path $OutputDirectory ('SPT-Assistant-'+$version+'-experimental.zip')
 [IO.Compression.ZipFile]::CreateFromDirectory($stage,$archive,[IO.Compression.CompressionLevel]::Optimal,$false)
 [IO.File]::WriteAllText((Join-Path $OutputDirectory 'SHA256SUMS.txt'),((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()+'  '+[IO.Path]::GetFileName($archive)+[Environment]::NewLine),$utf8)
+& (Join-Path $PSScriptRoot 'Build-Setup.ps1') -PackageDirectory $stage -OutputDirectory (Join-Path $OutputDirectory 'setup')
+$setupName='SPT-Assistant-'+$version+'-Setup.exe'
+Copy-Item -LiteralPath (Join-Path $OutputDirectory ('setup/'+$setupName)) -Destination (Join-Path $OutputDirectory $setupName)
+$lines=@(foreach($name in @([IO.Path]::GetFileName($archive),$setupName)){(Get-FileHash -LiteralPath (Join-Path $OutputDirectory $name) -Algorithm SHA256).Hash.ToLowerInvariant()+'  '+$name})
+[IO.File]::WriteAllText((Join-Path $OutputDirectory 'SHA256SUMS.txt'),(($lines -join [Environment]::NewLine)+[Environment]::NewLine),$utf8)
 Write-Output ('Built experimental package: '+$archive)

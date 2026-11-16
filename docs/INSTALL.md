@@ -1,64 +1,55 @@
-# Installation / 安装说明
+# 安装与故障排查 / Installation
 
-Assistant 2.2 includes Blackwall Pulse resources under `BepInEx/plugins/LocalSpt5ESP/Blackwall/Assets`. Installation backs up the retired standalone `BlackwallPulse` plugin outside BepInEx. 黑墙所需资源随安装包提供，旧独立插件会备份到 mod-backups 后停用；辅助设置保留。
+适用 Windows 11 / SPT 5.0 BE / EFT 1.3.0.1.48558。辅助版本为 2.3；安装程序版本为 2.3.0.1。实验版的战局效果仍需按发布说明验证。
 
-## English
+## 最简单的安装方法
 
-**Current target:** SPT 5.0 BE, EFT 1.3.0.1.48558, Windows x64, Unity IL2CPP / .NET 10. Development follows the latest SPT version; backward compatibility is not guaranteed. This is an unstable experimental release without broad testing. Back up profiles and settings first.
+1. 打开 [Releases](https://github.com/TRFCUTTFwww/SPT-Assistant/releases/latest)，在 **Assets（资源）** 中下载 `SPT-Assistant-2.3-Setup.exe`。
+2. 双击 EXE，不需要先解压，也不需要安装 .NET SDK。安装器使用 Windows 自带的 .NET Framework 和 PowerShell，全部模组资源都在 EXE 内。
+3. 选择 **SPT 目录里的 EscapeFromTarkov.exe**。可以拖入游戏文件夹或 EXE；误选 `SPT_Runtime` 等子目录时会尝试定位上一级的游戏。
+4. 单人 / 房主用默认模式；连接朋友的服务器时选择“仅安装客户端”。Fika 仍需另行安装。
+5. 关闭游戏和 SPT 服务端，点击 **开始安装**。安装程序不会强制结束它们。
+6. 出现“安装完成”后，照常启动 SPT；在游戏里按 **右 Shift** 打开辅助菜单。
 
-Use the `SPT-Assistant-2.2-experimental.zip` release asset. Extract it outside the game directory, close the target client and server, and run:
+更新时重新运行新版安装程序并选择同一个游戏目录即可。安装程序不会要求普通用户输入路径命令或复制 DLL。无需全程管理员权限；只有目标文件夹拒绝写入时，才使用“管理员重试”。安装器未做数字签名，Windows 可能显示未知发布者提示；请先确认下载来源，不应关闭系统保护来运行来路不明的文件。
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Install.ps1 -GameRoot "D:\SPT-5.0.0-48558" -Language en
-```
+## 常见问题
 
-Add `-ClientOnly` for a Fika member who connects to another machine. This installs the client host/core and generates local item caches; it does not install server mods or create an administration key. Fika itself must already be installed separately. Do not start a local SPT server on a member's machine. For authorized server administration, the client reads the host-provided key from its own `SPT_Runtime/user/mods/LocalGearMail/api-key.txt`; the key grants administrative access and is not required for local ESP. Keep it out of shared archives.
-
-The full installation uses these paths relative to the game root:
-
-| File | Purpose |
+| 提示 / 情况 | 怎么处理 |
 | --- | --- |
-| `BepInEx/plugins/LocalSpt5ESP/Local.Spt5.ESP.dll` | Client hot-reload host, version 1.5.0 |
-| `BepInEx/plugins/LocalSpt5ESP/runtime/Local.Spt5.ESP.Core.module` | Assistant client core, version 2.2 |
-| `BepInEx/plugins/LocalSpt5ESP/esp5-names.json` | Generated local item names |
-| `BepInEx/plugins/LocalSpt5ESP/esp5-prices.json` | Generated local price snapshot |
-| `SPT_Runtime/user/mods/LocalGearMail/LocalGearMail.dll` | Mail and administration API host |
-| `SPT_Runtime/user/mods/LocalGearMail/LocalGearAdmin.module` | Reloadable profile/story/stash administration |
-| `SPT_Runtime/user/mods/LocalRaidControls/LocalRaidControls.dll` | Server and raid settings |
-| `SPT_Runtime/user/mods/LocalGearMail/api-key.txt` | Locally generated administration secret; existing key preserved |
+| 没找到游戏 | 选择 SPT 目录内的 `EscapeFromTarkov.exe`，不要选官方在线版目录或下载压缩包。 |
+| 版本不匹配 | 使用 EFT 48558 / SPT 5.0 BE 对应的游戏。不要强行覆盖其他版本。 |
+| 缺少 SPT 必要文件 | 先把 SPT 安装完整，通过 SPT 启动器进入一次游戏，关闭后重试。 |
+| 游戏或服务端仍在运行 | 自行关闭对应程序，再点“开始安装”。 |
+| 安装文件损坏 | 从正式 Releases 重新下载完整 Setup EXE。不要下载 Source code 代替安装程序。 |
+| 无写入权限 | 点击安装界面的“管理员重试”，或使用自己有写入权限的游戏目录。 |
+| 文件被占用 / 无法写入 | 关闭游戏、服务端和正在打开相关文件的程序后重试，必要时查看日志。 |
+| 安装失败 | 安装器会尝试恢复已经替换的文件。保留备份和日志；若提示部分恢复未完成，不要删除备份。 |
 
-Start the server first, then launch the client through SPT. Press **Right Shift** for the panel. BepInEx lists the host as 1.5.0; the panel/core version is 2.2. On first installation or a host/server DLL update, restart the relevant processes. Later core-only updates can use the existing hot-reload facility; do not replace a host DLL while the game is running. For this prerelease, closing both processes and rerunning the installer is the recommended update path.
+安装日志位于 `%LOCALAPPDATA%/SPTAssistant/Logs`，可在界面点击“查看日志”。备份位于游戏目录的 `mod-backups/assistant-2.3-*`，成功或失败后都不自动删除。设置、已有管理密钥、MC 钱包和角色数据不随安装包分发；完整安装在替换前备份角色存档。旧 MC 与 3-X 加载包的迁移规则见 [2.3 说明](release-2.3.md)。
 
-The installer verifies the package's file checksums before installation and backs up replaced files under `mod-backups/assistant-2.2-*`. Existing configuration and profiles are not supplied by the archive. Item caches come from your installed SPT database; no game database or personal data is redistributed.
+## English quick start
 
-To remove the mod, close the client/server and remove only `BepInEx/plugins/LocalSpt5ESP`, `SPT_Runtime/user/mods/LocalGearMail`, and `SPT_Runtime/user/mods/LocalRaidControls`. Preserve any backups you need. Removing the mod does not undo profile edits; restore your own profile backup to reverse those edits. Leave Fika and SPT installed.
+Download **SPT-Assistant-2.3-Setup.exe** from release **Assets**, double-click it, select the SPT game's **EscapeFromTarkov.exe**, close the game/server and click **Install now**. Use the default mode for single-player/hosting, or client only when joining a friend. In game, press **Right Shift**. Setup is offline and uses Windows components; the .NET SDK is not needed.
 
-### Build from source
+Wrong version: use SPT 5.0 BE / EFT 48558. Missing dependencies: complete SPT installation and launch the matching game once. Access denied: use Retry as admin or select a writable game folder. Damaged package: download the EXE again. Existing files are backed up and rollback is attempted on failure; retain backups and the installation log if recovery needs attention.
 
-Install the .NET 10 **SDK** and matching SPT. Launch SPT once to generate BepInEx interop assemblies. From a checkout, build a package using:
+## 命令行与源码构建（可选）
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-ExperimentalRelease.ps1 -GameRoot "D:\SPT-5.0.0-48558" -OutputDirectory "D:\SPT-Assistant-build" -Dotnet dotnet
-```
-
-The output directory must be new or empty. Use the resulting ZIP with the installation command above. Native game/BepInEx/SPT dependencies are resolved from `GameRoot` and are not included in this repository or package. The package contains only this project's binaries, installation scripts, license and documentation.
-
-## 简体中文
-
-**当前适配：**SPT 5.0 BE、EFT 1.3.0.1.48558、Windows x64、Unity IL2CPP / .NET 10。后续以 SPT 最新版为适配目标，不保证向后兼容。当前版本不稳定，没有经过广泛测试，请先备份存档和设置。
-
-下载发布附件 `SPT-Assistant-2.2-experimental.zip`，解压到游戏目录外，关闭目标目录的客户端和服务端，再执行：
+旧 ZIP 安装方式继续保留。解压 `SPT-Assistant-2.3-experimental.zip` 后，可执行：
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Install.ps1 -GameRoot "D:\SPT-5.0.0-48558" -Language ch
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Install.ps1 -GameRoot "D:\SPT" -Language ch
 ```
 
-Fika 成员连接其他电脑的房主时，增加 `-ClientOnly`：只安装客户端宿主、功能模块及本地物品缓存，不安装服务端模组，也不生成管理密钥。Fika 需自行提前安装。成员电脑不要启动本地 SPT 服务端。需要房主授权的服务端管理时，客户端从自己目录下的 `SPT_Runtime/user/mods/LocalGearMail/api-key.txt` 读取房主提供的密钥；本地 ESP 不需要该密钥。该密钥具有管理权限，请勿打包公开。
+联机成员增加 `-ClientOnly`。`-VerifyOnly` 仅检查包和游戏目录，不安装。客户端模式仍需对应 SPT 安装中的本地数据库，以生成名称与价格缓存；不安装服务端模组或创建管理密钥。
 
-完整安装的文件位置见上表。先启动服务端，再通过 SPT 启动器启动游戏，按 **右 Shift** 打开面板。BepInEx 显示宿主版本 1.5.0，面板与功能模块版本为 2.2。首次安装、宿主或服务端 DLL 更新需要重启对应进程；后续仅功能模块更新可使用现有热加载。本实验版建议关闭两端后重新运行安装脚本更新。
+开发者使用 .NET 10 SDK 和匹配的游戏依赖构建模组；普通使用者不需要 SDK。完整打包会同时生成 ZIP 和自包含资源的图形安装 EXE：
 
-脚本安装前核对包内文件校验值，覆盖的文件备份到 `mod-backups/assistant-2.2-*`，保留已有设置及 API 密钥。压缩包不含个人存档、配置、密钥或游戏数据库；物品名称和价格从安装者自己的 SPT 数据库生成。
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-ExperimentalRelease.ps1 -GameRoot "D:\SPT" -OutputDirectory "D:\Assistant-build" -Dotnet dotnet
+```
 
-卸载时关闭两端，只移除 `BepInEx/plugins/LocalSpt5ESP`、`SPT_Runtime/user/mods/LocalGearMail`、`SPT_Runtime/user/mods/LocalRaidControls`，保留需要的备份。移除模组不会自动恢复已经修改的存档；需要撤销时使用自己的存档备份。保留 Fika 和 SPT。
+仅重建安装程序可使用 `scripts/Build-Setup.ps1 -PackageDirectory <已校验的安装包目录> -OutputDirectory <输出目录>`。GUI 源码在 `installer-ui`；使用 Windows 自带的 .NET Framework 编译器。安装包不携带游戏数据库、账户信息或 GitHub 凭据。
 
-源码构建使用 .NET 10 **SDK**，不是仅运行环境；准备对应 SPT 并启动一次以生成互操作程序集，在源码根目录运行上方构建命令。输出目录必须是新建或空目录，生成的 ZIP 使用同样的安装方式。构建依赖从 `GameRoot` 读取，不随源码或发布包分发。
+卸载前关闭游戏 / 服务端，仅移除 `BepInEx/plugins/LocalSpt5ESP`、`SPT_Runtime/user/mods/LocalGearMail`、`SPT_Runtime/user/mods/LocalRaidControls`；不要删 Fika 或 SPT。已整合的 MC 自定义物品依赖服务端模板，卸载前保留角色备份。移除模组不会撤销已经做过的角色编辑。

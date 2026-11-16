@@ -10,22 +10,17 @@ An in-game control panel for **SPT**, built with C# and Unity. Manage your chara
 >
 > Development follows the latest SPT version. **Backward compatibility is not guaranteed.** The exact supported SPT/EFT build is stated for each release; this release targets the versions above. Fika support is experimental and has not been broadly tested across hosts, clients or mod combinations.
 
-## Installation
+## Installation: double-click Setup
 
-1. Install the matching SPT/EFT build listed above and start SPT once so BepInEx interop assemblies are generated. Use a separate SPT installation.
-2. Close that game's client and server. Back up `SPT_Runtime/user/profiles`, `BepInEx/config` and any existing Assistant files.
-3. Download a matching built installation package from [Releases](https://github.com/TRFCUTTFwww/SPT-Assistant/releases) and extract it to a separate folder. GitHub's automatic source archives contain source code, not an installed mod.
-4. From the extracted folder, run the following in Windows PowerShell, replacing the example path:
+1. Under **Assets** on the [latest release](https://github.com/TRFCUTTFwww/SPT-Assistant/releases/latest), download **`SPT-Assistant-2.3-Setup.exe`**. The `Source code` downloads are for developers.
+2. Double-click the EXE and select **`EscapeFromTarkov.exe` in your SPT game folder**. Setup also tries to find installed games automatically.
+3. Close the game and SPT server, then click **Install now**. Start SPT as usual and press **Right Shift** in game.
 
-   ```powershell
-   powershell -NoProfile -ExecutionPolicy Bypass -File .\Install.ps1 -GameRoot "D:\SPT-5.0.0-48558" -Language en
-   ```
+Keep the default mode for single-player or hosting friends; choose client only when joining a friend's server. The EXE contains the complete offline payload. It checks the target version and package hashes, backs up replaced files, and retains existing settings and administration keys. No commands, SDK installation or manual file copying are required.
 
-5. Start the SPT server, then start the client through the SPT launcher. Press **Right Shift** to open the panel. The interface language can be changed in the menu.
+The installer is unsigned and does not bypass Windows protection. Verify that you downloaded the official release asset before handling an unknown-publisher prompt. If Windows denies write access, use Setup's Retry as admin button.
 
-The installer copies only Assistant components, generates item-name/price caches from your own SPT database, preserves existing settings and API keys, and backs up replaced files under `mod-backups`. First installation of the full package creates a random local administration API key. **Fika clients:** use `-ClientOnly`; connect to the host and do not start a local server. Server administration features require matching server components and the host's key, and should be enabled only for trusted administrators. This package does not install Fika.
-
-See [the bilingual installation guide](docs/INSTALL.md) for file locations, updates, source builds and removal, and [2.3 release notes](docs/release-2.3.md) for tested boundaries and remaining limitations.
+See [installation and troubleshooting](docs/INSTALL.md) for technical details and the retained command-line ZIP option.
 
 ## Features
 

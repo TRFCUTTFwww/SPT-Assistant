@@ -13,22 +13,17 @@
 >
 > 后续开发以 SPT 最新版为适配目标，**不保证向后兼容**。每次发布都会注明具体适配的 SPT/EFT 版本；本次仅以以上版本为目标。Fika 联机支持同样处于实验阶段，尚未覆盖不同房主、成员和模组组合的广泛测试。
 
-## 安装
+## 安装：双击即可
 
-1. 安装上方标注的对应版本 SPT/EFT，并启动一次 SPT，让 BepInEx 生成互操作程序集。请使用独立的 SPT 游戏目录。
-2. 关闭该目录的游戏和服务端，备份 `SPT_Runtime/user/profiles`、`BepInEx/config` 和已有辅助文件。
-3. 从 [Releases](https://github.com/TRFCUTTFwww/SPT-Assistant/releases) 下载对应版本的安装包，并解压到单独的文件夹。GitHub 自动生成的源码压缩包不是可直接安装的模组。
-4. 在解压目录打开 Windows PowerShell，执行下面的命令，把路径改为自己的游戏目录：
+1. 在 [最新版下载页](https://github.com/TRFCUTTFwww/SPT-Assistant/releases/latest) 的 **Assets / 资源** 中，下载 **`SPT-Assistant-2.3-Setup.exe`**。不要下载 `Source code`，那是开发者用的源码。
+2. 双击安装 EXE，选择你平时使用的 **SPT 游戏目录中的 `EscapeFromTarkov.exe`**。安装器也会尝试自动找到游戏位置。
+3. 关闭游戏和 SPT 服务端，点击 **开始安装**。完成后照常打开 SPT，进入游戏按 **右 Shift** 打开辅助菜单。
 
-   ```powershell
-   powershell -NoProfile -ExecutionPolicy Bypass -File .\Install.ps1 -GameRoot "D:\SPT-5.0.0-48558" -Language ch
-   ```
+单人游戏和联机房主保留默认选项；加入朋友的联机则选择“仅安装客户端”。安装程序自带全部模组文件，可离线安装；自动检查版本、校验文件并备份覆盖内容，保留已有设置和密钥。不需要输入命令、安装 SDK 或手动复制文件。
 
-5. 启动 SPT 服务端，再通过 SPT 启动器启动客户端。按 **右 Shift** 打开面板，界面内可切换语言。
+仅当你确认下载的是本项目正式发布附件时，才处理 Windows 对未知发布者的提示。安装器没有数字签名，不会绕过系统保护。若提示目录无写入权限，可使用安装界面的“管理员重试”。
 
-安装脚本只安装辅助组件，从你自己的 SPT 数据库生成物品名称和价格缓存，保留原有配置及 API 密钥，覆盖的文件备份到 `mod-backups`。首次完整安装会生成随机的本地管理 API 密钥。**Fika 成员：**命令增加 `-ClientOnly`，连接房主，不要启动本地服务端；服务端管理功能需要房主安装对应组件并提供密钥，只应给受信任的管理员使用。本包不负责安装 Fika。
-
-文件位置、更新、源码构建和卸载方式见[中英双语安装说明](docs/INSTALL.md)；验证范围和待实测项目见 [2.3 发布说明](docs/release-2.3.md)。
+需要技术细节或保留命令行安装方式时，请看[安装与故障排查](docs/INSTALL.md)。完整安装包仍保留 ZIP 形式，供手动部署使用。
 
 ## 功能
 
