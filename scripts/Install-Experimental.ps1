@@ -39,6 +39,14 @@ foreach($entry in $resourceManifest.files){
  $asset=Join-Path $package $relative
  if(!(Test-Path -LiteralPath $asset -PathType Leaf) -or (Get-FileHash -LiteralPath $asset -Algorithm SHA256).Hash -ne $entry.sha256){throw ('Invalid Blackwall resource: '+$entry.name)}
 }
+$minecraftManifest=Get-Content -LiteralPath (Join-Path $package 'docs/minecraft-assets.json') -Raw -Encoding UTF8|ConvertFrom-Json
+foreach($entry in $minecraftManifest.files){
+ if($entry.server -and $ClientOnly){continue}
+ $relative='payload/'+$entry.payload
+ $asset=Join-Path $package $relative
+ if(!(Test-Path -LiteralPath $asset -PathType Leaf) -or (Get-FileHash -LiteralPath $asset -Algorithm SHA256).Hash -ne $entry.sha256){throw ('Invalid MC resource: '+$entry.payload)}
+ $files[$relative]=$entry.target
+}
 $checks=Get-Content -LiteralPath (Join-Path $package 'checksums.json') -Raw -Encoding utf8 | ConvertFrom-Json
 foreach($entry in $checks.PSObject.Properties){
  $inputFile=[IO.Path]::GetFullPath((Join-Path $package $entry.Name))
@@ -82,9 +90,10 @@ foreach($process in Get-Process -Name $processNames -ErrorAction SilentlyContinu
  try{$processPath=$process.Path}catch{}
  if(-not $processPath -or $processPath.StartsWith($prefix,[StringComparison]::OrdinalIgnoreCase)){throw 'Close the target game and SPT server before installation'}
 }
-$backup=Target ('mod-backups/assistant-2.2-'+[DateTime]::Now.ToString('yyyyMMdd-HHmmssfff'))
+$backup=Target ('mod-backups/assistant-2.3-'+[DateTime]::Now.ToString('yyyyMMdd-HHmmssfff'))
 $completed=[Collections.Generic.List[object]]::new()
 $legacyBackup=$null
+$retired=[Collections.Generic.List[object]]::new()
 function Prepare([string]$relative){
  $destination=Target $relative
  $old=$null
@@ -98,6 +107,26 @@ function Prepare([string]$relative){
  return $destination
 }
 try{
+ # Preserve profiles and custom storage before retiring 3-X templates/old MC code.
+ if(-not $ClientOnly){
+  foreach($relative in @('SPT_Runtime/user/profiles','SPT_Runtime/user/mods/ProjectE/players','SPT_Runtime/user/mods/ProjectE/storage')){
+   $origin=Target $relative
+   if(Test-Path -LiteralPath $origin -PathType Container){$saved=Join-Path $backup $relative;[IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($saved))|Out-Null;Copy-Item -LiteralPath $origin -Destination $saved -Recurse}
+  }
+ }
+ # Recover pending MC conversion journals at the new integrated data path.
+ foreach($id in @('atm-swords','projecte')){
+  $oldState=Target ('BepInEx/plugins/UniversalModHost/state/'+$id+'/data')
+  if(Test-Path -LiteralPath $oldState -PathType Container){
+   foreach($item in Get-ChildItem -LiteralPath $oldState -File -Recurse){$suffix=$item.FullName.Substring($oldState.Length+1);$relative='BepInEx/plugins/LocalSpt5ESP/Minecraft/state/'+$id+'/'+$suffix;$destination=Target $relative;if(!(Test-Path -LiteralPath $destination)){$destination=Prepare $relative;Copy-Item -LiteralPath $item.FullName -Destination $destination}}
+  }
+ }
+ $oldCode=@('BepInEx/plugins/UniversalModHost/modules/atm-swords','BepInEx/plugins/UniversalModHost/modules/projecte','BepInEx/plugins/UniversalModHost/modules/scp3x')
+ if(-not $ClientOnly){$oldCode+=@('SPT_Runtime/user/mods/AllTheModiumSwords','SPT_Runtime/user/mods/ProjectE')}
+ foreach($relative in $oldCode){
+  $origin=Target $relative
+  if(Test-Path -LiteralPath $origin){$saved=Join-Path $backup ('disabled-code/'+$relative);[IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($saved))|Out-Null;Move-Item -LiteralPath $origin -Destination $saved;$retired.Add([pscustomobject]@{Origin=$origin;Saved=$saved})}
+ }
  foreach($entry in $files.GetEnumerator()){
   $destination=Prepare $entry.Value
   [IO.File]::WriteAllBytes($destination,[IO.File]::ReadAllBytes((Join-Path $package $entry.Key)))
@@ -120,12 +149,13 @@ try{
   Move-Item -LiteralPath $legacy -Destination $legacyBackup
  }
  $destination=Prepare 'BepInEx/plugins/LocalSpt5ESP/install-manifest.json'
- $manifest=@{version='2.2';hostVersion='1.5.0';targetSpt='5.0 BE';targetEft='1.3.0.1.48558';clientOnly=[bool]$ClientOnly;blackwallIntegrated=$true;blackwallAssets=$resourceManifest.files.Count;experimental=$true;inRaidVerified=$false;installedUtc=[DateTime]::UtcNow.ToString('O');backup=$backup;coreSha256=$checks.'payload/Local.Spt5.ESP.Core.module'}
+ $manifest=@{version='2.3';hostVersion='1.5.0';targetSpt='5.0 BE';targetEft='1.3.0.1.48558';clientOnly=[bool]$ClientOnly;minecraftIntegrated=$true;independentMinecraftHotReload=$false;scp3xRemoved=$true;blackwallIntegrated=$true;blackwallAssets=$resourceManifest.files.Count;experimental=$true;inRaidVerified=$false;installedUtc=[DateTime]::UtcNow.ToString('O');backup=$backup;coreSha256=$checks.'payload/Local.Spt5.ESP.Core.module'}
  [IO.File]::WriteAllText($destination,($manifest|ConvertTo-Json -Depth 4),$utf8)
- Write-Output ('Installed SPT Assistant 2.2 (EXPERIMENTAL). Backup: '+$backup)
+ Write-Output ('Installed SPT Assistant 2.3 (EXPERIMENTAL). Backup: '+$backup)
  Write-Output 'Start the SPT server, then its client. Press Right Shift. Fika members: connect to the host; do not start a local server.'
 }catch{
  $failure=$_
+ foreach($entry in $retired){if(Test-Path -LiteralPath $entry.Saved){Move-Item -LiteralPath $entry.Saved -Destination $entry.Origin}}
  if($legacyBackup -and (Test-Path -LiteralPath $legacyBackup)){Move-Item -LiteralPath $legacyBackup -Destination (Target 'BepInEx/plugins/BlackwallPulse')}
  for($index=$completed.Count-1;$index -ge 0;$index--){
   $entry=$completed[$index]

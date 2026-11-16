@@ -60,7 +60,4 @@
 !/icon-render-guard/
 !/totem-tests/
 !/icon-render-tests/
-!/scp3x-client/
-!/scp3x-shared/
-!/scp3x-tests/
-scp3x-client/Assets/
+!/release23-tests/

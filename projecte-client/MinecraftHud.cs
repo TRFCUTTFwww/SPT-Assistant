@@ -18,7 +18,7 @@ internal sealed class MinecraftHud {
   string path=Path.Combine(BepInEx.Paths.GameRootPath,"SPT_Runtime","SPT_Data","database","globals.json");
   using var globals=JsonDocument.Parse(File.ReadAllText(path));long total=0;foreach(var entry in globals.RootElement.GetProperty("config").GetProperty("exp").GetProperty("level").GetProperty("exp_table").EnumerateArray()){total+=entry.GetProperty("exp").GetInt64();thresholds.Add(total);}
  }
- internal void Tick(){
+ internal void Tick(bool diagnostics=false){
   var game=Singleton<AbstractGame>.Instance;player=game?.InRaid==true&&game.TryCast<HideoutGame>()==null?Singleton<GameWorld>.Instance?.MainPlayer:null;
   if(player?.IsYourPlayer!=true||player.HealthController?.IsAlive!=true){panel=null;slots.Clear();nativeViews.Clear();return;}
   var current=CommonUI.Instance?.EftBattleUIScreen?.QuickAccessPanel;
@@ -38,7 +38,7 @@ internal sealed class MinecraftHud {
   var h=player.ActiveHealthController;if(h==null)return;var hp=h.GetBodyPartHealth(EBodyPart.Common,false);float currentHealth=hp.Maximum>0?Math.Clamp(hp.Current/hp.Maximum,0,1):0;if(currentHealth<health-.0001f)lastHurt=Time.unscaledTime;health=currentHealth;food=h.Energy.Maximum>0?Math.Clamp(h.Energy.Current/h.Energy.Maximum,0,1):0;
   water=h.Hydration.Maximum>0?Math.Clamp(h.Hydration.Current/h.Hydration.Maximum,0,1):0;
   long xp=player.Profile.Info.Experience;level=Math.Max(1,player.Profile.Info.Level);experience=level<thresholds.Count-1?EmcRules.Progress(xp,thresholds[level],thresholds[level+1]):1;
-  if(Time.unscaledTime>=nextDiagnostics){nextDiagnostics=Time.unscaledTime+5;WriteDiagnostics();}
+  if(diagnostics&&Time.unscaledTime>=nextDiagnostics){nextDiagnostics=Time.unscaledTime+5;WriteDiagnostics();}
  }
  void WriteDiagnostics(){
   try{
@@ -50,7 +50,7 @@ internal sealed class MinecraftHud {
    }));
   }catch(Exception error){context.Log(LogLevel.Info,"HUD diagnostics: "+error.Message);}
  }
- internal void Draw(float scale){
+ internal void Draw(float scale,bool showHealth=true,bool showHunger=true,bool showHydration=true,bool showExperience=true,bool showHotbar=true){
   if(Event.current.type!=EventType.Repaint||player?.IsYourPlayer!=true||player.HealthController?.IsAlive!=true||player.IsInventoryOpened||Cursor.visible)return;
   // Integer screen-pixel scale preserves the original pixel grid and spacing.
   float pixel=Math.Max(1,Mathf.RoundToInt(2*scale));float width=slots.Count>0?slots.Count*20+2:182;
@@ -59,12 +59,12 @@ internal sealed class MinecraftHud {
   try{
    float stats=(width-182)/2;int hp=(int)Math.Ceiling(health*20),hunger=(int)Math.Ceiling(food*20);
    for(int i=0;i<10;i++){
-    art.Symbol(stats+i*8,-17+HudMotion.Offset(health,i,0,Time.unscaledTime,Time.unscaledTime-lastHurt<.45f),false,hp-i*2);
-    art.Symbol(stats+182-i*8-9,-17+HudMotion.Offset(food,i,1,Time.unscaledTime),true,hunger-i*2);
-    art.Hydration(stats+182-i*8-9,-30+HudMotion.Offset(water,i,2,Time.unscaledTime),(int)Math.Ceiling(water*20)-i*2);
+    if(showHealth)art.Symbol(stats+i*8,-17+HudMotion.Offset(health,i,0,Time.unscaledTime,Time.unscaledTime-lastHurt<.45f),false,hp-i*2);
+    if(showHunger)art.Symbol(stats+182-i*8-9,-17+HudMotion.Offset(food,i,1,Time.unscaledTime),true,hunger-i*2);
+    if(showHydration)art.Hydration(stats+182-i*8-9,-30+HudMotion.Offset(water,i,2,Time.unscaledTime),(int)Math.Ceiling(water*20)-i*2);
    }
-   art.Experience(stats,-7,experience);art.Level(width/2,-13,level);
-   if(panel==null||!panel.gameObject.activeInHierarchy||panel.IsDisabled)return;
+   if(showExperience){art.Experience(stats,-7,experience);art.Level(width/2,-13,level);}
+   if(!showHotbar||panel==null||!panel.gameObject.activeInHierarchy||panel.IsDisabled)return;
    float alpha=panel._animation?._canvasGroup?.alpha??1;if(alpha<=.001f)return;
    GUI.color=new(1,1,1,alpha);art.Hotbar(slots.Count);
    var held=player.HandsController?.Item;

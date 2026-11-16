@@ -15,6 +15,7 @@ namespace ProjectE.Client;
 internal sealed class TerminalInventory {
  static TerminalInventory? active;
  readonly ModuleContext context;readonly Action<string> report;
+ readonly TerminalAccess access=new();
  Task<string>? request;bool loading,ready,opening,ownsScreen,stopping,conflict;
  IntPtr actor;Stash? stash;GamePlayerOwner? owner;
  string profile="",revision="",saved="",sent="";JsonElement root;
@@ -31,11 +32,13 @@ internal sealed class TerminalInventory {
   context.OnShutdown(Shutdown);
  }
  internal bool Opening=>opening;
- internal bool CanReload=>request==null&&!ownsScreen&&(!ready||Snapshot()==saved);
+ internal bool CanReload=>request==null&&!ownsScreen&&!ready;
+ static bool Held=>Local?.HandsController?.GetItem()?.StringTemplateId==Gadgets.Terminal;
  bool Own(InventoryController? c)=>ready&&c!=null&&c.Pointer==Local?.InventoryController?.Pointer&&Local?.Pointer==actor;
- static void BeforeShow(InventoryController __1,ref CompoundItem __5,ref bool __9){var a=active;if(a?.context.IsActive!=true||!a.Own(__1)||(!a.opening&&__5!=null&&__5.TryCast<Stash>()==null))return;__5=a.stash!;__9=false;a.ownsScreen=true;}
- static bool FindItem(Player.PlayerInventoryController __instance,MongoID __0,ref Option<Item> __result){var a=active;if(a?.context.IsActive==true&&a.Own(__instance)&&a.stash?.TryFindItem(__0.ToString(),out var item)==true&&item!=null){__result=new(item);return false;}return true;}
- static void Closed(){var a=active;if(a?.ownsScreen!=true)return;a.ownsScreen=false;try{a.Save();}catch(Exception e){a.Fail(e.Message);}}
+ static void BeforeShow(InventoryController __1,ref CompoundItem __5,ref bool __9){var a=active;if(a?.context.IsActive!=true||!a.opening||!a.access.CanAttach(a.Own(__1),Held,a.ready))return;__5=a.stash!;__9=false;a.ownsScreen=true;a.access.Attach();}
+ static bool FindItem(Player.PlayerInventoryController __instance,MongoID __0,ref Option<Item> __result){var a=active;if(a?.context.IsActive==true&&a.access.CanResolve(a.Own(__instance),Held)&&a.stash?.TryFindItem(__0.ToString(),out var item)==true&&item!=null){__result=new(item);return false;}return true;}
+ static void Closed(){var a=active;if(a?.ownsScreen!=true)return;try{a.Disconnect();}catch(Exception e){a.Fail(e.Message);}}
+ void Disconnect(){access.Disconnect();ownsScreen=false;opening=false;openUntil=0;Save();}
  static bool BeforeStop(LocalGame __instance,string __0,ExitStatus __1,string __2,float __3){
   var a=active;if(a?.context.IsActive!=true||a.stopping||!a.ready||__0!=a.profile)return true;
   try{a.Save();if(a.request==null&&a.Snapshot()==a.saved&&Local?.InventoryController?.HasActiveEvents!=true)return true;
@@ -56,11 +59,12 @@ internal sealed class TerminalInventory {
   File.WriteAllText(Journal+".new",JsonSerializer.Serialize(payload));File.Move(Journal+".new",Journal,true);request=Call(payload);loading=false;
  }
  internal void Open(GamePlayerOwner? gameOwner){
-  var p=Local;if(p?.HealthController?.IsAlive!=true)return;
+  var p=Local;if(p?.HealthController?.IsAlive!=true||!Held)return;
   if(request!=null||ownsScreen)return;
   if(ready&&Snapshot()!=saved){Save();return;}
   owner=gameOwner??p.GetComponent<GamePlayerOwner>();if(owner==null){Fail("库存输入控制器尚未就绪。");return;}
   actor=p.Pointer;profile=p.ProfileId;openUntil=Time.unscaledTime+22;conflict=false;
+  access.Request();
   // Always load a fresh revision when explicitly opening, including after use
   // of another stash UI. A pending unconfirmed save is retried first.
   if(File.Exists(Journal)){var pending=JsonSerializer.Deserialize<StorageRequest>(File.ReadAllText(Journal))!;sent=pending.Items!.Value.GetRawText();request=Call(pending);loading=false;}
@@ -90,24 +94,27 @@ internal sealed class TerminalInventory {
   if(request?.IsCompleted==true){
    var completed=request;request=null;using var document=JsonDocument.Parse(completed.GetAwaiter().GetResult());var data=document.RootElement;if(data.TryGetProperty("data",out var inner))data=inner;
    if(!data.TryGetProperty("ok",out var ok)||!ok.GetBoolean()){conflict=true;throw new InvalidOperationException(data.TryGetProperty("error",out var error)?error.GetString():"终端接口未就绪，请更新服务端。");}
-   if(loading){if(p?.Pointer!=actor){Reset();return;}Load(data);loading=false;}
-   else{revision=data.GetProperty("revision").GetString()!;saved=sent;File.Delete(Journal);Status("");if(!ready&&p?.Pointer==actor&&openUntil>Time.unscaledTime){loading=true;request=Call(new(){Profile=profile});}}
+   if(loading){if(p?.Pointer!=actor||!Held||access.Closing||!access.Requested){Reset();return;}Load(data);loading=false;}
+   else{revision=data.GetProperty("revision").GetString()!;saved=sent;File.Delete(Journal);Status("");if(!ready&&p?.Pointer==actor&&Held&&access.Requested&&openUntil>Time.unscaledTime){loading=true;request=Call(new(){Profile=profile});}}
   }
   if(p?.Pointer!=actor||p.HealthController?.IsAlive!=true){if(request==null)Reset();return;}
   if(ownsScreen&&p.HandsController?.GetItem()?.StringTemplateId!=Gadgets.Terminal)CloseOwnedScreen();
-  if(ready&&request==null&&Time.unscaledTime>=nextCheck){nextCheck=Time.unscaledTime+1;Save();}
+  if(!Held&&(access.Visible||access.Requested)){
+   Disconnect();
+  }
+  if(ready&&request==null&&(access.Closing||Time.unscaledTime>=nextCheck&&access.Visible)){nextCheck=Time.unscaledTime+5;Save();}
   if(!conflict&&request==null&&File.Exists(Journal)&&Time.unscaledTime>=retryAt){retryAt=Time.unscaledTime+5;var pending=JsonSerializer.Deserialize<StorageRequest>(File.ReadAllText(Journal))!;sent=pending.Items!.Value.GetRawText();request=Call(pending);loading=false;}
   if(finishStop!=null&&request==null&&ready&&Snapshot()==saved&&p.InventoryController?.HasActiveEvents!=true){var finish=finishStop;finishStop=null;finish();return;}
-  if(openUntil>0&&Time.unscaledTime>=openUntil){openUntil=0;Fail("无线仓库连接超时。");}
-  if(ready&&!conflict&&request==null&&openUntil>Time.unscaledTime&&!p.IsInventoryOpened){
-   if(p.HandsController?.GetItem()?.StringTemplateId!=Gadgets.Terminal){openUntil=0;return;}
+  if(access.Closing&&request==null&&!conflict&&p.InventoryController?.HasActiveEvents!=true&&(!ready||Snapshot()==saved)){Reset();Status("");return;}
+  if(openUntil>0&&Time.unscaledTime>=openUntil){Disconnect();Fail("无线仓库连接超时。");}
+  if(ready&&!conflict&&request==null&&access.CanAttach(p.Pointer==actor,Held,ready)&&openUntil>Time.unscaledTime&&!p.IsInventoryOpened){
    opening=true;try{owner!.TranslateCommand(EFT.InputSystem.ECommand.ToggleInventory);}finally{opening=false;}
-   if(p.IsInventoryOpened)openUntil=0;
+   if(ownsScreen)openUntil=0;
   }
  }catch(Exception e){request=null;loading=false;openUntil=0;retryAt=Time.unscaledTime+5;Fail(e.GetBaseException().Message);}}
- void Status(string error){try{File.WriteAllText(Path.Combine(context.DataDirectory,"terminal-status.json"),JsonSerializer.Serialize(new{utc=DateTime.UtcNow,ready,ownsScreen,pending=request!=null,conflict,error,standalone=true}));}catch{}}
+ void Status(string error){try{File.WriteAllText(Path.Combine(context.DataDirectory,"terminal-status.json"),JsonSerializer.Serialize(new{utc=DateTime.UtcNow,ready,ownsScreen,requested=access.Requested,connected=access.Visible,disconnecting=access.Closing,pending=request!=null,conflict,error,standalone=true}));}catch{}}
  void Fail(string error){report("无线终端："+error);Status(error);}
- void Reset(){ready=false;stash=null;owner=null;actor=IntPtr.Zero;revision=saved=sent="";openUntil=0;ownsScreen=false;finishStop=null;}
+ void Reset(){access.Clear();ready=false;stash=null;owner=null;actor=IntPtr.Zero;revision=saved=sent="";openUntil=0;ownsScreen=false;finishStop=null;}
  void CloseOwnedScreen(){if(ownsScreen&&Local is {} p&&p.Pointer==actor)InventoryScreenLifecycle.Close(p,owner);}
  void Shutdown(){if(active==this)active=null;CloseOwnedScreen();if(ready&&request==null)Save();Reset();}
 }

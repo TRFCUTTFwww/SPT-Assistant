@@ -1,0 +1,950 @@
+{
+  "version": "2.3",
+  "files": [
+    {
+      "source": "atm-swords-client/Assets/AE2-LICENSE.txt",
+      "payload": "Minecraft/atm-swords-client/AE2-LICENSE.txt",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/AE2-LICENSE.txt",
+      "server": false,
+      "sha256": "39676552fd16d3317f6e6af4cf810778060cda238f75dac9b27c0fcbe848d3d4"
+    },
+    {
+      "source": "atm-swords-client/Assets/alloy_sword.obj",
+      "payload": "Minecraft/atm-swords-client/alloy_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/alloy_sword.obj",
+      "server": false,
+      "sha256": "afbd8cc66ed375db14858158c13677f1f2c8a83fa1f4b3b106efeee923fc85a7"
+    },
+    {
+      "source": "atm-swords-client/Assets/alloy_sword.png",
+      "payload": "Minecraft/atm-swords-client/alloy_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/alloy_sword.png",
+      "server": false,
+      "sha256": "1e183858a8c401379384094fbc4516f93bc598621d1707bf2df2a43a06bf7182"
+    },
+    {
+      "source": "atm-swords-client/Assets/allthemodium_sword.obj",
+      "payload": "Minecraft/atm-swords-client/allthemodium_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/allthemodium_sword.obj",
+      "server": false,
+      "sha256": "f44001d1964a98503fc3092c67585370e36549931f58b71ea2745f34e30b82fb"
+    },
+    {
+      "source": "atm-swords-client/Assets/allthemodium_sword.png",
+      "payload": "Minecraft/atm-swords-client/allthemodium_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/allthemodium_sword.png",
+      "server": false,
+      "sha256": "0a07011bcd7669fd5ee066f383738650c5ced44a83d5fcb034862bea7ea0c1cf"
+    },
+    {
+      "source": "atm-swords-client/Assets/black_bag_sword.obj",
+      "payload": "Minecraft/atm-swords-client/black_bag_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/black_bag_sword.obj",
+      "server": false,
+      "sha256": "1e076409a07017f0d575e5fe415b7da4c8dfc4b49271b5ba4b49cecbc0de51d3"
+    },
+    {
+      "source": "atm-swords-client/Assets/black_bag_sword.png",
+      "payload": "Minecraft/atm-swords-client/black_bag_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/black_bag_sword.png",
+      "server": false,
+      "sha256": "1a97a872a03191599ec431072ea15990001b1b4460cd439fdccda41bbd53f3d4"
+    },
+    {
+      "source": "atm-swords-client/Assets/blue_bag_sword.obj",
+      "payload": "Minecraft/atm-swords-client/blue_bag_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/blue_bag_sword.obj",
+      "server": false,
+      "sha256": "1e076409a07017f0d575e5fe415b7da4c8dfc4b49271b5ba4b49cecbc0de51d3"
+    },
+    {
+      "source": "atm-swords-client/Assets/blue_bag_sword.png",
+      "payload": "Minecraft/atm-swords-client/blue_bag_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/blue_bag_sword.png",
+      "server": false,
+      "sha256": "ab45ee8c13b101fa9d37ee75f50727deb34e3faa3ce0af3f3a8ef3a318e8a731"
+    },
+    {
+      "source": "atm-swords-client/Assets/body_stone_sword.obj",
+      "payload": "Minecraft/atm-swords-client/body_stone_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/body_stone_sword.obj",
+      "server": false,
+      "sha256": "2bcf73845a96f51fdc0c8e155e56725dbef57afb16b8385e845e441c11ccc3d0"
+    },
+    {
+      "source": "atm-swords-client/Assets/body_stone_sword.png",
+      "payload": "Minecraft/atm-swords-client/body_stone_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/body_stone_sword.png",
+      "server": false,
+      "sha256": "aad8752920a74ca2bc319484437015ec2ff44c63b0c6b77176119c5fc4973bd1"
+    },
+    {
+      "source": "atm-swords-client/Assets/brown_bag_sword.obj",
+      "payload": "Minecraft/atm-swords-client/brown_bag_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/brown_bag_sword.obj",
+      "server": false,
+      "sha256": "1e076409a07017f0d575e5fe415b7da4c8dfc4b49271b5ba4b49cecbc0de51d3"
+    },
+    {
+      "source": "atm-swords-client/Assets/brown_bag_sword.png",
+      "payload": "Minecraft/atm-swords-client/brown_bag_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/brown_bag_sword.png",
+      "server": false,
+      "sha256": "cd35426412f4cb462149533fc39038564f393184540084dac4a954b39663bbeb"
+    },
+    {
+      "source": "atm-swords-client/Assets/cyan_bag_sword.obj",
+      "payload": "Minecraft/atm-swords-client/cyan_bag_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/cyan_bag_sword.obj",
+      "server": false,
+      "sha256": "1e076409a07017f0d575e5fe415b7da4c8dfc4b49271b5ba4b49cecbc0de51d3"
+    },
+    {
+      "source": "atm-swords-client/Assets/cyan_bag_sword.png",
+      "payload": "Minecraft/atm-swords-client/cyan_bag_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/cyan_bag_sword.png",
+      "server": false,
+      "sha256": "5f01add7749ade5e8712502d3102de3853d1fe35cc7ee93a4488edb8f4028b0d"
+    },
+    {
+      "source": "atm-swords-client/Assets/dm_sword.obj",
+      "payload": "Minecraft/atm-swords-client/dm_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/dm_sword.obj",
+      "server": false,
+      "sha256": "12ac9875a36f412a105ed200b6133c4e8f1f6eaaeb16e6a3bfb96efc18002e05"
+    },
+    {
+      "source": "atm-swords-client/Assets/dm_sword.png",
+      "payload": "Minecraft/atm-swords-client/dm_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/dm_sword.png",
+      "server": false,
+      "sha256": "e987aa39d40dd63687bd14df0853bbe393267f11a66a918a6eae82f0b0877e96"
+    },
+    {
+      "source": "atm-swords-client/Assets/gray_bag_sword.obj",
+      "payload": "Minecraft/atm-swords-client/gray_bag_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/gray_bag_sword.obj",
+      "server": false,
+      "sha256": "1e076409a07017f0d575e5fe415b7da4c8dfc4b49271b5ba4b49cecbc0de51d3"
+    },
+    {
+      "source": "atm-swords-client/Assets/gray_bag_sword.png",
+      "payload": "Minecraft/atm-swords-client/gray_bag_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/gray_bag_sword.png",
+      "server": false,
+      "sha256": "c78aad2ed2efa7364c6cbb55620bfc107b8739afd991c237612172c340fba493"
+    },
+    {
+      "source": "atm-swords-client/Assets/green_bag_sword.obj",
+      "payload": "Minecraft/atm-swords-client/green_bag_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/green_bag_sword.obj",
+      "server": false,
+      "sha256": "1e076409a07017f0d575e5fe415b7da4c8dfc4b49271b5ba4b49cecbc0de51d3"
+    },
+    {
+      "source": "atm-swords-client/Assets/green_bag_sword.png",
+      "payload": "Minecraft/atm-swords-client/green_bag_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/green_bag_sword.png",
+      "server": false,
+      "sha256": "ae6c07a3ba1c56a12a1f1278c6c0298bf0d6df331e005f266f4071bceca08ca5"
+    },
+    {
+      "source": "atm-swords-client/Assets/katar_sword.obj",
+      "payload": "Minecraft/atm-swords-client/katar_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/katar_sword.obj",
+      "server": false,
+      "sha256": "ee6c24d6f04eba3d0304112d9b84c5b7884225164b214b1f20c8afeb2c4c1903"
+    },
+    {
+      "source": "atm-swords-client/Assets/katar_sword.png",
+      "payload": "Minecraft/atm-swords-client/katar_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/katar_sword.png",
+      "server": false,
+      "sha256": "be90be08b082c6934fc8ada2cc872bbdefedc810e40d92dc7ec796ef8921b956"
+    },
+    {
+      "source": "atm-swords-client/Assets/life_stone_sword.obj",
+      "payload": "Minecraft/atm-swords-client/life_stone_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/life_stone_sword.obj",
+      "server": false,
+      "sha256": "2bcf73845a96f51fdc0c8e155e56725dbef57afb16b8385e845e441c11ccc3d0"
+    },
+    {
+      "source": "atm-swords-client/Assets/life_stone_sword.png",
+      "payload": "Minecraft/atm-swords-client/life_stone_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/life_stone_sword.png",
+      "server": false,
+      "sha256": "55e94ff99882c6c9b548f93d7f910587c7b7fd3b3e7500ee5d6d4e9b90bdd436"
+    },
+    {
+      "source": "atm-swords-client/Assets/light_blue_bag_sword.obj",
+      "payload": "Minecraft/atm-swords-client/light_blue_bag_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/light_blue_bag_sword.obj",
+      "server": false,
+      "sha256": "1e076409a07017f0d575e5fe415b7da4c8dfc4b49271b5ba4b49cecbc0de51d3"
+    },
+    {
+      "source": "atm-swords-client/Assets/light_blue_bag_sword.png",
+      "payload": "Minecraft/atm-swords-client/light_blue_bag_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/light_blue_bag_sword.png",
+      "server": false,
+      "sha256": "c2513c1c13e6ac07492c419aabffa09622e7ab02b3c354edd5b031bad5c95b10"
+    },
+    {
+      "source": "atm-swords-client/Assets/light_gray_bag_sword.obj",
+      "payload": "Minecraft/atm-swords-client/light_gray_bag_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/light_gray_bag_sword.obj",
+      "server": false,
+      "sha256": "1e076409a07017f0d575e5fe415b7da4c8dfc4b49271b5ba4b49cecbc0de51d3"
+    },
+    {
+      "source": "atm-swords-client/Assets/light_gray_bag_sword.png",
+      "payload": "Minecraft/atm-swords-client/light_gray_bag_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/light_gray_bag_sword.png",
+      "server": false,
+      "sha256": "156fd8a00d9ff7b4f5cb4924d320fb03d6668b10aa78e46cbeaa74cb8da15412"
+    },
+    {
+      "source": "atm-swords-client/Assets/lime_bag_sword.obj",
+      "payload": "Minecraft/atm-swords-client/lime_bag_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/lime_bag_sword.obj",
+      "server": false,
+      "sha256": "1e076409a07017f0d575e5fe415b7da4c8dfc4b49271b5ba4b49cecbc0de51d3"
+    },
+    {
+      "source": "atm-swords-client/Assets/lime_bag_sword.png",
+      "payload": "Minecraft/atm-swords-client/lime_bag_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/lime_bag_sword.png",
+      "server": false,
+      "sha256": "8873cb49a8659e6b6884f7fec84929c5ffaffeee4cf652668f8df16c86c4a38a"
+    },
+    {
+      "source": "atm-swords-client/Assets/magenta_bag_sword.obj",
+      "payload": "Minecraft/atm-swords-client/magenta_bag_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/magenta_bag_sword.obj",
+      "server": false,
+      "sha256": "1e076409a07017f0d575e5fe415b7da4c8dfc4b49271b5ba4b49cecbc0de51d3"
+    },
+    {
+      "source": "atm-swords-client/Assets/magenta_bag_sword.png",
+      "payload": "Minecraft/atm-swords-client/magenta_bag_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/magenta_bag_sword.png",
+      "server": false,
+      "sha256": "bbab0e9c716d61498789eb009ca5460d11bf516929359bd259c2c18442c68508"
+    },
+    {
+      "source": "atm-swords-client/Assets/ModernIndustrialization-LICENSE.txt",
+      "payload": "Minecraft/atm-swords-client/ModernIndustrialization-LICENSE.txt",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/ModernIndustrialization-LICENSE.txt",
+      "server": false,
+      "sha256": "a3300fd6bd0537566a9e9aef02c975e4e378aa6bf1bba7cd750c57ee97a3093d"
+    },
+    {
+      "source": "atm-swords-client/Assets/ModernIndustrialization-NOTICE.txt",
+      "payload": "Minecraft/atm-swords-client/ModernIndustrialization-NOTICE.txt",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/ModernIndustrialization-NOTICE.txt",
+      "server": false,
+      "sha256": "d2c9b9423ef50e46b67d672ea0a98c47de9966521a8aa9a26c0fd3408b7353fb"
+    },
+    {
+      "source": "atm-swords-client/Assets/orange_bag_sword.obj",
+      "payload": "Minecraft/atm-swords-client/orange_bag_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/orange_bag_sword.obj",
+      "server": false,
+      "sha256": "1e076409a07017f0d575e5fe415b7da4c8dfc4b49271b5ba4b49cecbc0de51d3"
+    },
+    {
+      "source": "atm-swords-client/Assets/orange_bag_sword.png",
+      "payload": "Minecraft/atm-swords-client/orange_bag_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/orange_bag_sword.png",
+      "server": false,
+      "sha256": "82b1df8cbd23030a9f1e9475ea0c34bed86c40d0592c94273cec61dc0e0bea29"
+    },
+    {
+      "source": "atm-swords-client/Assets/pink_bag_sword.obj",
+      "payload": "Minecraft/atm-swords-client/pink_bag_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/pink_bag_sword.obj",
+      "server": false,
+      "sha256": "1e076409a07017f0d575e5fe415b7da4c8dfc4b49271b5ba4b49cecbc0de51d3"
+    },
+    {
+      "source": "atm-swords-client/Assets/pink_bag_sword.png",
+      "payload": "Minecraft/atm-swords-client/pink_bag_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/pink_bag_sword.png",
+      "server": false,
+      "sha256": "9932554fbce57bfdde3e69275c3a63365a21d6bc57bbc09d0c0db9cb80aa8d57"
+    },
+    {
+      "source": "atm-swords-client/Assets/Portable-NOTICE.txt",
+      "payload": "Minecraft/atm-swords-client/Portable-NOTICE.txt",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/Portable-NOTICE.txt",
+      "server": false,
+      "sha256": "4eb10e85902eb4a474a04a171c8108f71014c9889bfd725d746c45b54ba4f58e"
+    },
+    {
+      "source": "atm-swords-client/Assets/portable-provenance.json",
+      "payload": "Minecraft/atm-swords-client/portable-provenance.json",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/portable-provenance.json",
+      "server": false,
+      "sha256": "e3842e47fd3e73935e3286e5594542c8ce3ee141fb7ffbcfb16cbb5499db9b62"
+    },
+    {
+      "source": "atm-swords-client/Assets/ProjectE-LICENSE.txt",
+      "payload": "Minecraft/atm-swords-client/ProjectE-LICENSE.txt",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/ProjectE-LICENSE.txt",
+      "server": false,
+      "sha256": "c16196aa7c2337eef3e6e216c36b2cbd5b13e17373da0661ca11799ae3cbf5a6"
+    },
+    {
+      "source": "atm-swords-client/Assets/projecte-provenance.json",
+      "payload": "Minecraft/atm-swords-client/projecte-provenance.json",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/projecte-provenance.json",
+      "server": false,
+      "sha256": "843f4e6c811233c5e13e057249ab125d13138e09fb1fd063b7847bfadd7eb4d2"
+    },
+    {
+      "source": "atm-swords-client/Assets/provenance.json",
+      "payload": "Minecraft/atm-swords-client/provenance.json",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/provenance.json",
+      "server": false,
+      "sha256": "f32bebbbb3cca3daa5432fa00e7810ceef19dc465e71190731e875a6711d9180"
+    },
+    {
+      "source": "atm-swords-client/Assets/purple_bag_sword.obj",
+      "payload": "Minecraft/atm-swords-client/purple_bag_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/purple_bag_sword.obj",
+      "server": false,
+      "sha256": "1e076409a07017f0d575e5fe415b7da4c8dfc4b49271b5ba4b49cecbc0de51d3"
+    },
+    {
+      "source": "atm-swords-client/Assets/purple_bag_sword.png",
+      "payload": "Minecraft/atm-swords-client/purple_bag_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/purple_bag_sword.png",
+      "server": false,
+      "sha256": "8fe0301e8d3a8c952e45856b2fa352ebaf79d97e7951c874842ea5b9893aee6c"
+    },
+    {
+      "source": "atm-swords-client/Assets/quantum-provenance.json",
+      "payload": "Minecraft/atm-swords-client/quantum-provenance.json",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/quantum-provenance.json",
+      "server": false,
+      "sha256": "bc839f289c76b4d65dde780b9f62b00fb2343341e885adb6cb05d418941136a5"
+    },
+    {
+      "source": "atm-swords-client/Assets/quantum_sword.obj",
+      "payload": "Minecraft/atm-swords-client/quantum_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/quantum_sword.obj",
+      "server": false,
+      "sha256": "a3aa15ee58c6df45c9ace4798a4f33cfc356df22fa925ac523402c3a95747cf3"
+    },
+    {
+      "source": "atm-swords-client/Assets/quantum_sword.png",
+      "payload": "Minecraft/atm-swords-client/quantum_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/quantum_sword.png",
+      "server": false,
+      "sha256": "7492f588f6bb5a49fac400f6cfc4d11fd8599d72631e3a868ec863eb3e053d11"
+    },
+    {
+      "source": "atm-swords-client/Assets/red_bag_sword.obj",
+      "payload": "Minecraft/atm-swords-client/red_bag_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/red_bag_sword.obj",
+      "server": false,
+      "sha256": "1e076409a07017f0d575e5fe415b7da4c8dfc4b49271b5ba4b49cecbc0de51d3"
+    },
+    {
+      "source": "atm-swords-client/Assets/red_bag_sword.png",
+      "payload": "Minecraft/atm-swords-client/red_bag_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/red_bag_sword.png",
+      "server": false,
+      "sha256": "da62c5c6f5353f34f550fea9914a26733062d6b8d7339b7b98220a63a1c8b737"
+    },
+    {
+      "source": "atm-swords-client/Assets/repair_talisman_sword.obj",
+      "payload": "Minecraft/atm-swords-client/repair_talisman_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/repair_talisman_sword.obj",
+      "server": false,
+      "sha256": "ad32b019caca969e7518d42228fbaafd981c14b50183d2bc810c0c7d42a9a259"
+    },
+    {
+      "source": "atm-swords-client/Assets/repair_talisman_sword.png",
+      "payload": "Minecraft/atm-swords-client/repair_talisman_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/repair_talisman_sword.png",
+      "server": false,
+      "sha256": "33b4cca43f03c31f1b9855f062738c7776fcac7155dd84837b0f4156745634d9"
+    },
+    {
+      "source": "atm-swords-client/Assets/rm_sword.obj",
+      "payload": "Minecraft/atm-swords-client/rm_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/rm_sword.obj",
+      "server": false,
+      "sha256": "5e31879f6594b0867d753140081fd459405c08780b454c8418b6c562afca8270"
+    },
+    {
+      "source": "atm-swords-client/Assets/rm_sword.png",
+      "payload": "Minecraft/atm-swords-client/rm_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/rm_sword.png",
+      "server": false,
+      "sha256": "3dcaafd9e1619b6f3aab659776780963eb1cf52787c24a55e975716ce6af9604"
+    },
+    {
+      "source": "atm-swords-client/Assets/soul_stone_sword.obj",
+      "payload": "Minecraft/atm-swords-client/soul_stone_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/soul_stone_sword.obj",
+      "server": false,
+      "sha256": "2bcf73845a96f51fdc0c8e155e56725dbef57afb16b8385e845e441c11ccc3d0"
+    },
+    {
+      "source": "atm-swords-client/Assets/soul_stone_sword.png",
+      "payload": "Minecraft/atm-swords-client/soul_stone_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/soul_stone_sword.png",
+      "server": false,
+      "sha256": "b9cbfb2ea2ecac1af76bba19e8b289ab606e15ff5d91eb5145a5f6b4617b92c3"
+    },
+    {
+      "source": "atm-swords-client/Assets/tablet_sword.obj",
+      "payload": "Minecraft/atm-swords-client/tablet_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/tablet_sword.obj",
+      "server": false,
+      "sha256": "38539208fb5d07198769e9746484adbe293b5f7fbb5456a6c96666db88f47836"
+    },
+    {
+      "source": "atm-swords-client/Assets/tablet_sword.png",
+      "payload": "Minecraft/atm-swords-client/tablet_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/tablet_sword.png",
+      "server": false,
+      "sha256": "139aee5a1a61d915db9e9c59c9807f44ca83d54bf6a3079de6e5da83780fa472"
+    },
+    {
+      "source": "atm-swords-client/Assets/time_watch_sword.obj",
+      "payload": "Minecraft/atm-swords-client/time_watch_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/time_watch_sword.obj",
+      "server": false,
+      "sha256": "a3489a15f1f19f2c83b5c02fac214db0c4cb36935cc6a0f66e535bc3aaab5701"
+    },
+    {
+      "source": "atm-swords-client/Assets/time_watch_sword.png",
+      "payload": "Minecraft/atm-swords-client/time_watch_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/time_watch_sword.png",
+      "server": false,
+      "sha256": "d0d2f879dbceb3209e217ec692123de25f6087794c7c0ff59072ea7c267793e6"
+    },
+    {
+      "source": "atm-swords-client/Assets/totem_sword.obj",
+      "payload": "Minecraft/atm-swords-client/totem_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/totem_sword.obj",
+      "server": false,
+      "sha256": "01e637daef4c8a997240af43789e744c18d44789c2795bb79696cd4a31f6275e"
+    },
+    {
+      "source": "atm-swords-client/Assets/totem_sword.png",
+      "payload": "Minecraft/atm-swords-client/totem_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/totem_sword.png",
+      "server": false,
+      "sha256": "2ee3ccdd17f0b9acb13bac37b3b9d4db6eac72aa350a2b1ab9cc587e2f02514a"
+    },
+    {
+      "source": "atm-swords-client/Assets/unobtainium_sword.obj",
+      "payload": "Minecraft/atm-swords-client/unobtainium_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/unobtainium_sword.obj",
+      "server": false,
+      "sha256": "6618b775e499908e1dc23db6a0e0a838490cfd8ac01141c2a153ce2f9b3341e7"
+    },
+    {
+      "source": "atm-swords-client/Assets/unobtainium_sword.png",
+      "payload": "Minecraft/atm-swords-client/unobtainium_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/unobtainium_sword.png",
+      "server": false,
+      "sha256": "9ff45d1805f4ab8d2fa25bc21d15630718e18b898c0ece3e7a75f9c4b8a37489"
+    },
+    {
+      "source": "atm-swords-client/Assets/vibranium_sword.obj",
+      "payload": "Minecraft/atm-swords-client/vibranium_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/vibranium_sword.obj",
+      "server": false,
+      "sha256": "95c3a172c590ba3ac186e2901f97e9a114513c89ba0d0c5f6475e70dc3247bdb"
+    },
+    {
+      "source": "atm-swords-client/Assets/vibranium_sword.png",
+      "payload": "Minecraft/atm-swords-client/vibranium_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/vibranium_sword.png",
+      "server": false,
+      "sha256": "ccb66a485da5e70dc04c6b76ffe5ef5a0e21def7cee17ba5b79edd2d9733e8bf"
+    },
+    {
+      "source": "atm-swords-client/Assets/white_bag_sword.obj",
+      "payload": "Minecraft/atm-swords-client/white_bag_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/white_bag_sword.obj",
+      "server": false,
+      "sha256": "1e076409a07017f0d575e5fe415b7da4c8dfc4b49271b5ba4b49cecbc0de51d3"
+    },
+    {
+      "source": "atm-swords-client/Assets/white_bag_sword.png",
+      "payload": "Minecraft/atm-swords-client/white_bag_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/white_bag_sword.png",
+      "server": false,
+      "sha256": "03430e96c6bf4e18c7aed7b01754a3266634cabf4834d7420f88fbe12b9370ab"
+    },
+    {
+      "source": "atm-swords-client/Assets/wireless_terminal_sword.obj",
+      "payload": "Minecraft/atm-swords-client/wireless_terminal_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/wireless_terminal_sword.obj",
+      "server": false,
+      "sha256": "9d7263812216a9154edcc790d337e4edf031e057f738780b3fa5ddabc5978c90"
+    },
+    {
+      "source": "atm-swords-client/Assets/wireless_terminal_sword.png",
+      "payload": "Minecraft/atm-swords-client/wireless_terminal_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/wireless_terminal_sword.png",
+      "server": false,
+      "sha256": "4ce77b74e6a4947a5a3456874ee7f4e491800d827080383db4d7e00898ef6728"
+    },
+    {
+      "source": "atm-swords-client/Assets/yellow_bag_sword.obj",
+      "payload": "Minecraft/atm-swords-client/yellow_bag_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/yellow_bag_sword.obj",
+      "server": false,
+      "sha256": "1e076409a07017f0d575e5fe415b7da4c8dfc4b49271b5ba4b49cecbc0de51d3"
+    },
+    {
+      "source": "atm-swords-client/Assets/yellow_bag_sword.png",
+      "payload": "Minecraft/atm-swords-client/yellow_bag_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/AllTheModium/Assets/yellow_bag_sword.png",
+      "server": false,
+      "sha256": "04b07d1bb4d3fef737aa92efacb52c39acfdff1ad5d358eb9cecc7318b2d5f78"
+    },
+    {
+      "source": "projecte-client/Assets/AE2-LICENSE.txt",
+      "payload": "Minecraft/projecte-client/AE2-LICENSE.txt",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/AE2-LICENSE.txt",
+      "server": false,
+      "sha256": "39676552fd16d3317f6e6af4cf810778060cda238f75dac9b27c0fcbe848d3d4"
+    },
+    {
+      "source": "projecte-client/Assets/black_bag.png",
+      "payload": "Minecraft/projecte-client/black_bag.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/black_bag.png",
+      "server": false,
+      "sha256": "1a97a872a03191599ec431072ea15990001b1b4460cd439fdccda41bbd53f3d4"
+    },
+    {
+      "source": "projecte-client/Assets/blue_bag.png",
+      "payload": "Minecraft/projecte-client/blue_bag.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/blue_bag.png",
+      "server": false,
+      "sha256": "ab45ee8c13b101fa9d37ee75f50727deb34e3faa3ce0af3f3a8ef3a318e8a731"
+    },
+    {
+      "source": "projecte-client/Assets/body_stone.png",
+      "payload": "Minecraft/projecte-client/body_stone.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/body_stone.png",
+      "server": false,
+      "sha256": "aad8752920a74ca2bc319484437015ec2ff44c63b0c6b77176119c5fc4973bd1"
+    },
+    {
+      "source": "projecte-client/Assets/brown_bag.png",
+      "payload": "Minecraft/projecte-client/brown_bag.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/brown_bag.png",
+      "server": false,
+      "sha256": "cd35426412f4cb462149533fc39038564f393184540084dac4a954b39663bbeb"
+    },
+    {
+      "source": "projecte-client/Assets/chargetick.ogg",
+      "payload": "Minecraft/projecte-client/chargetick.ogg",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/chargetick.ogg",
+      "server": false,
+      "sha256": "eaaafb8e0bbbe6370b44edc6e07f86cf718b91c0b68228c1434689433fe8f6c4"
+    },
+    {
+      "source": "projecte-client/Assets/chargetick.wav",
+      "payload": "Minecraft/projecte-client/chargetick.wav",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/chargetick.wav",
+      "server": false,
+      "sha256": "91ad5f8040dce089b9cf187e51898cf5280cecab59b77c1eec046b77545150c1"
+    },
+    {
+      "source": "projecte-client/Assets/cyan_bag.png",
+      "payload": "Minecraft/projecte-client/cyan_bag.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/cyan_bag.png",
+      "server": false,
+      "sha256": "5f01add7749ade5e8712502d3102de3853d1fe35cc7ee93a4488edb8f4028b0d"
+    },
+    {
+      "source": "projecte-client/Assets/dm_sword.obj",
+      "payload": "Minecraft/projecte-client/dm_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/dm_sword.obj",
+      "server": false,
+      "sha256": "12ac9875a36f412a105ed200b6133c4e8f1f6eaaeb16e6a3bfb96efc18002e05"
+    },
+    {
+      "source": "projecte-client/Assets/dm_sword.png",
+      "payload": "Minecraft/projecte-client/dm_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/dm_sword.png",
+      "server": false,
+      "sha256": "e987aa39d40dd63687bd14df0853bbe393267f11a66a918a6eae82f0b0877e96"
+    },
+    {
+      "source": "projecte-client/Assets/gray_bag.png",
+      "payload": "Minecraft/projecte-client/gray_bag.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/gray_bag.png",
+      "server": false,
+      "sha256": "c78aad2ed2efa7364c6cbb55620bfc107b8739afd991c237612172c340fba493"
+    },
+    {
+      "source": "projecte-client/Assets/green_bag.png",
+      "payload": "Minecraft/projecte-client/green_bag.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/green_bag.png",
+      "server": false,
+      "sha256": "ae6c07a3ba1c56a12a1f1278c6c0298bf0d6df331e005f266f4071bceca08ca5"
+    },
+    {
+      "source": "projecte-client/Assets/katar_sword.obj",
+      "payload": "Minecraft/projecte-client/katar_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/katar_sword.obj",
+      "server": false,
+      "sha256": "ee6c24d6f04eba3d0304112d9b84c5b7884225164b214b1f20c8afeb2c4c1903"
+    },
+    {
+      "source": "projecte-client/Assets/katar_sword.png",
+      "payload": "Minecraft/projecte-client/katar_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/katar_sword.png",
+      "server": false,
+      "sha256": "be90be08b082c6934fc8ada2cc872bbdefedc810e40d92dc7ec796ef8921b956"
+    },
+    {
+      "source": "projecte-client/Assets/life_stone.png",
+      "payload": "Minecraft/projecte-client/life_stone.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/life_stone.png",
+      "server": false,
+      "sha256": "55e94ff99882c6c9b548f93d7f910587c7b7fd3b3e7500ee5d6d4e9b90bdd436"
+    },
+    {
+      "source": "projecte-client/Assets/light_blue_bag.png",
+      "payload": "Minecraft/projecte-client/light_blue_bag.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/light_blue_bag.png",
+      "server": false,
+      "sha256": "c2513c1c13e6ac07492c419aabffa09622e7ab02b3c354edd5b031bad5c95b10"
+    },
+    {
+      "source": "projecte-client/Assets/light_gray_bag.png",
+      "payload": "Minecraft/projecte-client/light_gray_bag.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/light_gray_bag.png",
+      "server": false,
+      "sha256": "156fd8a00d9ff7b4f5cb4924d320fb03d6668b10aa78e46cbeaa74cb8da15412"
+    },
+    {
+      "source": "projecte-client/Assets/lime_bag.png",
+      "payload": "Minecraft/projecte-client/lime_bag.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/lime_bag.png",
+      "server": false,
+      "sha256": "8873cb49a8659e6b6884f7fec84929c5ffaffeee4cf652668f8df16c86c4a38a"
+    },
+    {
+      "source": "projecte-client/Assets/magenta_bag.png",
+      "payload": "Minecraft/projecte-client/magenta_bag.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/magenta_bag.png",
+      "server": false,
+      "sha256": "bbab0e9c716d61498789eb009ca5460d11bf516929359bd259c2c18442c68508"
+    },
+    {
+      "source": "projecte-client/Assets/mc-hud-provenance.json",
+      "payload": "Minecraft/projecte-client/mc-hud-provenance.json",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/mc-hud-provenance.json",
+      "server": false,
+      "sha256": "7b9b6c48ff8e65c132dad8f8f394fcca1d35e8484e6292f7f014ee0ebf85032a"
+    },
+    {
+      "source": "projecte-client/Assets/mc_ascii.png",
+      "payload": "Minecraft/projecte-client/mc_ascii.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/mc_ascii.png",
+      "server": false,
+      "sha256": "63189e06bad788841fff43b90ebd19858eb774437b96d2a23578e252d0a5d4d2"
+    },
+    {
+      "source": "projecte-client/Assets/mc_icons.png",
+      "payload": "Minecraft/projecte-client/mc_icons.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/mc_icons.png",
+      "server": false,
+      "sha256": "3f5c3d10c6ac1931d097354c8c5c0ce0d38f9b4944b2a5772ef5d0ff915e16dd"
+    },
+    {
+      "source": "projecte-client/Assets/mc_widgets.png",
+      "payload": "Minecraft/projecte-client/mc_widgets.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/mc_widgets.png",
+      "server": false,
+      "sha256": "1b9e5899e1726b503046c873c11e2215e78566030d4c889d15b6cd5c5b76207f"
+    },
+    {
+      "source": "projecte-client/Assets/Minecraft-HUD-NOTICE.txt",
+      "payload": "Minecraft/projecte-client/Minecraft-HUD-NOTICE.txt",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/Minecraft-HUD-NOTICE.txt",
+      "server": false,
+      "sha256": "8cce16a4003350f6a6793cbadc8b374a93b66b9e8e91c57e0a12b3227a76bfc2"
+    },
+    {
+      "source": "projecte-client/Assets/ModernIndustrialization-LICENSE.txt",
+      "payload": "Minecraft/projecte-client/ModernIndustrialization-LICENSE.txt",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/ModernIndustrialization-LICENSE.txt",
+      "server": false,
+      "sha256": "a3300fd6bd0537566a9e9aef02c975e4e378aa6bf1bba7cd750c57ee97a3093d"
+    },
+    {
+      "source": "projecte-client/Assets/ModernIndustrialization-NOTICE.txt",
+      "payload": "Minecraft/projecte-client/ModernIndustrialization-NOTICE.txt",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/ModernIndustrialization-NOTICE.txt",
+      "server": false,
+      "sha256": "d2c9b9423ef50e46b67d672ea0a98c47de9966521a8aa9a26c0fd3408b7353fb"
+    },
+    {
+      "source": "projecte-client/Assets/orange_bag.png",
+      "payload": "Minecraft/projecte-client/orange_bag.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/orange_bag.png",
+      "server": false,
+      "sha256": "82b1df8cbd23030a9f1e9475ea0c34bed86c40d0592c94273cec61dc0e0bea29"
+    },
+    {
+      "source": "projecte-client/Assets/pecharge.ogg",
+      "payload": "Minecraft/projecte-client/pecharge.ogg",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/pecharge.ogg",
+      "server": false,
+      "sha256": "4e102023e68acc033634583bb12fc9136ed644e3f703d51f63b850ceed40a974"
+    },
+    {
+      "source": "projecte-client/Assets/pecharge.wav",
+      "payload": "Minecraft/projecte-client/pecharge.wav",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/pecharge.wav",
+      "server": false,
+      "sha256": "3ae266e850f1bccfc8e7710bb4911ef5d9e6cf54d239689dcb6690fd45ad6193"
+    },
+    {
+      "source": "projecte-client/Assets/petransmute.ogg",
+      "payload": "Minecraft/projecte-client/petransmute.ogg",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/petransmute.ogg",
+      "server": false,
+      "sha256": "9ae12fccd33520c7d6f59c77ea965bc880143e470329af96748a67e7d5aec566"
+    },
+    {
+      "source": "projecte-client/Assets/petransmute.wav",
+      "payload": "Minecraft/projecte-client/petransmute.wav",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/petransmute.wav",
+      "server": false,
+      "sha256": "3d46e01eb06119af5f3aeae6cff71f0182c971d289b88753a37d92e83b69c2c8"
+    },
+    {
+      "source": "projecte-client/Assets/peuncharge.ogg",
+      "payload": "Minecraft/projecte-client/peuncharge.ogg",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/peuncharge.ogg",
+      "server": false,
+      "sha256": "60b7094d491068d71b6faf90b21eade206c206ad66480ec3f1b9c0684f5eb99b"
+    },
+    {
+      "source": "projecte-client/Assets/peuncharge.wav",
+      "payload": "Minecraft/projecte-client/peuncharge.wav",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/peuncharge.wav",
+      "server": false,
+      "sha256": "add78984233557c77d20800c6285560482077af4c0d07753d5925f655b9728d8"
+    },
+    {
+      "source": "projecte-client/Assets/pink_bag.png",
+      "payload": "Minecraft/projecte-client/pink_bag.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/pink_bag.png",
+      "server": false,
+      "sha256": "9932554fbce57bfdde3e69275c3a63365a21d6bc57bbc09d0c0db9cb80aa8d57"
+    },
+    {
+      "source": "projecte-client/Assets/Portable-NOTICE.txt",
+      "payload": "Minecraft/projecte-client/Portable-NOTICE.txt",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/Portable-NOTICE.txt",
+      "server": false,
+      "sha256": "4eb10e85902eb4a474a04a171c8108f71014c9889bfd725d746c45b54ba4f58e"
+    },
+    {
+      "source": "projecte-client/Assets/portable-provenance.json",
+      "payload": "Minecraft/projecte-client/portable-provenance.json",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/portable-provenance.json",
+      "server": false,
+      "sha256": "e3842e47fd3e73935e3286e5594542c8ce3ee141fb7ffbcfb16cbb5499db9b62"
+    },
+    {
+      "source": "projecte-client/Assets/ProjectE-LICENSE.txt",
+      "payload": "Minecraft/projecte-client/ProjectE-LICENSE.txt",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/ProjectE-LICENSE.txt",
+      "server": false,
+      "sha256": "c16196aa7c2337eef3e6e216c36b2cbd5b13e17373da0661ca11799ae3cbf5a6"
+    },
+    {
+      "source": "projecte-client/Assets/provenance.json",
+      "payload": "Minecraft/projecte-client/provenance.json",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/provenance.json",
+      "server": false,
+      "sha256": "843f4e6c811233c5e13e057249ab125d13138e09fb1fd063b7847bfadd7eb4d2"
+    },
+    {
+      "source": "projecte-client/Assets/purple_bag.png",
+      "payload": "Minecraft/projecte-client/purple_bag.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/purple_bag.png",
+      "server": false,
+      "sha256": "8fe0301e8d3a8c952e45856b2fa352ebaf79d97e7951c874842ea5b9893aee6c"
+    },
+    {
+      "source": "projecte-client/Assets/quantum-provenance.json",
+      "payload": "Minecraft/projecte-client/quantum-provenance.json",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/quantum-provenance.json",
+      "server": false,
+      "sha256": "bc839f289c76b4d65dde780b9f62b00fb2343341e885adb6cb05d418941136a5"
+    },
+    {
+      "source": "projecte-client/Assets/quantum_sword.obj",
+      "payload": "Minecraft/projecte-client/quantum_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/quantum_sword.obj",
+      "server": false,
+      "sha256": "a3aa15ee58c6df45c9ace4798a4f33cfc356df22fa925ac523402c3a95747cf3"
+    },
+    {
+      "source": "projecte-client/Assets/quantum_sword.png",
+      "payload": "Minecraft/projecte-client/quantum_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/quantum_sword.png",
+      "server": false,
+      "sha256": "7492f588f6bb5a49fac400f6cfc4d11fd8599d72631e3a868ec863eb3e053d11"
+    },
+    {
+      "source": "projecte-client/Assets/red_bag.png",
+      "payload": "Minecraft/projecte-client/red_bag.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/red_bag.png",
+      "server": false,
+      "sha256": "da62c5c6f5353f34f550fea9914a26733062d6b8d7339b7b98220a63a1c8b737"
+    },
+    {
+      "source": "projecte-client/Assets/repair_talisman.png",
+      "payload": "Minecraft/projecte-client/repair_talisman.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/repair_talisman.png",
+      "server": false,
+      "sha256": "33b4cca43f03c31f1b9855f062738c7776fcac7155dd84837b0f4156745634d9"
+    },
+    {
+      "source": "projecte-client/Assets/rm_sword.obj",
+      "payload": "Minecraft/projecte-client/rm_sword.obj",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/rm_sword.obj",
+      "server": false,
+      "sha256": "5e31879f6594b0867d753140081fd459405c08780b454c8418b6c562afca8270"
+    },
+    {
+      "source": "projecte-client/Assets/rm_sword.png",
+      "payload": "Minecraft/projecte-client/rm_sword.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/rm_sword.png",
+      "server": false,
+      "sha256": "3dcaafd9e1619b6f3aab659776780963eb1cf52787c24a55e975716ce6af9604"
+    },
+    {
+      "source": "projecte-client/Assets/soul_stone.png",
+      "payload": "Minecraft/projecte-client/soul_stone.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/soul_stone.png",
+      "server": false,
+      "sha256": "b9cbfb2ea2ecac1af76bba19e8b289ab606e15ff5d91eb5145a5f6b4617b92c3"
+    },
+    {
+      "source": "projecte-client/Assets/tablet.png",
+      "payload": "Minecraft/projecte-client/tablet.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/tablet.png",
+      "server": false,
+      "sha256": "139aee5a1a61d915db9e9c59c9807f44ca83d54bf6a3079de6e5da83780fa472"
+    },
+    {
+      "source": "projecte-client/Assets/Thirst-LICENSE.txt",
+      "payload": "Minecraft/projecte-client/Thirst-LICENSE.txt",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/Thirst-LICENSE.txt",
+      "server": false,
+      "sha256": "380d8a70d1f437faf368f0db1d5f1195b4fd0a7acd731d3a3bd4383ef501e52f"
+    },
+    {
+      "source": "projecte-client/Assets/thirst-provenance.json",
+      "payload": "Minecraft/projecte-client/thirst-provenance.json",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/thirst-provenance.json",
+      "server": false,
+      "sha256": "f98a184aa93ed477f0bf861aeb4a572a10a8a3886bcf28331d815810fa4c830c"
+    },
+    {
+      "source": "projecte-client/Assets/thirst_icons.png",
+      "payload": "Minecraft/projecte-client/thirst_icons.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/thirst_icons.png",
+      "server": false,
+      "sha256": "8756ceb7285cd50f6f82984dea499bf6d88f1ca1c14877eefbc2cb58a179b03a"
+    },
+    {
+      "source": "projecte-client/Assets/time_watch.png",
+      "payload": "Minecraft/projecte-client/time_watch.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/time_watch.png",
+      "server": false,
+      "sha256": "d0d2f879dbceb3209e217ec692123de25f6087794c7c0ff59072ea7c267793e6"
+    },
+    {
+      "source": "projecte-client/Assets/tock.ogg",
+      "payload": "Minecraft/projecte-client/tock.ogg",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/tock.ogg",
+      "server": false,
+      "sha256": "9cd9aebfd67d61b412369aa6514b6a540d989b973058e8fd7f08a98d65d80918"
+    },
+    {
+      "source": "projecte-client/Assets/tock.wav",
+      "payload": "Minecraft/projecte-client/tock.wav",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/tock.wav",
+      "server": false,
+      "sha256": "87ead2d570f0ac53612d2f8a3f215ab3b67d4679493217bd61a3dd5685b73be7"
+    },
+    {
+      "source": "projecte-client/Assets/totem.ogg",
+      "payload": "Minecraft/projecte-client/totem.ogg",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/totem.ogg",
+      "server": false,
+      "sha256": "9d3a53dd9c6098021e87707a7942502ff35bb529efaed87b602030c201372674"
+    },
+    {
+      "source": "projecte-client/Assets/totem.png",
+      "payload": "Minecraft/projecte-client/totem.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/totem.png",
+      "server": false,
+      "sha256": "2ee3ccdd17f0b9acb13bac37b3b9d4db6eac72aa350a2b1ab9cc587e2f02514a"
+    },
+    {
+      "source": "projecte-client/Assets/totem.wav",
+      "payload": "Minecraft/projecte-client/totem.wav",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/totem.wav",
+      "server": false,
+      "sha256": "0d23439ae85ff64991e36703bc18f570248e45d3c47cc41a57d5478487934fc5"
+    },
+    {
+      "source": "projecte-client/Assets/transmute.png",
+      "payload": "Minecraft/projecte-client/transmute.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/transmute.png",
+      "server": false,
+      "sha256": "d87847e321c6a25b79e174d59122af1235bcbe86d415169109579068c87dd9b9"
+    },
+    {
+      "source": "projecte-client/Assets/white_bag.png",
+      "payload": "Minecraft/projecte-client/white_bag.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/white_bag.png",
+      "server": false,
+      "sha256": "03430e96c6bf4e18c7aed7b01754a3266634cabf4834d7420f88fbe12b9370ab"
+    },
+    {
+      "source": "projecte-client/Assets/wireless_terminal.png",
+      "payload": "Minecraft/projecte-client/wireless_terminal.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/wireless_terminal.png",
+      "server": false,
+      "sha256": "4ce77b74e6a4947a5a3456874ee7f4e491800d827080383db4d7e00898ef6728"
+    },
+    {
+      "source": "projecte-client/Assets/yellow_bag.png",
+      "payload": "Minecraft/projecte-client/yellow_bag.png",
+      "target": "BepInEx/plugins/LocalSpt5ESP/Minecraft/ProjectE/Assets/yellow_bag.png",
+      "server": false,
+      "sha256": "04b07d1bb4d3fef737aa92efacb52c39acfdff1ad5d358eb9cecc7318b2d5f78"
+    },
+    {
+      "source": "projecte-server/Assets/developer.png",
+      "payload": "Minecraft/projecte-server/developer.png",
+      "target": "SPT_Runtime/user/mods/LocalGearMail/Minecraft/ProjectE/Assets/developer.png",
+      "server": true,
+      "sha256": "816346f6fac368db979f52bc4112cec34a4227e15e25efd8e1dc9c844c5cde6e"
+    }
+  ]
+}

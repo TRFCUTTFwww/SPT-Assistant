@@ -7,7 +7,7 @@ public sealed partial class SwordModule {
  readonly Dictionary<string,object> modelApplications=[];
  bool diagnosticsDirty;
  float nextDiagnostics;
- void RecordApplication(string id,GameObject root,int count){if(count==0)return;modelApplications[id]=new{root=root.name,lods=count,utc=DateTime.UtcNow,mesh=assets[id].Mesh.name,shader=assets[id].Material.shader.name};diagnosticsDirty=true;}
+ void RecordApplication(string id,GameObject root,int count){if(count==0||!diagnosticsEnabled.Value)return;modelApplications[id]=new{root=root.name,lods=count,utc=DateTime.UtcNow,mesh=assets[id].Mesh.name,shader=assets[id].Material.shader.name};diagnosticsDirty=true;}
  bool diagnosed;
  float recordedBrightness=-1,recordedOpacity=-1;
  void Diagnose(){

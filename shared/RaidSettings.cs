@@ -3,6 +3,7 @@ using System.Collections.Generic;
 namespace LocalRaidShared;
 public sealed class RaidSettings {
  public int Schema {get;set;}=1;
+ public bool InstantBtrDelivery {get;set;}
  public bool LiveBitcoinEnabled {get;set;}
  public bool ItemWeightsEnabled {get;set;}
  public Dictionary<string,double> ItemWeights {get;set;}=new();

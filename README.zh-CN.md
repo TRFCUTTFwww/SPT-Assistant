@@ -1,4 +1,4 @@
-黑墙脉冲已内置于 2.2 的“趣味功能”，安装包包含所需动作、贴图与音频，安装时会备份并停用旧独立插件。详见[黑墙说明](docs/blackwall-pulse.md)。
+黑墙脉冲已内置于 2.3 的“趣味功能”，安装包包含所需动作、贴图与音频，安装时会备份并停用旧独立插件。详见[黑墙说明](docs/blackwall-pulse.md)。
 # SPT Assistant
 
 新独立客户端 MOD 的开发入口：[通用热更新加载器](docs/universal-mod-host.md)。提供稳定接口、示例工程、按模块发布与失败回退；适用于本机 EFT 48558 / SPT 5.0。
@@ -7,7 +7,7 @@
 
 为 **SPT 单机塔科夫**开发的游戏内控制面板，使用 C# 与 Unity 构建。角色、战局、装备、任务与服务端设置，都可以在同一界面中管理。
 
-**版本 2.2** · **当前适配：SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
+**版本 2.3** · **当前适配：SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
 
 > **不稳定，属于实验版本。** 本项目没有经过广泛测试，可能出现功能失效、崩溃、多人不同步或存档被意外修改。安装及更新前请备份存档和配置。编译通过、热加载成功，不代表每项功能都已在实战中验证。
 >
@@ -28,7 +28,7 @@
 
 安装脚本只安装辅助组件，从你自己的 SPT 数据库生成物品名称和价格缓存，保留原有配置及 API 密钥，覆盖的文件备份到 `mod-backups`。首次完整安装会生成随机的本地管理 API 密钥。**Fika 成员：**命令增加 `-ClientOnly`，连接房主，不要启动本地服务端；服务端管理功能需要房主安装对应组件并提供密钥，只应给受信任的管理员使用。本包不负责安装 Fika。
 
-文件位置、更新、源码构建和卸载方式见[中英双语安装说明](docs/INSTALL.md)；验证范围和待实测项目见 [2.2 发布说明](docs/release-2.2.md)。
+文件位置、更新、源码构建和卸载方式见[中英双语安装说明](docs/INSTALL.md)；验证范围和待实测项目见 [2.3 发布说明](docs/release-2.3.md)。
 
 ## 功能
 
@@ -52,3 +52,21 @@
 | **热更新** | 从面板重载受支持的客户端与服务端模块，保留宿主。 |
 
 [版本发布](https://github.com/TRFCUTTFwww/SPT-Assistant/releases) · [更新记录](https://github.com/TRFCUTTFwww/SPT-Assistant/blob/main/CHANGELOG.md)
+
+## 2.3：BTR、MC 整合与更新检测
+
+载具 → BTR 控制：免费乘车、免费物品转移、秒转移和 10×100（1000 格）扩展转移仓均为独立开关；叫车指派至玩家最近的可达原生站点。秒转移在战局结算上传配送物品后立即发信；扩容用于新建的转移仓。设置 → 版本更新可检查 GitHub 正式 Releases，支持 HTTP、HTTPS、SOCKS5 或系统代理；不自动下载安装。
+
+MC 像素剑、ProjectE、转换桌、图腾和相关 HUD 已整合进辅助 MOD 的客户端与服务端。MC 总显示、爱心、饱食度、口渴、经验和物品快捷栏可以分别开关。只停用旧的 MC 独立加载包，其他独立模块和辅助本体热重载保留。3-X 武器及其独立模块已移除。完整安装须关闭客户端和服务端；安装器备份旧代码与存档，保留 MC 配置、钱包、知识、终端数据和未完成操作日志。
+
+### MC 原模组仓库与素材来源
+
+| Project | Repository | Contribution |
+| --- | --- | --- |
+| AllTheModium | [AllTheModium](https://github.com/AllTheMods/AllTheModium) | Pixel swords / 像素剑 |
+| ProjectE | [ProjectE](https://github.com/sinkillerj/ProjectE) | Transmutation, tools, artifacts / 转换桌、工具与饰品 |
+| Modern Industrialization | [Modern Industrialization](https://github.com/AztechMC/Modern-Industrialization) | Quantum sword / 量子剑 |
+| Applied Energistics 2 | [Applied Energistics 2](https://github.com/AppliedEnergistics/Applied-Energistics-2) | Wireless terminal artwork / 无线终端素材 |
+| Thirst Mod | [Thirst Mod](https://github.com/ghen-git/Thirst-Mod) | Hydration HUD artwork / 口渴 HUD 素材 |
+
+Minecraft 原版 UI、图腾素材归 Mojang/Microsoft 所有；本项目不将其声明为上述开源模组素材。固定版本、文件哈希及第三方许可随 MC Assets 的 provenance 和许可文件保留。见 [2.3 说明](docs/release-2.3.md)。

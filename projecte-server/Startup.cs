@@ -11,12 +11,16 @@ using SPTarkov.Server.Core.Services.Modding.Custom;
 using SPTarkov.Common.Models.Logging;
 using SPTarkov.Server.Core.Models.Common;
 namespace ProjectE.Server;
+#if !SPT_ASSISTANT_SERVER
 public record Metadata:IModMetadata {
  public string ModGuid{get;init;}="local.projecte";
  public string Name{get;init;}="ProjectE Swords";public string Author{get;init;}="Local";public List<string>? Contributors{get;init;}
  public SemanticVersioning.Version Version{get;init;}=new("1.2.0");public SemanticVersioning.Range SptVersion{get;init;}=new("~5.0.0");public bool HasPrepatcher{get;init;}public List<string>? Incompatibilities{get;init;}public Dictionary<string,SemanticVersioning.Range>? ModDependencies{get;init;}public string? Url{get;init;}public string License{get;init;}="MIT";
 }
+#endif
+#if !SPT_ASSISTANT_SERVER
 [Injectable(TypePriority=OnLoadOrder.Preload)]
+#endif
 public sealed class Startup(CustomItemService custom,TemplateTable templates,TradersTable traders,Action<string> log,SPTarkov.Server.Core.Utils.JsonUtil json,Assembly? owner=null):IOnLoad {
  public async Task OnLoadAsync(CancellationToken cancellationToken){
   bool profilesLoaded=custom.ProfilesLoaded;
@@ -79,10 +83,9 @@ public sealed class Startup(CustomItemService custom,TemplateTable templates,Tra
    var p=templates.Items[s.Id].Properties!;var source=templates.Items[Swords.BaseTemplate].Properties!;
    if(p.KnifeHitSlashDam!=s.Damage||p.KnifeHitStabDam!=s.Damage||p.StackMaxSize!=1||p.Prefab?.Path!=source.Prefab?.Path||p.PrimaryDistance!=source.PrimaryDistance)throw new InvalidOperationException("Sword registration validation failed: "+s.Key);
   }
-  string folder=Path.Combine(AppContext.BaseDirectory,"user","mods","ProjectE");Directory.CreateDirectory(folder);
+  string folder=Path.Combine(AppContext.BaseDirectory,"user","mods","LocalGearMail","Minecraft","ProjectE");Directory.CreateDirectory(folder);
   File.WriteAllText(Path.Combine(folder,"registration-status.json"),JsonSerializer.Serialize(new {version="1.2.0",jaeger="5c0647fdd443bc2504c2d371",serverPid=Environment.ProcessId,utc=DateTime.UtcNow,originalGladiusUnchanged=true,swords=Swords.All.Select(s=>new{s.Id,s.English,s.Chinese,s.Damage,s.Price,width=1,height=2}),utilities=Gadgets.All.Select(g=>new{g.Id,g.Key,g.English,g.Chinese,g.Price,width=1,height=1})},new JsonSerializerOptions{WriteIndented=true}));
-  new Scp3XRegistration(custom,templates,traders,json,owner??Assembly.GetExecutingAssembly()).Register();
-  log("ProjectE and 3-X registered; Developer catalog; original donor templates unchanged");
+  log("ProjectE integrated; Developer catalog; original donor templates unchanged");
   return Task.CompletedTask;
  }
 }

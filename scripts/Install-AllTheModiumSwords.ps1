@@ -1,4 +1,5 @@
 param([string]$GameRoot='D:/SPT-5.0.0-48558',[string]$Dotnet='D:/SPT_Mod_Staging_20261027/dotnet-sdk/dotnet.exe')
+throw 'Minecraft features are integrated into SPT Assistant 2.3. Install the full Assistant release; independent MC hot modules are retired.'
 $ErrorActionPreference='Stop'
 $repo=Split-Path -Parent $PSScriptRoot
 $hostRoot=Join-Path $GameRoot 'BepInEx/plugins/UniversalModHost'
@@ -18,6 +19,6 @@ if(Test-Path -LiteralPath $target){
 }
 Copy-Item -LiteralPath $source -Destination $target
 if((Get-FileHash -LiteralPath $source).Hash -ne (Get-FileHash -LiteralPath $target).Hash){throw 'Server installation hash mismatch'}
-& (Join-Path $PSScriptRoot 'Publish-HotModule.ps1') -Id atm-swords -Assembly (Join-Path $repo 'atm-swords-client/bin/Release/net10.0/Local.AllTheModium.HotModule.dll') -EntryType AllTheModium.Client.SwordModule -Version 1.1.4 -Name 'AllTheModium Swords' -HostRoot $hostRoot -AssetsDirectory (Join-Path $repo 'atm-swords-client/Assets')
+& (Join-Path $PSScriptRoot 'Publish-HotModule.ps1') -Id atm-swords -Assembly (Join-Path $repo 'atm-swords-client/bin/Release/net10.0/Local.AllTheModium.HotModule.dll') -EntryType AllTheModium.Client.SwordModule -Version 1.3.5 -Name 'AllTheModium Swords' -HostRoot $hostRoot -AssetsDirectory (Join-Path $repo 'atm-swords-client/Assets')
 Copy-Item -LiteralPath (Join-Path $repo 'docs/allthemodium-swords.md') -Destination (Join-Path $serverRoot 'README.md')
 Write-Output 'Installed four independent swords. Restart the server and client to receive new item templates. Later model updates use the universal hot loader.'

@@ -58,10 +58,14 @@ Reject(()=>ArtifactRules.Cost(Gadgets.Body,3),"body stone cannot request unrelat
 Reject(()=>ArtifactRules.Cost(Gadgets.Watch,0,3),"watch cannot exceed its original charge cap");
 Reject(()=>ArtifactRules.Cost(Gadgets.Repair,1),"repair talisman cannot spend arbitrary wallet amounts");
 Check(ArtifactRules.Repair(0,50)==1&&ArtifactRules.Repair(49.5f,50)==50&&ArtifactRules.Repair(50,50)==50,"repair respects damaged ceiling and restores broken equipment");
-Check(ScrollRules.Maximum(36,9,54,216)==0&&ScrollRules.Maximum(37,9,54,216)==54,"inventory scrolling exposes the first row after the old page boundary");
-Check(ScrollRules.Step(0,-5,32,16)==0&&ScrollRules.Step(0,100,32,16)==16,"knowledge scrolling clamps at both ends");
 Check(Enumerable.Range(0,100).All(i=>HudMotion.Offset(1,i%10,0,i*.05f)==0&&HudMotion.Offset(1,i%10,1,i*.05f)==0&&HudMotion.Offset(1,i%10,2,i*.05f)==0),"normal status bars remain stable");
 Check(Enumerable.Range(0,100).Select(i=>HudMotion.Offset(0,i%10,2,i*.05f)).Distinct().Count()>=4,"empty hydration uses continuous vigorous jitter");
 Check(Enumerable.Range(0,100).All(i=>Math.Abs(HudMotion.Offset(0,i%10,1,i*.05f))<=2),"empty hunger jitter stays within two GUI pixels");
 Check(HudMotion.Offset(.1f,2,0,1.25f)==HudMotion.Offset(.1f,2,0,1.25f),"HUD motion is deterministic and does not consume gameplay randomness");
+Check(PageRules.Count(0,36)==1&&PageRules.Count(36,36)==1&&PageRules.Count(37,36)==2,"inventory pagination includes partial last page");
+Check(PageRules.Count(16,16)==1&&PageRules.Count(17,16)==2&&PageRules.Count(32,16)==2,"knowledge pagination includes every learned item");
+Check(PageRules.Step(0,1,100,36)==1&&PageRules.Step(1,1,100,36)==2,"consecutive presses advance one inventory page each");
+Check(PageRules.Step(2,-1,100,36)==1&&PageRules.Step(1,-1,100,36)==0,"previous page returns through inventory pages");
+Check(PageRules.Step(0,-1,100,36)==0&&PageRules.Step(2,1,100,36)==2,"page buttons cannot leave valid boundaries");
+Check(PageRules.Clamp(5,2,36)==0&&PageRules.Clamp(-1,2,16)==0,"filter or inventory changes clamp stale page state");
 Console.WriteLine($"Passed {checks} ProjectE rules and protocol checks.");

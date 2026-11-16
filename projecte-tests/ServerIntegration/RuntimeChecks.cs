@@ -23,7 +23,7 @@ internal static class RuntimeChecks {
   Check(settings.AsArray().Any(x=>x!["_id"]!.GetValue<string>()==dev&&x["nickname"]!.GetValue<string>()=="Developer"),"Developer appears in native trader settings");
   using(var imageRequest=new HttpRequestMessage(HttpMethod.Get,"https://127.0.0.1:6968/files/trader/avatar/developer.png")){
    imageRequest.Headers.Add("Cookie","PHPSESSID="+session);using var response=await client.SendAsync(imageRequest);var image=await response.Content.ReadAsByteArrayAsync();
-   Check(response.IsSuccessStatusCode&&SHA256.HashData(image).SequenceEqual(SHA256.HashData(File.ReadAllBytes(Path.Combine(fixture,"user/mods/ProjectE/Assets/developer.png")))),"Developer avatar serves the exact user-supplied image");
+   Check(response.IsSuccessStatusCode&&SHA256.HashData(image).SequenceEqual(SHA256.HashData(File.ReadAllBytes(Path.Combine(fixture,"user/mods/LocalGearMail/Minecraft/ProjectE/Assets/developer.png")))),"Developer avatar serves the exact user-supplied image");
   }
   var state=await Store(new(){["action"]="state"});Check(Ok(state),"wireless terminal works without assistant server mod");
   var rejected=await call(new(){["action"]="state",["profile"]="000000000000000000000000"},"/local/projecte/terminal");Check(!Ok(rejected),"terminal rejects a different PMC profile");
@@ -65,6 +65,12 @@ internal static class RuntimeChecks {
   var invalid=await Table(new(){["Action"]="artifact",["Operation"]=Guid.NewGuid().ToString("N"),["Template"]="a7e000000000000000000113",["Count"]=0,["Quality"]=3});Check(!Ok(invalid)&&Balance(await Table(new(){["Action"]="state"}))==baseline+936,"invalid watch charge cannot spend EMC");
   var drain=await Table(new(){["Action"]="exchange",["Operation"]=Guid.NewGuid().ToString("N"),["Raid"]=true,["Burn"]=false,["Template"]=ruble,["Count"]=936});Check(Ok(drain)&&Balance(drain)==baseline,"artifact test wallet returned to baseline");
   var runtime=await call(new(),"/local/projecte/runtime");Check(Ok(runtime)&&runtime["ready"]!.GetValue<bool>(),"stable server host reports ready");
+  if(runtime["integrated"]?.GetValue<bool>()==true){
+   Check(runtime["hotReload"]?.GetValue<bool>()==false&&runtime["version"]?.GetValue<string>()=="2.3","Minecraft server belongs to Assistant and independent hot loading is disabled");
+   Check(!File.Exists(Path.Combine(fixture,"user/mods/ProjectE/Local.ProjectE.Logic.module")),"old standalone MC logic module is absent");
+   Check(Ok(await Table(new(){["Action"]="state"})),"table remains available without a standalone module");
+   return checks;
+  }
   int generation=runtime["generation"]!.GetValue<int>();string goodHash=runtime["sha256"]!.GetValue<string>();
   string module=Path.Combine(fixture,"user/mods/ProjectE/Local.ProjectE.Logic.module");byte[] good=await File.ReadAllBytesAsync(module);
   try{

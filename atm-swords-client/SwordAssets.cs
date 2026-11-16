@@ -10,6 +10,8 @@ internal sealed class SwordAssets {
  internal readonly Mesh Mesh;
  internal readonly Texture2D Texture;
  internal readonly Material Material;
+ internal readonly Sprite InventorySprite;
+ internal readonly ItemIcon InventoryIcon;
  Vector3[] originalVertices=[];
  float appliedSize;
  Color32[] originalPixels=[];
@@ -44,6 +46,11 @@ internal sealed class SwordAssets {
   if(!ImageConversion.LoadImage(Texture,File.ReadAllBytes(Path.Combine(directory,sword.Key+"_sword.png")),false))throw new InvalidDataException("Invalid sword texture: "+sword.Key);
   Texture.filterMode=FilterMode.Point;Texture.wrapMode=TextureWrapMode.Clamp;Texture.name="ATM "+sword.Key;
   originalPixels=Texture.GetPixels32();
+  var raster=InventoryIconRules.Build(Texture.width,Texture.height,originalPixels.Select(c=>(uint)(c.r|(c.g<<8)|(c.b<<16)|(c.a<<24))).ToArray(),!Swords.IsUtility(sword.Id));
+  var inventoryTexture=new Texture2D(raster.Width,raster.Height,TextureFormat.RGBA32,false){name="Inventory "+sword.Key,filterMode=FilterMode.Point,wrapMode=TextureWrapMode.Clamp};context.OnShutdown(()=>Object.Destroy(inventoryTexture));
+  inventoryTexture.SetPixels32(raster.Pixels.Select(c=>new Color32((byte)c,(byte)(c>>8),(byte)(c>>16),(byte)(c>>24))).ToArray());inventoryTexture.Apply(false,false);
+  InventorySprite=Sprite.Create(inventoryTexture,new Rect(0,0,raster.Width,raster.Height),new Vector2(.5f,.5f),100);InventorySprite.name="Inventory "+sword.Key;context.OnShutdown(()=>Object.Destroy(InventorySprite));
+  InventoryIcon=new ItemIcon(sword.Id.GetHashCode(),false){_sprite=InventorySprite};
   // Every imported pixel prism has a constant UV/color. Use vertex color so
   // the fog-free material can write depth and cull back faces. Sprites/Default
   // hardcodes ZWrite Off/Cull Off, causing the back and internal pixel faces

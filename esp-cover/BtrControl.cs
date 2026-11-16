@@ -15,6 +15,7 @@ internal static partial class BtrControl {
  static BTRVehicle? stopped;static bool wasMoving,extracting;
  internal static bool Disabled=>disabled!=null&&disabled.Value;
  internal static void Initialize(Plugin plugin){
+  BtrServices.Initialize(plugin);
   const string section="18. BTR";
   disabled=FeatureConfig.Bind(section,"Disable BTR","关闭 BTR",false,"隐藏并停用本局 BTR 车辆、显示模型及射手；关闭此开关后恢复，地图原有路线与出现时机仍有效。");
   key=FeatureConfig.Bind(section,"Disable BTR key","关闭 BTR 切换键",KeyCode.None);
@@ -56,6 +57,19 @@ internal static partial class BtrControl {
   if(moving){notice="已安排到站后前往："+BtrDisplay.StopName(current,target);return;}
   AdvanceRoute(controller);
  }
+ internal static void CallNearest(GameWorld current){
+  if(!RaidClock.Active||current.MainPlayer==null)throw new ArgumentException("请在战局中叫车。");
+  var controller=current.BtrController??throw new ArgumentException("当前地图没有可用 BTR。");
+  var vehicle=controller.BtrVehicle??throw new ArgumentException("BTR 车辆尚未就绪。");
+  var map=controller.MapPathsConfiguration??throw new ArgumentException("BTR 路线尚未就绪。");
+  bool moving=vehicle.BtrState is not (EBtrState.Stop or EBtrState.StopPaid);
+  string start=(moving?vehicle._targetPathDestination:vehicle._currentPathDestination)?.id??"";
+  var stops=map.PathDestinations?.Where(s=>s!=null&&!string.IsNullOrWhiteSpace(s.id)).ToArray()??Array.Empty<PathDestination>();
+  var edges=new List<(string From,string To)>();foreach(var from in stops)foreach(var to in stops)if(from.id!=to.id&&map.GetPathSplineByPoints(from.id,to.id)!=null)edges.Add((from.id,to.id));
+  var target=stops.OrderBy(s=>{var delta=s.transform.position-current.MainPlayer.Position;return delta.x*delta.x+delta.z*delta.z;}).FirstOrDefault(s=>BtrRouteRules.Reachable(start,s.id,edges));
+  if(target==null)throw new ArgumentException("没有可达的 BTR 站点。");
+  RequestDestination(current,target.id);selected=target.id;if(!moving&&vehicle._currentPathDestination?.id==target.id)vehicle.MovePauseOn(customWait.Value?wait.Value:60);else vehicle.MovePauseOff();
+ }
  static void AdvanceRoute(BtrController controller){
   var vehicle=controller.BtrVehicle??throw new ArgumentException("BTR 车辆尚未就绪。");string here=vehicle._currentPathDestination?.id??"";
   if(here==requestedStop){pendingRoute.Clear();requestedStop="";notice="BTR 已到达所选站点。";return;}
@@ -71,7 +85,7 @@ internal static partial class BtrControl {
  internal static object Diagnostics(){var current=Singleton<GameWorld>.Instance;var controller=current?.BtrController;var vehicle=controller?.BtrVehicle;return new{active=RaidClock.Active,disabled=Disabled,vehicle=vehicle!=null,current=vehicle?._currentPathDestination?.id,target=vehicle?._targetPathDestination?.id,moving=vehicle?._moveByPath,paused=vehicle?._pauseOn,state=vehicle?.BtrState.ToString(),requestedStop,pending=pendingRoute.ToArray(),notice};}
  internal static void Draw(Rect rect){
   var current=Singleton<GameWorld>.Instance;var btr=current?.BtrController;var stops=btr?.MapPathsConfiguration?.PathDestinations;
-  scroll=GUI.BeginScrollView(rect,scroll,new Rect(0,0,rect.width-20,820+(stops?.Count??0)*44));float x=8,y=8,w=rect.width-36,half=(w-12)/2;
+  scroll=GUI.BeginScrollView(rect,scroll,new Rect(0,0,rect.width-20,1260+(stops?.Count??0)*44));float x=8,y=8,w=rect.width-36,half=(w-12)/2;
   InterfaceMenu.Label(new Rect(x,y,w,32),"BTR 管理",InterfaceMenu.Accent,21);y+=46;InterfaceMenu.DrawEntry(disabled,new Rect(x,y,half,84));InterfaceMenu.DrawEntry(key,new Rect(x+half+12,y,half,84));y+=96;
   InterfaceMenu.DrawEntry(BtrDisplay.Esp,new Rect(x,y,w,84));y+=96;
   InterfaceMenu.Paragraph(new Rect(x,y,w,62),BtrDisplay.Status.Length>0?BtrDisplay.Status:"当前地图 BTR 尚未就绪。",InterfaceMenu.Accent,13);y+=74;
@@ -79,6 +93,9 @@ internal static partial class BtrControl {
   bool enabled=GUI.enabled;GUI.enabled=enabled&&!Disabled&&btr?.BtrVehicle!=null;
   if(InterfaceMenu.Button(new Rect(x,y,half,36),"立即停留指定时间"))Action(()=>btr!.BtrVehicle.MovePauseOn(wait.Value));
   if(InterfaceMenu.Button(new Rect(x+half+12,y,half,36),"立即发车"))Action(()=>btr!.BtrVehicle.MovePauseOff());y+=48;GUI.enabled=enabled;
+  y=BtrServices.Draw(x,y,w);
+  GUI.enabled=enabled&&!Disabled&&btr?.BtrVehicle!=null;
+  if(InterfaceMenu.Button(new Rect(x,y,w,38),"叫车到离我最近的站点"))Action(()=>CallNearest(current!));y+=50;GUI.enabled=enabled;
   InterfaceMenu.Label(new Rect(x,y,w,30),"选择下一站",InterfaceMenu.Accent,16);y+=40;
   if(stops!=null)foreach(var stop in stops){if(stop==null||string.IsNullOrWhiteSpace(stop.id))continue;if(InterfaceMenu.Button(new Rect(x,y,w,34),BtrDisplay.StopName(current!,stop.id),selected==stop.id))selected=stop.id;y+=42;}
   GUI.enabled=enabled&&!Disabled&&btr?.BtrVehicle!=null&&selected.Length>0;

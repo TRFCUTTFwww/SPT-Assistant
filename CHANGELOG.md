@@ -1,8 +1,16 @@
-# 2.2 — 内置黑墙脉冲
+# Changelog
+
+## 2.3 — 2026-11-16
+
+- BTR: independent free rides and free item delivery, immediate post-raid mail, call to nearest reachable stop, optional 10×100 transfer container.
+- Minecraft: integrate client/server features into Assistant; retire only the old independent MC loaders; independent HUD component visibility.
+- Remove the 3-X weapon/module and registration.
+- Add GitHub release checks with HTTP/HTTPS/SOCKS5/system-proxy options and manual checks.
+- Include MC resources, upstream repository credits, migration backups and pending-journal preservation in the full installer.
+
+## 2.2 — 内置黑墙脉冲
 
 合并已修复的黑墙 0.2.10 到辅助核心，安装包携带所需动作、贴图和音频；校验并迁移资源后备份停用独立插件。保留快捷键、滤镜开关、单右臂渲染及确认击杀后播放声音规则，黑墙随辅助统一热更新。
-
-# Changelog
 
 ## 2.0.6 — FIKA local command support (2026-11-11)
 

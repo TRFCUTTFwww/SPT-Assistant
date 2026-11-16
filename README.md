@@ -4,7 +4,7 @@
 
 An in-game control panel for **SPT**, built with C# and Unity. Manage your character, raid, equipment, quests and server settings from one interface.
 
-**Version 2.2** · **Current target: SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
+**Version 2.3** · **Current target: SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
 
 > **UNSTABLE — EXPERIMENTAL.** This project has not undergone broad testing. Bugs, crashes, multiplayer desynchronization and unexpected profile changes are possible. Back up your profiles and configuration before installing or updating. A successful build or hot reload does not establish that every feature works in a raid.
 >
@@ -25,11 +25,11 @@ An in-game control panel for **SPT**, built with C# and Unity. Manage your chara
 
 The installer copies only Assistant components, generates item-name/price caches from your own SPT database, preserves existing settings and API keys, and backs up replaced files under `mod-backups`. First installation of the full package creates a random local administration API key. **Fika clients:** use `-ClientOnly`; connect to the host and do not start a local server. Server administration features require matching server components and the host's key, and should be enabled only for trusted administrators. This package does not install Fika.
 
-See [the bilingual installation guide](docs/INSTALL.md) for file locations, updates, source builds and removal, and [2.2 release notes](docs/release-2.2.md) for tested boundaries and remaining limitations.
+See [the bilingual installation guide](docs/INSTALL.md) for file locations, updates, source builds and removal, and [2.3 release notes](docs/release-2.3.md) for tested boundaries and remaining limitations.
 
 ## Features
 
-Blackwall Pulse is built into 2.2 under Fun Features. The release package includes its animation, textures and audio; installation backs up and disables the retired standalone plugin. See [Blackwall details](docs/blackwall-pulse.md).
+Blackwall Pulse is built into 2.3 under Fun Features. The release package includes its animation, textures and audio; installation backs up and disables the retired standalone plugin. See [Blackwall details](docs/blackwall-pulse.md).
 
 
 The [chat and slash-command system](docs/CHAT.md) adds a configurable T chat overlay, command history, Tab completion and locally entered commands in single-player and supported FIKA scenarios. Text chat between users of the same upgraded server uses mutually verified TLS 1.3 channels with session-level forward secrecy. Read the fingerprint-verification steps and limitations before use. The old multiplayer branch is unchanged; remote game commands are disabled in main.
@@ -52,3 +52,21 @@ The opt-in [world editor](docs/world-editor.md) adds a crosshair context menu fo
 | **Hot reload** | Reload supported client and server modules from the panel while retaining the host. |
 
 [Releases](https://github.com/TRFCUTTFwww/SPT-Assistant/releases) · [Changelog](https://github.com/TRFCUTTFwww/SPT-Assistant/blob/main/CHANGELOG.md)
+
+## 2.3: BTR, integrated Minecraft features and updates
+
+Vehicles → BTR controls adds separate free ride, free delivery, instant delivery and expanded 10×100 (1,000-cell) transfer-container switches. Call BTR selects the nearest reachable native stop. Instant delivery mails items as soon as the raid result submits them; expanded dimensions apply to newly created containers. Settings → Version updates checks GitHub Releases and supports HTTP, HTTPS, SOCKS5 or system proxies, without automatic installation.
+
+Pixel swords, ProjectE, the transmutation table, totems and Minecraft HUD now run inside Assistant on both client and server. The HUD master switch, hearts, hunger, hydration, experience and hotbar each have controls. Only the old independent Minecraft loaders are retired; other modules and Assistant core reload remain available. The 3-X weapon and its module are removed. Close both client and server for full installation; the installer backs up retired code and profiles while retaining MC configuration, wallets, knowledge, terminal data and pending-operation journals.
+
+### Upstream Minecraft repositories and assets
+
+| Project | Repository | Contribution |
+| --- | --- | --- |
+| AllTheModium | [AllTheModium](https://github.com/AllTheMods/AllTheModium) | Pixel swords / 像素剑 |
+| ProjectE | [ProjectE](https://github.com/sinkillerj/ProjectE) | Transmutation, tools, artifacts / 转换桌、工具与饰品 |
+| Modern Industrialization | [Modern Industrialization](https://github.com/AztechMC/Modern-Industrialization) | Quantum sword / 量子剑 |
+| Applied Energistics 2 | [Applied Energistics 2](https://github.com/AppliedEnergistics/Applied-Energistics-2) | Wireless terminal artwork / 无线终端素材 |
+| Thirst Mod | [Thirst Mod](https://github.com/ghen-git/Thirst-Mod) | Hydration HUD artwork / 口渴 HUD 素材 |
+
+Vanilla Minecraft UI and totem assets belong to Mojang/Microsoft. Fixed revisions, hashes and third-party notices are retained in the Minecraft asset provenance and license files. See [2.3 notes](docs/release-2.3.md).

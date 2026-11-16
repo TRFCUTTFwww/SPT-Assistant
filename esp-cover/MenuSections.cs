@@ -25,7 +25,7 @@ internal static class MenuSections {
   "载具与空投"=>new[]{"BTR 控制","空投控制"},
   "传送与导航"=>new[]{"撤离定位","撤离控制","地图过图","任务定位","路面导航","角色传送"},
   "物品与装备"=>new[]{"添加物品","玩家枪械预设","整套装备","修理与耐久"},
-  _=>new[]{"全部热键","配置方案","主题与布局","其他设置"}
+  _=>new[]{"全部热键","配置方案","主题与布局","版本更新","其他设置"}
  };
  internal static string Subtitle(string category)=>category switch{"趣味功能"=>"快速破解、黑墙脉冲、镭射眼、像素剑与 ProjectE","杂项"=>"趣味规则与特殊待遇，每项独立开关","主页面"=>"当前存档、角色资产、战绩与常用入口","服务端"=>"服务端配置、PMC 与 Scav 业力、跳蚤市场信誉及装备入口","AI 工作台"=>"选一次角色，连续完成生成、动作、装备与场景编辑","玩具枪工具"=>"生成类型、模板、命中操作和射击设置都在这里","战斗与枪械"=>"瞄准、伤害与命中反馈","人物与移动"=>"生存、移动、穿墙与状态","镜头与画面"=>"人物标记、第三人称、HUD 与战斗显示","战局与物资"=>"本局时间、物资、任务与下局刷新规则","载具与空投"=>"BTR 路线与空投投放","传送与导航"=>"撤离点定位、撤离控制、地图过图与路面导航","物品与装备"=>"物品添加、枪械与整套装备方案","枪械编辑"=>"当前武器与配件参数编辑","模型与镜头"=>"自由镜头、人物模型与动作锁定","剧情"=>"主线进度、任务重做与剧情走向","数据"=>"技能、成就、商城钱包与角色管理","开发工具"=>"角色管理与命令控制台",_=>"快捷键、配置方案与界面设置"};
  internal static bool OnPage(string category,string page,string section,string key){int n=Number(section);return (category,page) switch{
@@ -52,6 +52,7 @@ internal static class MenuSections {
   ("传送与导航","撤离控制")=>n==14&&(key.Contains("Force",StringComparison.OrdinalIgnoreCase)||key.Contains("Ignore",StringComparison.OrdinalIgnoreCase)),
   ("传送与导航","任务定位")=>n==60,
   ("传送与导航","地图过图")=>n is 15 or 41,
+  ("设置与热键","版本更新")=>n==66,
   ("设置与热键","其他设置")=>n is 3 or 4 or 17 or 47||n==0,
   _=>false
  };}

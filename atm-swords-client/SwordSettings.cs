@@ -3,9 +3,11 @@ namespace AllTheModium.Client;
 public sealed partial class SwordModule {
  ConfigFile? settingsFile;
  ConfigEntry<bool> guardEnabled=null!,blockBullets=null!;
+ ConfigEntry<bool> diagnosticsEnabled=null!;
  ConfigEntry<float> reductionPercent=null!,sizePercent=null!,brightnessPercent=null!,opacityPercent=null!;
  void InitializeSettings(){
   settingsFile=new ConfigFile(Path.Combine(BepInEx.Paths.ConfigPath,"local.allthemodium.swords.cfg"),true);
+  diagnosticsEnabled=settingsFile.Bind("Diagnostics","Enabled",false,"临时记录模型和库存诊断；默认关闭，避免战局内创建测试物品、扫描 UI 和写入文件。");
   guardEnabled=settingsFile.Bind("Guard","Enabled",true,"启用右键格挡；关闭后恢复右键刺击。");
   blockBullets=settingsFile.Bind("Guard","Block bullets",true,"开启时正面子弹也受格挡减伤；关闭后只对近战减伤。");
   reductionPercent=settingsFile.Bind("Guard","Damage reduction percent",50f,new ConfigDescription("格挡减少的生命伤害百分比：0 不减伤，100 完全挡住符合条件的生命伤害。",new AcceptableValueRange<float>(0,100)));

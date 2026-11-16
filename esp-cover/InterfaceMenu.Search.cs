@@ -24,7 +24,7 @@ internal static partial class InterfaceMenu {
     ("服务端","业力与信誉")=>"Fence 声望 好感 信誉 业力 reputation standing karma",
     ("数据","角色管理")=>"藏身处 等级 经验 名称 阵营 hideout level experience profile",
     ("战局与物资","本局物资")=>"仓库 战局仓库 stash inventory loot",
-    ("载具与空投","BTR 控制")=>"下一站 设置下一站 立即发车 停留 路线 destination next stop route departure",
+    ("载具与空投","BTR 控制")=>"下一站 设置下一站 立即发车 停留 路线 免费 物品转移 秒转移 叫车 扩展 转移仓 destination next stop route departure free delivery call expanded container",
     ("剧情","等待时间")=>"跳过 支线 主线 商人任务 冷却 skip quest wait cooldown",
     _=>""
    };

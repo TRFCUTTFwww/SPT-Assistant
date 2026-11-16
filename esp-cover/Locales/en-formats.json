@@ -6,7 +6,6 @@
   "护甲覆盖区：估算穿透 {0}–{1}%": "Armored zones: estimated penetration {0}–{1}%",
   "{0} · 存在未覆盖区域": "{0} · Some zones are unprotected",
   "{0} · 部分防护数据未知": "{0} · Some protection data is unknown",
-
   "待保存 {0} 项 · 无效 {1} 项": "Unsaved: {0} · Invalid: {1}",
   "游戏  {0}  暂停": "Game  {0}  Paused",
   "{0}窗口不透明度": "{0} window opacity",
@@ -508,5 +507,9 @@
   "已安排到站后前往：{0}": "Scheduled after the current leg: {0}",
   "BTR 下一站已设置：{0}": "BTR next stop set: {0}",
   "阔剑地雷 · {0} 米": "Claymore mine · {0} m",
-  "难度：{0}": "Difficulty: {0}"
+  "难度：{0}": "Difficulty: {0}",
+  "版本更新 · {0}": "Version updates · {0}",
+  "发现新版本：{0}": "New version available: {0}",
+  "上次检查的 GitHub 版本：{0}": "Last checked GitHub version: {0}",
+  "当前已是最新版本（GitHub：{0}）。": "You are up to date (GitHub: {0})."
 }

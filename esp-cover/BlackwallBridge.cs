@@ -31,7 +31,7 @@ internal static class BlackwallBridge {
   StopLegacyRuntime();
   string home=Path.Combine(BepInEx.Paths.PluginPath,"LocalSpt5ESP","Blackwall");
   Directory.CreateDirectory(home);
-  if(!File.Exists(Path.Combine(home,"Assets","station-arms.glb"))){message="缺少黑墙资源，请安装完整的辅助 2.2 安装包";return;}
+  if(!File.Exists(Path.Combine(home,"Assets","station-arms.glb"))){message="缺少黑墙资源，请安装完整的辅助 2.3 安装包";return;}
   try{
    PulseRuntime.Initialize(home,Plugin.Self.Log);PulseRuntime.Protection=Protected;
    Plugin.Self.Patches.Patch(AccessTools.Method(typeof(Player.FirearmController),"SetTriggerPressed"),prefix:new HarmonyMethod(typeof(BlackwallBridge),nameof(BeforeTrigger)));

@@ -11,7 +11,7 @@ $OutputDirectory=[IO.Path]::GetFullPath($OutputDirectory)
 if((Test-Path -LiteralPath $OutputDirectory) -and (Get-ChildItem -LiteralPath $OutputDirectory -Force | Select-Object -First 1)){throw 'OutputDirectory must be new or empty'}
 [IO.Directory]::CreateDirectory($OutputDirectory)|Out-Null
 $version=([IO.File]::ReadAllText((Join-Path $repo 'VERSION'))).Trim()
-if($version -ne '2.2'){throw 'Review packaging for the new release version'}
+if($version -ne '2.3'){throw 'Review packaging for the new release version'}
 foreach($project in @('esp-cover/Esp.csproj','gear-admin-module/AdminModule.csproj','raid-controls-server/RaidControls.csproj')){
  & $Dotnet build (Join-Path $repo $project) -c Release --nologo ('-p:GameRoot='+$GameRoot) -p:EftBuild=48558
  if($LASTEXITCODE -ne 0){throw ('Build failed: '+$project)}
@@ -32,7 +32,7 @@ foreach($entry in $components.GetEnumerator()){Copy-Item -LiteralPath (Join-Path
 Copy-Item -LiteralPath (Join-Path $repo 'scripts/Install-Experimental.ps1') -Destination (Join-Path $stage 'Install.ps1')
 foreach($name in @('README.md','README.zh-CN.md','LICENSE')){Copy-Item -LiteralPath (Join-Path $repo $name) -Destination $stage}
 [IO.Directory]::CreateDirectory((Join-Path $stage 'docs'))|Out-Null
-foreach($name in @('INSTALL.md','release-2.2.md','validation-2.2.json','hotkeys.md','world-editor.md','blackwall-pulse.md','blackwall-assets.json')){Copy-Item -LiteralPath (Join-Path $repo ('docs/'+$name)) -Destination (Join-Path $stage 'docs')}
+foreach($name in @('INSTALL.md','release-2.3.md','validation-2.3.json','hotkeys.md','world-editor.md','blackwall-pulse.md','blackwall-assets.json','minecraft-assets.json')){Copy-Item -LiteralPath (Join-Path $repo ('docs/'+$name)) -Destination (Join-Path $stage 'docs')}
 # Package only the explicitly inventoried Blackwall runtime resources.
 if(!$BlackwallAssetRoot){
  $BlackwallAssetRoot=Join-Path $GameRoot 'BepInEx/plugins/LocalSpt5ESP/Blackwall/Assets'
@@ -46,6 +46,14 @@ foreach($entry in $resourceManifest.files){
  $inputAsset=Join-Path $BlackwallAssetRoot $entry.name
  if(!(Test-Path -LiteralPath $inputAsset -PathType Leaf) -or (Get-FileHash -LiteralPath $inputAsset -Algorithm SHA256).Hash -ne $entry.sha256){throw ('Missing or modified Blackwall resource: '+$entry.name)}
  Copy-Item -LiteralPath $inputAsset -Destination (Join-Path $assetDestination $entry.name)
+}
+$minecraftManifest=Get-Content -LiteralPath (Join-Path $repo 'docs/minecraft-assets.json') -Raw -Encoding UTF8|ConvertFrom-Json
+foreach($entry in $minecraftManifest.files){
+ $asset=Join-Path $repo $entry.source
+ if(!(Test-Path -LiteralPath $asset -PathType Leaf) -or (Get-FileHash -LiteralPath $asset -Algorithm SHA256).Hash -ne $entry.sha256){throw ('Invalid MC resource: '+$entry.source)}
+ $destination=Join-Path $payload $entry.payload
+ [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($destination))|Out-Null
+ Copy-Item -LiteralPath $asset -Destination $destination
 }
 $checks=[ordered]@{}
 Get-ChildItem -LiteralPath $stage -File -Recurse | Sort-Object FullName | ForEach-Object {

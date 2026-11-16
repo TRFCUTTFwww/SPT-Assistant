@@ -1,3 +1,7 @@
+# 辅助 2.3：像素剑已内置
+
+使用辅助 MOD 2.3 完整安装包；客户端和服务端都已整合，旧独立 MC 热加载包由安装器备份停用。原配置继续沿用。原仓库：[AllTheMods/AllTheModium](https://github.com/AllTheMods/AllTheModium)。下文旧版独立部署记录保留作历史参考。
+
 # AllTheModium 四把独立近战剑（客户端 1.1.4 / 服务端 1.0.1）
 
 目标环境：EFT 48558 / SPT 5.0。每把剑有固定且不同的模板 ID，使用原生近战物品、近战槽、命中判定和存档流程。客户端外观使用 Universal Mod Host 模块，服务端另行注册物品与商人商品。

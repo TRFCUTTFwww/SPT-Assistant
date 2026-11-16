@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 namespace LocalSpt5Esp;
 internal static class BtrRouteRules {
+ internal static bool Reachable(string start,string target,IEnumerable<(string From,string To)> connections){try{Plan(start,target,connections);return true;}catch(ArgumentException){return false;}}
  internal static string[] Plan(string start,string target,IEnumerable<(string From,string To)> connections){
   if(string.IsNullOrWhiteSpace(start)||string.IsNullOrWhiteSpace(target))throw new ArgumentException("BTR 站点尚未就绪。");
   if(start==target)return Array.Empty<string>();

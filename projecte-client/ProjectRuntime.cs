@@ -9,12 +9,18 @@ namespace ProjectE.Client;
 public sealed partial class ProjectModule {
  Transmutation? table;MinecraftHud? hud;ProjectResources? resources;InventoryScreenLifecycle? inventoryScreens;
  CatalogSync? catalog;ConfigEntry<bool> catalogEnabled=null!;ConfigEntry<KeyCode> catalogKey=null!;
- ConfigEntry<bool> hudEnabled=null!;
+ ConfigEntry<bool> hudEnabled=null!,hudDiagnostics=null!,showHealth=null!,showHunger=null!,showHydration=null!,showExperience=null!,showHotbar=null!;
  ConfigEntry<float> hudScale=null!,volume=null!,burnVolume=null!;
  ConfigEntry<KeyCode> tableKey=null!;
  int releaseFrame;
  void InitializeExtra(Harmony harmony){
   hudEnabled=settingsFile!.Bind("HUD","Enabled",true,"显示原版 MC 爱心、饱食度、经验条及同步塔科夫快捷栏。");
+  showHealth=settingsFile.Bind("HUD","Show hearts",true,"显示 MC 爱心生命条。");
+  showHunger=settingsFile.Bind("HUD","Show hunger",true,"显示 MC 饱食度条。");
+  showHydration=settingsFile.Bind("HUD","Show hydration",true,"显示 MC 口渴条。");
+  showExperience=settingsFile.Bind("HUD","Show experience",true,"显示 MC 经验条和等级。");
+  showHotbar=settingsFile.Bind("HUD","Show hotbar",true,"显示 MC 风格物品快捷栏；不改变原生快捷键和物品绑定。");
+  hudDiagnostics=settingsFile.Bind("Diagnostics","HUD enabled",false,"临时记录快捷栏诊断文件；默认关闭，避免战局内周期性写盘。");
   hudScale=settingsFile.Bind("HUD","Scale",1.35f,new ConfigDescription("底部 HUD 缩放，最终取整为像素倍率，保持原版素材清晰。",new AcceptableValueRange<float>(.6f,2.5f)));
   volume=settingsFile.Bind("Audio","Volume",.65f,new ConfigDescription("ProjectE 原版音效音量。",new AcceptableValueRange<float>(0,1)));
   burnVolume=settingsFile.Bind("Audio","EMC conversion volume",.35f,new ConfigDescription("消耗物品换成 EMC 时的额外音量倍率，同时用于首次学习提示。",new AcceptableValueRange<float>(0,1)));
@@ -41,9 +47,13 @@ public sealed partial class ProjectModule {
   if(Input.GetKeyDown(tableKey.Value)){if(!table.Open)Singleton<GameWorld>.Instance?.MainPlayer?.HandsController?.TryCast<Player.FirearmController>()?.SetTriggerPressed(false);table.Toggle();releaseFrame=Time.frameCount+2;}
   else if(table.Open&&Input.GetKeyDown(KeyCode.Escape)){table.SetOpen(false);releaseFrame=Time.frameCount+2;}
   if(table.Open||Time.frameCount<=releaseFrame&&(Input.GetMouseButton(0)||Input.GetMouseButton(1)))releaseFrame=Time.frameCount+2;
-  inventoryScreens?.Tick(table.Open);table.Tick();if(Input.GetKeyDown(catalogKey.Value))catalog?.Refresh();catalog?.Tick(catalogEnabled.Value,table.Busy);TickTools();if(hudEnabled.Value)hud?.Tick();
+  inventoryScreens?.Tick(table.Open);table.Tick();
+#if !SPT_ASSISTANT
+  if(Input.GetKeyDown(catalogKey.Value))catalog?.Refresh();catalog?.Tick(catalogEnabled.Value,table.Busy);
+#endif
+  TickTools();if(hudEnabled.Value)hud?.Tick(hudDiagnostics.Value);
  }
- void DrawExtra(){if(hudEnabled.Value&&table?.Open!=true)hud?.Draw(hudScale.Value);DrawTools();table?.Draw();}
+ void DrawExtra(){if(hudEnabled.Value&&table?.Open!=true)hud?.Draw(hudScale.Value,showHealth.Value,showHunger.Value,showHydration.Value,showExperience.Value,showHotbar.Value);DrawTools();table?.Draw();}
 }
 public static class ProjectEApi {
  public static bool Active=>ProjectModule.SettingsActive;
@@ -51,6 +61,6 @@ public static class ProjectEApi {
  public static void ToggleTable()=>ProjectModule.ToggleTable();
 }
 public sealed partial class ProjectModule {
- internal static ConfigEntryBase[] ExtraSettings=>SettingsActive?[active!.hudEnabled,active.hudScale,active.volume,active.burnVolume,active.tableKey,active.chargeKey,active.skillKey,active.modeKey,active.totemEnabled,active.totemProtectionSeconds,active.artifactsEnabled,active.watchEnabled,active.watchCharge,active.repairEnabled,active.catalogEnabled,active.catalogKey]:[];
+ internal static ConfigEntryBase[] ExtraSettings=>SettingsActive?[active!.hudEnabled,active.showHealth,active.showHunger,active.showHydration,active.showExperience,active.showHotbar,active.hudScale,active.volume,active.burnVolume,active.tableKey,active.chargeKey,active.skillKey,active.modeKey,active.totemEnabled,active.totemProtectionSeconds,active.artifactsEnabled,active.watchEnabled,active.watchCharge,active.repairEnabled]:[];
  internal static void ToggleTable()=>active?.table?.Toggle();
 }

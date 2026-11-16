@@ -11,11 +11,13 @@ using SPTarkov.Server.Core.Services.Modding.Custom;
 using SPTarkov.Common.Models.Logging;
 using SPTarkov.Server.Core.Models.Common;
 namespace AllTheModium.Server;
+#if !SPT_ASSISTANT_SERVER
 public record Metadata:IModMetadata {
  public string ModGuid{get;init;}="local.allthemodium.swords";
  public string Name{get;init;}="AllTheModium Swords";public string Author{get;init;}="Local";public List<string>? Contributors{get;init;}
  public SemanticVersioning.Version Version{get;init;}=new("1.1.0");public SemanticVersioning.Range SptVersion{get;init;}=new("~5.0.0");public bool HasPrepatcher{get;init;}public List<string>? Incompatibilities{get;init;}public Dictionary<string,SemanticVersioning.Range>? ModDependencies{get;init;}public string? Url{get;init;}public string License{get;init;}="MIT";
 }
+#endif
 [Injectable(TypePriority=OnLoadOrder.Preload)]
 public sealed class Startup(CustomItemService custom,TemplateTable templates,TradersTable traders,ISptLogger<Startup> log,SPTarkov.Server.Core.Utils.JsonUtil json):IOnLoad {
  public Task OnLoadAsync(CancellationToken cancellationToken){
@@ -47,7 +49,7 @@ public sealed class Startup(CustomItemService custom,TemplateTable templates,Tra
    var p=templates.Items[s.Id].Properties!;var source=templates.Items[Swords.BaseTemplate].Properties!;
    if(p.KnifeHitSlashDam!=s.Damage||p.KnifeHitStabDam!=s.Damage||p.StackMaxSize!=1||p.Prefab?.Path!=source.Prefab?.Path||p.PrimaryDistance!=source.PrimaryDistance)throw new InvalidOperationException("Sword registration validation failed: "+s.Key);
   }
-  string folder=Path.Combine(AppContext.BaseDirectory,"user","mods","AllTheModiumSwords");Directory.CreateDirectory(folder);
+  string folder=Path.Combine(AppContext.BaseDirectory,"user","mods","LocalGearMail","Minecraft","AllTheModium");Directory.CreateDirectory(folder);
   File.WriteAllText(Path.Combine(folder,"registration-status.json"),JsonSerializer.Serialize(new {version="1.1.0",jaeger="5c0647fdd443bc2504c2d371",serverPid=Environment.ProcessId,utc=DateTime.UtcNow,originalGladiusUnchanged=true,swords=Swords.All.Select(s=>new{s.Id,s.English,s.Chinese,s.Damage,s.Price,width=1,height=2})},new JsonSerializerOptions{WriteIndented=true}));
   log.Success("AllTheModium Swords: 4 independent melee items validated; Jaeger LL1; original gladius unchanged");
   return Task.CompletedTask;

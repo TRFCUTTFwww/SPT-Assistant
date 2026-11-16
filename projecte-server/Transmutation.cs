@@ -17,7 +17,9 @@ public class TableRequestBase:IRequestData {
  [JsonExtensionData] public Dictionary<string,JsonElement> Values{get;set;}=[];
  public TableRequest Read()=>JsonSerializer.Deserialize<TableRequest>(JsonSerializer.Serialize(Values),new JsonSerializerOptions{PropertyNameCaseInsensitive=true})!;
 }
+#if !SPT_ASSISTANT_SERVER
 [Injectable]
+#endif
 public sealed class TableRouter:StaticRouter {
  public TableRouter(JsonUtil json,TableService service):base(json,[new RouteAction<ApiRequest>("/local/projecte/table",(_,r,s,_,ct)=>service.Handle(r.Read(),s,ct))]){}
 }

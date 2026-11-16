@@ -37,7 +37,7 @@ if(args.Contains("--visual-lifecycle-only")||args.Contains("--totem-boundaries-o
  return;
 }
 WorldEditorChecks.Run();
-Assert(MenuSections.Names.Count(n=>n=="趣味功能")==1&&MenuSections.Pages("趣味功能").SequenceEqual(new[]{"快速破解","黑墙脉冲","镭射眼"})&&!MenuSections.Pages("模型与镜头").Contains("趣味功能")&&MenuSections.Group("61. 镭射眼")=="趣味功能"&&MenuSections.Group("65. 黑墙脉冲")=="趣味功能","fun features have one sidebar workspace and retain laser and Blackwall settings routes");
+Assert(MenuSections.Names.Count(n=>n=="趣味功能")==1&&MenuSections.Pages("趣味功能").SequenceEqual(new[]{"快速破解","黑墙脉冲","镭射眼","像素剑","ProjectE"})&&!MenuSections.Pages("模型与镜头").Contains("趣味功能")&&MenuSections.Group("61. 镭射眼")=="趣味功能"&&MenuSections.Group("65. 黑墙脉冲")=="趣味功能","fun features have one sidebar workspace and retain laser, Blackwall and integrated Minecraft routes");
 Assert(InstantSearchRules.Allowed(true,true,true,false,10,10,"local","local"),"active local search can be instant");
 Assert(!InstantSearchRules.Allowed(false,true,true,false,10,10,"local","local")&&!InstantSearchRules.Allowed(true,false,true,false,10,10,"local","local")&&!InstantSearchRules.Allowed(true,true,false,false,10,10,"local","local")&&!InstantSearchRules.Allowed(true,true,true,true,10,10,"local","local"),"disabled, out-of-raid, dead and terminated searches retain native behavior");
 Assert(!InstantSearchRules.Allowed(true,true,true,false,10,20,"local","local")&&!InstantSearchRules.Allowed(true,true,true,false,0,0,"local","local")&&!InstantSearchRules.Allowed(true,true,true,false,10,10,"local","remote")&&!InstantSearchRules.Allowed(true,true,true,false,10,10,"",""),"remote or missing search controller/profile cannot become instant");

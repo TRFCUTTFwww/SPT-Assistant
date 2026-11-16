@@ -237,6 +237,7 @@ internal static partial class InterfaceMenu {
     case ("物品与装备","玩家枪械预设"):PlayerWeaponPresets.Draw(content);break;
     case ("物品与装备","整套装备"):LoadoutPlans.Draw(content);break;
     case ("设置与热键","全部热键"):HotkeyPage.Draw(content);break;
+    case ("设置与热键","版本更新"):UpdateChecker.Draw(content);break;
     case ("设置与热键","配置方案"):ConfigProfiles.Draw(content);break;
     case ("设置与热键","主题与布局"):DrawAppearance(content);break;
     case ("开发工具","命令控制台"):CommandoConsole.Draw(content);break;

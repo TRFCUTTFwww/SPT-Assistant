@@ -11,7 +11,18 @@ public sealed partial class ProjectModule {
  sealed class MatterState {public int Charge{get;set;} public bool All{get;set;}}
  Dictionary<string,MatterState> matter=[];float nextAbility,abilitySwingUntil;bool abilityDamage;string matterProfile="",abilitySwingWeapon="";IntPtr abilitySwingOperation;
  string MatterFile=>Path.Combine(context!.DataDirectory,"matter-"+matterProfile+".json");
- void InitializeMatter(Harmony harmony){var apply=AccessTools.Method(typeof(ActiveHealthController),nameof(ActiveHealthController.ApplyDamage),[typeof(EBodyPart),typeof(float),typeof(DamageInfo)]);harmony.Patch(apply,prefix:new HarmonyMethod(typeof(ProjectModule),nameof(ChargedMelee)));harmony.Patch(apply,prefix:new HarmonyMethod(typeof(ProjectModule),nameof(QuantumHit)){priority=Priority.First});harmony.Patch(apply,prefix:new HarmonyMethod(typeof(ProjectModule),nameof(AbilityAnimationHit)){priority=Priority.High});}
+ void InitializeMatter(Harmony harmony){var apply=AccessTools.Method(typeof(ActiveHealthController),nameof(ActiveHealthController.ApplyDamage),[typeof(EBodyPart),typeof(float),typeof(DamageInfo)]);harmony.Patch(apply,prefix:new HarmonyMethod(typeof(ProjectModule),nameof(ChargedMelee)));harmony.Patch(apply,prefix:new HarmonyMethod(typeof(ProjectModule),nameof(QuantumHit)){priority=Priority.First});harmony.Patch(apply,prefix:new HarmonyMethod(typeof(ProjectModule),nameof(AbilityAnimationHit)){priority=Priority.High});
+  harmony.Patch(AccessTools.Method(typeof(Player.BaseKnifeController),nameof(Player.BaseKnifeController.ProcessHit)),prefix:new HarmonyMethod(typeof(ProjectModule),nameof(QuantumCollision)){priority=Priority.First});
+ }
+ // Resolve an actual native blade/body collision before armor can zero out
+ // damage. Environment collisions and remote/human victims retain native logic.
+ static bool QuantumCollision(Player.BaseKnifeController __instance,BallisticCollider __1,ref PlayerHitInfo __result){
+  var p=RaidPlayer();if(active?.context?.IsActive!=true||p==null||__instance._player?.Pointer!=p.Pointer||p.HandsController?.Pointer!=__instance.Pointer||__instance.GetItem()?.StringTemplateId!=Swords.Quantum)return true;
+  var target=__1?.TryCast<BodyPartCollider>()?.Player?.TryCast<Player>();
+  if(target?.IsAI!=true||target.IsYourPlayer||target.AIData?.BotOwner==null||target.ActiveHealthController?.IsAlive!=true)return true;
+  target.LastAggressor=p;target.ActiveHealthController.Kill(EDamageType.Melee);
+  __result=new PlayerHitInfo{Penetrated=true,PoV=target.PointOfView};return false;
+ }
  static bool AbilityAnimationHit(DamageInfo __2){var a=active;var p=RaidPlayer();if(a?.context?.IsActive!=true||a.abilityDamage||Time.unscaledTime>=a.abilitySwingUntil||p==null||__2==null||__2.DamageType!=EDamageType.Melee||__2.Player?.iPlayer?.ProfileId!=p.ProfileId)return true;var hands=p.HandsController?.TryCast<Player.KnifeController>();return a.abilitySwingOperation==IntPtr.Zero||hands?.CurrentOperation?.Pointer!=a.abilitySwingOperation||__2.Weapon?.Id.ToString()!=a.abilitySwingWeapon;}
  static bool QuantumHit(ActiveHealthController __instance,float __1,DamageInfo __2){
   var a=active;var p=RaidPlayer();if(a?.context?.IsActive!=true||p==null||__1<=0||__2==null||__2.DamageType!=EDamageType.Melee||__2.Player?.iPlayer?.ProfileId!=p.ProfileId||__2.Weapon?.StringTemplateId!=Swords.Quantum||p.HandsController?.GetItem()?.Id.ToString()!=__2.Weapon.Id.ToString())return true;

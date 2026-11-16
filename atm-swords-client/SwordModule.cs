@@ -20,7 +20,7 @@ public sealed partial class SwordModule:IHotModule {
  int failures;
  [ThreadStatic] static string? creating;
  public int ApiVersion=>1;
- public string Version=>"1.3.0";
+ public string Version=>"1.3.5";
  // We only observe factory tasks. They own no module assets or callbacks and
  // must not block unloading if the native factory stalls or a UI request dies.
  public bool CanReload=>true;
@@ -39,7 +39,9 @@ public sealed partial class SwordModule:IHotModule {
   h.Patch(AccessTools.Method(typeof(ObjectsFactory),nameof(ObjectsFactory.PopOrCreate)),postfix:new HarmonyMethod(typeof(SwordModule),nameof(Popped)));
   h.Patch(AccessTools.Method(typeof(Player.KnifeController),"Spawn"),postfix:new HarmonyMethod(typeof(SwordModule),nameof(Spawned)));
   InstallGuard(h);
-  context.Log(LogLevel.Info,"Sword assets loaded; model application is recorded in model-applications.json. Native gladius animation and hit registration retained.");
+  InitializeInventoryIcons(h);
+  InitializeHandsLifecycle(h);
+  context.Log(LogLevel.Info,"Sword assets loaded using the 1.3.2 model factory path. Repeated rig traversal is cached; diagnostics are opt-in.");
  }
  static void Creating(Item __0,out string? __state){__state=creating;creating=__0?.StringTemplateId;}
  static void CreationEnded(string? __state){creating=__state;}
@@ -78,16 +80,31 @@ public sealed partial class SwordModule:IHotModule {
   if(context?.IsActive!=true)return;
   foreach(var asset in assets.Values){asset.SetSize(sizePercent.Value);asset.SetAppearance(brightnessPercent.Value,opacityPercent.Value);}
   RestoreToolPose();TickGuard();
-  Diagnose();
+  RefreshInventoryIcons();if(diagnosticsEnabled.Value){Diagnose();ObserveInventoryPresentation();}
   for(int i=pending.Count-1;i>=0;i--){var p=pending[i];if(!p.Task.IsCompleted){if(Time.unscaledTime-p.Started>30){pending.RemoveAt(i);context.Log(LogLevel.Warning,"Sword native model request timed out: "+p.Item.StringTemplateId);}continue;}pending.RemoveAt(i);if(!p.Task.IsCanceled&&!p.Task.IsFaulted)TryApply(p.Item,p.Task.Result);else context.Log(LogLevel.Warning,"Sword native model request failed: "+p.Item.StringTemplateId+" "+p.Task.Exception);}
   if(Time.unscaledTime<nextScan)return;nextScan=Time.unscaledTime+.5f;
   foreach(var key in swaps.Where(p=>p.Value.Filter==null).Select(p=>p.Key).ToArray())swaps.Remove(key);
-  // Covers hot reload, asynchronous native controller creation, and other players.
-  var players=Singleton<GameWorld>.Instance?.AllAlivePlayersList;if(players==null)return;
-  for(int i=0;i<players.Count;i++){var hands=players[i]?.HandsController?.TryCast<Player.KnifeController>();if(hands!=null)TryApply(hands.GetItem(),hands.ControllerGameObject);}
+  // Keep the fallback for async hands creation and late joining actors, but
+  // traverse a rig only when that actor changes hands. Factory hooks are 1.3.2.
+  var world=Singleton<GameWorld>.Instance;
+  if(world?.Pointer!=scannedWorld){scannedHands.Clear();scannedWorld=world?.Pointer??IntPtr.Zero;}
+  var players=world?.AllAlivePlayersList;if(players==null)return;
+  liveActors.Clear();
+  for(int i=0;i<players.Count;i++){
+   var player=players[i];if(player==null)continue;liveActors.Add(player.Pointer);
+   var hands=player.HandsController?.TryCast<Player.KnifeController>();var root=hands?.ControllerGameObject;
+   if(hands==null||root==null){scannedHands.Remove(player.Pointer);continue;}
+   string item=hands.GetItem()?.Id.ToString()??"";var key=(hands.Pointer,root.Pointer,item);
+   if(scannedHands.TryGetValue(player.Pointer,out var previous)&&previous==key)continue;
+   TryApply(hands.GetItem(),root);scannedHands[player.Pointer]=key;
+  }
+  foreach(var actor in scannedHands.Keys.Where(p=>!liveActors.Contains(p)).ToArray())scannedHands.Remove(actor);
  }
  public void LateTick(){ApplyGuardPose();ApplyToolPose();}
  public void Draw(){}
  public void Shutdown(){Cleanup();}
- void Cleanup(){RestoreToolPose();ResetGuard();if(active==this)active=null;foreach(var swap in swaps.Values)Restore(swap);swaps.Clear();pending.Clear();assets.Clear();modelApplications.Clear();creating=null;context=null;}
+ IntPtr scannedWorld;
+ readonly Dictionary<IntPtr,(IntPtr Hands,IntPtr Root,string Item)> scannedHands=[];
+ readonly HashSet<IntPtr> liveActors=[];
+ void Cleanup(){RestoreToolPose();ResetGuard();ClearToolMeshes();scannedHands.Clear();liveActors.Clear();if(active==this)active=null;RestoreInventoryIcons();foreach(var swap in swaps.Values)Restore(swap);swaps.Clear();pending.Clear();assets.Clear();modelApplications.Clear();creating=null;context=null;}
 }

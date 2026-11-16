@@ -32,7 +32,7 @@ public sealed partial class SwordModule {
   string id=hands?.GetItem()?.StringTemplateId??"";return hands!=null&&local!=null&&local.IsYourPlayer&&hands._player?.Pointer==local.Pointer&&Swords.Find(id)!=null&&!Swords.IsUtility(id);
  }
  static bool Requested(Player player,Player.KnifeController hands){
-  bool control=player.IsYourPlayer&&player.HealthController?.IsAlive==true&&!player.IsInventoryOpened&&Application.isFocused&&!Cursor.visible&&Time.timeScale>0;
+  bool control=player.IsYourPlayer&&player.HealthController?.IsAlive==true&&!player.IsSprintEnabled&&!player.IsInventoryOpened&&Application.isFocused&&!Cursor.visible&&Time.timeScale>0;
   return active?.guardEnabled.Value==true&&SwordGuardRules.CanRaise(control,hands.CurrentOperation?.TryCast<Player.KnifeController.Idling>()!=null,Input.GetMouseButton(1),Input.GetMouseButton(0));
  }
  static bool GuardInsteadOfStab(Player.KnifeController __instance,ref bool __result){
@@ -68,9 +68,9 @@ public sealed partial class SwordModule {
   }
   bool requested=Requested(player,hands);
   // Attacks and non-idle operations must take the pose away immediately.
-  if(hands.CurrentOperation?.TryCast<Player.KnifeController.Idling>()==null)guardBlend=0;
+  if(player.IsSprintEnabled||hands.CurrentOperation?.TryCast<Player.KnifeController.Idling>()==null)guardBlend=0;
   else guardBlend=Mathf.MoveTowards(guardBlend,requested?1:0,Time.unscaledDeltaTime/.14f);
-  if(guardDiagnosticsDirty&&Time.unscaledTime>=nextGuardDiagnostics){
+  if(diagnosticsEnabled.Value&&guardDiagnosticsDirty&&Time.unscaledTime>=nextGuardDiagnostics){
    nextGuardDiagnostics=Time.unscaledTime+1;guardDiagnosticsDirty=false;
    try{File.WriteAllText(Path.Combine(context!.DataDirectory,"guard-status.json"),System.Text.Json.JsonSerializer.Serialize(new{version=Version,utc=DateTime.UtcNow,blockedHits,lastGuardDamage,lastGuardResult}));}
    catch(Exception e){context!.Log(LogLevel.Warning,"Sword guard diagnostics: "+e.Message);}

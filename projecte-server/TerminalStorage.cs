@@ -9,7 +9,9 @@ using SPTarkov.Server.Core.Servers;
 using SPTarkov.Server.Core.Utils;
 namespace ProjectE.Server;
 public sealed class StorageApiRequest:StorageRequest,IRequestData {}
+#if !SPT_ASSISTANT_SERVER
 [Injectable]
+#endif
 public sealed class TerminalRouter:StaticRouter {
  public TerminalRouter(JsonUtil json,TerminalStorage service):base(json,[new RouteAction<StorageApiRequest>("/local/projecte/terminal",(_,r,s,_,ct)=>service.Handle(r,s,ct))]){}
 }
@@ -37,7 +39,7 @@ public sealed class TerminalStorage(SaveServer saves,JsonUtil json,HttpResponseU
     if(request.Revision!=current&&Digest(incoming)!=current)throw new ArgumentException("仓库已被其他操作修改，请关闭终端重新连接。");
     var merged=TerminalStorageRules.Merge(inventory.Items!,root,incoming);
     if(Digest(incoming)!=current){
-     string directory=System.IO.Path.Combine(AppContext.BaseDirectory,"user","mods","ProjectE","backups","terminal");Directory.CreateDirectory(directory);
+     string directory=System.IO.Path.Combine(AppContext.BaseDirectory,"user","mods","LocalGearMail","Minecraft","ProjectE","backups","terminal");Directory.CreateDirectory(directory);
      await File.WriteAllTextAsync(System.IO.Path.Combine(directory,$"{session}-{DateTime.UtcNow:yyyyMMdd-HHmmssfff}-{Guid.NewGuid():N}.json"),json.Serialize(profile),ct);
      if(Revision()!=current)throw new ArgumentException("保存期间仓库已变化，请重新连接。");
      var previous=inventory.Items;inventory.Items=merged;

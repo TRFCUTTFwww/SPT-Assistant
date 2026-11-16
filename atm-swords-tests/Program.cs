@@ -42,3 +42,17 @@ Check(Vector3.Dot(blade,Vector3.UnitX)<0&&Vector3.Dot(blade,Vector3.UnitY)>0&&Ma
 var yaw=Quaternion.CreateFromAxisAngle(Vector3.UnitY,1.5f);
 var turned=SwordGuardRules.GuardBlade(Vector3.Transform(Vector3.UnitX,yaw),Vector3.Transform(Vector3.UnitY,yaw));
 Check(Vector3.Distance(turned,Vector3.Transform(blade,yaw))<1e-5,"guard direction follows the camera instead of weapon local axes");
+
+Check(InventoryIconRules.Pixels(1)==64&&InventoryIconRules.Pixels(2)==127,"inventory sword canvas uses exactly two native cells");
+Check(InventoryIconRules.Pixels(4)==253,"regression identifies the stale four-cell native canvas");
+uint red=0xff0000ff,blue=0xffff0000;var diagonal=new uint[256];for(int y=2;y<14;y++){diagonal[y*16+y]=red;diagonal[y*16+y+1]=blue;}
+var swordIcon=InventoryIconRules.Build(16,16,diagonal,true);
+Check(swordIcon.Width==64&&swordIcon.Height==127,"sword icon dimensions match native footprint");
+var colored=swordIcon.Pixels.Where(p=>p!=0).ToArray();Check(colored.Contains(red)&&colored.Contains(blue)&&colored.All(p=>p==red||p==blue),"inventory projection preserves exact source colors with no blended pixels");
+var points=(from y in Enumerable.Range(0,127) from x in Enumerable.Range(0,64) where swordIcon.Pixels[y*64+x]!=0 select (X:x,Y:y)).ToArray();
+Check(points.Max(p=>p.Y)-points.Min(p=>p.Y)>100&&points.Max(p=>p.X)-points.Min(p=>p.X)<20,"diagonal source sword becomes upright without stretching its axes");
+Check(points.All(p=>p.X>=4&&p.X<60&&p.Y>=4&&p.Y<123),"source sword fits its two-cell canvas without edge clipping");
+var square=new uint[256];for(int y=2;y<14;y++)for(int x=2;x<14;x++)square[y*16+x]=red;
+var utility=InventoryIconRules.Build(16,16,square,false);var up=(from y in Enumerable.Range(0,64) from x in Enumerable.Range(0,64) where utility.Pixels[y*64+x]!=0 select (X:x,Y:y)).ToArray();
+Check(utility.Width==64&&utility.Height==64&&up.Max(p=>p.X)-up.Min(p=>p.X)==up.Max(p=>p.Y)-up.Min(p=>p.Y),"square utility source remains square in one native cell");
+Check(InventoryIconRules.Build(16,16,new uint[256],true).Pixels.All(p=>p==0),"empty source stays transparent without invalid scaling");
