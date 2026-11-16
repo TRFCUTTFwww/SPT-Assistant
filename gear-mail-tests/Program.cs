@@ -353,3 +353,5 @@ Console.WriteLine("PASS native Mechanic wait: unlocks acceptance only, preserves
  if(!File.ReadAllBytes(profilePath).SequenceEqual(diskBefore))throw new Exception("Read-only cross-profile test changed a live profile");
  Console.WriteLine("PASS native SPT cross-account converter: new PMC/Scav identity preserved for full and stash restoration; live files unchanged");
 }
+
+Console.WriteLine("Passed "+NativeFleaChecks.Run()+" native flea and diplomacy checks.");

@@ -10,11 +10,13 @@
     "projecteRules": 68,
     "raidControls": "native generation/inventory/repair check groups passed",
     "gearMail": "native rules, immutable live-profile bytes and cross-account SPT converter passed",
-    "clientProbe": "existing binary/source regression suite passed"
+    "clientProbe": "existing binary/source regression suite passed",
+    "fleaAndDiplomacy": 40
   },
   "isolatedServer": {
     "enabledChecks": 108,
     "disabledFunItemChecks": 5,
+    "nativeFleaChecks": 22,
     "coverage": [
       "SQLite snapshots and actual native profile persistence",
       "stash restore and complete restore",
@@ -24,7 +26,9 @@
       "energy/hydration maximum and current value persistence",
       "fun-item templates retained while acquisition disabled",
       "restart required before saved fun-item preference takes effect",
-      "handheld time-watch native registration"
+      "handheld time-watch native registration",
+      "no-cash native flea listings, exact single/pack/multiple Ragman payouts and Assistant buyer",
+      "instant-sale toggle restoration and original flea item/category restrictions"
     ]
   },
   "installerChecks": 33,
@@ -36,7 +40,8 @@
     "Boundary sniper protection in actual trigger zones",
     "Zero-cash vehicle extraction and BTR services",
     "Zryachiy weapon-glitch behavior",
-    "BTR stop-marker placement and live hydration/energy maxima"
+    "BTR stop-marker placement and live hydration/energy maxima",
+    "Player-Scav diplomatic immunity against Scavs, Zryachiy, bosses and followers"
   ],
   "broadTestingCompleted": false
 }

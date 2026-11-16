@@ -3766,5 +3766,11 @@
   "任务、任务计数与任务物品": "Quests, quest counters and quest items",
   "商人好感与解锁进度": "Trader reputation and unlocks",
   "全部游戏数据（含装备、藏身处、邮件与 MOD 数据）": "All game data (equipment, hideout, mail and mod data)",
-  "启用趣味物品（需重启服务端）": "Enable fun items (server restart required)"
+  "启用趣味物品（需重启服务端）": "Enable fun items (server restart required)",
+  "外交豁免权": "Diplomatic immunity",
+  "供不应求": "In high demand",
+  "诚信经营 · 免手续费": "Honest business · No flea fees",
+  "Scav 出战时，普通 Scav 与 BOSS（含保镖）将你视为中立；攻击或击杀后不因报复而转为敌对。PMC 和其他真人玩家不受影响。不修改 Fence 好感，与背叛者独立。": "During player-Scav raids, AI Scavs, bosses and followers stay neutral even after attacks or kills. Does not affect PMCs, human players or Fence reputation. Independent of Traitor.",
+  "跳蚤市场上架报价与最终扣款均为 0，包括客户端缓存的手续费；已打开的上架窗口会自动刷新。": "Zero flea listing quotes and final fees, including cached client tax. Open listing windows refresh automatically.",
+  "成功上架的玩家跳蚤挂单立即全部售出，购买者显示为 Assistant；货款通过原生 Ragman 邮件结算，正常更新跳蚤信誉。关闭后新挂单恢复原生出售速度。": "Immediately sell successful new player flea listings. Buyer: Assistant. Payment uses native Ragman mail and updates flea reputation. Disable to restore normal sales for new offers."
 }

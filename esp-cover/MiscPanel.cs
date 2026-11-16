@@ -23,6 +23,7 @@ internal static class MiscPanel {
  static readonly (string Key,string Name,string Help)[] rows={
   ("FunItemsEnabled","启用趣味物品（需重启服务端）","控制 MC／ProjectE 趣味物品的售卖、兑换与能力。修改后重启服务端，并重新登录客户端生效；已持有物品保留，避免丢失。"),
   ("GoodBrother","背叛者","Scav 出战时，攻击或击杀 Scav、BOSS 造成的 Fence 好感扣分改为等额加分。"),
+  ("DiplomaticImmunity","外交豁免权","Scav 出战时，普通 Scav 与 BOSS（含保镖）将你视为中立；攻击或击杀后不因报复而转为敌对。PMC 和其他真人玩家不受影响。不修改 Fence 好感，与背叛者独立。"),
   ("Connections","关系户","允许 Scav 选择实验室、迷宫和破冰船。地图自身的入场物品与开放条件仍需满足；下次准备战局生效。"),
   ("ScavNoCooldown","随叫随到 · Scav 无冷却","开启后立即解除当前 Scav 冷却，后续 Scav 出战无需等待。停用后，新生成的 Scav 恢复正常冷却。"),
   ("FreeInsurance","人情世故","投保费用为 0。重新打开投保页面后刷新报价。"),
@@ -30,13 +31,14 @@ internal static class MiscPanel {
   ("UnlimitedLightkeeperVisit","有朋自远方来","灯塔商人无限访问时间；保留进入灯塔商人的正常解锁与通行要求，仅取消合法访问的时间限制。"),
   ("SniperBlind","看不见我","阻止边界狙击区锁定及狙击区伤害，仅保护本地玩家，不影响地图内普通 AI 狙击手的枪弹。"),
   ("ScavSecure","违禁品","Scav 使用独立安全箱，默认 Alpha，可选择箱型；一键售卖、撤离、阵亡和下一名 Scav 保留箱子及其内容，与 PMC 完全分开。更换箱型前须清空。开启后自动同步当前 Scav，重新打开装备页面查看。"),
-  ("FreeFlea","诚信经营","跳蚤市场上架手续费为 0；重新打开挂单窗口刷新费用。"),
+  ("FreeFlea","诚信经营 · 免手续费","跳蚤市场上架报价与最终扣款均为 0，包括客户端缓存的手续费；已打开的上架窗口会自动刷新。"),
+  ("InstantFleaSales","供不应求","成功上架的玩家跳蚤挂单立即全部售出，购买者显示为 Assistant；货款通过原生 Ragman 邮件结算，正常更新跳蚤信誉。关闭后新挂单恢复原生出售速度。"),
   ("ExpressInsurance","加急件","新产生的保险无需等待回送；在服务端下一次保险检查时发信，不改变领取期限。"),
   ("UnlimitedTraderPurchases","供大于求","商人购买无上限")
  };
  internal static string SearchTerms=>string.Join(" ",rows.Select(row=>row.Key+" "+row.Name+" "+row.Help));
  internal static void Initialize(Plugin plugin){
-  MiscNativeProtection.Initialize(plugin);
+  MiscNativeProtection.Initialize(plugin);FleaFees.Initialize(plugin);
   plugin.Patches.Patch(AccessTools.Method(typeof(Profile.FenceTraderInfo),"AddStanding"),prefix:new HarmonyMethod(typeof(MiscPanel),nameof(Fence)));
   plugin.Patches.Patch(AccessTools.Method(typeof(SniperFiringZone),"Shoot"),prefix:new HarmonyMethod(typeof(MiscPanel),nameof(Sniper)));
   plugin.Patches.Patch(AccessTools.Method(typeof(SniperFiringZone),"IsPlayerCanBeDamaged"),prefix:new HarmonyMethod(typeof(MiscPanel),nameof(SniperEligible)));

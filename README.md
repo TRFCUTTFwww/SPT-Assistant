@@ -24,6 +24,8 @@ See [installation and troubleshooting](docs/INSTALL.md) for technical details an
 
 ## 2.3.1 update
 
+New misc switches: **Diplomatic immunity** keeps AI Scavs, bosses and followers neutral toward a player Scav without changing Fence reputation; **In high demand** instantly completes new flea listings with buyer **Assistant** and native Ragman payment. Flea fee waiver now handles cached client fees and the final server charge.
+
 Train schedules, pre-raid duration, BTR stop markers, energy/hydration editing, an independent keycard-hacking toggle, and [SQLite profile backups with cross-character restoration](docs/profile-backup.md). Zero-fare cash checks, boundary-sniper protection and special-AI weapon glitch handling were revised. See [release notes](docs/release-2.3.1.md).
 
 ## Features
