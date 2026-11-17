@@ -11,9 +11,21 @@ internal static class RaidClock {
 
  static string minutes="60",hoursPart="1",minutesPart="0",secondsPart="0",notice="";static bool useHms=true;
  static bool scenarioHook,stopHook;
- static float nextError,nextPauseSync;static readonly RaidPauseState pause=new();
- internal static void Reset(){pause.Reset();nextPauseSync=0;}
- internal static void Tick(){try{var timer=Timer;if(timer==null||!timer.SessionTime.HasValue){Reset();return;}if(!PauseRemaining.Value){pause.Reset();return;}double duration=pause.Update(timer.Pointer.ToInt64(),true,timer.PastTime.TotalSeconds,timer.SessionTime.Value.TotalSeconds);timer._SessionTime_k__BackingField=new Il2CppSystem.Nullable<Il2CppSystem.TimeSpan>(Il2CppSystem.TimeSpan.FromSeconds(duration));if(timer.StartDateTime.HasValue)timer._escape=new Il2CppSystem.Nullable<Il2CppSystem.DateTime>(timer.StartDateTime.Value.AddSeconds(duration));if(Time.unscaledTime>=nextPauseSync){nextPauseSync=Time.unscaledTime+.25f;NativeRaidTimer.Changed(timer,duration);}}catch(Exception e){Warn(e);}}
+ static float nextError,nextPauseSync;static readonly RaidPauseState pause=new();static readonly RaidDeadlineState deadline=new();
+ internal static void Reset(){pause.Reset();deadline.Reset();nextPauseSync=0;}
+ // GameTimer.PastTime is capped at SessionTime in EFT 48558. Use the same
+ // native clock and stop timestamp to retain elapsed play time after zero.
+ static double Elapsed(GameTimer timer)=>timer.StartDateTime.HasValue?Math.Max(0,(timer._stop.HasValue?timer._stop.Value:EFT.DateTimeExtensions.UtcNow).Subtract(timer.StartDateTime.Value).TotalSeconds):timer.PastTime.TotalSeconds;
+ internal static double? DisplayDuration {get{var timer=Timer;return timer?.SessionTime.HasValue==true?deadline.Duration(timer.Pointer.ToInt64(),timer.SessionTime.Value.TotalSeconds):null;}}
+ internal static void Tick(){try{
+  var timer=Timer;if(timer==null||!timer.SessionTime.HasValue){Reset();return;}
+  double native=timer.SessionTime.Value.TotalSeconds,elapsed=Elapsed(timer),duration=deadline.Duration(timer.Pointer.ToInt64(),native);
+  duration=pause.Update(timer.Pointer.ToInt64(),PauseRemaining.Value,elapsed,duration);
+  double protectedDuration=deadline.Update(timer.Pointer.ToInt64(),PreventTimeout.Value||PauseRemaining.Value,elapsed,duration);
+  if(Math.Abs(protectedDuration-native)>.001){WriteDuration(timer,protectedDuration);if(Time.unscaledTime>=nextPauseSync){nextPauseSync=Time.unscaledTime+.25f;NativeRaidTimer.Changed(timer,protectedDuration);}}
+ }catch(Exception e){Warn(e);}}
+ static void WriteDuration(GameTimer timer,double duration){timer._SessionTime_k__BackingField=new Il2CppSystem.Nullable<Il2CppSystem.TimeSpan>(Il2CppSystem.TimeSpan.FromSeconds(duration));if(timer.StartDateTime.HasValue)timer._escape=new Il2CppSystem.Nullable<Il2CppSystem.DateTime>(timer.StartDateTime.Value.AddSeconds(duration));}
+ internal static void Shutdown(){try{var timer=Timer;if(timer?.SessionTime.HasValue==true)WriteDuration(timer,deadline.Duration(timer.Pointer.ToInt64(),timer.SessionTime.Value.TotalSeconds));}finally{Reset();}}
  internal static bool Active {get{try{return ItemSpawner.InRaid()&&Singleton<GameWorld>.Instance?.MainPlayer?.IsYourPlayer==true;}catch{return false;}}}
  internal static GameTimer? Timer=>Active?Singleton<AbstractGame>.Instance?.GameTimer:null;
  internal static void Initialize(Plugin plugin){
@@ -27,11 +39,11 @@ internal static class RaidClock {
  }
  static bool BeforeTimeout(EndByTimerScenario __instance){try{return !(PreventTimeout.Value||PauseRemaining.Value)||!Active||Timer==null||__instance._timer==null||__instance._timer.Pointer!=Timer.Pointer;}catch(Exception e){Warn(e);return true;}}
  static bool BeforeStop(string __0,ExitStatus __1){try{if(RaidEnd.ManualEnding)return true;if((PreventTimeout.Value||PauseRemaining.Value)&&Active&&__1==ExitStatus.MissingInAction&&__0==Singleton<GameWorld>.Instance.MainPlayer.ProfileId&&Remaining is double seconds&&seconds<=1)return false;}catch(Exception e){Warn(e);}return true;}
- internal static double? Remaining {get{var timer=Timer;if(timer==null||!timer.SessionTime.HasValue)return null;return timer.SessionTime.Value.TotalSeconds-timer.PastTime.TotalSeconds;}}
- static Color RemainingColor=>RaidRules.TimeTone(Remaining,Timer?.SessionTime is {} span&&span.HasValue?span.Value.TotalSeconds:null) switch{RaidTimeTone.Green=>Color.green,RaidTimeTone.Yellow=>Color.yellow,RaidTimeTone.Red=>new Color(1,.42f,.38f,1),_=>InterfaceMenu.Accent};
+ internal static double? Remaining {get{var timer=Timer;if(timer==null||!timer.SessionTime.HasValue)return null;return deadline.Duration(timer.Pointer.ToInt64(),timer.SessionTime.Value.TotalSeconds)-Elapsed(timer);}}
+ static Color RemainingColor=>RaidRules.TimeTone(Remaining,DisplayDuration) switch{RaidTimeTone.Green=>Color.green,RaidTimeTone.Yellow=>Color.yellow,RaidTimeTone.Red=>new Color(1,.42f,.38f,1),_=>InterfaceMenu.Accent};
  internal static string RemainingText=>Remaining is double s?RaidRules.Clock(s)+(PauseRemaining.Value?" · 已暂停":"")+(s<=0&&PreventTimeout.Value?" · 超时保护中":""):"未进入战局 / 计时未同步";
  internal static string GameTime {get{try{return Active?Singleton<GameWorld>.Instance.GameDateTime?.Calculate().ToString("HH:mm:ss")??"未同步":"未进入战局";}catch{return "未同步";}}}
- internal static void SetRemaining(double seconds){var timer=Timer??throw new ArgumentException("请进入战局后修改时间。");double duration=RaidRules.Duration(timer.PastTime.TotalSeconds,seconds);var span=Il2CppSystem.TimeSpan.FromSeconds(duration);if(timer.StartDateTime.HasValue)timer.StartDateTime.Value.AddSeconds(duration);timer.ChangeSessionTime(span);if(Remaining is not double actual||Math.Abs(actual-seconds)>2)throw new InvalidOperationException("计时回读不一致，请重新检查。");pause.SetRemaining(seconds);bool synced=NativeRaidTimer.Changed(timer,duration);notice="剩余时间已设置为 "+RaidRules.Clock(seconds)+(synced?"，O 键面板已同步。":"；打开 O 键面板后更新。");Plugin.Self.Log.LogInfo($"Raid remaining seconds changed to {seconds}; duration={duration}; native UI synchronized={synced}");}
+ internal static void SetRemaining(double seconds){var timer=Timer??throw new ArgumentException("请进入战局后修改时间。");double duration=RaidRules.Duration(Elapsed(timer),seconds);var span=Il2CppSystem.TimeSpan.FromSeconds(duration);if(timer.StartDateTime.HasValue)timer.StartDateTime.Value.AddSeconds(duration);timer.ChangeSessionTime(span);deadline.Reset();if(Remaining is not double actual||Math.Abs(actual-seconds)>2)throw new InvalidOperationException("计时回读不一致，请重新检查。");pause.SetRemaining(seconds);Tick();bool synced=NativeRaidTimer.Changed(timer,timer.SessionTime.Value.TotalSeconds);notice="剩余时间已设置为 "+RaidRules.Clock(seconds)+(synced?"，O 键面板已同步。":"；打开 O 键面板后更新。");Plugin.Self.Log.LogInfo($"Raid remaining seconds changed to {seconds}; duration={duration}; native UI synchronized={synced}");}
  static void Action(Action action){try{action();}catch(Exception e){notice=e.Message;Warn(e);}}
  internal static void DrawPanel(Rect rect){
   float gap=18,half=(rect.width-gap)/2;
@@ -53,7 +65,7 @@ internal static class RaidClock {
   InterfaceMenu.Paragraph(new Rect(x,y+330,w,72),notice.Length>0?notice:"设置当前战局的剩余时间。",null,12);
   InterfaceMenu.Label(new Rect(x,y+402,w,24),NativeRaidTimer.State,null,11);
   if(InterfaceMenu.Button(new Rect(x,y+438,w,32),$"调整时间窗大小 · {hudWidth.Value} × {hudHeight.Value}"))InterfaceMenu.BeginLayout();
-  if(!scenarioHook||!stopHook)InterfaceMenu.Paragraph(new Rect(x,y+462,w,40),"时间保护暂不可用。",Color.yellow,12);
+  if(!scenarioHook||!stopHook)InterfaceMenu.Paragraph(new Rect(x,y+462,w,40),"结束拦截未就绪，正在使用计时期限保护。",Color.yellow,12);
   RaidEnvironment.Draw(new Rect(right.x+16,right.y+16,right.width-32,480));
   DrawNextRaid(new Rect(rect.x,rect.y+686,rect.width,165));
   RaidEnd.Draw(new Rect(rect.x,rect.y+870,rect.width,260));
@@ -71,4 +83,5 @@ internal static class RaidClock {
   InterfaceMenu.Label(new Rect(rect.x+10,rect.y+4+2*row,rect.width-20,row),"剩余  "+remaining+(PauseRemaining.Value?"  暂停":"")+(overtime?"  保护中":""),RemainingColor,font,outline:true);
  }
  static void Warn(Exception e){if(Time.unscaledTime<nextError)return;nextError=Time.unscaledTime+20;Plugin.Self.Error(e);}
+ internal static object Diagnostics()=>new{active=Active,preventTimeout=PreventTimeout.Value,paused=PauseRemaining.Value,scenarioHook,stopHook,remaining=Remaining,displayDuration=DisplayDuration,nativeDuration=Timer?.SessionTime is {} span&&span.HasValue?(double?)span.Value.TotalSeconds:null};
 }

@@ -4076,5 +4076,9 @@
   "赛季 · 独立 PVE": "Season · Separate PVE character",
   "独立的新角色和存档，仓库、任务与进度独立保存；对局沿用 PVE。选择 PVE 可返回原角色。": "A separate character and save, with independent stash, quests and progress. Raids use PVE. Select PVE to return to your original character.",
   "独立赛季档案尚未就绪，请刷新角色列表并检查服务端。": "The seasonal profile is not ready. Refresh the character list and check the server.",
-  "赛季使用独立的新档案，仓库、任务与进度独立保存，对局沿用 PVE。选择 PVE 可返回原角色。": "Seasons use a separate save with independent stash, quests and progress. Raids use PVE. Select PVE to return to your original character."
+  "赛季使用独立的新档案，仓库、任务与进度独立保存，对局沿用 PVE。选择 PVE 可返回原角色。": "Seasons use a separate save with independent stash, quests and progress. Raids use PVE. Select PVE to return to your original character.",
+  "JavaScript · 左下角文字": "JavaScript · Corner text",
+  "打开编辑器": "Open editor",
+  "原始版本文字": "Original version text",
+  "结束拦截未就绪，正在使用计时期限保护。": "End hooks are unavailable; native deadline protection remains active."
 }

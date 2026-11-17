@@ -721,6 +721,30 @@ Console.WriteLine("PASS raid stash native root/grid/capacity restore, Tab inject
 foreach(string method in new[]{"Load","Snapshot"})Assert(raidStashType.Methods.Single(m=>m.Name==method).Body.Instructions.Any(i=>i.Operand is MethodReference r&&r.DeclaringType.Name=="RaidStashJson"&&r.Name=="Normalize"),"stash "+method+" normalizes IL2CPP UnparsedData before reading or saving");
 Console.WriteLine("PASS raid stash JSON normalization is connected to both native load and snapshot paths");
 var pauseClock=new RaidPauseState();
+var raidDeadline=new RaidDeadlineState();double nativeDeadline=60;
+for(double elapsed=0;elapsed<=7200;elapsed+=.25){
+ double displayed=raidDeadline.Duration(1,nativeDeadline);
+ Assert(displayed==60,"timeout protection retains the selected visible deadline");
+ nativeDeadline=raidDeadline.Update(1,true,elapsed,displayed);
+ Assert(nativeDeadline>elapsed,"native timeout watchdog stays ahead throughout two hours of overtime");
+ Assert(raidDeadline.Duration(1,nativeDeadline)-elapsed==60-elapsed,"HUD reads the visible deadline rather than the native safety buffer");
+}
+Assert(raidDeadline.Update(1,false,7201,raidDeadline.Duration(1,nativeDeadline))==60,"disabling protection restores the original expired deadline");
+nativeDeadline=raidDeadline.Update(1,true,7201,60);Assert(nativeDeadline>7201,"protection can be enabled after the visible deadline");
+Assert(raidDeadline.Duration(2,1800)==1800,"another raid never inherits the previous visible deadline");
+nativeDeadline=raidDeadline.Update(2,true,1800,1800);
+Assert(raidDeadline.Duration(2,4000)==4000,"external native duration edits replace the retained deadline");
+Assert(raidDeadline.Update(2,true,1800,4000)==4000,"adding time exits overtime and retains the new deadline");
+nativeDeadline=raidDeadline.Update(2,true,5000,4000);raidDeadline.Reset();
+Assert(raidDeadline.Duration(2,9000)==9000,"unload resets the deadline owner and retained value");
+var zeroPause=new RaidPauseState();nativeDeadline=0;
+for(int elapsed=0;elapsed<120;elapsed++){
+ double visible=raidDeadline.Duration(3,nativeDeadline);
+ visible=zeroPause.Update(3,true,elapsed,visible);
+ nativeDeadline=raidDeadline.Update(3,true,elapsed,visible);
+ Assert(raidDeadline.Duration(3,nativeDeadline)-elapsed==0&&nativeDeadline>elapsed,"pausing at zero retains zero without allowing native MIA");
+}
+Console.WriteLine("PASS timeout protection across two hours, zero-time pause, disabling/re-enabling, time edits, external changes and raid/reset isolation");
 Assert(pauseClock.Update(1,true,100,3600)==3600&&pauseClock.Update(1,true,220,3600)==3720,"pause extends deadline by elapsed time without freezing elapsed play time");
 pauseClock.SetRemaining(90);Assert(pauseClock.Update(1,true,221,3720)==311,"time edits while paused replace the frozen remainder");
 Assert(pauseClock.Update(1,false,222,311)==311&&pauseClock.Update(1,true,224,311)==311&&pauseClock.Update(1,true,225,311)==312,"resume preserves deadline and pausing again captures the new remainder");

@@ -531,5 +531,7 @@
   "当前地图匹配 {0} / {1} 个地点目标；其他目标可能位于别的地图，或没有原生坐标。": "Matched {0} / {1} location objectives on this map. Others may be on different maps or lack native coordinates.",
   "已添加武器：{0}": "Added weapon: {0}",
   "黑墙调用失败：{0}": "Blackwall action failed: {0}",
-  "黑墙更新失败：{0}": "Blackwall update failed: {0}"
+  "黑墙更新失败：{0}": "Blackwall update failed: {0}",
+  "JavaScript · {0}": "JavaScript · {0}",
+  "当前显示：{0}": "Current text: {0}"
 }

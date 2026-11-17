@@ -259,6 +259,7 @@ internal static partial class InterfaceMenu {
     case ("数据","存档备份"):ProfileBackupPanel.Draw(content);break;
     case ("设置与热键","全部热键"):HotkeyPage.Draw(content);break;
     case ("设置与热键","版本更新"):UpdateChecker.Draw(content);break;
+    case ("设置与热键","JavaScript"):CornerVersionControl.DrawScript(content);break;
     case ("设置与热键","配置方案"):ConfigProfiles.Draw(content);break;
     case ("设置与热键","日志与诊断"):DiagnosticsPanel.DrawLogs(content);break;
      case ("设置与热键","主题与布局"):DrawAppearance(content);break;

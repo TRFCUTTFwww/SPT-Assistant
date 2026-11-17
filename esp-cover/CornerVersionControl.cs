@@ -14,7 +14,7 @@ internal static class CornerVersionControl {
  static readonly Dictionary<long,(TextMeshProUGUI Label,bool Rich)> formats=new();
  static ConfigEntry<bool> dynamic=null!;static ConfigEntry<string> script=null!;static ConfigEntry<int> interval=null!;
  static string scriptDraft="",intervalDraft="30",dynamicText="",scriptStatus="尚未运行";static Task<string>? work;static CancellationTokenSource? cancellation;static float nextScript;static GUIStyle? codeStyle;
- static bool changed;
+ static bool changed;static Vector2 scriptScroll;
  internal static void Initialize(Plugin plugin){
   CornerScriptDependencies.Install();
   dynamic=FeatureConfig.Bind("24. Interface","Dynamic corner version","动态左下角文字",false,"使用 JavaScript 返回显示文字，支持 httpGet 获取 API；在后台按间隔刷新。");
@@ -48,12 +48,22 @@ internal static class CornerVersionControl {
   InterfaceMenu.Label(new(r.x,r.y,r.width,28),"左下角版本文字",InterfaceMenu.Accent,17);
   if(InterfaceMenu.Button(new(r.x,r.y+34,Math.Min(340,r.width),32),I18n.Text("自定义左下角版本")+" · "+I18n.Text(enabled.Value?"开启":"关闭"),enabled.Value)){enabled.Value=!enabled.Value;Apply();}
   draft=InterfaceMenu.Field(new(r.x,r.y+78,Math.Max(100,r.width-204),32),draft);
-  if(InterfaceMenu.Button(new(r.xMax-194,r.y+78,86,32),"应用")){text.Value=Clean(draft);draft=text.Value;enabled.Value=text.Value.Length>0;Apply();}
+  if(InterfaceMenu.Button(new(r.xMax-194,r.y+78,86,32),"应用")){text.Value=Clean(draft);draft=text.Value;enabled.Value=text.Value.Length>0;dynamic.Value=false;CancelScript();dynamicText="";Apply();}
   if(InterfaceMenu.Button(new(r.xMax-98,r.y+78,98,32),"恢复原始")){enabled.Value=false;text.Value=draft="";CancelScript();dynamicText="";Apply();}
-  if(InterfaceMenu.Button(new(r.x,r.y+120,r.width,32),"动态 JavaScript · "+(dynamic.Value?"开启":"关闭"),dynamic.Value)){dynamic.Value=!dynamic.Value;CancelScript();nextScript=0;dynamicText="";Apply();}
-  if(!dynamic.Value){InterfaceMenu.Paragraph(new(r.x,r.y+164,r.width,44),"只修改左下角显示文字。开启动态模式后可输入 JavaScript、读取 API 并定时刷新。",null,12);return;}
-  float y=r.y+164;InterfaceMenu.Paragraph(new(r.x,y,r.width,42),"使用 return 返回文字；httpGet(url) 获取 HTTP / HTTPS 正文，JSON.parse 解析数据。脚本和网络请求在后台运行。",null,12);y+=48;
-  float height=Math.Clamp(r.yMax-y-150,90,220);codeStyle??=new GUIStyle(GUI.skin.textArea){fontSize=13,wordWrap=true,richText=false};
+  if(InterfaceMenu.Button(new(r.x,r.y+120,r.width,32),"JavaScript · "+(dynamic.Value&&enabled.Value?"运行中":"打开编辑器")))InterfaceMenu.Navigate("设置与热键","JavaScript");
+ }
+ internal static void DrawScript(Rect content){
+  float pageHeight=Math.Max(580,content.height-2);bool scrolling=pageHeight>content.height;
+  var r=new Rect(0,0,content.width-(scrolling?24:4),pageHeight);
+  scriptScroll=GUI.BeginScrollView(content,scriptScroll,new Rect(0,0,r.width,pageHeight));
+  try{DrawScriptContent(r);}finally{GUI.EndScrollView();}
+ }
+ static void DrawScriptContent(Rect r){
+  InterfaceMenu.Label(new(r.x,r.y,r.width,28),"JavaScript · 左下角文字",InterfaceMenu.Accent,17);
+  bool running=dynamic.Value&&enabled.Value;
+  if(InterfaceMenu.Button(new(r.x,r.y+38,r.width,32),"动态 JavaScript · "+(running?"开启":"关闭"),running)){dynamic.Value=!running;if(dynamic.Value)enabled.Value=true;CancelScript();nextScript=0;dynamicText="";Apply();}
+  float y=r.y+84;InterfaceMenu.Paragraph(new(r.x,y,r.width,42),"使用 return 返回文字；httpGet(url) 获取 HTTP / HTTPS 正文，JSON.parse 解析数据。脚本和网络请求在后台运行。",null,12);y+=50;
+  float height=Math.Clamp(r.yMax-y-216,220,520);codeStyle??=new GUIStyle(GUI.skin.textArea){fontSize=13,wordWrap=true,richText=false};
   scriptDraft=GUI.TextArea(new Rect(r.x,y,r.width,height),scriptDraft,16384,codeStyle);y+=height+10;
   InterfaceMenu.Label(new(r.x,y,132,30),"刷新间隔（秒）",null,12);intervalDraft=InterfaceMenu.Field(new(r.x+136,y,80,30),intervalDraft);
   if(InterfaceMenu.Button(new(r.x+228,y,Math.Max(90,r.width-228),30),"保存并立即刷新")){
@@ -62,6 +72,7 @@ internal static class CornerVersionControl {
   }y+=40;
   if(InterfaceMenu.Button(new(r.x,y,Math.Min(180,r.width),30),"填入时间示例"))scriptDraft=CornerScript.Example;
   InterfaceMenu.Paragraph(new(r.x,y+38,r.width,46),scriptStatus,null,12);
+  InterfaceMenu.Paragraph(new(r.x,y+92,r.width,44),"当前显示："+(written.Length>0?written:I18n.Text("原始版本文字")),null,12);
  }
  internal static object Diagnostics()=>new{enabled=enabled.Value,found=label!=null,applied=written.Length>0,matches=written.Length>0&&label?.FormattedText==written,length=written.Length};
  internal static void Shutdown(){CancelScript();CornerScriptDependencies.Shutdown();codeStyle=null;try{Restore();}finally{preloader=null;label=null;formats.Clear();}}
