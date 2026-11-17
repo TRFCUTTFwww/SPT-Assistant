@@ -126,6 +126,8 @@ internal class Plugin {
   yield return ()=>HideoutCraftControl.Initialize(this);
   yield return ()=>CultistCircleControl.Initialize(this);
   yield return ()=>SeasonMenuControl.Initialize(this);
+  yield return ()=>SeasonSelectionControl.Initialize(this);
+  yield return ()=>CornerVersionControl.Initialize(this);
   yield return ()=>CommandoConsole.Initialize();
   yield return ()=>ChatSelectionGuard.Initialize(this);
   yield return ()=>NoclipControl.Initialize(this);

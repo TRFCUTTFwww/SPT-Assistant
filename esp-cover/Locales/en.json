@@ -4060,5 +4060,15 @@
   "打开原生赛季菜单": "Open the native Seasons menu",
   "赛季数据尚未就绪，请返回主菜单后重试。": "Season data is not ready. Return to the main menu and try again.",
   "赛季菜单暂不可用，请查看诊断日志。": "The Seasons menu is unavailable. Check the diagnostic logs.",
-  "赛季菜单数据已就绪。": "The Seasons menu data is ready."
+  "赛季菜单数据已就绪。": "The Seasons menu data is ready.",
+  "选择 PVE 赛季": "Select PVE season",
+  "赛季 · PVE": "Season · PVE",
+  "使用现有 PVE 角色，共用装备、任务和进度。": "Use your existing PVE character, sharing equipment, quests and progress.",
+  "PVE 角色尚未就绪，请刷新角色列表。": "The PVE character is not ready. Refresh the character list.",
+  "开放角色选择中的赛季入口，使用现有 PVE 角色并共用进度。": "Enable the Seasons entry in character selection using your existing PVE character and shared progress.",
+  "自定义左下角版本": "Customize the bottom-left version",
+  "左下角版本文字": "Bottom-left version text",
+  "只修改游戏左下角显示文字，不改变真实客户端版本。": "Change the text at the bottom-left of the game. The actual client version is unchanged.",
+  "最多 160 个字符；留空或关闭开关时恢复原始显示。": "Up to 160 characters. Leave blank or turn off to restore the original display.",
+  "恢复原始": "Restore original"
 }

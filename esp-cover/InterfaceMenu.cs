@@ -252,7 +252,7 @@ internal static partial class InterfaceMenu {
    }
   }catch(Exception error){if(Time.unscaledTime>=nextError){nextError=Time.unscaledTime+10;Plugin.Self.Error(error);}}finally{var e=Event.current;if(InputBlocked&&e!=null&&(e.isMouse||e.type==EventType.ScrollWheel))e.Use();}
  }
- static void DrawAppearance(Rect content){float height=960+slots.Count*65;scroll=GUI.BeginScrollView(content,scroll,new Rect(0,0,content.width-20,height));Appearance(new Rect(0,0,content.width-26,height));GUI.EndScrollView();}
+ static void DrawAppearance(Rect content){float height=1150+slots.Count*65;scroll=GUI.BeginScrollView(content,scroll,new Rect(0,0,content.width-20,height));Appearance(new Rect(0,0,content.width-26,height));GUI.EndScrollView();}
  static Vector2 funScroll;
  static void DrawFunFeatures(Rect content){
   var entries=config.Select(pair=>pair.Value).Where(e=>MenuSections.Number(e.Definition.Section)==61).ToArray();
@@ -324,7 +324,8 @@ internal static partial class InterfaceMenu {
   Label(new Rect(rect.x,rect.y+500,rect.width,22),"设置自动保存 · 右 Shift / Esc 关闭",Text,12);
   DrawEntry(menuKey,new Rect(rect.x,rect.y+540,rect.width,92));
   FloatingStatus.DrawSettings(new Rect(rect.x,rect.y+658,rect.width,160));
-  float top=rect.y+840;Label(new Rect(rect.x,top,rect.width,28),"各悬浮窗不透明度",Accent,17);
+  CornerVersionControl.Draw(new Rect(rect.x,rect.y+840,rect.width,170));
+  float top=rect.y+1030;Label(new Rect(rect.x,top,rect.width,28),"各悬浮窗不透明度",Accent,17);
   Label(new Rect(rect.x,top+30,rect.width,24),"仅调整底板与装饰；0% 底板透明，文字始终清晰可见。",Text,12);
   top+=65;
   if(slots.TryGetValue("armor",out var analysis)&&analysis.AutoSize!=null){if(Button(new Rect(rect.x,top,Math.Min(390,rect.width),32),analysis.AutoSize.Value?"分析窗大小 · 自适应":"分析窗大小 · 手动",analysis.AutoSize.Value))analysis.AutoSize.Value=!analysis.AutoSize.Value;top+=48;}

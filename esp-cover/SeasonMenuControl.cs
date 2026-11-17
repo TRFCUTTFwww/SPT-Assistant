@@ -12,10 +12,11 @@ namespace LocalSpt5Esp;
 internal static class SeasonMenuControl {
  static ConfigEntry<bool> enabled=null!;static MenuScreen? menu;static Profile? profile;static SeasonalRewardController? rewards;static float next;static bool applied,restoring;static string notice="";
  internal static void Initialize(Plugin plugin){
-  enabled=FeatureConfig.Bind("70. 赛季","Seasons menu in PVE","PVE 开放赛季入口",true,"开放原生赛季菜单，保留当前 PVE 模式和角色进度。赛季功能以本机 SPT 服务端支持为准。");
+  enabled=FeatureConfig.Bind("70. 赛季","Seasons menu in PVE","PVE 开放赛季入口",true,"开放角色选择中的赛季入口，使用现有 PVE 角色并共用进度。");
   plugin.Patches.Patch(AccessTools.Method(typeof(MenuScreen),nameof(MenuScreen.RefreshSeasonWidget)),postfix:new HarmonyMethod(typeof(SeasonMenuControl),nameof(Observe)));
   plugin.Patches.Patch(AccessTools.Method(typeof(MenuScreen),nameof(MenuScreen.HandleSeasonWidgetClick)),prefix:new HarmonyMethod(typeof(SeasonMenuControl),nameof(Click)));
  }
+ internal static bool Enabled=>enabled!=null&&enabled.Value;
  static TarkovApplication? application;
  static TarkovApplication? App()=>application!=null?application:application=Singleton<TarkovApplication>.Instance??Singleton<AbstractApplication>.Instance?.TryCast<TarkovApplication>()??UnityEngine.Object.FindObjectOfType<TarkovApplication>();
  static bool Ready=>!ItemSpawner.InRaid()&&profile!=null&&profile.Id==App()?._menuOperation?._profile?.Id&&rewards!=null&&App()?._menuOperation?._seasonalRewardController!=null&&App()?.GetClientBackEndSession()?.BackEndConfig?.Config?.SeasonalRewards?.Season!=null;
@@ -38,8 +39,8 @@ internal static class SeasonMenuControl {
  internal static object Diagnostics()=>new{enabled=enabled.Value,menu=menu!=null,active=menu?.gameObject.activeInHierarchy,pve=menu?._modeDescriptor?.IsPve,mode=menu?._modeDescriptor?.GameMode.ToString(),hasProfile=profile!=null,hasRewardController=rewards!=null,nativeController=App()?._menuOperation?._seasonalRewardController!=null,season=App()?.GetClientBackEndSession()?.BackEndConfig?.Config?.SeasonalRewards?.Season!=null,ready=Ready,applied};
  internal static void Draw(Rect r){
   InterfaceMenu.Label(new(r.x,r.y,r.width,34),"赛季 / Seasons",InterfaceMenu.Accent,20);
-  InterfaceMenu.Paragraph(new(r.x,r.y+48,r.width,64),"开放原生赛季菜单，保留当前 PVE 模式和角色进度。赛季功能以本机 SPT 服务端支持为准。",null,14);
-  if(InterfaceMenu.Button(new(r.x,r.y+132,r.width,40),I18n.Text("PVE 开放赛季入口")+" · "+I18n.Text(enabled.Value?"开启":"关闭"),enabled.Value)){enabled.Value=!enabled.Value;applied=false;if(menu!=null&&profile!=null&&rewards!=null)menu.RefreshSeasonWidget(profile,rewards);}
+  InterfaceMenu.Paragraph(new(r.x,r.y+48,r.width,64),"开放角色选择中的赛季入口，使用现有 PVE 角色并共用进度。",null,14);
+  if(InterfaceMenu.Button(new(r.x,r.y+132,r.width,40),I18n.Text("PVE 开放赛季入口")+" · "+I18n.Text(enabled.Value?"开启":"关闭"),enabled.Value)){enabled.Value=!enabled.Value;applied=false;SeasonSelectionControl.Refresh();if(menu!=null&&profile!=null&&rewards!=null)menu.RefreshSeasonWidget(profile,rewards);}
   bool old=GUI.enabled;GUI.enabled=old&&enabled.Value&&Ready;try{if(InterfaceMenu.Button(new(r.x,r.y+188,r.width,40),"打开原生赛季菜单"))Open();}finally{GUI.enabled=old;}
   InterfaceMenu.Paragraph(new(r.x,r.y+248,r.width,88),notice.Length>0?notice:Ready?"赛季菜单数据已就绪。":"赛季数据尚未就绪，请返回主菜单后重试。",null,13);
  }

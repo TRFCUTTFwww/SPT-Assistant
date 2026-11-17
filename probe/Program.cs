@@ -787,6 +787,7 @@ Assert(dashboardStrings.Contains("Pmc")&&dashboardStrings.Contains("Sessions")&&
 Assert(dashboardType.Methods.Single(m=>m.Name=="Draw").Body.Instructions.Select(i=>i.Operand).OfType<MethodReference>().All(m=>m.Name!="Read"&&m.Name!="MoveNext"),"IMGUI repaint never advances inventory enumeration");
 Console.WriteLine("PASS native PMC dashboard integration, exact lifetime counter keys and rendering separated from incremental reads");
 CultistCircleChecks.Run();
+SeasonSelectionChecks.Run(sourceRoot);
 RecentLocalizationChecks.Run(sourceRoot);
 var englishText=JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(Path.Combine(sourceRoot,"esp-cover/Locales/en.json")))!;
 var englishFormats=JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(Path.Combine(sourceRoot,"esp-cover/Locales/en-formats.json")))!;

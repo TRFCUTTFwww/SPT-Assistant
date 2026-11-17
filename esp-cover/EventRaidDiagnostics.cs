@@ -25,6 +25,8 @@ internal static class EventRaidDiagnostics {
   using var doc=JsonDocument.Parse(File.ReadAllText(file));string action=doc.RootElement.GetProperty("action").GetString()??"";var app=App();
   if(action=="inspect")Write("application-state",new{screen=EFT.UI.Screens.EftScreenManager.Instance?.CurrentScreenController?.ScreenType.ToString(),world=Singleton<GameWorld>.Instantiated,menuOperation=app._menuOperation!=null,matchmakerOperation=app._localMatchmakerOperation!=null,raidSettings=app._raidSettings!=null,weather=app._raidSettings?.TimeAndWeatherSettings!=null,localSettings=app._localRaidSettings!=null,location=app._raidSettings?.SelectedLocation?.Id,mode=app._raidSettings?.RaidMode.ToString(),profile=app.GetProfileForLocalGame()!=null,aiTestStatus=AiSpawnService.Status});
   else if(action=="native-lab-state"||action=="native-lab-check")Write(action,NativeEventControl.Diagnostics(app,action=="native-lab-check"));
+  else if(action=="corner-version-state")Write("corner-version-state",CornerVersionControl.Diagnostics());
+  else if(action=="season-selection-state")Write("season-selection-state",SeasonSelectionControl.Diagnostics());
   else if(action=="season-menu-state")Write("season-menu-state",SeasonMenuControl.Diagnostics());
   else if(action=="ai-difficulty-state")Write("ai-difficulty-state",AiDifficultyControl.Diagnostics());
   else if(action=="btr-control-state")Write("btr-control-state",BtrControl.Diagnostics());
