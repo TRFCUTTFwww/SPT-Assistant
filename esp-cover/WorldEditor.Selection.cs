@@ -88,7 +88,7 @@ internal static partial class WorldEditor {
   foreach(var reference in selectedItems)try{var value=reference.Resolve();Mark(value.BoundCollider?.bounds.center??value.transform.position,ItemSpawner.TemplateName(value.Item.TemplateId.ToString()),new Color(.4f,.9f,.65f));}catch{}
   foreach(var reference in selectedCorpses)try{var body=reference.Resolve();Mark(CorpseDisplay.Position(body),reference.Name,new Color(.9f,.65f,.4f));}catch{}
   foreach(var reference in selectedAirdrops)try{var drop=reference.Resolve();Mark(AirdropPoint(drop),I18n.Text("空投箱")+" #"+drop.ObjectId,new Color(.45f,1,.72f));}catch{}
-  foreach(var reference in selectedContainers)try{var c=reference.Resolve();Mark(ContainerAnchor.Position(c),ItemSpawner.TemplateName(ContainerScene.Template(c)),new Color(.5f,.85f,1));}catch{}
+  foreach(var reference in selectedContainers)try{var c=reference.Resolve();Mark(ContainerAnchor.Position(c),ContainerScene.Name(c),new Color(.5f,.85f,1));}catch{}
   if(dragging){var b=EditorSelectionRules.Box(dragStart.x,dragStart.y,dragEnd.x,dragEnd.y);var rect=new Rect(b.X,b.Y,b.Width,b.Height);var color=InterfaceMenu.Accent;InterfaceMenu.Surface(rect,new Color(color.r,color.g,color.b,.14f),0);InterfaceMenu.Surface(new Rect(rect.x,rect.y,rect.width,1),color,0);InterfaceMenu.Surface(new Rect(rect.x,rect.yMax-1,rect.width,1),color,0);InterfaceMenu.Surface(new Rect(rect.x,rect.y,1,rect.height),color,0);InterfaceMenu.Surface(new Rect(rect.xMax-1,rect.y,1,rect.height),color,0);}
   }
  static void DrawTargetNavigation(float x,ref float y,float width){
@@ -99,7 +99,7 @@ internal static partial class WorldEditor {
  }
  static void SwitchTarget(int direction){
   ReleasePropertyEditors();TargetAt((selectionIndex+direction+SelectionCount)%SelectionCount);
-  if(dialog=="rename")rename=Actor().Profile.Nickname;else if(dialog=="properties")ReadProperties();scroll=Vector2.zero;notice="";
+  if(dialog=="rename")rename=RenameValue;else if(dialog=="properties")ReadProperties();scroll=Vector2.zero;notice="";
  }
  internal static void FilterMotion(Il2CppObjectBase controller,ref Vector3 motion){if(!moving)return;foreach(var value in moveActors)if(value.Player.CharacterController?.Pointer==controller.Pointer&&value.Reference.World==Comfort.Common.Singleton<GameWorld>.Instance?.Pointer&&value.Reference.Profile==value.Player.ProfileId){motion=Vector3.zero;return;}}
 }

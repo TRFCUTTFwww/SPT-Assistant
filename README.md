@@ -13,6 +13,8 @@ An in-game control panel for **SPT**, built with C# and Unity. Manage your chara
 >
 > Development follows the latest SPT version. **Backward compatibility is not guaranteed.** The exact supported SPT/EFT build is stated for each release; this release targets the versions above. Fika support is experimental and has not been broadly tested across hosts, clients or mod combinations.
 
+Dynamic lower-left text can run JavaScript and display HTTP API results; see [script usage and examples](docs/corner-version-scripts.md).
+
 ## Installation: double-click Setup
 
 1. Under **Assets** on the [release downloads](https://github.com/TRFCUTTFwww/SPT-Assistant/releases), download **`SPT-Assistant-2.3.1-Setup.exe`**. The `Source code` downloads are for developers.

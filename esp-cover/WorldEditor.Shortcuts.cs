@@ -29,7 +29,8 @@ internal static partial class WorldEditor {
   if(ShortcutBindings.Take(toggleEditor)){enabled!.Value=!enabled.Value;shortcutFrame=Time.frameCount;}
  }
  static void BeginCreate(){query=lastQuery="";items=System.Array.Empty<(string,string)>();createItemSample=null;createItemEditor=null;Modal("create");}
- static void BeginRename(){rename=Actor().Profile.Nickname;Modal("rename");}
+ static string RenameValue=>selectionKind==SelectionKind.Containers?ContainerScene.Name(selectedContainers[selectionIndex].Resolve()):Actor().Profile.Nickname;
+ static void BeginRename(){rename=RenameValue;Modal("rename");}
  static bool ShortcutInput(GameWorld current){
   bool external=InterfaceMenu.Open||RaidChat.InputBlocked||FloatingStatus.Capturing||!Application.isFocused||DirectorStage.FreeActive;
   bool cursor=dialog=="context"||altCursor||!Cursor.visible&&!gate.Blocked;
@@ -62,7 +63,7 @@ internal static partial class WorldEditor {
    case EditorShortcut.Delete:Delete();break;
    case EditorShortcut.Move:BeginMove();break;
    case EditorShortcut.Properties:if(kind is SelectionKind.Ai or SelectionKind.Items)OpenProperties();break;
-   case EditorShortcut.Rename:if(kind==SelectionKind.Ai)BeginRename();else FeatureToasts.Show("仅支持 AI。");break;
+   case EditorShortcut.Rename:if(kind is SelectionKind.Ai or SelectionKind.Containers)BeginRename();else FeatureToasts.Show("请选择 AI 或容器。");break;
    case EditorShortcut.Kill:if(kind==SelectionKind.Ai)Kill();else FeatureToasts.Show("仅支持 AI。");break;
    case EditorShortcut.ReleaseAir:if(kind==SelectionKind.Ai)ReleaseAir();else FeatureToasts.Show("仅支持 AI。");break;
   }

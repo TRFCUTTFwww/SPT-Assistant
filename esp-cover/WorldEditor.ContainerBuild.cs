@@ -9,7 +9,7 @@ using Shortcut=BepInEx.Unity.IL2CPP.Configuration.KeyboardShortcut;
 namespace LocalSpt5Esp;
 internal static partial class WorldEditor {
  internal static bool ContainerBuilding=>containerBuilding;
- static ConfigEntry<Shortcut>? containerBuildKey;
+ static ConfigEntry<Shortcut>? containerBuildKey;static ConfigEntry<bool>? containerFloating;static float containerDistance=4;
  static bool containerBuilding,containerValid,containerGrid=true;
  static string containerTemplate="",containerMode="server",containerInvalid="";
  static float containerYaw,containerPitch,containerRoll;static int containerAxis=1;
@@ -18,7 +18,7 @@ internal static partial class WorldEditor {
  static string containerImageTemplate="";static IntPtr containerImageSource;
  static Material? containerGhostMaterial;static Vector3 containerPosition;
  static readonly Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<RaycastHit> buildHits=new(512);
- static void InitializeContainerBuild(){containerBuildKey=FeatureConfig.Bind("63. 场景编辑","Container placement shortcut","连续放置容器热键",new Shortcut(KeyCode.F7),"编辑模式下按一次进入、再按一次退出。右键放置，左键删除准星处容器；Q/E 左右旋转，PgUp/PgDn 上下旋转，R 切换滚轮 X/Y/Z 轴，Shift 精调，Home 归零，X 网格吸附，Esc 取消。");}
+ static void InitializeContainerBuild(){containerFloating=FeatureConfig.Bind("63. 场景编辑","Floating container placement","容器浮空放置",true,"容器跟随准星前方的距离放置，无需地面支撑；Ctrl + 滚轮调整 0.5～20 米距离。关闭时改为地面放置。放下后固定位置。");containerBuildKey=FeatureConfig.Bind("63. 场景编辑","Container placement shortcut","连续放置容器热键",new Shortcut(KeyCode.F7),"编辑模式下按一次进入、再按一次退出。右键放置，左键删除准星处容器；Q/E 左右旋转，PgUp/PgDn 上下旋转，R 切换滚轮 X/Y/Z 轴，Shift 精调，Ctrl + 滚轮调距离，Home 归零，X 网格吸附，Esc 取消。");}
  static void BeginContainerBuild(){
   if(containerTemplate.Length==0){createContainer=true;BeginCreate();return;}var current=Current();ContainerLootAvailability.Read(current);if(containerMode=="server"&&!ContainerLootAvailability.Allows(current,containerTemplate))containerMode="empty";if(containerMode=="custom")LootOptions("custom").Validate();
   var source=ContainerScene.Prototype(Current(),containerTemplate)??throw new ArgumentException("请先在容器目录加载此模型。");
@@ -36,7 +36,7 @@ internal static partial class WorldEditor {
   float step=Input.GetKey(KeyCode.LeftShift)||Input.GetKey(KeyCode.RightShift)?1:15;
   if(Input.GetKeyDown(KeyCode.Q))containerYaw-=step;if(Input.GetKeyDown(KeyCode.E))containerYaw+=step;
   if(Input.GetKeyDown(KeyCode.R))containerAxis=(containerAxis+1)%3;
-  float delta=Input.mouseScrollDelta.y*step;
+  bool distanceWheel=containerFloating!.Value&&(Input.GetKey(KeyCode.LeftControl)||Input.GetKey(KeyCode.RightControl));if(distanceWheel)containerDistance=Math.Clamp(containerDistance+Input.mouseScrollDelta.y*(step==1?.05f:.25f),.5f,20);float delta=distanceWheel?0:Input.mouseScrollDelta.y*step;
   if(containerAxis==0)containerPitch=ContainerBuildRules.Yaw(containerPitch+delta);else if(containerAxis==2)containerRoll=ContainerBuildRules.Yaw(containerRoll+delta);else containerYaw=ContainerBuildRules.Yaw(containerYaw+delta);
   if(Input.GetKeyDown(KeyCode.PageUp))containerPitch=ContainerBuildRules.Yaw(containerPitch-step);if(Input.GetKeyDown(KeyCode.PageDown))containerPitch=ContainerBuildRules.Yaw(containerPitch+step);
   if(Input.GetKeyDown(KeyCode.Home))containerPitch=containerYaw=containerRoll=0;
@@ -57,27 +57,28 @@ internal static partial class WorldEditor {
  }
  static void UpdateContainerGhost(GameWorld current){
   containerValid=false;containerInvalid="请瞄准 20 米内的平坦地面。";if(containerGhost==null)return;
-  var ray=PointerRay(false);int count=Physics.RaycastNonAlloc(ray,buildHits,20,~0,QueryTriggerInteraction.Ignore);float nearest=21;RaycastHit? contact=null;
+  bool floating=containerFloating!.Value;var ray=PointerRay(false);int count=Physics.RaycastNonAlloc(ray,buildHits,20,~0,QueryTriggerInteraction.Ignore);float nearest=21;RaycastHit? contact=null;
   if(count<buildHits.Length)for(int i=0;i<count;i++){var hit=buildHits[i];if(hit.collider==null||CrosshairProbe.LocalCollider(current,current.MainPlayer,hit.collider)||hit.distance>=nearest)continue;nearest=hit.distance;contact=hit;}
-  containerGhost.SetActive(contact!=null);
-  if(contact is {} surface){
-   var p=surface.point;if(containerGrid){p.x=ContainerBuildRules.Snap(p.x,.25f);p.z=ContainerBuildRules.Snap(p.z,.25f);}
-   // Recheck the snapped point vertically: snapping may move the anchor off a ledge.
-   if(Physics.Raycast(p+Vector3.up*.3f,Vector3.down,out var ground,.7f,~0,QueryTriggerInteraction.Ignore)){p.y=ground.point.y;containerValid=ground.normal.y>=.85f&&surface.normal.y>=.85f;}
+  containerGhost.SetActive(floating||contact!=null);
+  if(floating||contact!=null){
+   var p=floating?ray.GetPoint(Math.Min(containerDistance,Math.Max(.5f,nearest-.15f))):contact!.Value.point;
+   if(containerGrid){p.x=ContainerBuildRules.Snap(p.x,.25f);p.z=ContainerBuildRules.Snap(p.z,.25f);if(floating)p.y=ContainerBuildRules.Snap(p.y,.25f);}
+   containerValid=floating;
+   // Ground mode rechecks support after snapping; floating mode needs no surface.
+   if(!floating&&Physics.Raycast(p+Vector3.up*.3f,Vector3.down,out var ground,.7f,~0,QueryTriggerInteraction.Ignore)){p.y=ground.point.y;containerValid=ground.normal.y>=.85f&&contact!.Value.normal.y>=.85f;}
    containerGhost.transform.SetPositionAndRotation(p,BuildRotation);var bounds=ContainerScene.Bounds(containerGhost.transform);containerGhost.transform.position+=Vector3.up*(p.y-bounds.min.y+.015f);containerPosition=containerGhost.transform.position;
    bounds=ContainerScene.Bounds(containerGhost.transform);
-   // AABB test is deliberately conservative for rotated furniture. Keep a small floor clearance.
    var overlaps=Physics.OverlapBox(bounds.center+Vector3.up*.035f,new Vector3(Math.Max(.02f,bounds.extents.x-.04f),Math.Max(.02f,bounds.extents.y-.06f),Math.Max(.02f,bounds.extents.z-.04f)),Quaternion.identity,~0,QueryTriggerInteraction.Ignore);
-   foreach(var collider in overlaps)if(collider!=null&&collider.Pointer!=surface.collider?.Pointer&&collider.bounds.max.y>p.y+.08f){containerValid=false;containerInvalid="空间不足：请避开墙体、人物或其他容器。";break;}
+   foreach(var collider in overlaps)if(collider!=null&&(floating||collider.Pointer!=contact?.collider?.Pointer)&&collider.bounds.max.y>p.y+.08f){containerValid=false;containerInvalid="空间不足：请避开墙体、人物或其他容器。";break;}
    if(!containerValid&&containerInvalid.StartsWith("请瞄准"))containerInvalid="落点不够平坦，或网格吸附后没有支撑面。";
   }
   if(containerGhostMaterial!=null)containerGhostMaterial.color=containerValid?new Color(.15f,.85f,.6f,.55f):new Color(1,.25f,.22f,.55f);
  }
  static void DrawContainerBuild(){
   DrawEditorCrosshair();float w=Math.Min(640,Screen.width-24);var box=new Rect((Screen.width-w)/2,Math.Max(12,Screen.height-160),w,144);InterfaceMenu.Panel(box);
-  InterfaceMenu.Label(new(box.x+14,box.y+8,w-28,26),"连续放置 · "+ItemSpawner.TemplateName(containerTemplate),InterfaceMenu.Accent,16);
+  InterfaceMenu.Label(new(box.x+14,box.y+8,w-28,26),(containerFloating!.Value?$"浮空放置 · {containerDistance:0.00} 米 · ":"地面放置 · ")+ItemSpawner.TemplateName(containerTemplate),InterfaceMenu.Accent,16);
   InterfaceMenu.Label(new(box.x+14,box.y+38,w-28,24),containerValid?$"可放置 · X {containerPitch:0}° / Y {containerYaw:0}° / Z {containerRoll:0}° · 当前轴 {new[]{"X","Y","Z"}[containerAxis]} · 网格 "+(containerGrid?"0.25m":"关闭"):containerInvalid,containerValid?new Color(.3f,1,.65f):new Color(1,.5f,.4f),12);
-  InterfaceMenu.Paragraph(new(box.x+14,box.y+68,w-28,64),"右键放置 · 左键删除 · Q/E 左右旋转 · PgUp/PgDn 上下旋转\nR 切换滚轮旋转轴 · Shift 精调 · Home 归零 · X 吸附 · "+ShortcutBindings.Label(containerBuildKey!.Value)+" / Esc 退出\n"+containerStatus,null,12);
+  InterfaceMenu.Paragraph(new(box.x+14,box.y+68,w-28,64),"右键放置 · 左键删除 · Q/E 左右旋转 · PgUp/PgDn 上下旋转\nCtrl + 滚轮调距离 · R 切换旋转轴 · Shift 精调 · Home 归零 · X 吸附 · "+ShortcutBindings.Label(containerBuildKey!.Value)+" / Esc 退出\n"+containerStatus,null,12);
  }
  static void ClearContainerPreview(){
   if(containerImageObject!=null)UnityEngine.Object.Destroy(containerImageObject);containerImageObject=null;
@@ -96,9 +97,9 @@ internal static partial class WorldEditor {
   // Only preview meshes are enabled for this explicit render.
   try{containerCamera.Render();}finally{containerImageObject.SetActive(false);light.enabled=false;}
  }
- static Vector2 containerCatalogScroll;
+
  static void DrawContainerCatalog(Rect viewport){
-  float height=Math.Max(700,viewport.height);containerCatalogScroll=GUI.BeginScrollView(viewport,containerCatalogScroll,new Rect(0,0,viewport.width-20,height));try{DrawContainerCatalogContent(new Rect(0,0,viewport.width-24,height));}finally{GUI.EndScrollView();}
+  DrawContainerCatalogContent(viewport);
  }
  static void DrawContainerCatalogContent(Rect rect){
   float x=rect.x,y=rect.y,w=rect.width;if(InterfaceMenu.Button(new(x,y,w,30),"← 返回 AI / 物品 / 容器分类")){createContainer=false;return;}y+=40;

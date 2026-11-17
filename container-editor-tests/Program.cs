@@ -25,7 +25,7 @@ using var native=AssemblyDefinition.ReadAssembly(Path.Combine(game,"BepInEx/inte
 MethodReference[] Calls(string type,string method)=>core.MainModule.Types.Single(t=>t.Name==type).Methods.Single(m=>m.Name==method).Body.Instructions.Select(i=>i.Operand).OfType<MethodReference>().ToArray();
 Check(Calls("RuntimeModule","Update").Any(m=>m.Name=="TickContainers")&&Calls("RuntimeModule","PrepareForReload").Any(m=>m.Name=="PrepareContainersForReload"),"container queue participates in update and reload drain");
 Check(Calls("ContainerScene","Create").Any(m=>m.Name=="RegisterWorldInteractionObject")&&Calls("ContainerScene","Create").Any(m=>m.Name=="Init"),"placed containers use native registration and item owners");
-Check(Calls("ContainerScene","Remove").Any(m=>m.Name=="get_InteractingPlayer"),"active interaction prevents removal");
+Check(Calls("ContainerScene","Remove").Any(m=>m.Name=="RequireIdle")&&Calls("ContainerScene","RequireIdle").Any(m=>m.Name=="get_IsInventoryOpened"),"real inventory interaction prevents removal, stale player reference does not");
 Check(Calls("WorldEditor","ResolveContainerJob").Any(m=>m.Name=="get_IsAlive")&&Calls("WorldEditor","ResolveContainerJob").Any(m=>m.Name=="get_Pointer"),"queued writes revalidate world/player lifetime");
 Check(!Calls("RaidSpawnControl","Tick").Any(m=>m.Name=="get_SpawnPaused")&&Calls("RaidSpawnControl","Block").Any(m=>m.Name=="get_SpawnPaused"),"pause only gates activation and never feeds removal reconciliation");
 Check(Calls("WorldEditor","StopContainerBuild").Any(m=>m.Name=="Destroy")&&Calls("WorldEditor","ClearContainerPreview").Any(m=>m.Name=="Release"),"ghost and thumbnail resources are released");

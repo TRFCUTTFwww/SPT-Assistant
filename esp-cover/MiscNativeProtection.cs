@@ -9,7 +9,7 @@ using UnityEngine;
 namespace LocalSpt5Esp;
 internal static class MiscNativeProtection {
  sealed record Immunity(PlayersWithImmuneToSniperFire Component,int RaidId);
- static readonly List<Immunity> added=new();static IntPtr world;static float next;
+ static readonly List<Immunity> added=new();static IntPtr world;static float next;static SniperFiringZone[]? zones;
  internal static void Initialize(Plugin plugin){
   plugin.Patches.Patch(AccessTools.Method(typeof(BorderZone),"ProcessIncomingPacket"),prefix:new HarmonyMethod(typeof(MiscNativeProtection),nameof(Packet)));
   plugin.Patches.Patch(AccessTools.Method(typeof(BorderZone),"InvokePlayerShotEvent"),prefix:new HarmonyMethod(typeof(MiscNativeProtection),nameof(ShotEvent)));
@@ -26,10 +26,11 @@ internal static class MiscNativeProtection {
   if(!MiscPanel.Options.SniperBlind||!RaidClock.Active||local==null){Reset();return;}
   if(world!=current!.Pointer){Reset();world=current.Pointer;}
   if(Time.unscaledTime<next)return;next=Time.unscaledTime+2;
-  foreach(var zone in UnityEngine.Object.FindObjectsOfType<SniperFiringZone>()){
+  zones??=UnityEngine.Object.FindObjectsOfType<SniperFiringZone>();
+  foreach(var zone in zones){if(zone==null)continue;
    var immune=zone._playersWithImmuneToFire;if(immune==null||immune.IsPlayerImmuneForFire(local.RaidId))continue;
    immune.AddImmunePlayer(local.RaidId);added.Add(new(immune,local.RaidId));
   }
  }
- internal static void Reset(){foreach(var entry in added)try{entry.Component?.RemoveImmunePlayer(entry.RaidId);}catch{}added.Clear();world=IntPtr.Zero;next=0;}
+ internal static void Reset(){foreach(var entry in added)try{entry.Component?.RemoveImmunePlayer(entry.RaidId);}catch{}added.Clear();zones=null;world=IntPtr.Zero;next=0;}
 }

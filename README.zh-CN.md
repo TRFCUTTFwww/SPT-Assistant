@@ -16,6 +16,8 @@
 >
 > 后续开发以 SPT 最新版为适配目标，**不保证向后兼容**。每次发布都会注明具体适配的 SPT/EFT 版本；本次仅以以上版本为目标。Fika 联机支持同样处于实验阶段，尚未覆盖不同房主、成员和模组组合的广泛测试。
 
+左下角版本文字支持 JavaScript 和 HTTP API 定时刷新，见[脚本用法与示例](docs/corner-version-scripts.md)。
+
 ## 安装：双击即可
 
 1. 在 [发布下载页](https://github.com/TRFCUTTFwww/SPT-Assistant/releases) 的 **Assets / 资源** 中，下载 **`SPT-Assistant-2.3.1-Setup.exe`**。不要下载 `Source code`，那是开发者用的源码。

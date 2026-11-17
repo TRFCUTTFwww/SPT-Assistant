@@ -12,7 +12,7 @@ using LocalSpt.WorldEditing;
 using UnityEngine;
 namespace LocalSpt5Esp;
 internal static partial class WorldEditor {
- sealed record ContainerCopy(ItemCopy[] Contents,string Template,Quaternion Rotation,bool Opened);
+ sealed record ContainerCopy(ItemCopy[] Contents,string Template,Quaternion Rotation,bool Opened,string Name);
  sealed record ContainerMove(ContainerScene.Reference Reference,Vector3 Origin,Quaternion Rotation);
  sealed record ContainerJob(IntPtr World,IntPtr Player,string Profile,string Map,string Template,Vector3 Position,Quaternion Rotation,bool Opened,ContainerLootOptions? Options,ContainerCopy? Copy,ContainerScene.Reference? Target,string ExpectedRoot);
  static readonly List<ContainerScene.Reference> selectedContainers=new();
@@ -29,7 +29,7 @@ internal static partial class WorldEditor {
   if(migrated.Value)return;contextOrder.Value=string.Join(",",EditorContextRules.Read(contextOrder.Value).Concat(new[]{"rotate","loot-server","loot-custom","container-open"}).Distinct());migrated.Value=true;
  }
  static ContainerLootOptions LootOptions(string mode)=>new(){Mode=mode,Rolls=ItemSpawnRules.Integer(containerRolls,0,100,"抽取次数"),FoundInRaid=containerFir,Items=containerChoices.Select(i=>new ContainerLootChoice{Template=i.Template,Weight=i.Weight}).ToList()};
- static ContainerCopy CaptureContainer(LootableContainer c)=>new(ContainerScene.Group(c).Select(v=>CaptureItem(v.ItemOwner?.RootItem??throw new ArgumentException("容器库存尚未就绪。"))).ToArray(),ContainerScene.Template(c),ContainerScene.Root(c).rotation,ContainerScene.Open(c));
+ static ContainerCopy CaptureContainer(LootableContainer c)=>new(ContainerScene.Group(c).Select(v=>CaptureItem(v.ItemOwner?.RootItem??throw new ArgumentException("容器库存尚未就绪。"))).ToArray(),ContainerScene.Template(c),ContainerScene.Root(c).rotation,ContainerScene.Open(c),ContainerScene.Name(c));
  static void PlaceContainerCopy(ContainerCopy copy,Vector3 position)=>QueueContainer(copy.Template,position,copy.Rotation,copy.Opened,null,copy,null);
  static void QueueContainer(string template,Vector3 position,Quaternion rotation,bool opened,ContainerLootOptions? options,ContainerCopy? copy,ContainerScene.Reference? target){
   var current=Current();if(containerDraining)throw new ArgumentException("正在更新，请稍候。");
@@ -42,7 +42,7 @@ internal static partial class WorldEditor {
  static GameWorld ResolveContainerJob(ContainerJob job){
   var current=Singleton<GameWorld>.Instance;var p=current?.MainPlayer;
   if(!RaidClock.Active||current?.Pointer!=job.World||p?.Pointer!=job.Player||p.ProfileId!=job.Profile||p.HealthController?.IsAlive!=true)throw new ArgumentException("战局已改变，已取消容器操作。");
-  if(job.Target is {} reference){var target=reference.Resolve();if(target.ItemOwner?.RootItem?.Id.ToString()!=job.ExpectedRoot)throw new ArgumentException("容器库存已改变，请重新选择后操作。");if(target.InteractingPlayer!=null)throw new ArgumentException("容器正在使用中，已取消替换。");}
+  if(job.Target is {} reference){var target=reference.Resolve();if(target.ItemOwner?.RootItem?.Id.ToString()!=job.ExpectedRoot)throw new ArgumentException("容器库存已改变，请重新选择后操作。");ContainerScene.RequireIdle(target);}
   return current;
  }
  internal static bool PrepareContainersForReload(){StopContainerBuild();containerDraining=true;containerJobs.Clear();return !ContainerLibrary.Busy&&(containerLoading==null||containerLoading.IsCompleted);}
@@ -73,7 +73,7 @@ internal static partial class WorldEditor {
    if(containerLoading!=null){if(!containerLoading.IsCompleted)return;if(containerLoading.IsCanceled||containerLoading.IsFaulted)throw new ArgumentException("容器物资资源加载失败，原库存未替换。");}
    current=ResolveContainerJob(job);
    if(job.Target is {} target)ContainerScene.Replace(current,target.Resolve(),containerRoot);
-   else ContainerScene.Create(current,ContainerScene.Prototype(current,job.Template)??throw new ArgumentException("原模型已不可用。"),containerRoots,job.Position,job.Rotation,job.Opened);
+   else {var placed=ContainerScene.Create(current,ContainerScene.Prototype(current,job.Template)??throw new ArgumentException("原模型已不可用。"),containerRoots,job.Position,job.Rotation,job.Opened);if(job.Copy!=null)ContainerScene.Rename(placed,job.Copy.Name);}
    containerStatus=job.Target==null?"容器已放置。":"容器物资已重新生成。";FeatureToasts.Show(containerStatus);ClearContainerJob();
   }catch(Exception e){containerStatus="容器操作失败："+e.GetBaseException().Message;Plugin.Self.Log.LogWarning(containerStatus);FeatureToasts.Show(containerStatus);ClearContainerJob();}
  }

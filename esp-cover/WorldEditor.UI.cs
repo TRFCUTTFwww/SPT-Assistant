@@ -14,8 +14,8 @@ internal static partial class WorldEditor {
  static readonly Dictionary<string,(string Max,string Current)> health=new();
  static ItemComponentEditor? componentEditor;
  internal static void DrawSettings(Rect rect){
-  settingsScroll=GUI.BeginScrollView(rect,settingsScroll,new Rect(0,0,rect.width-22,576));
-  try{var entries=new BepInEx.Configuration.ConfigEntryBase[]{enabled!,toggleEditor!,containerBuildKey!,throughWallSelection!,moveInvincible!,moveIgnored!};for(int i=0;i<entries.Length;i++)InterfaceMenu.DrawEntry(entries[i],new Rect(0,i*96,rect.width-28,86));}finally{GUI.EndScrollView();}
+  settingsScroll=GUI.BeginScrollView(rect,settingsScroll,new Rect(0,0,rect.width-22,672));
+  try{var entries=new BepInEx.Configuration.ConfigEntryBase[]{enabled!,toggleEditor!,containerBuildKey!,containerFloating!,throughWallSelection!,moveInvincible!,moveIgnored!};for(int i=0;i<entries.Length;i++)InterfaceMenu.DrawEntry(entries[i],new Rect(0,i*96,rect.width-28,86));}finally{GUI.EndScrollView();}
  }
  internal static void Draw(){
   if(!Active||InterfaceMenu.Open)return;int depth=GUI.depth;bool oldEnabled=GUI.enabled;GUI.depth=-900;
@@ -55,7 +55,7 @@ internal static partial class WorldEditor {
   }
   InterfaceMenu.Paragraph(new Rect(rect.x,rect.yMax-60,rect.width,60),createAi?AiSpawnService.Status:WorldItemPlacement.Status.Length>0?WorldItemPlacement.Status:"显示前 300 项，请输入名称或模板 ID 缩小范围。",InterfaceMenu.Accent,12);
  }
- static void DrawRename(float x,float y,float width){rename=InterfaceMenu.Field(new Rect(x,y,width,32),rename);if(InterfaceMenu.Button(new Rect(x,y+44,width,32),"应用"))Run(()=>{string name=rename.Trim();if(name.Length is <1 or >64)throw new ArgumentException("名称长度须为 1～64 个字符。");Actor().Profile.Info.Nickname=name;if(SelectionCount>1){notice="已应用当前对象。";FeatureToasts.Show(notice);}else CloseDialog();});}
+ static void DrawRename(float x,float y,float width){rename=InterfaceMenu.Field(new Rect(x,y,width,32),rename);if(InterfaceMenu.Button(new Rect(x,y+44,width,32),"应用"))Run(()=>{string name=rename.Trim();if(name.Length is <1 or >64)throw new ArgumentException("名称长度须为 1～64 个字符。");if(selectionKind==SelectionKind.Containers)ContainerScene.Rename(selectedContainers[selectionIndex].Resolve(),name);else Actor().Profile.Info.Nickname=name;if(SelectionCount>1){notice="已应用当前对象。";FeatureToasts.Show(notice);}else CloseDialog();});}
  static void OpenProperties(){ReadProperties();Modal("properties");}
  static void ReadProperties(){
   health.Clear();componentEditor=null;ReleasePropertyEditors();
