@@ -55,7 +55,7 @@ try{
   $destination=Join-Path $GameRoot $entry.Value
   $temporary=$destination+'.editor-update.tmp'
   Copy-Item -LiteralPath (Join-Path $PSScriptRoot $entry.Key) -Destination $temporary
-  [IO.File]::Replace($temporary,$destination,$null)
+  [IO.File]::Replace($temporary,$destination,(Join-Path $backup ($entry.Key+'.replaced')))
   $changed.Add($entry.Key)
   if((Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash -ne $hashes.($entry.Key)){throw ('Installed checksum mismatch: '+$entry.Key)}
  }
