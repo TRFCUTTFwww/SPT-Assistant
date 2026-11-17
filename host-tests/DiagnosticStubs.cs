@@ -3,7 +3,7 @@ using BepInEx.Configuration;
 namespace LocalSpt5Esp.HotReload;
 public sealed class DiagnosticService:IDisposable {
  public Action<string,string,bool>? Fatal;
- public ConfigEntry<string> Minimum=new("INFO");
+ public ConfigEntry<string> Minimum=new("INFO"),Language=new("zh-CN");
  public ConfigEntry<bool> IncludeHardware=new(false),IncludePerformance=new(true),IncludeSpt=new(true),IncludeGame=new(true),DetailedTiming=new(false),DebugEnabled=new(false),PhysicsTracing=new(false);
  public string LastExport=>"";
  public string ExportStatus=>"test export";

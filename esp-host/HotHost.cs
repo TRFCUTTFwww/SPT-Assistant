@@ -48,14 +48,16 @@ public sealed partial class RuntimeReloader:IHostServices,IDisposable {
   try{
    GUI.color=new Color(0,0,0,.8f);GUI.DrawTexture(new Rect(0,0,Screen.width,Screen.height),Texture2D.whiteTexture);GUI.color=Color.white;
    var rect=new Rect((Screen.width-580)/2f,(Screen.height-220)/2f,580,220);GUI.Box(rect,"");
-   GUI.Label(new Rect(rect.x+24,rect.y+20,532,32),failure.Length==0?"正在热更新 · 游戏已暂停":"热更新失败 · 游戏已暂停");
-   GUI.Label(new Rect(rect.x+24,rect.y+64,532,52),phase);
-   GUI.Label(new Rect(rect.x+24,rect.y+120,532,32),$"已执行 {stepCount} 个步骤 · 完成后自动恢复");
-   if(failure.Length>0&&sequence==null&&persistence==null&&GUI.Button(new Rect(rect.x+180,rect.y+165,220,32),"关闭提示并恢复游戏"))EndPause();
+   GUI.Label(new Rect(rect.x+24,rect.y+20,532,32),failure.Length==0?LoadingText("正在热更新 · 游戏已暂停","Updating Assistant · game paused"):LoadingText("热更新失败 · 游戏已暂停","Update failed · game paused"));
+   GUI.Label(new Rect(rect.x+24,rect.y+64,532,52),LoadingPhase());
+   GUI.Label(new Rect(rect.x+24,rect.y+120,532,32),LoadingText($"已执行 {stepCount} 个步骤 · 完成后自动恢复",$"{stepCount} steps complete · resumes automatically"));
+   if(failure.Length>0&&sequence==null&&persistence==null&&GUI.Button(new Rect(rect.x+180,rect.y+165,220,32),LoadingText("关闭提示并恢复游戏","Close and resume game")))EndPause();
    if(Event.current.type==EventType.Repaint)painted++;
    if(Event.current.type is EventType.KeyDown or EventType.KeyUp or EventType.MouseDown or EventType.MouseUp or EventType.ScrollWheel)Event.current.Use();
   }finally{GUI.color=oldColor;GUI.depth=oldDepth;}
  }
+ string LoadingText(string zh,string en)=>Diagnostics.Language.Value.StartsWith("en",StringComparison.OrdinalIgnoreCase)?en:zh;
+ string LoadingPhase()=>LoadingText(phase,phase switch{"正在保存设置并准备切换…"=>"Saving settings and preparing the update…","正在释放旧功能…"=>"Unloading the previous features…","正在启用新功能…"=>"Enabling the updated features…","正在保存更新结果…"=>"Saving the update result…","已恢复上一版本，正在保存结果…"=>"Previous version restored. Saving the result…",_=>failure.Length>0?"The update could not be completed. Review the diagnostic logs.":"Preparing the update…"});
  void Poll(){
   if(pause!=null){
    if(painted<2)return;
@@ -100,7 +102,7 @@ public sealed partial class RuntimeReloader:IHostServices,IDisposable {
   yield return ()=>{loadedHash=selected.Hash;lastGood=selected.Bytes;phase="已恢复上一版本，正在保存结果…";};
  }
  void EndPause(){var previous=pause;pause=null;previous?.Dispose();}
- byte[] StatusBytes(string? error)=>JsonSerializer.SerializeToUtf8Bytes(new{apiVersion=1,hostVersion="1.6.1",coreVersion=module?.Version,generation,sha256=loadedHash,ready=module!=null&&!SafetyBlocked,error,rollback=rollingBack,suspended=SafetyBlocked,cleanupUnsafe,updatedUtc=DateTime.UtcNow,steps=stepCount,peakStepMs=peakMs});
+ byte[] StatusBytes(string? error)=>JsonSerializer.SerializeToUtf8Bytes(new{apiVersion=1,hostVersion="1.6.2",coreVersion=module?.Version,generation,sha256=loadedHash,ready=module!=null&&!SafetyBlocked,error,rollback=rollingBack,suspended=SafetyBlocked,cleanupUnsafe,updatedUtc=DateTime.UtcNow,steps=stepCount,peakStepMs=peakMs});
  static void AtomicWrite(string path,byte[] bytes){string temporary=path+"."+Guid.NewGuid().ToString("N")+".tmp";File.WriteAllBytes(temporary,bytes);File.Move(temporary,path,true);}
  void Report(Exception error){if(DateTime.UtcNow<nextError)return;nextError=DateTime.UtcNow.AddSeconds(10);Log.LogWarning(error);}
  public void Dispose(){disposed=true;try{sequence?.Dispose();module?.Unload();}finally{StopSafety();EndPause();module=null;context?.Release();}}

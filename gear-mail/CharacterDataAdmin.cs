@@ -48,6 +48,7 @@ public class CharacterDataService(SaveServer saves,JsonUtil json,HttpResponseUti
    if(request.Action is "backupList" or "backupCreate" or "backupPreview" or "backupRestore")return await ProfileBackupService.Handle(request,session,profile,saves,json,http,templates,ct);
    if(request.Action=="serverSave")return ServerSettingsService.Handle(request,http,pmc);
    if(request.Action is "finishCrafts" or "craftStatus")return await HideoutCraftService.Handle(request,session,profile,saves,json,http,ct);
+   if(request.Action is "cultistStatus" or "finishCultist")return await CultistCircleService.Handle(request,session,profile,saves,json,http,ct);
    if(request.Action=="repairRaidStash")return await RaidStashService.Handle(request,session,profile,saves,json,http,ct);
    snapshot=json.Deserialize<SptProfile>(json.Serialize(profile))!;
    var directory=System.IO.Path.Combine(AppContext.BaseDirectory,"user","mods","LocalGearMail","backups","character-data");Directory.CreateDirectory(directory);

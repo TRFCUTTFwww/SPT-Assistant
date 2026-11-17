@@ -18,11 +18,13 @@ public sealed class DiagnosticService:ILogListener {
  readonly object writeLock=new(),exceptionLock=new();string repeatedException="";long exceptionTicks;int exceptionCount;public Action<string,string,bool>? Fatal;int queued,dropped;bool disposed;Task<string>? exporting;string performance="",hardware="",lastFault="",lastExport="",writtenPerformance="",writtenHardware="";
  public ConfigEntry<string> Minimum {get;private set;}=null!;public ConfigEntry<bool> IncludeHardware {get;private set;}=null!;public ConfigEntry<bool> IncludePerformance {get;private set;}=null!;public ConfigEntry<bool> IncludeSpt {get;private set;}=null!;public ConfigEntry<bool> IncludeGame {get;private set;}=null!;public ConfigEntry<bool> DetailedTiming {get;private set;}=null!;public ConfigEntry<bool> DebugEnabled {get;private set;}=null!;public ConfigEntry<bool> PhysicsTracing {get;private set;}=null!;
  public string ExportStatus {get;private set;}="";
+ public ConfigEntry<string> Language {get;private set;}=null!;
  public DiagnosticService(ConfigFile config,string directory){game=BepInEx.Paths.GameRootPath;home=Path.Combine(directory,"runtime","logs");Directory.CreateDirectory(home);
   Rebind(config);
   BepInEx.Logging.Logger.Listeners.Add(this);Application.logMessageReceivedThreaded+=UnityLog;worker=Task.Run(WriteLoop);
  }
  public void Rebind(ConfigFile config){
+  Language=config.Bind("24. Interface","Language","zh-CN","界面语言 / Interface language");
   Minimum=config.Bind("67. 日志与诊断","Minimum level","INFO",new ConfigDescription("标准日志最低等级：ALL、TRACE、DEBUG、INFO、WARNING、ERROR、FATAL、OFF。",new AcceptableValueList<string>(LogBundle.Levels)));
   IncludeHardware=config.Bind("67. 日志与诊断","Attach hardware",false,"导出时附加 CPU、GPU、内存、系统与驱动信息，不包含用户名或计算机名。");IncludePerformance=config.Bind("67. 日志与诊断","Attach performance",true,"附加帧时间、辅助功能 CPU 耗时和最近的慢帧记录。");IncludeSpt=config.Bind("67. 日志与诊断","Attach SPT logs",true,"一起打包 SPT 服务端日志；不包含存档和认证文件。");IncludeGame=config.Bind("67. 日志与诊断","Attach game logs",true,"一起打包游戏与 BepInEx 日志。");DetailedTiming=config.Bind("67. 日志与诊断","Detailed feature timing",false,"记录各辅助功能的 CPU 平均耗时与峰值；GPU 时间不归因到某个 MOD。");PhysicsTracing=config.Bind("67. 日志与诊断","Trace physics warnings",false,"调试物理警告时采集调用栈；可能增加开销，默认关闭。");DebugEnabled=config.Bind("68. 调试","Master switch",false,"调试总开关。错误测试均带明显标识，危险原生错误仅作受控模拟，不会自动结束真实战局。");
  }

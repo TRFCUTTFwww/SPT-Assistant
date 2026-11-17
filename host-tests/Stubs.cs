@@ -19,6 +19,7 @@ namespace UnityEngine {
  public class GUIStyle{public int fontSize;public bool wordWrap;public GUIStyle(){}public GUIStyle(GUIStyle other){}}
  public class GUISkin{public GUIStyle label=new();}
  public static class ColorUtility{public static bool TryParseHtmlString(string s,out Color c){c=Color.white;return true;}}
+ public static class GUIUtility {public static string systemCopyBuffer="";}
  public static class GUI {public static GUISkin skin=new();public static bool enabled=true;public static void Label(Rect r,string t,GUIStyle s){}public static int depth;public static Color color;public static void DrawTexture(Rect r,Texture2D t){}public static void Box(Rect r,string t){}public static void Label(Rect r,string t){}public static bool Button(Rect r,string t){if(TestState.Click==t){TestState.Click="";return true;}return false;}}
 }
 namespace Comfort.Common {public static class Singleton<T> {public static T? Instance;}}

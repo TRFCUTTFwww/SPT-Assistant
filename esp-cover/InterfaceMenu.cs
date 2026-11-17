@@ -196,7 +196,7 @@ internal static partial class InterfaceMenu {
    if(contextKeys){HotkeyPage.Draw(content,category);return;}
    if(category=="调试"){DiagnosticsPanel.DrawDebug(content);return;}if(category=="主页面"){HomeDashboard.Draw(content);return;}if(category=="杂项"){MiscPanel.Draw(content);return;}
    var pages=MenuSections.Pages(category);if(!pages.Contains(otherPage))otherPage=pages[0];string next=Tabs(content,pages,otherPage,out float tabsHeight);if(next!=otherPage)Navigate(category,next);content.y+=tabsHeight;content.height-=tabsHeight;
-   if(category=="服务端"){ServerControlPanel.Draw(content,otherPage);return;}if(category=="剧情"){StoryPanel.Draw(content,otherPage);return;}if(category=="数据"&&otherPage is not ("角色管理" or "存档备份")){CharacterDataPanel.Draw(content,otherPage);return;}if(category=="AI 工作台"){AiWorkspace.Draw(content,otherPage);return;}if(category=="玩具枪工具"){ToyDeveloper.DrawWorkspace(content,otherPage);return;}if(category=="战局与物资"&&otherPage=="活动控制"){SeasonalEventControls.Draw(content);return;}
+   if(category=="服务端"){ServerControlPanel.Draw(content,otherPage);return;}if(category=="剧情"){StoryPanel.Draw(content,otherPage);return;}if(category=="数据"&&otherPage is not ("角色管理" or "存档备份" or "仪式圈" or "赛季")){CharacterDataPanel.Draw(content,otherPage);return;}if(category=="AI 工作台"){AiWorkspace.Draw(content,otherPage);return;}if(category=="玩具枪工具"){ToyDeveloper.DrawWorkspace(content,otherPage);return;}if(category=="战局与物资"&&otherPage=="活动控制"){SeasonalEventControls.Draw(content);return;}
    if(category=="战局与物资"&&otherPage=="地图模式"){EventRaidLauncher.Draw(content);return;}
    switch((category,otherPage)){
     case ("枪械编辑","枪械参数"):WeaponEditor.Draw(content);break;
@@ -239,6 +239,8 @@ internal static partial class InterfaceMenu {
     case ("物品与装备","添加物品"):ItemSpawner.Draw(content);break;
     case ("物品与装备","玩家枪械预设"):PlayerWeaponPresets.Draw(content);break;
     case ("物品与装备","整套装备"):LoadoutPlans.Draw(content);break;
+    case ("数据","赛季"):SeasonMenuControl.Draw(content);break;
+    case ("数据","仪式圈"):CultistCircleControl.Draw(content);break;
     case ("数据","存档备份"):ProfileBackupPanel.Draw(content);break;
     case ("设置与热键","全部热键"):HotkeyPage.Draw(content);break;
     case ("设置与热键","版本更新"):UpdateChecker.Draw(content);break;

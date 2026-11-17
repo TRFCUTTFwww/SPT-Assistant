@@ -4,6 +4,7 @@ using LocalSpt5Esp.HotReload;
 using UnityEngine;
 void Check(bool condition,string message){if(!condition)throw new Exception(message);}
 TestState.MainThread=Environment.CurrentManagedThreadId;
+SafetyPresentationChecks.Run();
 string home=Path.Combine(Path.GetTempPath(),"spt-host-tests-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(Path.Combine(home,"runtime"));
 string payload=Path.Combine(home,"runtime","Local.Spt5.ESP.Core.module"),status=Path.Combine(home,"runtime","hotreload-status.json");
 File.Copy(args[0],payload);

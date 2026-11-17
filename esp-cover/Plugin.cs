@@ -124,6 +124,8 @@ internal class Plugin {
   yield return ()=>QuestLocations.Initialize();
   yield return ()=>BitcoinControl.Initialize(this);
   yield return ()=>HideoutCraftControl.Initialize(this);
+  yield return ()=>CultistCircleControl.Initialize(this);
+  yield return ()=>SeasonMenuControl.Initialize(this);
   yield return ()=>CommandoConsole.Initialize();
   yield return ()=>ChatSelectionGuard.Initialize(this);
   yield return ()=>NoclipControl.Initialize(this);

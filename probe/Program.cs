@@ -786,6 +786,8 @@ var dashboardStrings=dashboardMethods.SelectMany(m=>m.Body.Instructions).Where(i
 Assert(dashboardStrings.Contains("Pmc")&&dashboardStrings.Contains("Sessions")&&dashboardStrings.Contains("Survived"),"native overall raid and survival counters retain the PMC discriminator");
 Assert(dashboardType.Methods.Single(m=>m.Name=="Draw").Body.Instructions.Select(i=>i.Operand).OfType<MethodReference>().All(m=>m.Name!="Read"&&m.Name!="MoveNext"),"IMGUI repaint never advances inventory enumeration");
 Console.WriteLine("PASS native PMC dashboard integration, exact lifetime counter keys and rendering separated from incremental reads");
+CultistCircleChecks.Run();
+RecentLocalizationChecks.Run(sourceRoot);
 var englishText=JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(Path.Combine(sourceRoot,"esp-cover/Locales/en.json")))!;
 var englishFormats=JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(Path.Combine(sourceRoot,"esp-cover/Locales/en-formats.json")))!;
 var englishCatalog=new LocalizationCatalog(englishText,englishFormats,JsonSerializer.Deserialize<Dictionary<string,int[]>>(File.ReadAllText(Path.Combine(sourceRoot,"esp-cover/Locales/en-verbatim.json"))));

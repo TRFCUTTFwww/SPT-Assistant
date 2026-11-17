@@ -1,19 +1,29 @@
 using System;
 namespace AssistantSafetyUi;
-internal enum SafetyAction { None, Export, Rollback, Restart, Close, Continue, OpenLogs }
+internal enum SafetyAction { None, Export, Rollback, Restart, Close, Continue, OpenLogs, CopyDetails }
 internal sealed class SafetyPresentation {
  internal string Failure="",Details="",Phase="",Recovery="",ExportStatus="";
- internal bool Simulation,ReloadFailure,CleanupUnsafe,Working,RecoveryBusy,CanRollback,CanOpenLogs;
- internal string Title=>Simulation?"错误保护测试已触发":ReloadFailure?"这次更新没有完成":"游戏遇到了问题，已为你暂停";
- internal string Subtitle=>Simulation?"这是一次受控测试。你的背包和战局不会因此改变。":ReloadFailure?"游戏会保持暂停。你可以回退到上个正常版本，或等待修复后继续更新。":"先查看下面的保存状态，再选择导出日志、回退功能或重新启动游戏。";
+ internal bool English,Simulation,ReloadFailure,CleanupUnsafe,Working,RecoveryBusy,CanRollback,CanOpenLogs;
+ internal string Text(string chinese,string english)=>English?english:chinese;
+ bool Has(string value)=>Recovery.Contains(value,StringComparison.Ordinal);
+ bool BackupSaved=>Has("SQLite 救援备份 ");
+ bool LeftRaid=>Has("游戏已退出战局");
+ bool RecoveryFailed=>Has("超时")||Has("失败")||Has("异常")||Has("未确认")||Has("不支持")||Has("已阵亡")||Has("战局已改变");
+ internal bool ExportBusy=>ExportStatus.StartsWith("正在",StringComparison.Ordinal);
+ internal bool ExportFailed=>ExportStatus.StartsWith("日志导出失败",StringComparison.Ordinal);
+ internal string Title=>Simulation?Text("错误保护测试已触发","Error protection test"):ReloadFailure?Text("这次更新没有完成","The update could not finish"):Text("游戏遇到了问题，已为你暂停","The game encountered a problem");
+ internal string Subtitle=>Simulation?Text("这是一次受控测试。你的背包和战局不会因此改变。","This is a controlled test. It does not change your inventory or end your raid."):ReloadFailure?Text("游戏会保持暂停。你可以回退到上个正常版本，或等待修复后继续更新。","The game will stay paused. Roll back to the last working version, or wait for a repaired module."):Text("游戏已暂停。请先查看物品保存状态，再选择下一步操作。","The game is paused. Check the inventory recovery status before choosing your next step.");
  internal string Reason {
-  get {string text=Failure+"\n"+Details;if(text.Contains("NullReferenceException",StringComparison.OrdinalIgnoreCase))return "程序访问了一个还没有准备好的对象（空引用）。";
-   if(text.Contains("IndexOutOfRange",StringComparison.OrdinalIgnoreCase)||text.Contains("ArgumentOutOfRange",StringComparison.OrdinalIgnoreCase))return "程序读取了超出有效范围的数据。";
-   if(text.Contains("StackOverflow",StringComparison.OrdinalIgnoreCase))return Simulation?"正在模拟调用栈耗尽，未真正耗尽游戏线程。":"程序的调用层级超出了允许范围。";
-   if(text.Contains("AccessViolation",StringComparison.OrdinalIgnoreCase))return Simulation?"正在模拟无效内存访问，未执行危险的内存操作。":"程序访问了无效的内存区域。";
-   return ReloadFailure?"新的辅助功能未能完成加载或启用。":Failure.Length>0?Failure:"暂时无法确定具体原因，请导出日志进一步检查。";}
+  get {string text=Failure+"\n"+Details;if(text.Contains("NullReferenceException",StringComparison.OrdinalIgnoreCase))return Text("程序访问了一个还没有准备好的对象（空引用）。","The program tried to use an object that was not ready (a null reference).");
+   if(text.Contains("IndexOutOfRange",StringComparison.OrdinalIgnoreCase)||text.Contains("ArgumentOutOfRange",StringComparison.OrdinalIgnoreCase))return Text("程序读取了超出有效范围的数据。","The program tried to read data outside its valid range.");
+   if(text.Contains("StackOverflow",StringComparison.OrdinalIgnoreCase))return Simulation?Text("正在模拟调用栈耗尽，未真正耗尽游戏线程。","Simulating an exhausted call stack. The game thread was not actually exhausted."):Text("程序的调用层级超出了允许范围。","The program exceeded the allowed call stack depth.");
+   if(text.Contains("AccessViolation",StringComparison.OrdinalIgnoreCase))return Simulation?Text("正在模拟无效内存访问，未执行危险的内存操作。","Simulating invalid memory access. No unsafe memory operation was performed."):Text("程序访问了无效的内存区域。","The program accessed an invalid memory region.");
+   return ReloadFailure?Text("新的辅助功能未能完成加载或启用。","The new Assistant module could not finish loading or initialization."):Text("暂时无法确定具体原因。技术信息中保留了原始错误，请导出日志进一步检查。","The cause is not yet known. The original error is in the technical details; export logs for investigation.");}
  }
- internal string RecoveryTitle=>Simulation?"本次测试不保存或结束战局":Recovery.Contains("SQLite 救援备份 ",StringComparison.Ordinal)?"已保留可恢复的物品备份":Recovery.Contains("不在战局",StringComparison.Ordinal)?"当前没有战局物品需要处理":RecoveryBusy?"正在保护本局物品，请稍候":ReloadFailure?"本局仍保持暂停":"物品保存状态";
- internal string RecoveryText=>Simulation?"你可以直接结束测试并返回游戏，无需重启。":ReloadFailure?"此次更新失败不会主动提交战局结算。继续等待修复时，游戏会保持暂停。":Recovery.Contains("游戏已退出战局",StringComparison.Ordinal)?"游戏已退出战局。请重新登录检查物品，若有缺失可使用救援备份恢复。":Recovery.Contains("SQLite 救援备份 ",StringComparison.Ordinal)?"物品快照已保存，正在尝试按幸存结束战局。最终结果以服务端存档为准。":RecoveryBusy?"正在为装备与背包保存恢复快照，随后尝试幸存结算。完成前请保持此窗口打开。":Recovery.Contains("不在战局",StringComparison.Ordinal)?"当前不在行动中，没有需要执行的战局结算。":"尚未确认保存结果。请先导出日志，保留现有备份。";
- internal string Advice=>CleanupUnsafe?"上个功能没有完成关闭，当前无法安全回退。建议导出日志后重新启动游戏。":RecoveryBusy?"正在等待物品备份或结算流程完成，重启和退出暂不可用。":Simulation?"测试只用于检查保护界面，不表示游戏真的发生了致命错误。":"物品备份和幸存结算是两个步骤；有备份不代表结算已经完成。";
+ internal string RecoveryTitle=>Simulation?Text("本次测试不保存或结束战局","This test does not save or end a raid"):ReloadFailure?Text("本局仍保持暂停","The raid remains paused"):LeftRaid?Text("游戏已退出战局","The game has left the raid"):RecoveryFailed?Text("保存或结算结果尚未确认","Recovery needs attention"):Has("不在战局")?Text("当前没有战局物品需要处理","No active raid inventory to recover"):BackupSaved?Text("已保留可恢复的物品备份","An inventory recovery backup is available"):RecoveryBusy?Text("正在保护本局物品，请稍候","Protecting raid inventory — please wait"):Text("物品保存状态","Inventory recovery status");
+ internal string RecoveryText=>Simulation?Text("你可以直接结束测试并返回游戏，无需重启。","End the test to return to the game. No restart is needed."):ReloadFailure?Text("此次更新失败不会主动提交战局结算。继续等待修复时，游戏会保持暂停。","An update failure does not submit a raid result. The game stays paused while you wait for a fix."):LeftRaid?Text("请重新登录检查物品。最终结果以服务端存档为准，保留的救援快照可用于恢复。","Log in again to check your items. The server profile is authoritative; keep recovery snapshots in case restoration is needed."):RecoveryFailed?Text("备份或幸存结算未能确认完成。请导出日志并保留恢复快照；如已有备份，也不代表结算已完成。","The backup or survived settlement could not be confirmed. Export logs and keep recovery snapshots. An existing backup does not confirm settlement."):Has("不在战局")?Text("当前不在行动中，没有需要执行的战局结算。","There is no active raid to settle."):BackupSaved?RecoveryBusy?Text("物品快照已保存，正在尝试按幸存结束战局。最终结果以服务端存档为准。","The inventory snapshot is saved. A survived settlement is being attempted; the final result depends on the server profile."):Text("已保存物品备份，但尚未确认幸存结算完成。请保留日志，并在重新登录后核对物品。","The inventory backup is saved, but survived settlement is not confirmed. Keep the logs and check your items after logging in again."):RecoveryBusy?Text("正在为装备与背包保存恢复快照，随后尝试幸存结算。完成前请保持此窗口打开。","Saving an equipment and backpack recovery snapshot, then attempting a survived settlement. Keep this window open until it finishes."):Text("尚未确认保存结果。请先导出日志，保留现有备份。","The save result has not been confirmed. Export logs and keep any existing backups.");
+ internal string Advice=>CleanupUnsafe?Text("上个功能没有完成关闭，当前无法安全回退。建议导出日志后重新启动游戏。","The previous module did not shut down cleanly. Rollback is unavailable; export logs, then restart the game."):RecoveryBusy?Text("正在等待物品备份或结算流程完成，重启和退出暂不可用。","Waiting for inventory backup or settlement. Restart and exit are temporarily disabled."):Simulation?Text("测试只用于检查保护界面，不表示游戏真的发生了致命错误。","This test checks the protection screen; it does not indicate a real fatal error."):!CanRollback?Text("当前没有可安全回退的版本。请导出日志，并在保存流程结束后重启游戏。","No safe rollback is available. Export logs and restart after recovery has finished."):Text("物品备份和幸存结算是两个步骤；有备份不代表结算已经完成。","Inventory backup and raid settlement are separate steps. A backup does not mean settlement has completed.");
+ internal string ProgressText=>Working?Text("正在处理，请稍候…","Applying recovery — please wait…"):RecoveryBusy?Text("等待保存与结算完成…","Waiting for backup and settlement…"):Text("可先导出日志，便于排查。","Export logs to help investigate the error.");
+ internal string ExportNotice=>ExportBusy?Text("正在整理诊断日志…","Preparing diagnostic logs…"):ExportFailed?Text("日志导出失败。可展开技术信息查看原因后重试。","Log export failed. Check the technical details and retry."):ExportStatus.StartsWith("日志已导出",StringComparison.Ordinal)?Text("日志已导出，可打开日志目录查看。","Logs exported. Open the log folder to find the ZIP."):Text("日志包不包含完整存档或认证配置。","Log bundles exclude full profiles and authentication settings.");
+ internal string TechnicalDetails=>Failure+"\n\n"+Details+"\n\n"+Phase+"\n"+Recovery+"\n"+ExportStatus;
 }

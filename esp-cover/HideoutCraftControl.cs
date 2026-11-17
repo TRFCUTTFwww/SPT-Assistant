@@ -23,6 +23,8 @@ internal static class HideoutCraftControl {
  internal static void Initialize(Plugin plugin){instant=FeatureConfig.Bind("60. 藏身处制作","Instant hideout crafts","藏身处制作秒完成",false);plugin.Patches.Patch(AccessTools.Method(typeof(ProductionController),"Update"),postfix:new HarmonyMethod(typeof(HideoutCraftControl),nameof(Observe)));}
  static TarkovApplication? application;
  static TarkovApplication? App()=>application!=null?application:application=Singleton<TarkovApplication>.Instance??Singleton<AbstractApplication>.Instance?.TryCast<TarkovApplication>()??UnityEngine.Object.FindObjectOfType<TarkovApplication>();
+ internal static ProductionController? CurrentController=>App()?._hideout?.ProductionController??controller;
+ internal static Profile? CurrentProfile=>Profile();
  static Profile? Profile()=>(App()?._menuOperation?.QuestController??EFT.UI.ItemUiContext.Instance?.QuestController)?.Profile??App()?.GetProfileForLocalGame();
  internal static object Diagnostics(){
   var profile=Profile();var rows=new List<object>();

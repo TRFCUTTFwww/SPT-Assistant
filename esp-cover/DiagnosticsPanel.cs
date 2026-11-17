@@ -13,7 +13,7 @@ internal static class DiagnosticsPanel {
  internal static void Tick(){if(Time.unscaledTime<next)return;next=Time.unscaledTime+1;Refresh();}
  internal static void Performance(string json)=>snapshot?.Invoke(host,new object[]{json});
  static void Set(string key,string value){if(option==null)throw new ArgumentException("错误保护宿主需要更新并重启游戏。");option.Invoke(host,new object[]{key,value});Refresh();}
- static void Toggle(Rect r,int index,string key,string label){bool on=Flag(index);if(InterfaceMenu.Button(r,label+" · "+(on?"开":"关"),on))Run(()=>Set(key,(!on).ToString()));}
+ static void Toggle(Rect r,int index,string key,string label){bool on=Flag(index);if(InterfaceMenu.Button(r,I18n.Text(label)+" · "+I18n.Text(on?"开启":"关闭"),on))Run(()=>Set(key,(!on).ToString()));}
  static void Run(Action action){try{action();notice="";}catch(Exception e){notice=e.GetBaseException().Message;}}
  internal static void DrawLogs(Rect r){scroll=GUI.BeginScrollView(r,scroll,new Rect(0,0,r.width-22,800));try{float w=r.width-30,y=0;InterfaceMenu.Label(new(0,y,w,30),"日志与诊断",InterfaceMenu.Accent,20);y+=44;
   InterfaceMenu.Paragraph(new(0,y,w,48),"按最低等级记录和导出日志。性能记录用于定位辅助功能的 CPU 开销；游戏、驱动或其他 Mod 的耗时需要结合其日志判断。",null,13);y+=65;

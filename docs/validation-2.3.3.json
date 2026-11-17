@@ -1,0 +1,43 @@
+{
+  "version": "2.3.3",
+  "date": "2026-11-17",
+  "target": "SPT 5.0 BE / EFT 48558",
+  "hostVersion": "1.6.2",
+  "checks": {
+    "clientBuild": "passed; existing nullable warnings remain",
+    "adminBuild": "passed",
+    "standaloneCrashMonitorBuild": "passed",
+    "hostSafety": "passed; bilingual explanations, backup/timeout precedence, fixed actions across eight viewport sizes and existing lifecycle checks",
+    "serverIntegration": "passed; native cultist flags, idempotence, reward root identity/isolation and stale revision rejection; existing regression checks passed",
+    "clientProbe": "passed; profile/item/process synchronization guards, localization argument preservation and existing regression checks"
+  },
+  "inGameVisualVerified": false,
+  "cultistLiveCompletionTested": false,
+  "seasonsScreenOpenedByAgent": false,
+  "limitations": [
+    "No live ritual was completed and no rewards were claimed for testing.",
+    "Seasons entry does not switch PVE mode or implement missing online league endpoints.",
+    "Host and crash monitor updates take effect on the next process start."
+  ],
+  "deployment": {
+    "coreVersion": "2.3.3",
+    "coreGeneration": 3,
+    "coreSha256": "5F9D3CEE35B891C74A88AB7D65BE3513050DD8CE27A249018EA71BC82814C372",
+    "coreReady": true,
+    "coreSuspended": false,
+    "coreError": null,
+    "serverAdminGeneration": 2,
+    "serverAdminReady": true,
+    "cultistStatusEndpoint": "passed; read-only response, inactive ritual returns zero reward roots",
+    "seasonsReadOnlyState": {
+      "mode": "Pve",
+      "seasonData": true,
+      "rewardController": true,
+      "ready": true,
+      "entryPatchApplied": true
+    },
+    "installedHostVersion": "1.6.2",
+    "runningHostVersion": "1.6.1",
+    "hostAndMonitor": "installed for next process start"
+  }
+}

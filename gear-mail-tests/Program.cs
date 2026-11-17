@@ -359,4 +359,5 @@ Console.WriteLine("Passed "+NativeFleaChecks.Run()+" native flea and diplomacy c
 
 Console.WriteLine("Passed "+ClearanceChecks.Run()+" clearance and FIR checks.");
 
+CultistCircleChecks.Run();
 File.Delete(profilePath);

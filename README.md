@@ -1,13 +1,13 @@
 # SPT Assistant
 
-2.3.2: [Error protection, logging and recovery](docs/release-2.3.2.md).
+2.3.3: [English UI, error screen, Cultist Circle and PVE Seasons](docs/release-2.3.3.md).
 
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 
 An in-game control panel for **SPT**, built with C# and Unity. Manage your character, raid, equipment, quests and server settings from one interface.
 
-**Version 2.3.1** · **Current target: SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
+**Version 2.3.3** · **Current target: SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
 
 > **UNSTABLE — EXPERIMENTAL.** This project has not undergone broad testing. Bugs, crashes, multiplayer desynchronization and unexpected profile changes are possible. Back up your profiles and configuration before installing or updating. A successful build or hot reload does not establish that every feature works in a raid.
 >
