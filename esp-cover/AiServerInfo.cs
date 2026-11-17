@@ -1,49 +1,72 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
 using UnityEngine;
 namespace LocalSpt5Esp;
+// Server-only view. IL2CPP wrappers expose Pointer (IntPtr), which JSON cannot serialize.
 internal static class AiServerInfo {
- sealed record Row(string Path,string Value);
- static Task<JsonElement>? request;static JsonElement? data;static string map="",notice="",filter="",role="",sourceMap="";static Vector2 scroll;static Row[] rows=Array.Empty<Row>();
- static TarkovApplication? application;static float nextApplicationScan;static IntPtr requestedWorld;static float nextLive,nextFetch;static string fetchedMap="";
- static readonly HashSet<string> groups=new(StringComparer.Ordinal){"mapAi","botConfig","pmcConfig","currentRaid"};
- static Row[] visibleRows=Array.Empty<Row>();static string visibleFilter="";static bool dirty=true;
- static void Fetch(){if(request!=null)return;var current=Singleton<GameWorld>.Instance;if(!RaidClock.Active||current==null){notice="请进入战局后读取当前地图配置。";return;}sourceMap=current.LocationId;fetchedMap=sourceMap;nextFetch=Time.unscaledTime+15;requestedWorld=current.Pointer;request=WorldEditorClient.Call("aiInfo",sourceMap,role:role.Trim());notice="正在读取服务端实时配置…";}
- static void Finish(){if(request?.IsCompleted!=true)return;var pending=request;request=null;try{var result=pending.GetAwaiter().GetResult();var current=Singleton<GameWorld>.Instance;if(!RaidClock.Active||current?.LocationId!=sourceMap||current.Pointer!=requestedWorld)return;data=result;map=sourceMap;notice="服务端读取时间："+result.GetProperty("updatedUtc").GetString();Rebuild();}catch(Exception e){notice=e.GetBaseException().Message;}}
- static object Scalars(object? owner){var result=new Dictionary<string,object?>();if(owner==null)return result;foreach(var p in owner.GetType().GetProperties(BindingFlags.Public|BindingFlags.Instance)){if(p.GetIndexParameters().Length>0||!(p.PropertyType.IsEnum||p.PropertyType.IsPrimitive||p.PropertyType==typeof(string)))continue;try{var v=p.GetValue(owner);result[p.Name]=p.PropertyType.IsEnum?v?.ToString():v;}catch{}}return result;}
- static object CurrentRaid(){
-  var current=Singleton<GameWorld>.Instance;var actors=new List<object>();if(current?.AllAlivePlayersList is {} list)for(int i=0;i<list.Count;i++){var p=list[i];if(p==null||p.IsYourPlayer||p.HealthController?.IsAlive!=true||p.AIData?.BotOwner==null)continue;actors.Add(new{role=p.Profile?.Info?.Settings?.Role.ToString(),difficulty=Scalars(p.Profile?.Info?.Settings)});}
-  if(application==null&&Time.unscaledTime>=nextApplicationScan){nextApplicationScan=Time.unscaledTime+10;application=UnityEngine.Object.FindFirstObjectByType<TarkovApplication>();}var settings=application?._raidSettings;
-  return new{map=current?.LocationId,raidActive=RaidClock.Active,naturalSpawningPaused=RaidSpawnControl.SpawnPaused,noAi=RaidSpawnControl.NoAiActive,interceptedCalls=RaidSpawnControl.BlockedSpawns,botSettings=Scalars(settings?.BotSettings),wavesSettings=Scalars(settings?.WavesSettings),aliveActors=actors,customDifficulty=AiDifficultyControl.Read(),customApplied=AiDifficultyControl.AppliedCount};
+ sealed record Snapshot(string Map,string Updated,AiSpawnInfoRows.Row[] Rows);
+ static Task<Snapshot>? request;static Snapshot? snapshot;
+ static IntPtr world;static string map="",notice="",search="",lastSearch="";static int group=1,lastGroup=-1,wave,lastWave=-1;
+ static float retryAt,layoutWidth=-1,contentHeight;static Vector2 scroll;static bool dirty=true;
+ static AiSpawnInfoRows.Row[] visible=Array.Empty<AiSpawnInfoRows.Row>();
+ static float[] tops=Array.Empty<float>(),heights=Array.Empty<float>(),titles=Array.Empty<float>();static GUIStyle? measure;
+ static void ObserveWorld(){
+  var current=Singleton<GameWorld>.Instance;var pointer=RaidClock.Active&&current!=null?current.Pointer:IntPtr.Zero;
+  string location=pointer==IntPtr.Zero?"":AiSpawnInfoRows.NormalizeMap(current!.LocationId);
+  if(world==pointer&&map==location)return;Reset();world=pointer;map=location;
  }
- static void Flatten(JsonElement value,string path,List<Row> result){if(value.ValueKind==JsonValueKind.Object){foreach(var p in value.EnumerateObject())Flatten(p.Value,path.Length==0?p.Name:path+"."+p.Name,result);}else if(value.ValueKind==JsonValueKind.Array){int i=0;foreach(var item in value.EnumerateArray())Flatten(item,path+"["+(i++)+"]",result);if(i==0)result.Add(new(path,"[]"));}else result.Add(new(path,value.ToString()));}
- static void Rebuild(){var list=new List<Row>();using var live=JsonDocument.Parse(JsonSerializer.Serialize(CurrentRaid()));Flatten(live.RootElement,"currentRaid",list);if(data is {} value)foreach(var p in value.EnumerateObject())if(p.Name!="ok")Flatten(p.Value,p.Name,list);rows=list.ToArray();dirty=true;}
- internal static void Reset(){if(request is {} pending)_=pending.ContinueWith(t=>{_=t.Exception;},TaskContinuationOptions.OnlyOnFaulted);request=null;application=null;nextApplicationScan=0;data=null;rows=visibleRows=Array.Empty<Row>();dirty=true;map=sourceMap=fetchedMap="";notice="";nextFetch=nextLive=0;}
+ static async Task<Snapshot> Read(string location){
+  var result=await WorldEditorClient.Call("aiInfo",location).ConfigureAwait(false);
+  return await Task.Run(()=>{
+   if(AiSpawnInfoRows.NormalizeMap(AiSpawnInfoRows.Get(result,"map").ToString())!=location)throw new InvalidOperationException("服务端返回了其他地图的配置，请刷新重试。");
+   string updated=AiSpawnInfoRows.Get(result,"updatedUtc").ToString();if(DateTimeOffset.TryParse(updated,out var time))updated=time.ToLocalTime().ToString("HH:mm:ss");
+   return new Snapshot(location,updated,AiSpawnInfoRows.Build(result));
+  }).ConfigureAwait(false);
+ }
+ static void Fetch(){if(request!=null||world==IntPtr.Zero||map.Length==0)return;request=Read(map);notice="正在读取服务端 AI 生成参数…";}
+ static void Finish(){
+  if(request?.IsCompleted!=true)return;var done=request;request=null;
+  try{snapshot=done.GetAwaiter().GetResult();notice="服务端读取成功 · "+snapshot.Updated;dirty=true;}
+  catch(Exception error){notice="读取失败："+error.GetBaseException().Message+(snapshot==null?"；15 秒后重试，也可手动刷新。":"；保留上次结果，请刷新重试。");retryAt=Time.unscaledTime+15;}
+ }
+ internal static void Reset(){
+  if(request is {} pending)_=pending.ContinueWith(t=>{_=t.Exception;},TaskContinuationOptions.OnlyOnFaulted);
+  request=null;snapshot=null;world=IntPtr.Zero;map=notice="";retryAt=0;wave=0;scroll=Vector2.zero;visible=Array.Empty<AiSpawnInfoRows.Row>();tops=heights=titles=Array.Empty<float>();dirty=true;measure=null;layoutWidth=-1;
+ }
  internal static void Draw(Rect rect){
-  if(RaidClock.Active&&(fetchedMap!=Singleton<GameWorld>.Instance?.LocationId||data==null&&Time.unscaledTime>=nextFetch))Fetch();
-  Finish();if(RaidClock.Active&&Time.unscaledTime>=nextLive){nextLive=Time.unscaledTime+1;try{Rebuild();}catch(Exception e){notice=e.Message;}}var current=Singleton<GameWorld>.Instance;if(map.Length>0&&(!RaidClock.Active||current?.LocationId!=map)){data=null;map="";rows=visibleRows=Array.Empty<Row>();dirty=true;}
-  float x=rect.x,y=rect.y,w=rect.width;bool old=GUI.enabled;
-  InterfaceMenu.Label(new(x,y,w,30),"本局 AI 与服务端配置",InterfaceMenu.Accent,19);y+=38;RaidSpawnControl.DrawSpawnPause(new(x,y,w,34));y+=42;
-  InterfaceMenu.Paragraph(new(x,y,w,48),"暂停仅拦截后续自然生成，保留场上 AI；手动生成可用。恢复不补发已拦截批次。配置区分本局客户端快照与服务端当前值，服务端改动可能下局才生效。",null,12);y+=56;
-  GUI.enabled=old&&request==null&&RaidClock.Active;if(InterfaceMenu.Button(new(x,y,110,30),"读取 / 刷新"))Fetch();
-  GUI.enabled=old;InterfaceMenu.Label(new(x+120,y,96,30),"角色代号",null,12);role=InterfaceMenu.Field(new(x+220,y,Math.Max(60,w-220),30),role);y+=38;
-  InterfaceMenu.Paragraph(new(x,y,w,38),"右侧输入角色代号后刷新，可读取该角色完整配置；留空列出角色目录。可搜索 difficulty、max、limit、bear、usec、scav、wave 或参数路径。",null,11);y+=44;
-  filter=InterfaceMenu.Field(new(x,y,w,30),filter);y+=38;
-  string[] quick={"","difficulty","max","bear","usec","scav","wave"},quickNames={"全部参数","难度","生成上限","BEAR","USEC","Scav","波次"};float qw=(w-36)/7;for(int i=0;i<quick.Length;i++)if(InterfaceMenu.Button(new(x+i*(qw+6),y,qw,28),quickNames[i],filter==quick[i])){filter=quick[i];scroll=Vector2.zero;}y+=36;
-  InterfaceMenu.Paragraph(new(x,y,w,34),notice,null,11);y+=40;
-  if(data==null&&rows.Length==0&&RaidClock.Active)try{Rebuild();}catch(Exception e){notice=e.Message;}
-  if(dirty||visibleFilter!=filter){visibleFilter=filter;dirty=false;visibleRows=rows.Where(r=>filter.Length==0?groups.Contains(r.Path.Split('.')[0]):(r.Path+" "+r.Value).Contains(filter,StringComparison.OrdinalIgnoreCase)).ToArray();}var visible=visibleRows;
-  var groupNames=new[]{"currentRaid","mapAi","botConfig","pmcConfig","locationConfig","core","assistant","role","roles"};
-  var labels=new[]{"本局实际值","地图 AI / 波次","Bot 全局配置","PMC / 阵营","地图全局配置","AI 核心","助手服务端","指定角色","角色目录"};
-  float cell=(w-21)/4;for(int i=0;i<groupNames.Length;i++){string name=groupNames[i];if(InterfaceMenu.Button(new(x+i%4*(cell+7),y+i/4*34,cell,28),labels[i],groups.Contains(name))){if(!groups.Add(name))groups.Remove(name);dirty=true;}}
-  y+=110;float height=Math.Max(60,rect.yMax-y);scroll=GUI.BeginScrollView(new(x,y,w,height),scroll,new Rect(0,0,w-22,visible.Length*52+40));
-  try{float cw=w-28;int first=Math.Max(0,(int)(scroll.y/52)-1),last=Math.Min(visible.Length,first+(int)(height/52)+4);for(int i=first;i<last;i++){var row=visible[i];if(i%2==0)InterfaceMenu.Surface(new(0,i*52,cw,50),new Color(.2f,.25f,.3f,.15f),2);InterfaceMenu.Label(new(6,i*52,cw-12,22),Readable(row.Path),InterfaceMenu.Accent,11);InterfaceMenu.Paragraph(new(6,i*52+23,cw-12,25),row.Value,null,12);}}finally{GUI.EndScrollView();}
+  ObserveWorld();Finish();if(snapshot==null&&request==null&&Time.unscaledTime>=retryAt)Fetch();
+  float x=rect.x,y=rect.y,w=rect.width;
+  InterfaceMenu.Label(new(x,y,Math.Max(80,w-126),30),"本局 AI 生成参数",InterfaceMenu.Accent,19);
+  bool enabled=GUI.enabled;try{GUI.enabled=enabled&&world!=IntPtr.Zero&&request==null;if(InterfaceMenu.Button(new(rect.xMax-116,y,116,30),request!=null?"读取中…":"刷新服务端"))Fetch();}finally{GUI.enabled=enabled;}y+=38;
+  InterfaceMenu.Paragraph(new(x,y,w,42),world==IntPtr.Zero?"进入战局后自动读取当前地图的服务端配置。":"地图："+AiSpawnInfoRows.MapName(map)+" · "+notice,null,12);y+=48;
+  InterfaceMenu.Paragraph(new(x,y,w,52),"这里解释服务端当前的 AI 生成配置。人数上限、波次数量和刷新概率决定不同环节，不能直接相加当作本局总人数。进局后改动的配置不一定会重新应用到本局。",null,12);y+=58;
+  InterfaceMenu.Label(new(x,y,90,30),"搜索参数",null,12);search=InterfaceMenu.Field(new(x+94,y,Math.Max(60,w-94),30),search);y+=36;
+  int columns=Math.Max(1,(int)(w/145));float cell=(w-(columns-1)*6)/columns;
+  for(int i=0;i<AiSpawnInfoRows.Groups.Length;i++)if(InterfaceMenu.Button(new(x+i%columns*(cell+6),y+i/columns*32,cell,28),AiSpawnInfoRows.Groups[i],group==i)){group=i;wave=0;scroll=Vector2.zero;}
+  y+=((AiSpawnInfoRows.Groups.Length+columns-1)/columns)*32+6;
+  if(snapshot==null){InterfaceMenu.Paragraph(new(x,y,w,Math.Max(40,rect.yMax-y)),world==IntPtr.Zero?"此页只读配置。暂停生成等操作仍在「全局控制」。":"尚未取得服务端数据。成功读取后会显示参数值和作用说明。",null,13);return;}
+  string waveRoot=group==4?"mapAi.Waves":group==5?"mapAi.BossLocationSpawn":"";
+  bool browseWave=waveRoot.Length>0&&string.IsNullOrWhiteSpace(search);
+  if(browseWave){
+   int count=snapshot.Rows.Count(r=>r.Path.StartsWith(waveRoot+"[",StringComparison.Ordinal)&&r.Path.EndsWith(group==4?".WildSpawnType":".BossName",StringComparison.Ordinal));
+   wave=Math.Clamp(wave,0,Math.Max(0,count-1));
+   try{GUI.enabled=enabled&&wave>0;if(InterfaceMenu.Button(new(x,y,90,28),"上一批"))wave--;GUI.enabled=enabled&&wave<count-1;if(InterfaceMenu.Button(new(rect.xMax-90,y,90,28),"下一批"))wave++;}finally{GUI.enabled=enabled;}
+   InterfaceMenu.Label(new(x+100,y,Math.Max(60,w-200),28),count==0?"没有候选波次":$"第 {wave+1} / {count} 批 · 搜索可跨批次查找",null,12);y+=36;
+  }
+  if(lastGroup!=group||lastSearch!=search||lastWave!=wave){lastGroup=group;lastSearch=search;lastWave=wave;dirty=true;scroll=Vector2.zero;}
+  float width=Math.Max(100,w-26);
+  if(dirty||layoutWidth!=width){
+   dirty=false;layoutWidth=width;visible=snapshot.Rows.Where(r=>(group==0||r.Group==AiSpawnInfoRows.Groups[group])&&(!browseWave||r.Path==waveRoot||r.Path.StartsWith(waveRoot+"["+wave+"].",StringComparison.Ordinal))&&AiSpawnInfoRows.Matches(r,search)).ToArray();
+   measure??=new GUIStyle(GUI.skin.label){wordWrap=true,fontSize=12,richText=false};tops=new float[visible.Length];heights=new float[visible.Length];titles=new float[visible.Length];contentHeight=0;
+   for(int i=0;i<visible.Length;i++){var row=visible[i];tops[i]=contentHeight;titles[i]=Math.Max(26,measure.CalcHeight(new GUIContent(row.Name+"  ·  "+row.Value),width-20)+8);heights[i]=titles[i]+Math.Max(38,measure.CalcHeight(new GUIContent(row.Help),width-20)+8)+Math.Max(20,measure.CalcHeight(new GUIContent(row.Path),width-20))+18;contentHeight+=heights[i]+8;}
+  }
+  float viewport=Math.Max(30,rect.yMax-y);scroll=GUI.BeginScrollView(new(x,y,w,viewport),scroll,new Rect(0,0,width,Math.Max(viewport-1,contentHeight)));
+  try{
+   if(visible.Length==0)InterfaceMenu.Paragraph(new(8,8,width-16,60),"没有匹配参数。可搜索中文含义、英文参数名、角色代号或数值。",null,12);
+   for(int i=0;i<visible.Length;i++){float top=tops[i],height=heights[i];if(top+height<scroll.y||top>scroll.y+viewport)continue;var row=visible[i];InterfaceMenu.Surface(new(0,top,width,height),new Color(.2f,.25f,.3f,.16f),6);InterfaceMenu.Paragraph(new(10,top+6,width-20,titles[i]),row.Name+"  ·  "+row.Value,InterfaceMenu.Accent,12);float pathHeight=Math.Max(20,measure!.CalcHeight(new GUIContent(row.Path),width-20));InterfaceMenu.Paragraph(new(10,top+6+titles[i],width-20,height-titles[i]-pathHeight-18),row.Help,null,12);InterfaceMenu.Paragraph(new(10,top+height-pathHeight-6,width-20,pathHeight),row.Path,Color.Lerp(InterfaceMenu.Text,InterfaceMenu.Background,.35f),11);}
+  }finally{GUI.EndScrollView();}
  }
- static string Readable(string path)=>path.Replace("currentRaid","本局实际值").Replace("naturalSpawningPaused","自然生成已暂停").Replace("noAi","禁止 AI").Replace("aliveActors","存活 AI").Replace("difficulty","难度").Replace("mapAi","地图波次与上限").Replace("botConfig","Bot 全局配置").Replace("pmcConfig","PMC 阵营配置").Replace("locationConfig","地图全局配置");
 }
