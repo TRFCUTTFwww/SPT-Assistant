@@ -17,8 +17,8 @@ internal static class SeasonMenuControl {
   plugin.Patches.Patch(AccessTools.Method(typeof(MenuScreen),nameof(MenuScreen.HandleSeasonWidgetClick)),prefix:new HarmonyMethod(typeof(SeasonMenuControl),nameof(Click)));
  }
  internal static bool Enabled=>enabled!=null&&enabled.Value;
- static TarkovApplication? application;
- static TarkovApplication? App()=>application!=null?application:application=Singleton<TarkovApplication>.Instance??Singleton<AbstractApplication>.Instance?.TryCast<TarkovApplication>()??UnityEngine.Object.FindObjectOfType<TarkovApplication>();
+ static TarkovApplication? application;static bool discovered;
+ static TarkovApplication? App(bool search=false){application??=Singleton<TarkovApplication>.Instance??Singleton<AbstractApplication>.Instance?.TryCast<TarkovApplication>();if(search&&application==null)application=UnityEngine.Object.FindObjectOfType<TarkovApplication>();return application;}
  static bool Ready=>!ItemSpawner.InRaid()&&profile!=null&&profile.Id==App()?._menuOperation?._profile?.Id&&rewards!=null&&App()?._menuOperation?._seasonalRewardController!=null&&App()?.GetClientBackEndSession()?.BackEndConfig?.Config?.SeasonalRewards?.Season!=null;
  static void Observe(MenuScreen __instance,Profile __0,SeasonalRewardController __1){menu=__instance;profile=__0;rewards=__1;applied=false;Apply();}
  static void Apply(){
@@ -29,12 +29,12 @@ internal static class SeasonMenuControl {
   if(!enabled.Value||__instance._modeDescriptor?.IsPve!=true)return true;
   Open();return false;
  }
- static void Open(){try{
+ static void Open(){try{App(true);
   if(!Ready){notice="赛季数据尚未就绪，请返回主菜单后重试。";FeatureToasts.Show(notice);return;}
   App()!._menuOperation.ShowSeasonsHubScreen();notice="";
  }catch(Exception error){notice="赛季菜单暂不可用，请查看诊断日志。";FeatureToasts.Show(notice);Plugin.Self.Error(error);}}
- internal static void Tick(){if(Time.unscaledTime<next||ItemSpawner.InRaid())return;next=Time.unscaledTime+2;
-  try{if(menu==null)menu=UnityEngine.Object.FindObjectOfType<MenuScreen>();if(profile==null||rewards==null){var operation=App()?._menuOperation;profile=operation?._profile;rewards=operation?._seasonalRewardController;}if(!applied)Apply();}catch(Exception error){next=Time.unscaledTime+10;Plugin.Self.Error(error);}
+ internal static void Tick(){if(!Enabled||Time.unscaledTime<next||ItemSpawner.InRaid())return;next=Time.unscaledTime+2;
+  try{if(!discovered){discovered=true;if(menu==null)menu=UnityEngine.Object.FindObjectOfType<MenuScreen>();App(true);}if(profile==null||rewards==null){var operation=App()?._menuOperation;profile=operation?._profile;rewards=operation?._seasonalRewardController;}if(!applied)Apply();}catch(Exception error){next=Time.unscaledTime+10;Plugin.Self.Error(error);}
  }
  internal static object Diagnostics()=>new{enabled=enabled.Value,menu=menu!=null,active=menu?.gameObject.activeInHierarchy,pve=menu?._modeDescriptor?.IsPve,mode=menu?._modeDescriptor?.GameMode.ToString(),hasProfile=profile!=null,hasRewardController=rewards!=null,nativeController=App()?._menuOperation?._seasonalRewardController!=null,season=App()?.GetClientBackEndSession()?.BackEndConfig?.Config?.SeasonalRewards?.Season!=null,ready=Ready,applied};
  internal static void Draw(Rect r){
@@ -44,5 +44,5 @@ internal static class SeasonMenuControl {
   bool old=GUI.enabled;GUI.enabled=old&&enabled.Value&&Ready;try{if(InterfaceMenu.Button(new(r.x,r.y+188,r.width,40),"打开原生赛季菜单"))Open();}finally{GUI.enabled=old;}
   InterfaceMenu.Paragraph(new(r.x,r.y+248,r.width,88),notice.Length>0?notice:Ready?"赛季菜单数据已就绪。":"赛季数据尚未就绪，请返回主菜单后重试。",null,13);
  }
- internal static void Shutdown(){try{if(applied&&menu!=null&&profile!=null&&rewards!=null){applied=false;restoring=true;try{menu.RefreshSeasonWidget(profile,rewards);}finally{restoring=false;}}}finally{menu=null;profile=null;rewards=null;application=null;}}
+ internal static void Shutdown(){try{if(applied&&menu!=null&&profile!=null&&rewards!=null){applied=false;restoring=true;try{menu.RefreshSeasonWidget(profile,rewards);}finally{restoring=false;}}}finally{menu=null;profile=null;rewards=null;application=null;discovered=false;}}
 }

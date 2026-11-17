@@ -24,14 +24,16 @@ internal static class QuestWaitSync {
  static bool initialized;
  static readonly HashSet<string> waitingIds=new();
  internal static string Notice=>notice;
- static QuestControllerClientBackend? Controller(){
-  var app=Singleton<TarkovApplication>.Instance??Singleton<AbstractApplication>.Instance?.TryCast<TarkovApplication>()??UnityEngine.Object.FindObjectOfType<TarkovApplication>();
+ static TarkovApplication? application;static float nextApplication;
+ static QuestControllerClientBackend? Controller(bool search=false){
+  if(EFT.UI.ItemUiContext.Instance?.QuestController?.TryCast<QuestControllerClientBackend>() is {} available)return available;
+  var app=Singleton<TarkovApplication>.Instance??Singleton<AbstractApplication>.Instance?.TryCast<TarkovApplication>()??application;if(search&&app==null&&Time.unscaledTime>=nextApplication){nextApplication=Time.unscaledTime+10;app=UnityEngine.Object.FindObjectOfType<TarkovApplication>();}application=app;
   return (app?._menuOperation?.QuestController??EFT.UI.ItemUiContext.Instance?.QuestController)?.TryCast<QuestControllerClientBackend>();
  }
  internal static void Queue(JsonElement response){
   if(!response.TryGetProperty("waitSync",out var sync))return;
   if(snapshot!=null||templates!=null){queued=sync.Clone();return;}
-  try{var controller=Controller();if(controller==null||!Matches(controller,sync))return;Apply(controller,sync);}
+  try{var controller=Controller(true);if(controller==null||!Matches(controller,sync))return;Apply(controller,sync);}
   catch(Exception error){Failed(error);}
  }
  static bool Matches(QuestControllerClientBackend controller,JsonElement sync)=>!ItemSpawner.InRaid()&&!controller.InRaid&&controller.Profile?.Id==sync.GetProperty("profileId").GetString();
@@ -91,5 +93,5 @@ internal static class QuestWaitSync {
   initialized=true;profile=current.Profile.Id;snapshotController=current;deadline=DateTime.UtcNow.AddSeconds(20);snapshot=CharacterDataPanel.Call("/local/gear/story","storyManagement",new(){{"action","status"}});
  }catch(Exception error){Failed(error);}}
  static void Failed(Exception error){snapshot=null;templates=null;pendingController=snapshotController=null;queued=null;notice="任务同步失败，请刷新或重新登录角色。";Plugin.Self.Log.LogWarning("Quest wait sync: "+error);}
- internal static void Reset(){snapshot=null;templates=null;pendingController=snapshotController=null;queued=null;waitingIds.Clear();profile=notice="";initialized=false;next=0;}
+ internal static void Reset(){snapshot=null;templates=null;pendingController=snapshotController=null;queued=null;waitingIds.Clear();profile=notice="";initialized=false;next=0;application=null;nextApplication=0;}
 }

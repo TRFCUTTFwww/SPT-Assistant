@@ -17,7 +17,8 @@ internal static class ScavEquipmentSync {
  internal static bool Busy=>pending!=null;
  internal static string Status=>status;
  static TarkovApplication? application;
- static TarkovApplication? App()=>application??=Singleton<TarkovApplication>.Instance??Singleton<AbstractApplication>.Instance?.TryCast<TarkovApplication>()??UnityEngine.Object.FindObjectOfType<TarkovApplication>();
+ static float nextApplication;
+ static TarkovApplication? App(){if(application!=null)return application;application=Singleton<TarkovApplication>.Instance??Singleton<AbstractApplication>.Instance?.TryCast<TarkovApplication>();if(application==null&&Time.unscaledTime>=nextApplication){nextApplication=Time.unscaledTime+10;application=UnityEngine.Object.FindObjectOfType<TarkovApplication>();}return application;}
  static ClientBackendSession? Session()=>App()?.GetClientBackEndSession()?.TryCast<ClientBackendSession>()??App()?.Session?.TryCast<ClientBackendSession>();
  internal static string Owner=>Session()?.Profile?.Id??"";
  internal static bool Matching=>App()?._localMatchmakerOperation!=null;

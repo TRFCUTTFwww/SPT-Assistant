@@ -24,6 +24,7 @@ internal static class CultistCircleControl {
   request=CharacterDataPanel.Call("/local/gear/data","characterData",payload);next=Time.unscaledTime+3;
  }
  internal static void Tick(){try{
+  if(request==null&&(ItemSpawner.InRaid()||!instant.Value&&(!preview.Value||Time.unscaledTime>=visibleUntil))){snapshot=null;owner="";return;}
   var profile=HideoutCraftControl.CurrentProfile;
   if(ItemSpawner.InRaid()||owner.Length>0&&profile?.Id!=owner){snapshot=null;owner="";}
   if(request?.IsCompleted==true){var done=request;request=null;using var doc=JsonDocument.Parse(done.GetAwaiter().GetResult());var root=doc.RootElement;

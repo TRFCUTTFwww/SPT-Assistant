@@ -49,6 +49,7 @@ internal static class ProfileAdminPanel {
  }
  internal static void Tick(){
   ScavEquipmentSync.Tick();
+  if(!ready&&request==null)return;
   string owner=ScavEquipmentSync.Owner;
   if(ready&&owner!=loadedOwner){ready=requested=false;data=default;values.Clear();changes.Clear();contents.Clear();picker=contentsEditor=false;cacheKey="";ScavEquipmentSync.Reset();}
   if(request?.IsCompleted!=true)return;

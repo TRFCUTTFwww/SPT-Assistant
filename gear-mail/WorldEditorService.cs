@@ -36,9 +36,13 @@ public sealed class WorldEditorService(LocationLootGenerator generator,LocationT
   try{
    string key=await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory,"user","mods","LocalGearMail","api-key.txt"),ct);
    if(!CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(key.Trim()),Encoding.UTF8.GetBytes(request.ApiKey)))throw new ArgumentException("认证失败。");
-   if(saves.GetProfile(session)?.CharacterData?.PmcData?.Info==null)throw new ArgumentException("当前角色尚未就绪。");
-   if(request.Action=="catalog")return http.GetBody(new{ok=true,containers=templates.Items.Where(p=>p.Value.Parent.ToString()=="566965d44bdc2d814c8b4571").Select(p=>new{id=p.Key.ToString(),name=p.Value.Name})});
+   var pmc=saves.GetProfile(session)?.CharacterData?.PmcData;if(pmc?.Info==null)throw new ArgumentException("当前角色尚未就绪。");
+   if(request.Action=="overview"){
+    string[] currencies=["5449016a4bdc2d6f028b456f","5696686a4bdc2da3298b456a","569668774bdc2da2298b4568"];
+    return http.GetBody(new{ok=true,profile=pmc.Id.ToString(),money=currencies.Select(t=>pmc.Inventory?.Items?.Where(i=>i.Template.ToString()==t).Sum(i=>(long)(i.Upd?.StackObjectsCount??1))??0).ToArray()});
+   }
    var map=locations.GetLocation(request.Map)??throw new ArgumentException("地图不存在。");
+   if(request.Action=="catalog")return http.GetBody(new{ok=true,map=request.Map,serverLootReady=AppDomain.CurrentDomain.GetAssemblies().Any(a=>a.GetType("LocalRaidControls.Patches")?.GetMethod("GenerateEditorContainer",BindingFlags.Public|BindingFlags.Static)!=null),serverLootTemplates=(map.StaticLoot?.Value?.Keys??Enumerable.Empty<MongoId>()).Select(k=>k.ToString()).ToArray(),containers=templates.Items.Where(p=>p.Value.Parent.ToString()=="566965d44bdc2d814c8b4571").Select(p=>new{id=p.Key.ToString(),name=p.Value.Name})});
    if(request.Action=="aiInfo"){
     request.Role=(request.Role??"").Trim().ToLowerInvariant();var role=string.IsNullOrWhiteSpace(request.Role)?null:bots.Types.GetValueOrDefault(request.Role);if(request.Role.Length>0&&role==null)throw new ArgumentException("未知角色代号，请在角色目录中查找。");
     return http.GetBody(new{ok=true,map=request.Map,updatedUtc=DateTime.UtcNow,source="live-server",botConfig,pmcConfig,locationConfig,core=bots.Core,mapAi=AiMap(map.Base),roles=bots.Types.Keys.Order().ToArray(),role=role==null?null:new{request.Role,configuration=role},assistant=AssistantSettings()});

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
 using EFT.Counters;
@@ -7,7 +9,7 @@ using EFT.Quests;
 using UnityEngine;
 namespace LocalSpt5Esp;
 
-// Only the open dashboard polls. Native inventory enumeration is split across frames;
+// Only the open dashboard polls. Native statistics are read incrementally;
 // publish the completed snapshot atomically so GUI layout and repaint see the same data.
 internal static class HomeDashboard {
  sealed class Snapshot {
@@ -21,22 +23,24 @@ internal static class HomeDashboard {
  static IEnumerator<int>? scan;
  static string owner="";static long pointer;static float nextRead;
  static Vector2 scroll;
- static TarkovApplication? application;
+ static TarkovApplication? application;static float nextApplication;
+ static Task<JsonElement>? moneyRequest;
  static Profile? Current(){
-  application??=Singleton<TarkovApplication>.Instance??Singleton<AbstractApplication>.Instance?.TryCast<TarkovApplication>()??UnityEngine.Object.FindObjectOfType<TarkovApplication>();
+  application??=Singleton<TarkovApplication>.Instance??Singleton<AbstractApplication>.Instance?.TryCast<TarkovApplication>();if(application==null&&Time.unscaledTime>=nextApplication){nextApplication=Time.unscaledTime+10;application=UnityEngine.Object.FindObjectOfType<TarkovApplication>();}
   var session=application?.GetClientBackEndSession()?.TryCast<ClientBackendSession>()??application?.Session?.TryCast<ClientBackendSession>();
   // The backend PMC remains the overview owner during Scav raids.
   var pmc=session?.Profile;
   return pmc?.Side==EPlayerSide.Savage?null:pmc;
  }
- internal static void Reset(){scan?.Dispose();scan=null;saved=null;owner="";pointer=0;nextRead=0;application=null;}
+ internal static void Reset(){scan?.Dispose();scan=null;saved=null;owner="";pointer=0;nextRead=0;application=null;nextApplication=0;if(moneyRequest is {} pending)_=pending.ContinueWith(t=>{_=t.Exception;},TaskContinuationOptions.OnlyOnFaulted);moneyRequest=null;}
  internal static void Tick(){
   if(!InterfaceMenu.HomePage){scan?.Dispose();scan=null;nextRead=0;return;}
   try{
    var pmc=Current();
    if(pmc==null){scan?.Dispose();scan=null;saved=null;owner="";pointer=0;return;}
    if(!HomeOverviewRules.SameOwner(owner,pointer,pmc.Id,pmc.Pointer.ToInt64())){scan?.Dispose();scan=null;saved=null;owner=pmc.Id;pointer=pmc.Pointer.ToInt64();nextRead=0;}
-   if(scan==null&&Time.unscaledTime>=nextRead){nextRead=Time.unscaledTime+5;scan=Read(pmc).GetEnumerator();}
+   if(moneyRequest?.IsCompleted==true){var done=moneyRequest;moneyRequest=null;try{var value=done.GetAwaiter().GetResult();if(saved!=null&&value.GetProperty("profile").GetString()==owner){int i=0;foreach(var amount in value.GetProperty("money").EnumerateArray())if(i<3)saved.Money[i++]=amount.GetInt64();saved.MoneyReady=i==3;}}catch{}}
+   if(scan==null&&Time.unscaledTime>=nextRead){nextRead=Time.unscaledTime+5;scan=Read(pmc).GetEnumerator();moneyRequest??=WorldEditorClient.Call("overview","");}
    if(scan!=null&&!scan.MoveNext()){scan.Dispose();scan=null;}
   }catch{scan?.Dispose();scan=null;saved=null;nextRead=Time.unscaledTime+5;}
  }
@@ -51,8 +55,7 @@ internal static class HomeDashboard {
   var quests=pmc.QuestsData;
   if(quests!=null){var seen=new HashSet<string>();int budget=0;foreach(var quest in quests){if(quest==null||!seen.Add(quest.Id.ToString()))continue;switch(quest.Status){case EQuestStatus.Started:result.Started++;break;case EQuestStatus.AvailableForFinish:result.Ready++;break;case EQuestStatus.Success:result.Done++;break;}if(++budget%64==0)yield return 0;}result.QuestsReady=true;}
   yield return 0;
-  var inventory=pmc.Inventory;
-  if(inventory!=null){var seen=new HashSet<string>();int budget=0;foreach(var item in inventory.AllRealPlayerItems){if(item!=null&&seen.Add(item.Id.ToString())){int currency=HomeOverviewRules.Currency(item.StringTemplateId);if(currency>=0)result.Money[currency]+=Math.Max(1,item.StackObjectsCount);}if(++budget%64==0)yield return 0;}result.MoneyReady=true;}
+  if(saved is {} prior){result.Money=(long[])prior.Money.Clone();result.MoneyReady=prior.MoneyReady;}
   saved=result;
  }
  static long Count(CountersCollection counters,params string[] keys){var values=new Il2CppSystem.Object[keys.Length];for(int i=0;i<keys.Length;i++)values[i]=(Il2CppSystem.String)keys[i];return counters.GetLong(values);}
@@ -74,7 +77,7 @@ internal static class HomeDashboard {
    InterfaceMenu.Paragraph(new Rect(20,126,width-40,34),s==null?"":I18n.Text("创建日期")+"  "+s.Created+"    /    "+I18n.Text(RaidClock.Active?(Singleton<GameWorld>.Instance?.MainPlayer?.Side==EPlayerSide.Savage?"当前出战：Scav":"当前出战：PMC"):"待命"),Muted,12);
    float y=182,cell=(width-12*(moneyColumns-1))/moneyColumns;string[] names={"卢布","美元","欧元"};string[] signs={"₽","$","€"};
    for(int i=0;i<3;i++){var r=new Rect(i%moneyColumns*(cell+12),y+i/moneyColumns*94,cell,82);Card(r);InterfaceMenu.Label(new Rect(r.x+16,r.y+9,r.width-32,23),names[i],Muted,12);InterfaceMenu.Label(new Rect(r.x+16,r.y+36,r.width-32,34),s?.MoneyReady==true?signs[i]+" "+s.Money[i].ToString("N0"):"—",InterfaceMenu.Text,22);}
-   y+=moneyHeight;InterfaceMenu.Paragraph(new Rect(4,y,width-8,36),"资金统计当前已加载的 PMC 库存；不含邮件、未成交挂单及商城钱包。",Muted,11);y+=48;
+   y+=moneyHeight;InterfaceMenu.Paragraph(new Rect(4,y,width-8,36),"资金来自服务端最新保存的 PMC 库存；战局内新收入在结算后更新。不含邮件、挂单及商城钱包。",Muted,11);y+=48;
    float detailWidth=detailColumns==2?(width-12)/2:width;
    Stats(new Rect(0,y,detailWidth,226),s);Quests(new Rect(detailColumns==2?detailWidth+12:0,y+(detailColumns==2?0:238),detailWidth,226),s);
    y+=detailHeight+16;Heading(4,y,width-8,"常用入口");y+=32;

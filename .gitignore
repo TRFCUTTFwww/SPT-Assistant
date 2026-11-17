@@ -70,3 +70,5 @@
 !/diagnostics-shared/
 !/diagnostics-tests/
 !/safety-ui/
+
+!/profile-save-tests/

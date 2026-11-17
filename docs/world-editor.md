@@ -66,7 +66,7 @@
 
 ### 本局 AI 信息与生成暂停
 
-AI 工作台 → 本局 AI 信息，可读取服务端实时 Bot/PMC/地图配置、核心参数、地图波次与上限、阵营设置、助手刷新配置及角色目录。输入角色代号后刷新可查看该角色完整服务端配置。搜索按参数路径和值过滤，复制完整信息保留长字段。客户端区域每秒刷新本局难度/波次选项、存活角色设置、助手自定义难度及生成拦截状态；服务端区域显示最近读取时刻。服务端当前值可能影响下一次生成或下局，不应当作本局已经应用的最终波次。
+AI 工作台 → 本局 AI 信息，可读取服务端实时 Bot/PMC/地图配置、核心参数、地图波次与上限、阵营设置、助手刷新配置及角色目录。输入角色代号后刷新可查看该角色完整服务端配置。搜索按参数路径和值过滤，所有参数直接显示在游戏内，难度、生成上限、BEAR/USEC/Scav 和波次有快捷筛选，无需导出。客户端区域每秒刷新本局难度/波次选项、存活角色设置、助手自定义难度及生成拦截状态；服务端区域显示最近读取时刻。服务端当前值可能影响下一次生成或下局，不应当作本局已经应用的最终波次。
 
 本局 AI 信息和全局控制均可暂停/恢复自然 AI 生成。暂停保留场上 AI，助手手动生成不受影响，不等同于“无 AI”或“暂停 AI 行为”。恢复后继续后续刷新；暂停期间已拦截的请求不补发。离开战局重置。
 
@@ -97,7 +97,7 @@ Completed operations clear single, multiple and mixed selections, including move
 - **Delete** acts on the selected category using native loot removal or the existing AI cleanup path, retaining the other category’s selection. There is no undo.
 - **Properties** uses Previous/Next to edit one selected object at a time. Apply affects only that object; switching objects discards unapplied drafts. It has six AI pages: General, Health, Behavior, Combat, Equipment and Buff. Edit name, yaw/pitch, pause, seven body-part health values, stance/facing/following and door/healing/movement restrictions. Combat controls per-AI invincibility and incoming local-player damage multiplier. Equipment embeds the existing equipment/weapon/storage editors; Buff displays, adds and removes effects on the selected AI. Apply each page separately. Drafts survive page changes; closing discards unapplied drafts and retains applied changes. Item properties edit stack size and supported durability, resources, remaining uses, toggles and found-in-raid state. Enable a component field to change it. Item template details remain read-only.
 
-Only locally controlled living AI can be edited; players, teammates and BTR shooters are excluded. Loose loot, corpses, landed airdrops and map containers have separate editor actions. The container catalog lists all templates, but placement requires a model already loaded by the current map. F7 toggles continuous container placement: right-click places, left-click deletes, Q/E or the wheel rotates, Shift selects fine rotation, X toggles grid snapping, and Esc exits. Opening the main panel, disabling editing, death, world changes or unloading ends the active edit and restores temporary move state where the original object remains resolvable. Selection and clipboard state do not carry across raids. Committed air anchors survive editor mode being disabled; raid exit discards records and module unload/hot reload releases anchors and restores prior pause state. Server spawn settings are unchanged. The AI workspace also exposes live server configuration and a raid-only natural-spawn pause that retains existing AI and permits manual spawning. Fika editor authorization and synchronization remain unverified.
+Only locally controlled living AI can be edited; players, teammates and BTR shooters are excluded. Loose loot, corpses, landed airdrops and map containers have separate editor actions. The container catalog lists all templates. Models can come from the current map or a local, asynchronously loaded cross-map model library; it never loads a source map scene. F7 toggles continuous container placement: right-click places, left-click deletes, Q/E or the wheel rotates, Shift selects fine rotation, X toggles grid snapping, and Esc exits. Opening the main panel, disabling editing, death, world changes or unloading ends the active edit and restores temporary move state where the original object remains resolvable. Selection and clipboard state do not carry across raids. Committed air anchors survive editor mode being disabled; raid exit discards records and module unload/hot reload releases anchors and restores prior pause state. Server spawn settings are unchanged. The AI workspace also exposes live server configuration and a raid-only natural-spawn pause that retains existing AI and permits manual spawning. Fika editor authorization and synchronization remain unverified.
 
 Toy **Select / teleport AI** uses the same exact-coordinate placement. Hit AI to select it, then hit a destination, including walls or other points without navigation. Groups retain relative spacing and air destinations stay anchored. A real projectile impact is still required; firing into an empty sky does not trigger teleportation. Creating/pasting AI retains the asynchronous native spawn/navigation requirements.
 
@@ -116,3 +116,24 @@ Validation: EFT 48558 build and 127 client Probe groups passed, including revers
 - 新功能通过编译及离线检查，尸体姿态、落点、武器使用和多人同步仍需用户实机验收。
 
 The replacement 2.1 build hides the idle instruction HUD, supports through-wall point/marquee selection, adds weapons to empty AI equipment slots, exposes A/B relationship marks in Combat properties, and adds corpse revival/copy/paste/move/delete. Mixed selections choose a category first. Copies use fresh inventory identities; revival requires original AI data from this raid. A/B marking does not itself regroup actors or change hostility. Native poses, weapon handling and multiplayer behavior require manual acceptance.
+
+## 容器与性能修复（2026-11-17）
+
+- 容器目录显示全部模板，● 为已就绪模型，↓ 为可从本机库加载，○ 为暂缺模型。选择 ↓ 后自动异步加载并生成实物预览；不加载来源地图，不运行其 AI、灯光或地图脚本。本机这次生成 48 个有效模板；缺少可用交互模型的特殊模板仍不可放置。
+- 抽屉柜按整柜选择、移动、复制、旋转、删除；四个抽屉保留独立库存、ID 和交互。重新生成会分别处理每个抽屉。该操作仅在当前战局生效。
+- 连续放置仍由 F7 进入/退出，右键放置、左键删除；Q/E 朝向，PgUp/PgDn 俯仰，R 切换滚轮 X/Y/Z 旋转轴，Shift 细调，Home 三轴归零。选中容器的旋转窗口也支持三轴和取消恢复。
+- 服务端物资模式在放置前检查接口及当前地图的物资表；缺表/未就绪时禁用并默认空容器，自定义物资仍可使用。跨地图外观可加载，不代表当前地图一定有该容器的物资表。
+- 离线 GameWorld 的 NetworkWorld 可为空；跳过仅适用于联网 World 的交互注册，仍初始化原生库存 owner 和碰撞体。
+- 主面板改用缓存圆角蒙版和主题色；主页货币改为异步读取服务端快照，消除逐帧枚举原生全库存。容器原型、模型树和缩略图复用，目录只处理可见行，全局预制体扫描每个战局一次。
+- 后台任务同步优先使用现有 QuestController；空闲角色管理不查询 Scav session。必要的应用对象查找缓存并限频。详细耗时分开记录编辑器、任务、Scav 和面板，方便区分周期性卡顿与绘制开销。
+- 仓库还原修复了修改 SaveServer.GetProfiles() 字典副本导致的假成功：更新现有存档对象，调用原生保存，再比对磁盘 JSON。写入失败回退；还原后仍需退出客户端并重新登录，避免旧客户端库存覆盖恢复内容。
+
+本机模型库由自己的游戏安装生成，资源不进入 Git，也不随模组分发：
+
+```powershell
+python scripts/Build-ContainerLibrary.py --game D:/SPT-5.0.0-48558 --output D:/SPT-5.0.0-48558/BepInEx/plugins/LocalSpt5ESP/container-library --modules <安装UnityPy的目录>
+```
+
+服务端此更改涉及固定路由 DLL 和管理逻辑 module，必须一起替换并重启服务端。可用 `scripts/Apply-EditorServerUpdate.ps1 -UpdateDirectory <含两个组件和checksums.json的目录> -WaitForExit -StartServer` 在现有服务端关闭后安装；脚本核对哈希、备份、失败回退，不主动结束进程，不修改存档。
+
+验证包含容器离线规则与 48558 API 契约、39 项备份/SQLite 检查，以及真实 SaveServer 在隔离临时目录下的 7 项写盘/回退/拒绝假成功检查。后台 Unity 探针检查抽屉柜模型、四个交互组件、网格与材质；实际放置、搜索库存、三轴外观及主面板打开时的帧率仍由用户实机验收，不能用编译或空闲后台帧率代替。

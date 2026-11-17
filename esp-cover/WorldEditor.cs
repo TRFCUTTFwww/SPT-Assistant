@@ -30,7 +30,7 @@ internal static partial class WorldEditor {
  static void CancelContext(){CloseDialog();ClearSelection();}
  internal static void KeepCursor(){if(cursorOwned){Cursor.lockState=CursorLockMode.None;Cursor.visible=true;}}
  internal static void Suspend(){StopContainerBuild();if(moving)Run(()=>FinishMove(true));altCursor=false;dragging=false;CloseDialog();}
- internal static void Reset(){Suspend();gate.Reset();ClearSelection();LootReference.ClearCache();ContainerScene.Reset();ClearContainerPreview();ResetContainerJobs();clipboard=Array.Empty<ClipboardEntry>();world=IntPtr.Zero;frame=shortcutFrame=-1;}
+ internal static void Reset(){Suspend();gate.Reset();ClearSelection();LootReference.ClearCache();ContainerScene.Reset();ContainerLootAvailability.Reset();ClearContainerPreview();ResetContainerJobs();clipboard=Array.Empty<ClipboardEntry>();world=IntPtr.Zero;frame=shortcutFrame=-1;}
  internal static void CaptureInput(){
   if(frame==Time.frameCount)return;frame=Time.frameCount;
   gate.Tick(frame,Input.GetMouseButton(0)||Input.GetMouseButton(1)||Input.GetMouseButton(2));ToggleShortcut();

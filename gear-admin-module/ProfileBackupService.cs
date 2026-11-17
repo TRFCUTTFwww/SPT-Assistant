@@ -31,9 +31,11 @@ public static class ProfileBackupService {
    var rollback=store.Add(session.ToString(),ProfileRestoreRules.Nickname(current),"还原前自动备份",current);
    if(ProfileRestoreRules.Revision(json.Serialize(saves.GetProfile(session))!)!=revision)throw new ArgumentException("保存期间存档已改变，请重新预览。");
    try{
-    saves.GetProfiles()[session]=restored;await saves.SaveProfileAsync(session,CancellationToken.None);
+    // GetProfiles returns a copy. Update the existing live instance so other
+    // server services holding this profile see the restored data as well.
+    await LiveProfileState.RestoreAndSave(profile,restored,session,saves,json);
    }catch{
-    saves.GetProfiles()[session]=profile;
+    LiveProfileState.Replace(profile,json.Deserialize<SptProfile>(current)??throw new IOException("原存档无法回退。"));
     try{await saves.SaveProfileAsync(session,CancellationToken.None);}catch{throw new IOException("还原写入失败，内存已回退。请保留数据库和还原前备份 "+rollback.Id+"，关闭客户端后检查存档文件。");}
     throw new IOException("还原保存失败，已恢复原存档。");
    }

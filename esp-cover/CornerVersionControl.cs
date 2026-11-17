@@ -27,7 +27,7 @@ internal static class CornerVersionControl {
   if(current.FormattedText!=value)current.SetLabelText(value);written=value;
  }
  static void Restore(){if(label!=null&&written.Length>0)label.SetLabelText(original);foreach(var entry in formats.Values)if(entry.Label!=null)entry.Label.richText=entry.Rich;formats.Clear();written="";}
- internal static void Tick(){if(Time.unscaledTime<next)return;next=Time.unscaledTime+.5f;try{preloader??=PreloaderUI.Instance??UnityEngine.Object.FindObjectOfType<PreloaderUI>();Apply();}catch(Exception error){next=Time.unscaledTime+10;Plugin.Self.Error(error);}}
+ internal static void Tick(){if(!enabled.Value&&written.Length==0||Time.unscaledTime<next)return;next=Time.unscaledTime+.5f;try{preloader??=PreloaderUI.Instance??UnityEngine.Object.FindObjectOfType<PreloaderUI>();Apply();}catch(Exception error){next=Time.unscaledTime+10;Plugin.Self.Error(error);}}
  internal static void Draw(Rect r){
   InterfaceMenu.Label(new(r.x,r.y,r.width,28),"左下角版本文字",InterfaceMenu.Accent,17);
   if(InterfaceMenu.Button(new(r.x,r.y+34,Math.Min(340,r.width),32),I18n.Text("自定义左下角版本")+" · "+I18n.Text(enabled.Value?"开启":"关闭"),enabled.Value)){enabled.Value=!enabled.Value;Apply();}

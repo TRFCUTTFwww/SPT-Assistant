@@ -36,7 +36,7 @@ internal static partial class WorldEditor {
    Pair("player-toggle",targets.Select(AiActorControl.EditorPlayerCeasefire).ToArray(),"对玩家停战","对玩家敌对",value=>ContextPlayerRelation(value?1:2));Add("player-default",true,()=>ContextPlayerRelation(0));
    Pair("invincible-toggle",targets.Select(p=>AiActorControl.EditorState(p).Invincible).ToArray(),"开启无敌","关闭无敌",ContextInvincible);Add("clear-effects",true,ContextClearEffects);
   }
-  if(kind==SelectionKind.Containers&&selected){Add("rotate",true,BeginContainerRotation);Add("loot-server",true,()=>RegenerateContainers(false));Add("loot-custom",true,OpenContainerLoot);Pair("container-open",selectedContainers.Select(r=>ContainerScene.Open(r.Resolve())).ToArray(),"开启容器","关闭容器",SetContainersOpen);}
+  if(kind==SelectionKind.Containers&&selected){ContainerLootAvailability.Read(Current());Add("rotate",true,BeginContainerRotation);Add("loot-server",selectedContainers.All(r=>ContainerLootAvailability.Allows(Current(),ContainerScene.Template(r.Resolve()))),()=>RegenerateContainers(false));Add("loot-custom",true,OpenContainerLoot);Pair("container-open",selectedContainers.Select(r=>ContainerScene.Open(r.Resolve())).ToArray(),"开启容器","关闭容器",SetContainersOpen);}
   Add("delete",selected,Delete,ShortcutLabel(EditorShortcut.Delete));if(kind==SelectionKind.Corpses)Add("revive",selected,ReviveCorpses);else if(kind is not (SelectionKind.Airdrops or SelectionKind.Containers))Add("properties",selected,OpenProperties,ShortcutLabel(EditorShortcut.Properties));
   var actions=EditorContextRules.Read(contextOrder.Value).Where(available.ContainsKey).SelectMany(id=>available[id]).ToList();
   actions.Add(new("自定义右键菜单",true,OpenContextSettings));
@@ -44,6 +44,7 @@ internal static partial class WorldEditor {
  }
  static void ContextInput(){
   if(Time.frameCount<=contextFrame)return;
+  if(!categoryMenu&&selectionKind==SelectionKind.Containers&&selectedContainers.Count>0){var current=Current();ContainerLootAvailability.Read(current);string name=EditorContextRules.Options.First(o=>o.Id=="loot-server").Name;for(int i=0;i<contextActions.Length;i++)if(contextActions[i].Name==name)contextActions[i]=contextActions[i] with{Enabled=selectedContainers.All(r=>ContainerLootAvailability.Allows(current,ContainerScene.Template(r.Resolve())))};}
   var bounds=ContextBounds;var pointer=MousePosition;bool left=Input.GetMouseButtonDown(0),right=Input.GetMouseButtonDown(1);
   if((left||right)&&!bounds.Contains(pointer)){CancelContext();return;}
   if(right){if(!categoryMenu&&SelectionKinds>1)OpenContext();else CancelContext();return;}

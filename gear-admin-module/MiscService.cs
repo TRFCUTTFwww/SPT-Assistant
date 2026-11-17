@@ -85,7 +85,7 @@ public static class MiscService {
   }catch{
    Options=previous;
    if(settingsWritten){if(oldSettings==null)File.Delete(FilePath);else File.WriteAllText(FilePath,oldSettings);}
-   if(snapshot!=null){saves.GetProfiles()[session]=snapshot;await saves.SaveProfileAsync(session,CancellationToken.None);}
+   if(snapshot!=null){LiveProfileState.Replace(saves.GetProfile(session),snapshot);await saves.SaveProfileAsync(session,CancellationToken.None);}
    throw;
   }finally{Gate.Release();}
  }

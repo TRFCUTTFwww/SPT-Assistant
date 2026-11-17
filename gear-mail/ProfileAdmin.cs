@@ -101,7 +101,7 @@ public class ProfileAdminService {
     default:throw new ArgumentException("未知角色管理操作。");
    }
    await saves.SaveProfileAsync(session);return Status(profile,session);
-  }catch(Exception error){if(snapshot!=null)saves.GetProfiles()[session]=snapshot;if(error is not ArgumentException)log.Error("Profile management failed: "+error);return http.GetBody(new{ok=false},(BackendErrorCodes)228,error is ArgumentException?error.Message:"操作失败，已恢复内存中的原角色数据。");}
+  }catch(Exception error){if(snapshot!=null)LiveProfileState.Replace(saves.GetProfile(session),snapshot);if(error is not ArgumentException)log.Error("Profile management failed: "+error);return http.GetBody(new{ok=false},(BackendErrorCodes)228,error is ArgumentException?error.Message:"操作失败，已恢复内存中的原角色数据。");}
   finally{if(request.Action=="hideout")output.ResetOutput(session);gate.Release();}
  }
  string Status(SptProfile profile,MongoId session){

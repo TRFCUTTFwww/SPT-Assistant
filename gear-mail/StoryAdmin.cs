@@ -76,7 +76,7 @@ public class StoryService(SaveServer saves,JsonUtil json,HttpResponseUtil http,T
     RewindDialogue(profile,affected);StoryRules.SyncVariables(pmc,templates,variables,affected);
    }
    await saves.SaveProfileAsync(session);committed=true;return Status(profile);
-  }catch(Exception error){if(snapshot!=null&&!committed)saves.GetProfiles()[session]=snapshot;return http.GetBody(new{ok=false},(BackendErrorCodes)228,error is ArgumentException?error.Message:committed?"已保存，请刷新剧情进度。":"保存失败，已恢复角色数据。");}
+  }catch(Exception error){if(snapshot!=null&&!committed)LiveProfileState.Replace(saves.GetProfile(session),snapshot);return http.GetBody(new{ok=false},(BackendErrorCodes)228,error is ArgumentException?error.Message:committed?"已保存，请刷新剧情进度。":"保存失败，已恢复角色数据。");}
   finally{gate.Release();}
  }
  string QuestName(MongoId id){if(!templates.Quests.TryGetValue(id,out var quest))return id.ToString();if(quest.Localization?.TryGetValue("ch",out var ch)==true&&ch.TryGetValue(id+" name",out var name)&&!string.IsNullOrWhiteSpace(name))return name;return quest.Name??id.ToString();}

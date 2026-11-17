@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Text;
 namespace LocalSpt5Esp;
 
-internal enum CostStage { General, Heartbeat, Bitcoin, Loot, Weapons, Containers, Combat, Exits, Navigation, AiTools, World, Tint, Scan, Chat, Inventory, AIProtection, Market, FunItems }
+internal enum CostStage { General, Heartbeat, Bitcoin, Loot, Weapons, Containers, Combat, Exits, Navigation, AiTools, World, Tint, Scan, Chat, Inventory, AIProtection, Market, FunItems, EditorUpdate, ProfileUpdate, EffectsUpdate, MenuUpdate, OverlayGUI, EditorGUI, MenuGUI, OtherGUI, DifficultyUpdate, QuestUpdate, CraftUpdate, CultistUpdate, ScavUpdate,SeasonUpdate,CornerUpdate, BackupUpdate, StashUpdate }
 // Fixed counters; no delegates, closures or per-frame formatting on the hot path.
 internal static class RuntimeCosts {
  static readonly long[] ticks=new long[Enum.GetValues<CostStage>().Length],peaks=new long[ticks.Length];

@@ -86,7 +86,7 @@ public class CharacterDataService(SaveServer saves,JsonUtil json,HttpResponseUti
    await saves.SaveProfileAsync(session);committed=true;
    if(request.Action is "deposit" or "wallet")try{await notifications.SendMessageAsync(session,new WsExpansionsBalance{EventType=NotificationEventType.UpdateAccountTarcoinBalance,Balance=pmc.TarCoinBalance??0});}catch{/* The durable balance is returned even if the client disconnected. */}
    return Status(profile);
-  }catch(Exception error){if(snapshot!=null&&!committed)saves.GetProfiles()[session]=snapshot;return http.GetBody(new{ok=false},(BackendErrorCodes)228,error is ArgumentException||request.Action.StartsWith("backup",StringComparison.Ordinal)&&error is IOException?error.Message:"保存失败，请刷新角色数据后重试。");}
+  }catch(Exception error){if(snapshot!=null&&!committed)LiveProfileState.Replace(saves.GetProfile(session),snapshot);return http.GetBody(new{ok=false},(BackendErrorCodes)228,error is ArgumentException||request.Action.StartsWith("backup",StringComparison.Ordinal)&&error is IOException?error.Message:"保存失败，请刷新角色数据后重试。");}
   finally{gate.Release();}
  }
  string Status(SptProfile profile){var pmc=profile.CharacterData!.PmcData!;return http.GetBody(new{ok=true,balance=pmc.TarCoinBalance??0,coins=CharacterDataRules.PhysicalCoins(pmc),health=pmc.Health,skills=pmc.Skills?.Common?.Select(skill=>new{id=skill.Id.ToString(),level=skill.Progress/100}),achievements=(templates.Achievements??[]).Concat(templates.CustomAchievements??[]).DistinctBy(entry=>entry.Id).Select(entry=>new{id=entry.Id.ToString(),unlocked=pmc.Achievements?.ContainsKey(entry.Id)==true})});}

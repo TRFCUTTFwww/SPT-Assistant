@@ -47,9 +47,11 @@ internal static partial class InterfaceMenu {
   internal Rect Bounds;
   internal Rect Initial;
  }
- internal static Color Background=>Parse(background.Value,new Color(.05f,.07f,.1f));
- internal static Color Text=>Parse(text.Value,Color.white);
- internal static Color Accent=>Parse(accent.Value,Color.cyan);
+ static readonly Dictionary<string,Color> parsedColors=new();
+ internal static Color Background=>Theme(background.Value,new Color(.05f,.07f,.1f));
+ internal static Color Text=>Theme(text.Value,Color.white);
+ internal static Color Accent=>Theme(accent.Value,Color.cyan);
+ static Color Theme(string value,Color fallback){if(parsedColors.TryGetValue(value,out var color))return color;if(parsedColors.Count>32)parsedColors.Clear();return parsedColors[value]=Parse(value,fallback);}
  static Color Parse(string value,Color fallback)=>ColorUtility.TryParseHtmlString(value,out var color)?color:fallback;
  static ConfigEntry<T> Bind<T>(string key,string name,T value,AcceptableValueBase? range=null)=>config.Bind("24. Interface",key,value,new ConfigDescription("",range,new CnConfig.ConfigurationManagerAttributes{DispName=name,Category="24. 界面与主题"}));
  internal static void Initialize(Plugin plugin){
@@ -108,7 +110,7 @@ internal static partial class InterfaceMenu {
   Plugin.Self.Log.LogInfo("Main menu "+(value?"opened":"closed"));
  }
  internal static void CloseForExternalPanel()=>SetOpen(false);
- internal static void Shutdown(){SetOpen(false);inputGate.Reset();MenuIcons.Shutdown();slots.Clear();drafts.Clear();ResetGlobalSearch();}
+ internal static void Shutdown(){SetOpen(false);inputGate.Reset();MenuIcons.Shutdown();ClearSurfaces();slots.Clear();drafts.Clear();ResetGlobalSearch();}
  internal static Rect Place(string id,Rect initial){
   if(!slots.TryGetValue(id,out var slot))return initial;
   slot.Initial=initial;if(slot.AutoSize?.Value!=true){if(slot.Width.Value>0)initial.width=Math.Clamp(slot.Width.Value,60,Math.Max(60,Screen.width));if(slot.Height.Value>0)initial.height=Math.Clamp(slot.Height.Value,24,Math.Max(24,Screen.height));}
@@ -132,7 +134,20 @@ internal static partial class InterfaceMenu {
   public void Dispose(){GUI.backgroundColor=previousBackground;windowAlpha=previousAlpha;}
  }
  internal static Color WindowTint(Color color){color.a*=windowAlpha;return color;}
- internal static void Surface(Rect rect,Color color,float radius=8){if(Event.current.type!=EventType.Repaint)return;var old=GUI.color;GUI.color=Color.white;GUI.DrawTexture(rect,Texture2D.whiteTexture,ScaleMode.StretchToFill,true,0,WindowTint(color),0,radius);GUI.color=old;}
+ static readonly Dictionary<int,GUIStyle> surfaces=new();
+ static readonly List<Texture2D> surfaceTextures=new();
+ internal static void Surface(Rect rect,Color color,float radius=8){
+  if(Event.current.type!=EventType.Repaint)return;
+  int r=Math.Clamp((int)radius,0,12);
+  if(!surfaces.TryGetValue(r,out var style)){
+   const int size=32;var pixels=new Color32[size*size];
+   for(int y=0;y<size;y++)for(int x=0;x<size;x++){float dx=Math.Max(0,Math.Max(r-x-.5f,x+.5f-(size-r))),dy=Math.Max(0,Math.Max(r-y-.5f,y+.5f-(size-r)));byte alpha=(byte)(Math.Clamp(r+.5f-MathF.Sqrt(dx*dx+dy*dy),0,1)*255);pixels[y*size+x]=new Color32(255,255,255,r==0?(byte)255:alpha);}
+   var texture=new Texture2D(size,size,TextureFormat.RGBA32,false){hideFlags=HideFlags.HideAndDontSave,filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp};texture.SetPixels32(new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<Color32>(pixels));texture.Apply(false,true);
+   style=new GUIStyle{border=new RectOffset(r,r,r,r)};style.normal.background=texture;surfaces[r]=style;surfaceTextures.Add(texture);
+  }
+  var old=GUI.color;try{GUI.color=WindowTint(color);style.Draw(rect,false,false,false,false);}finally{GUI.color=old;}
+ }
+ static void ClearSurfaces(){foreach(var texture in surfaceTextures)if(texture!=null)UnityEngine.Object.Destroy(texture);surfaceTextures.Clear();surfaces.Clear();parsedColors.Clear();}
  internal static void Panel(Rect rect,float alpha=1){var shadow=new Rect(rect.x+2,rect.y+5,rect.width,rect.height);Surface(shadow,new Color(0,0,0,.2f*alpha),12);var border=Color.Lerp(Background,Text,.14f);border.a=opacity.Value*alpha;Surface(rect,border,12);var color=Background;color.a=opacity.Value*alpha;Surface(new Rect(rect.x+1,rect.y+1,rect.width-2,rect.height-2),color,11);}
  internal static void MoveSlot(string id,Vector2 position,Rect bounds){if(!slots.TryGetValue(id,out var slot))return;slot.X.Value=Math.Clamp(position.x/Math.Max(1,Screen.width-bounds.width),0,1);slot.Y.Value=Math.Clamp(position.y/Math.Max(1,Screen.height-bounds.height),0,1);}
  internal static void Close()=>SetOpen(false);
@@ -149,7 +164,7 @@ internal static partial class InterfaceMenu {
   field.normal.background=null;field.focused.background=null;field.hover.background=null;field.active.background=null;
  }
  static void Fill(Rect rect,Color color){if(Event.current.type!=EventType.Repaint)return;var old=GUI.color;GUI.color=color;GUI.DrawTexture(rect,Texture2D.whiteTexture);GUI.color=old;}
- internal static void Label(Rect rect,string value,Color? color=null,int size=14,bool outline=false,bool translate=true){if(translate)value=I18n.Text(value);Styles();var old=GUI.color;GUI.color=color??Text;label!.fontSize=size;label.wordWrap=I18n.English&&rect.height>=30;
+ internal static void Label(Rect rect,string value,Color? color=null,int size=14,bool outline=false,bool translate=true){if(Event.current.type!=EventType.Repaint)return;if(translate)value=I18n.Text(value);Styles();var old=GUI.color;GUI.color=color??Text;label!.fontSize=size;label.wordWrap=I18n.English&&rect.height>=30;
   if(I18n.English){var content=new GUIContent(value);while(label.fontSize>10&&(label.wordWrap?label.CalcHeight(content,Math.Max(1,rect.width))>rect.height:label.CalcSize(content).x>rect.width))label.fontSize--;}
   if(outline&&Event.current.type==EventType.Repaint){
    // Snap the glyph baseline to physical pixels, including resized HUD rows.
@@ -166,7 +181,7 @@ internal static partial class InterfaceMenu {
  internal static string Field(Rect rect,string value){Styles();Surface(rect,Color.Lerp(Background,Text,.085f),6);var old=GUI.color;GUI.color=Text;var result=GUI.TextField(rect,value,field);GUI.color=old;return result;}
  internal static float ButtonHeight(string value,float width,float minimum=44){value=I18n.Text(value);Styles();return Math.Max(minimum,wrappedButton!.CalcHeight(new GUIContent(I18n.Text(value)),Math.Max(1,width)));}
  internal static float ParagraphHeight(string value,float width,int size=14){value=I18n.Text(value);Styles();wrappedLabel!.fontSize=size;return wrappedLabel.CalcHeight(new GUIContent(I18n.Text(value)),Math.Max(1,width));}
- internal static void Paragraph(Rect rect,string value,Color? color=null,int size=14){value=I18n.Text(value);Styles();wrappedLabel!.fontSize=size;var old=GUI.color;GUI.color=color??Text;GUI.Label(rect,I18n.Text(value),wrappedLabel);GUI.color=old;}
+ internal static void Paragraph(Rect rect,string value,Color? color=null,int size=14){if(Event.current.type!=EventType.Repaint)return;value=I18n.Text(value);Styles();wrappedLabel!.fontSize=size;var old=GUI.color;GUI.color=color??Text;GUI.Label(rect,value,wrappedLabel);GUI.color=old;}
  internal static bool WrappedButton(Rect rect,string value,bool selected=false){value=I18n.Text(value);Styles();Fill(rect,selected?new Color(Accent.r,Accent.g,Accent.b,.24f):new Color(1,1,1,rect.Contains(Event.current.mousePosition)?.1f:.045f));var old=GUI.color;GUI.color=selected?Accent:Text;bool clicked=GUI.Button(rect,I18n.Text(value),wrappedButton);GUI.color=old;return clicked;}
  static float Slider(Rect rect,float value,float min,float max){
   var old=GUI.color;GUI.color=Accent;value=GUI.HorizontalSlider(rect,value,min,max);GUI.color=old;return value;
