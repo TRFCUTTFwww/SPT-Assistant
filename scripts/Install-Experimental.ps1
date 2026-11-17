@@ -15,7 +15,7 @@ function Report-Progress([int]$percent,[string]$phase){
 function Stop-Install([string]$code,[string]$message){$errorObject=[InvalidOperationException]::new($message);$errorObject.Data['InstallerCode']=$code;throw $errorObject}
 function Write-Result([bool]$ok,[string]$code,[string]$message){
  if(!$ResultPath){return}
- $value=@{ok=$ok;code=$code;message=$message;version='2.3.4';backup=$backup;verified=[bool]$VerifyOnly;rollbackSucceeded=[bool]$rollbackSucceeded}
+ $value=@{ok=$ok;code=$code;message=$message;version='2.3.5';backup=$backup;verified=[bool]$VerifyOnly;rollbackSucceeded=[bool]$rollbackSucceeded}
  [IO.File]::WriteAllText($ResultPath,($value|ConvertTo-Json -Depth 4),[Text.UTF8Encoding]::new($false))
 }
 try{
@@ -179,11 +179,11 @@ try{
   Move-Item -LiteralPath $legacy -Destination $legacyBackup
  }
  $destination=Prepare 'BepInEx/plugins/LocalSpt5ESP/install-manifest.json'
- $manifest=@{version='2.3.4';hostVersion='1.6.2';targetSpt='5.0 BE';targetEft='1.3.0.1.48558';clientOnly=[bool]$ClientOnly;minecraftIntegrated=$true;independentMinecraftHotReload=$false;scp3xRemoved=$true;blackwallIntegrated=$true;blackwallAssets=$resourceManifest.files.Count;experimental=$true;inRaidVerified=$false;installedUtc=[DateTime]::UtcNow.ToString('O');backup=$backup;coreSha256=$checks.'payload/Local.Spt5.ESP.Core.module'}
+ $manifest=@{version='2.3.5';hostVersion='1.6.2';targetSpt='5.0 BE';targetEft='1.3.0.1.48558';clientOnly=[bool]$ClientOnly;minecraftIntegrated=$true;independentMinecraftHotReload=$false;scp3xRemoved=$true;blackwallIntegrated=$true;blackwallAssets=$resourceManifest.files.Count;experimental=$true;inRaidVerified=$false;installedUtc=[DateTime]::UtcNow.ToString('O');backup=$backup;coreSha256=$checks.'payload/Local.Spt5.ESP.Core.module'}
  [IO.File]::WriteAllText($destination,($manifest|ConvertTo-Json -Depth 4),$utf8)
  Report-Progress 100 'COMPLETE'
  Write-Result $true 'OK' 'Installation completed.'
- Write-Output ('Installed SPT Assistant 2.3.4 (EXPERIMENTAL). Backup: '+$backup)
+ Write-Output ('Installed SPT Assistant 2.3.5 (EXPERIMENTAL). Backup: '+$backup)
  Write-Output 'Start the SPT server, then its client. Press Right Shift. Fika members: connect to the host; do not start a local server.'
  }catch{
  $failure=$_

@@ -1,13 +1,13 @@
 # SPT Assistant
 
-2.3.4: [PVE season selection and custom corner version text](docs/release-2.3.4.md).
+2.3.5: [Independent seasonal character with PVE raids](docs/release-2.3.5.md).
 
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 
 An in-game control panel for **SPT**, built with C# and Unity. Manage your character, raid, equipment, quests and server settings from one interface.
 
-**Version 2.3.4** · **Current target: SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
+**Version 2.3.5** · **Current target: SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
 
 > **UNSTABLE — EXPERIMENTAL.** This project has not undergone broad testing. Bugs, crashes, multiplayer desynchronization and unexpected profile changes are possible. Back up your profiles and configuration before installing or updating. A successful build or hot reload does not establish that every feature works in a raid.
 >

@@ -4070,5 +4070,11 @@
   "左下角版本文字": "Bottom-left version text",
   "只修改游戏左下角显示文字，不改变真实客户端版本。": "Change the text at the bottom-left of the game. The actual client version is unchanged.",
   "最多 160 个字符；留空或关闭开关时恢复原始显示。": "Up to 160 characters. Leave blank or turn off to restore the original display.",
-  "恢复原始": "Restore original"
+  "恢复原始": "Restore original",
+  "新建独立赛季角色": "Create seasonal character",
+  "选择独立赛季角色": "Select seasonal character",
+  "赛季 · 独立 PVE": "Season · Separate PVE character",
+  "独立的新角色和存档，仓库、任务与进度独立保存；对局沿用 PVE。选择 PVE 可返回原角色。": "A separate character and save, with independent stash, quests and progress. Raids use PVE. Select PVE to return to your original character.",
+  "独立赛季档案尚未就绪，请刷新角色列表并检查服务端。": "The seasonal profile is not ready. Refresh the character list and check the server.",
+  "赛季使用独立的新档案，仓库、任务与进度独立保存，对局沿用 PVE。选择 PVE 可返回原角色。": "Seasons use a separate save with independent stash, quests and progress. Raids use PVE. Select PVE to return to your original character."
 }

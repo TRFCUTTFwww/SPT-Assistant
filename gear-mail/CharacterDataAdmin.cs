@@ -31,6 +31,7 @@ public class CharacterDataRequest:IRequestData {
  [JsonPropertyName("expectedCoins")] public long ExpectedCoins{get;set;}
 }
 public class CharacterDataService(SaveServer saves,JsonUtil json,HttpResponseUtil http,TemplateTable templates,NotificationSendHelper notifications) {
+ readonly bool seasonsReady=SeasonProfiles.Install(saves,json);
  readonly bool miscReady=MiscService.Install(saves,json,templates);
  readonly bool containerRewardsReady=ArmoredCaseRewards.Install(templates);
  public async ValueTask<string> Handle(CharacterDataRequest request,MongoId session,CancellationToken ct){

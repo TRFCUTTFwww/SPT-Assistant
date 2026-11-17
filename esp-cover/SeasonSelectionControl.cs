@@ -1,5 +1,4 @@
 using System;
-using Comfort.Common;
 using EFT;
 using EFT.UI;
 using EFT.UI.Screens;
@@ -7,10 +6,10 @@ using HarmonyLib;
 using UnityEngine;
 using Selection=EFT.UI.CharacterSelectionScreen.CharacterSelectionScreenController;
 namespace LocalSpt5Esp;
-// The server deliberately locks pvp-season. Present a PVE-backed entry using
-// the existing PVE descriptor; never change server data or create a character.
+// The server supplies an independent seasonal descriptor. Never alias PVE or
+// rewrite the submitted mode: the native reload must request pvp-season.
 internal static class SeasonSelectionControl {
- static Selection? observed;static CharacterSelectionScreen? screen;static long aliasSlot;static bool restoring;static float next;static int routed;
+ static Selection? observed;static CharacterSelectionScreen? screen;static bool restoring;static int submitted;
  internal static void Initialize(Plugin plugin){
   plugin.Patches.Patch(AccessTools.Method(typeof(CharacterSelectionScreen),nameof(CharacterSelectionScreen.ShowSlot)),prefix:new HarmonyMethod(typeof(SeasonSelectionControl),nameof(Slot)));
   plugin.Patches.Patch(AccessTools.Method(typeof(CharacterSelectionSlotViewBase),nameof(CharacterSelectionSlotViewBase.Show)),prefix:new HarmonyMethod(typeof(SeasonSelectionControl),nameof(Model)));
@@ -18,35 +17,25 @@ internal static class SeasonSelectionControl {
   plugin.Patches.Patch(AccessTools.Method(typeof(Selection),nameof(Selection.SubmitAsync)),prefix:new HarmonyMethod(typeof(SeasonSelectionControl),nameof(SubmitAsync)));
  }
  static Selection? Current=>EftScreenManager.Instance?.CurrentScreenController?.TryCast<Selection>();
- static bool Eligible(Selection? controller,out CharacterSelectionProfileData? pve){
-  pve=null;if(controller?.Data is not {} data||!data.TryGetValue(EGameMode.Pve,out pve)||pve==null||!data.TryGetValue(EGameMode.PvpSeason,out var season)||season==null)return false;
-  return SeasonSelectionRules.CanAlias(SeasonMenuControl.Enabled&&!restoring,ItemSpawner.InRaid(),season.IsLocked,pve.HasProfile,pve.IsSelectable,pve.ProfileId);
+ static void Slot(CharacterSelectionScreen __instance,CharacterSelectionSlotViewBase __0,EGameMode __1,CharacterSelectionProfileData __2,Selection __3){observed=__3;screen=__instance;}
+ static void Model(CharacterSelectionSlotViewBase __instance,EGameMode __0,CharacterSelectionProfileData __1,CharacterSelectionSlotViewModel __2){
+  if(restoring||__0!=EGameMode.PvpSeason||__1.IsLocked)return;
+  __2.ActionAvailable=SeasonMenuControl.Enabled&&!ItemSpawner.InRaid();__2.ActionText=I18n.Text(__1.IsEmpty?"新建独立赛季角色":"选择独立赛季角色");__2.DisabledTooltipKey="";__2.PurchaseVisible=false;__2.PurchaseAvailable=false;
+  __2.ModeType=I18n.Text("赛季 · 独立 PVE");__2.CharacterDescription=I18n.Text("独立的新角色和存档，仓库、任务与进度独立保存；对局沿用 PVE。选择 PVE 可返回原角色。");
  }
- static void Slot(CharacterSelectionScreen __instance,CharacterSelectionSlotViewBase __0,EGameMode __1,ref CharacterSelectionProfileData __2,Selection __3){
-  observed=__3;screen=__instance;if(__1!=EGameMode.PvpSeason)return;aliasSlot=0;
-  if(Eligible(__3,out var pve)){__2=pve!;aliasSlot=__0.Pointer.ToInt64();}
- }
- static void Model(CharacterSelectionSlotViewBase __instance,EGameMode __0,ref CharacterSelectionProfileData __1,ref CharacterSelectionSlotViewModel __2){
-  if(__0!=EGameMode.PvpSeason||__instance.Pointer.ToInt64()!=aliasSlot||!Eligible(observed,out var pve)||__1.ProfileId!=pve!.ProfileId)return;
-  __2=CharacterSelectionSlotViewModel.Create(EGameMode.PvpSeason,pve,false,observed!.ExpansionsSettings);
-  __2.ActionAvailable=true;__2.ActionText=I18n.Text("选择 PVE 赛季");__2.DisabledTooltipKey="";__2.PurchaseVisible=false;__2.PurchaseAvailable=false;
-  __2.ModeType=I18n.Text("赛季 · PVE");__2.CharacterDescription=I18n.Text("使用现有 PVE 角色，共用装备、任务和进度。");
- }
- static bool Route(Selection controller,ref EGameMode mode,ref CharacterSelectionProfileData selected){
+ static bool Route(Selection controller,EGameMode mode,CharacterSelectionProfileData selected){
   if(mode!=EGameMode.PvpSeason)return true;
-  // A genuine supported seasonal profile retains its native path.
-  if(controller.Data?.TryGetValue(EGameMode.PvpSeason,out var season)!=true||season?.IsLocked!=true)return true;
-  bool eligible=Eligible(controller,out var pve)&&Current?.Pointer==controller.Pointer;
-  if(!SeasonSelectionRules.CanSubmit(eligible,pve?.ProfileId??"",selected?.ProfileId??"")){FeatureToasts.Show("PVE 角色尚未就绪，请刷新角色列表。");return false;}
-  mode=EGameMode.Pve;selected=pve!;routed++;return true;
+  bool current=Current?.Pointer==controller.Pointer;
+  CharacterSelectionProfileData? season=null;bool found=controller.Data?.TryGetValue(EGameMode.PvpSeason,out season)==true;
+  if(!SeasonSelectionRules.CanSubmit(SeasonMenuControl.Enabled,ItemSpawner.InRaid(),current,found&&season!=null&&!season.IsLocked,found&&season?.Pointer==selected?.Pointer)){
+   FeatureToasts.Show("独立赛季档案尚未就绪，请刷新角色列表并检查服务端。");return false;
+  }
+  submitted++;return true;
  }
- static bool Submit(Selection __instance,ref EGameMode __0,ref CharacterSelectionProfileData __1)=>Route(__instance,ref __0,ref __1);
- static bool SubmitAsync(Selection __instance,ref EGameMode __0,ref CharacterSelectionProfileData __1,ref Il2CppSystem.Threading.Tasks.Task __result){if(Route(__instance,ref __0,ref __1))return true;__result=Il2CppSystem.Threading.Tasks.Task.CompletedTask;return false;}
- internal static void Tick(){if(Time.unscaledTime<next||ItemSpawner.InRaid())return;next=Time.unscaledTime+1;try{var current=Current;if(current==null){observed=null;screen=null;aliasSlot=0;return;}
-  bool eligible=Eligible(current,out _);if(observed?.Pointer==current.Pointer&&(eligible?aliasSlot!=0:aliasSlot==0))return;observed=current;screen=UnityEngine.Object.FindObjectOfType<CharacterSelectionScreen>();if(screen!=null)screen.Redraw(current);
-  }catch(Exception error){next=Time.unscaledTime+10;Plugin.Self.Error(error);}
- }
- internal static object Diagnostics(){var current=Current;bool eligible=Eligible(current,out var pve);var slot=screen?._seasonSlotView;return new{open=current!=null,eligible,pveHasProfile=pve?.HasProfile,pveSelectable=pve?.IsSelectable,aliasShown=aliasSlot!=0&&slot?.Pointer.ToInt64()==aliasSlot,slotHasProfile=slot?.ProfileData?.HasProfile,slotSelectable=slot?.ProfileData?.IsSelectable,slotLocked=slot?.ProfileData?.IsLocked,buttonInteractable=slot?._actionButton?.Interactable,actionAvailable=slot?._viewModel?.ActionAvailable,actionText=slot?._viewModel?.ActionText,profileMatches=slot?.ProfileData!=null&&slot.ProfileData.ProfileId==pve?.ProfileId,routed};}
- internal static void Refresh(){aliasSlot=0;if(Current is {} current&&(screen??=UnityEngine.Object.FindObjectOfType<CharacterSelectionScreen>())!=null)screen.Redraw(current);}
- internal static void Shutdown(){try{restoring=true;Refresh();}finally{restoring=false;observed=null;screen=null;aliasSlot=0;}}
+ static bool Submit(Selection __instance,EGameMode __0,CharacterSelectionProfileData __1)=>Route(__instance,__0,__1);
+ static bool SubmitAsync(Selection __instance,EGameMode __0,CharacterSelectionProfileData __1,ref Il2CppSystem.Threading.Tasks.Task __result){if(Route(__instance,__0,__1))return true;__result=Il2CppSystem.Threading.Tasks.Task.CompletedTask;return false;}
+ internal static void Tick(){if(Current==null){observed=null;screen=null;}}
+ internal static object Diagnostics(){var current=Current;var slot=screen?._seasonSlotView;return new{open=current!=null,independent=true,slotHasProfile=slot?.ProfileData?.HasProfile,slotSelectable=slot?.ProfileData?.IsSelectable,slotLocked=slot?.ProfileData?.IsLocked,buttonInteractable=slot?._actionButton?.Interactable,actionAvailable=slot?._viewModel?.ActionAvailable,actionText=slot?._viewModel?.ActionText,profileMatches=slot?.ProfileData?.ProfileId==current?.ProfileId,submitted};}
+ internal static void Refresh(){if(Current is {} current&&(screen??=UnityEngine.Object.FindObjectOfType<CharacterSelectionScreen>())!=null)screen.Redraw(current);}
+ internal static void Shutdown(){try{restoring=true;Refresh();}finally{restoring=false;observed=null;screen=null;}}
 }
