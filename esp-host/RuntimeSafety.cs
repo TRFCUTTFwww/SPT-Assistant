@@ -44,7 +44,7 @@ public sealed partial class RuntimeReloader {
  void ContinueRollback(){if(rollbackPreparing?.IsCompleted!=true)return;var pendingRollback=rollbackPreparing;rollbackPreparing=null;try{var prepared=pendingRollback.GetAwaiter().GetResult();rollingBack=true;candidate=prepared;painted=stepCount=0;peakMs=0;phase="正在清理当前模块并回退…";sequence=new ReloadSequence(Swap(prepared));}catch(Exception e){SafetyFailure(e);}}
  bool RecoveryBusy=>!simulation&&rescueAttempted&&module?.GetType().GetProperty("EmergencyBusy")?.GetValue(module) is true;
  public bool FriendlyErrorUi=>true;
- public int SafetyUiRevision=>2;
+ public int SafetyUiRevision=>3;
  void DrawSafety(){if(Event.current.type==EventType.Repaint)painted++;try{DrawFriendlySafety();}catch(Exception e){Diagnostics.Record("WARNING","Error UI",e.Message);DrawLegacySafety();}}
  void DrawLegacySafety(){
   if(Event.current.type==EventType.Repaint)painted++;Diagnostics.Tick();int oldDepth=GUI.depth;var oldColor=GUI.color;GUI.depth=-100000;
@@ -57,6 +57,6 @@ public sealed partial class RuntimeReloader {
    GUI.Label(new Rect(x,y+45,width,55),Diagnostics.ExportStatus,small);if(Event.current.type is EventType.KeyDown or EventType.KeyUp or EventType.MouseDown or EventType.MouseUp or EventType.ScrollWheel)Event.current.Use();
   }finally{GUI.color=oldColor;GUI.depth=oldDepth;}
  }
- public void SimulateError(string type){if(!Diagnostics.DebugEnabled.Value)throw new InvalidOperationException("请先开启调试总开关。");try{switch(type){case "null":object? value=null;_ = value!.ToString();break;case "bounds":var values=new int[1];_ = values[2];break;case "stack":throw new StackOverflowException("受控模拟：没有真实耗尽线程栈。");case "access":throw new AccessViolationException("受控模拟：没有执行非法内存访问。");case "reload":SafetyFailure(new InvalidOperationException("受控模拟：热更新初始化失败。"));simulation=true;return;default:throw new InvalidOperationException("受控模拟错误。");}}catch(Exception e){ReportFatal("[调试] "+e.GetType().Name,e.ToString(),true);}}
+ public void SimulateError(string type){if(!Diagnostics.DebugEnabled.Value)throw new InvalidOperationException("请先开启调试总开关。");try{switch(type){case "null":object? value=null;_ = value!.ToString();break;case "bounds":var values=new int[1];_ = values[2];break;case "stack":ReportFatal("[界面演练] StackOverflowException","仅模拟栈溢出报告；未耗尽线程栈，不能验证真实栈溢出的恢复能力。",true);return;case "access":ReportFatal("[界面演练] AccessViolationException","仅模拟内存访问错误报告；未执行非法内存访问，不能验证原生崩溃恢复能力。",true);return;case "reload":SafetyFailure(new InvalidOperationException("受控模拟：热更新初始化失败。"));simulation=true;return;default:throw new InvalidOperationException("受控模拟错误。");}}catch(Exception e){ReportFatal("[调试] "+e.GetType().Name,e.ToString(),true);}}
  void StopSafety(){AppDomain.CurrentDomain.UnhandledException-=Unhandled;TaskScheduler.UnobservedTaskException-=Unobserved;CrashWatchClient.MarkNormal();Diagnostics.Dispose();}
 }

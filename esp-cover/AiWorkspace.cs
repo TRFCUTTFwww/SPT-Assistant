@@ -9,7 +9,7 @@ internal static class AiWorkspace {
  internal static void CloseEditors(){equipmentSelection="";AiActorControl.Close();AiEquipmentEditor.Close();AiBackpackEditor.Close();CharacterBuffs.CloseAi();}
  static void Run(Action action){try{action();}catch(Exception e){FeatureToasts.Show(e.Message);}}
  internal static void Draw(Rect rect,string page){
-  var selected=AiTestControl.CheckedSelection;string fingerprint=string.Join("|",selected.Select(p=>p.ProfileId));float x=rect.x,y=rect.y,w=rect.width;
+  if(page=="本局 AI 信息"){AiServerInfo.Draw(rect);return;}var selected=AiTestControl.CheckedSelection;string fingerprint=string.Join("|",selected.Select(p=>p.ProfileId));float x=rect.x,y=rect.y,w=rect.width;
   InterfaceMenu.Surface(new Rect(x,y,w,64),Color.Lerp(InterfaceMenu.Background,InterfaceMenu.Accent,.06f),8);
   InterfaceMenu.Label(new Rect(x+10,y+3,w-20,24),selected.Length==0?"先在 AI 列表勾选角色；切换下面的工具会保留选择。":"已选 "+selected.Length+" 名 · "+string.Join("、",selected.Take(3).Select(p=>p.Profile?.Nickname??"AI"))+(selected.Length>3?" 等":""),InterfaceMenu.Accent,12);
   float button=(w-40)/5;bool old=GUI.enabled;if(InterfaceMenu.Button(new Rect(x+6,y+30,button,28),"列表选人"))InterfaceMenu.Navigate("AI 工作台","AI 列表");GUI.enabled=old&&selected.Length>0;

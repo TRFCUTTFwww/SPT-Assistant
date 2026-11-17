@@ -14,19 +14,19 @@ internal static partial class WorldEditor {
  static readonly Dictionary<string,(string Max,string Current)> health=new();
  static ItemComponentEditor? componentEditor;
  internal static void DrawSettings(Rect rect){
-  settingsScroll=GUI.BeginScrollView(rect,settingsScroll,new Rect(0,0,rect.width-22,480));
-  try{var entries=new BepInEx.Configuration.ConfigEntryBase[]{enabled!,toggleEditor!,throughWallSelection!,moveInvincible!,moveIgnored!};for(int i=0;i<entries.Length;i++)InterfaceMenu.DrawEntry(entries[i],new Rect(0,i*96,rect.width-28,86));}finally{GUI.EndScrollView();}
+  settingsScroll=GUI.BeginScrollView(rect,settingsScroll,new Rect(0,0,rect.width-22,576));
+  try{var entries=new BepInEx.Configuration.ConfigEntryBase[]{enabled!,toggleEditor!,containerBuildKey!,throughWallSelection!,moveInvincible!,moveIgnored!};for(int i=0;i<entries.Length;i++)InterfaceMenu.DrawEntry(entries[i],new Rect(0,i*96,rect.width-28,86));}finally{GUI.EndScrollView();}
  }
  internal static void Draw(){
   if(!Active||InterfaceMenu.Open)return;int depth=GUI.depth;bool oldEnabled=GUI.enabled;GUI.depth=-900;
   try{
-   if(dialog.Length==0){DrawEditorCrosshair();DrawSelection();return;}
+   if(dialog.Length==0){if(containerBuilding){DrawContainerBuild();return;}DrawEditorCrosshair();DrawSelection();return;}
    if(dialog=="context"){DrawContext();return;}
    KeepCursor();GUI.enabled=oldEnabled&&Time.frameCount>dialogFrame;float w=Math.Min(dialog=="rename"?380:actor!=null&&dialog=="properties"?860:700,Screen.width-24),h=Math.Min(dialog=="rename"?174+(SelectionCount>1?38:0):760,Screen.height-24);var rect=new Rect((Screen.width-w)/2,(Screen.height-h)/2,w,h);InterfaceMenu.Panel(rect);float x=rect.x+18,y=rect.y+14,width=w-36;
-   InterfaceMenu.Label(new Rect(x,y,width-90,30),dialog switch{"context-settings"=>"自定义右键菜单","context"=>"场景编辑","create"=>"创建","rename"=>"重命名",_=>"属性"},InterfaceMenu.Accent,20);
+   InterfaceMenu.Label(new Rect(x,y,width-90,30),dialog switch{"context-settings"=>"自定义右键菜单","context"=>"场景编辑","create"=>"创建","rename"=>"重命名","container-rotation"=>"旋转容器","container-loot"=>"自定义容器物资",_=>"属性"},InterfaceMenu.Accent,20);
    if(InterfaceMenu.Button(new Rect(rect.xMax-94,y,76,30),"关闭")){CloseDialog();return;}y+=44;
    if(dialog is "properties" or "rename")DrawTargetNavigation(x,ref y,width);
-   switch(dialog){case "context-settings":DrawContextSettings(new Rect(x,y,width,rect.yMax-y-18));break;case "create":DrawCreate(new Rect(x,y,width,rect.yMax-y-18));break;case "rename":DrawRename(x,y,width);break;case "properties":DrawProperties(new Rect(x,y,width,rect.yMax-y-18));break;}
+   switch(dialog){case "container-rotation":DrawContainerRotation(new Rect(x,y,width,rect.yMax-y-18));break;case "container-loot":DrawContainerLoot(new Rect(x,y,width,rect.yMax-y-18));break;case "context-settings":DrawContextSettings(new Rect(x,y,width,rect.yMax-y-18));break;case "create":DrawCreate(new Rect(x,y,width,rect.yMax-y-18));break;case "rename":DrawRename(x,y,width);break;case "properties":DrawProperties(new Rect(x,y,width,rect.yMax-y-18));break;}
    var e=Event.current;if(e.isMouse||e.type==EventType.ScrollWheel)e.Use();
   }catch(Exception error){notice=error.Message;CloseDialog();FeatureToasts.Show(notice);}finally{GUI.depth=depth;GUI.enabled=oldEnabled;}
  }
@@ -39,10 +39,12 @@ internal static partial class WorldEditor {
   InterfaceMenu.Surface(new Rect(x,y-6,1,13),Color.white,0);
  }
  static void DrawCreate(Rect rect){
+  if(createContainer){DrawContainerCatalog(rect);return;}
   if(!createAi&&createItemSample!=null){DrawCreateItem(rect);return;}
-  float half=(rect.width-10)/2;
-  if(InterfaceMenu.Button(new Rect(rect.x,rect.y,half,32),"AI",createAi)){createAi=true;query="";scroll=Vector2.zero;}
-  if(InterfaceMenu.Button(new Rect(rect.x+half+10,rect.y,half,32),"物品",!createAi)){createAi=false;query="";scroll=Vector2.zero;}
+  float half=(rect.width-20)/3;
+  if(InterfaceMenu.Button(new Rect(rect.x,rect.y,half,32),"AI",createAi)){createAi=true;createContainer=false;query="";scroll=Vector2.zero;}
+  if(InterfaceMenu.Button(new Rect(rect.x+half+10,rect.y,half,32),"物品",!createAi)){createAi=false;createContainer=false;query="";scroll=Vector2.zero;}
+  if(InterfaceMenu.Button(new Rect(rect.x+2*(half+10),rect.y,half,32),"容器",createContainer)){createContainer=true;query="";scroll=Vector2.zero;}
   query=InterfaceMenu.Field(new Rect(rect.x,rect.y+42,rect.width,30),query);
   float top=rect.y+82;
   if(createAi){if(InterfaceMenu.Button(new Rect(rect.x,top,rect.width,30),"难度："+new[]{"简单","普通","困难","不可能"}[difficulty]))difficulty=(difficulty+1)%4;top+=40;

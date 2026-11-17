@@ -7,6 +7,7 @@ internal static class EditorContextRules {
   ("rename","重命名"),("kill","杀死"),("release-air","解除空中固定"),("delete","删除"),("revive","复活"),("properties","属性"),
   ("remove-weapons","删除所有武器"),("team-a","设为A方"),("team-b","设为B方"),("team-clear","清除队伍标记"),("pause-toggle","暂停／恢复活动"),
   ("ab-toggle","A ↔ B 敌对／停战"),("player-toggle","对玩家敌对／停战"),("player-default","恢复对玩家默认关系"),
+  ("rotate","旋转容器"),("loot-server","重新生成物品（当前服务端配置）"),("loot-custom","重新生成物品（自定义配置）"),("container-open","开启／关闭容器"),
   ("invincible-toggle","切换无敌"),("clear-effects","清除异常状态")
  };
  internal static string Default=>string.Join(",",Options.Select(o=>o.Id));

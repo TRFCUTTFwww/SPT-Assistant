@@ -15,9 +15,9 @@ internal static partial class WorldEditor {
   if(SelectionKinds>1){categoryMenu=true;contextTitle="选择对象类别";SetContext(CategoryActions(OpenEditContext));return;}
   OpenEditContext(FirstSelectionKind);
  }
- static int SelectionKinds=>(selectedActors.Count>0?1:0)+(selectedItems.Count>0?1:0)+(selectedCorpses.Count>0?1:0)+(selectedAirdrops.Count>0?1:0);
- static SelectionKind FirstSelectionKind=>selectedActors.Count>0?SelectionKind.Ai:selectedItems.Count>0?SelectionKind.Items:selectedCorpses.Count>0?SelectionKind.Corpses:selectedAirdrops.Count>0?SelectionKind.Airdrops:SelectionKind.Items;
- static ContextAction[] CategoryActions(Action<SelectionKind> apply){var result=new System.Collections.Generic.List<ContextAction>();if(selectedActors.Count>0)result.Add(new("AI ×"+selectedActors.Count,true,()=>apply(SelectionKind.Ai)));if(selectedItems.Count>0)result.Add(new(I18n.Text("物品")+" ×"+selectedItems.Count,true,()=>apply(SelectionKind.Items)));if(selectedCorpses.Count>0)result.Add(new(I18n.Text("尸体")+" ×"+selectedCorpses.Count,true,()=>apply(SelectionKind.Corpses)));if(selectedAirdrops.Count>0)result.Add(new(I18n.Text("空投箱")+" ×"+selectedAirdrops.Count,true,()=>apply(SelectionKind.Airdrops)));return result.ToArray();}
+ static int SelectionKinds=>(selectedActors.Count>0?1:0)+(selectedItems.Count>0?1:0)+(selectedCorpses.Count>0?1:0)+(selectedAirdrops.Count>0?1:0)+(selectedContainers.Count>0?1:0);
+ static SelectionKind FirstSelectionKind=>selectedActors.Count>0?SelectionKind.Ai:selectedItems.Count>0?SelectionKind.Items:selectedCorpses.Count>0?SelectionKind.Corpses:selectedAirdrops.Count>0?SelectionKind.Airdrops:selectedContainers.Count>0?SelectionKind.Containers:SelectionKind.Items;
+ static ContextAction[] CategoryActions(Action<SelectionKind> apply){var result=new System.Collections.Generic.List<ContextAction>();if(selectedActors.Count>0)result.Add(new("AI ×"+selectedActors.Count,true,()=>apply(SelectionKind.Ai)));if(selectedItems.Count>0)result.Add(new(I18n.Text("物品")+" ×"+selectedItems.Count,true,()=>apply(SelectionKind.Items)));if(selectedCorpses.Count>0)result.Add(new(I18n.Text("尸体")+" ×"+selectedCorpses.Count,true,()=>apply(SelectionKind.Corpses)));if(selectedAirdrops.Count>0)result.Add(new(I18n.Text("空投箱")+" ×"+selectedAirdrops.Count,true,()=>apply(SelectionKind.Airdrops)));if(selectedContainers.Count>0)result.Add(new(I18n.Text("容器")+" ×"+selectedContainers.Count,true,()=>apply(SelectionKind.Containers)));return result.ToArray();}
  static void SetContext(ContextAction[] actions){contextActions=actions;contextChoice=EditorMenuRules.Next(Array.ConvertAll(actions,a=>a.Enabled),-1,1);contextTop=0;contextFrame=Time.frameCount;contextPointer=MousePosition;Modal("context");}
  static void OpenEditContext(SelectionKind kind){
   selectionKind=kind;TargetAt(0);categoryMenu=false;contextTitle="场景编辑";bool selected=SelectionCount>0;
@@ -36,7 +36,8 @@ internal static partial class WorldEditor {
    Pair("player-toggle",targets.Select(AiActorControl.EditorPlayerCeasefire).ToArray(),"对玩家停战","对玩家敌对",value=>ContextPlayerRelation(value?1:2));Add("player-default",true,()=>ContextPlayerRelation(0));
    Pair("invincible-toggle",targets.Select(p=>AiActorControl.EditorState(p).Invincible).ToArray(),"开启无敌","关闭无敌",ContextInvincible);Add("clear-effects",true,ContextClearEffects);
   }
-  Add("delete",selected,Delete,ShortcutLabel(EditorShortcut.Delete));if(kind==SelectionKind.Corpses)Add("revive",selected,ReviveCorpses);else if(kind!=SelectionKind.Airdrops)Add("properties",selected,OpenProperties,ShortcutLabel(EditorShortcut.Properties));
+  if(kind==SelectionKind.Containers&&selected){Add("rotate",true,BeginContainerRotation);Add("loot-server",true,()=>RegenerateContainers(false));Add("loot-custom",true,OpenContainerLoot);Pair("container-open",selectedContainers.Select(r=>ContainerScene.Open(r.Resolve())).ToArray(),"开启容器","关闭容器",SetContainersOpen);}
+  Add("delete",selected,Delete,ShortcutLabel(EditorShortcut.Delete));if(kind==SelectionKind.Corpses)Add("revive",selected,ReviveCorpses);else if(kind is not (SelectionKind.Airdrops or SelectionKind.Containers))Add("properties",selected,OpenProperties,ShortcutLabel(EditorShortcut.Properties));
   var actions=EditorContextRules.Read(contextOrder.Value).Where(available.ContainsKey).SelectMany(id=>available[id]).ToList();
   actions.Add(new("自定义右键菜单",true,OpenContextSettings));
   if(SelectionKinds>1)actions.Add(new("返回类别选择",true,OpenContext));SetContext(actions.ToArray());

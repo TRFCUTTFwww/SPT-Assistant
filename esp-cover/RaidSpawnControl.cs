@@ -9,15 +9,19 @@ using UnityEngine;
 using NativeTask=Il2CppSystem.Threading.Tasks.Task;
 namespace LocalSpt5Esp;
 internal static class RaidSpawnControl {
- static IntPtr game,world;static bool noAi;static float nextSweep,nextWarning;static int blocked;
+ static IntPtr game,world;static bool noAi,spawnPaused;
+ internal static bool SpawnPaused=>spawnPaused&&RaidClock.Active;
+ internal static int BlockedSpawns=>blocked;
+ internal static void SetSpawnPaused(bool value){if(!RaidClock.Active)throw new ArgumentException("请进入战局后操作。");spawnPaused=value;FeatureToasts.Show(value?"自然 AI 生成已暂停；场上 AI 保留，手动生成可用。":"自然 AI 生成已恢复；后续刷新继续。");}
+ internal static void DrawSpawnPause(Rect rect){bool was=GUI.enabled;GUI.enabled=was&&RaidClock.Active;if(InterfaceMenu.Button(rect,SpawnPaused?"恢复本局自然 AI 生成":"暂停本局自然 AI 生成",SpawnPaused))SetSpawnPaused(!SpawnPaused);GUI.enabled=was;}static float nextSweep,nextWarning;static int blocked;
  static readonly HashSet<IntPtr> manual=new();static readonly HashSet<string> manualProfiles=new(StringComparer.Ordinal);
  static readonly Dictionary<IntPtr,float> pending=new();
  internal static bool NoAiActive=>noAi&&(game!=IntPtr.Zero||RaidClock.Active);
- internal static void Reset(){game=world=IntPtr.Zero;noAi=false;blocked=0;nextSweep=nextWarning=0;manual.Clear();manualProfiles.Clear();pending.Clear();}
+ internal static void Reset(){game=world=IntPtr.Zero;noAi=spawnPaused=false;blocked=0;nextSweep=nextWarning=0;manual.Clear();manualProfiles.Clear();pending.Clear();}
  internal static void Configure(bool value){noAi=value;nextSweep=0;}
  internal static void AllowManual(BotCreationData data){manual.Add(data.Pointer);if(data.Profiles is {} profiles)for(int i=0;i<profiles.Count;i++)if(profiles[i]?.Id is string id&&id.Length>0)manualProfiles.Add(id);}
  internal static void ForgetManual(BotCreationData? data){if(data!=null)manual.Remove(data.Pointer);}
- static bool Block(bool explicitManual){bool value=AiCleanupRules.BlockSpawn(NoAiActive,SceneTemplates.Exclusive,explicitManual);if(value)blocked++;return value;}
+ static bool Block(bool explicitManual){bool value=AiCleanupRules.BlockSpawn(NoAiActive||SpawnPaused,SceneTemplates.Exclusive,explicitManual);if(value)blocked++;return value;}
  internal static void Initialize(Plugin plugin){
   try{Configure(NextRaidLoot.Read().NoAi);}catch(Exception e){plugin.Log.LogWarning("No-AI settings: "+e.Message);}
   void Hook(MethodInfo method,string prefix){try{plugin.Patches.Patch(method,prefix:new HarmonyMethod(typeof(RaidSpawnControl),prefix));}catch(Exception e){plugin.Log.LogError("No-AI hook "+method.DeclaringType?.Name+"."+method.Name+": "+e);}}
@@ -36,8 +40,8 @@ internal static class RaidSpawnControl {
  static bool CreatorProfile(Profile __0,ref NativeTask __result){if(!Block(__0!=null&&manualProfiles.Contains(__0.Id)))return true;__result=NativeTask.CompletedTask;return false;}
  static bool Btr(ref NativeTask __result){if(!NoAiActive)return true;blocked++;__result=NativeTask.CompletedTask;return false;}
  internal static void Tick(GameWorld? current){
-  if(current==null){if(world!=IntPtr.Zero){world=IntPtr.Zero;pending.Clear();manual.Clear();manualProfiles.Clear();}return;}
-  if(world!=current.Pointer){world=current.Pointer;pending.Clear();nextSweep=0;try{Configure(NextRaidLoot.Read().NoAi);}catch{}Plugin.Self.Log.LogInfo($"No-AI world bound: {world}; enabled={noAi}");}
+  if(current==null){spawnPaused=false;if(world!=IntPtr.Zero){world=IntPtr.Zero;pending.Clear();manual.Clear();manualProfiles.Clear();}return;}
+  if(world!=current.Pointer){if(world!=IntPtr.Zero)spawnPaused=false;world=current.Pointer;pending.Clear();nextSweep=0;try{Configure(NextRaidLoot.Read().NoAi);}catch{}Plugin.Self.Log.LogInfo($"No-AI world bound: {world}; enabled={noAi}");}
   if(!(NoAiActive||SceneTemplates.Exclusive)||Time.unscaledTime<nextSweep)return;nextSweep=Time.unscaledTime+1;
   try{
    var actors=AiRemoval.Gather(current);var candidates=new List<Player>();var seen=new HashSet<IntPtr>();

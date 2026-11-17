@@ -36,6 +36,13 @@ public static partial class Patches {
  [ThreadStatic]static RaidSettings? airdrop;
  static readonly JsonSerializerOptions json=new(){WriteIndented=true};
  public sealed class Scope {internal RaidSettings? Previous;}
+ // Explicit scope for editor regeneration: apply current rules without mutating map tables.
+ public static object GenerateEditorContainer(object generator,object shell,object distribution,object ammo,string map,bool serverRules){
+  var previous=raid;try{raid=serverRules?Read():null;
+   return typeof(LocationLootGenerator).GetMethod("AddLootToContainer",BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic)!.Invoke(generator,[shell,Array.Empty<StaticForced>(),distribution,ammo,map])!;
+  }finally{raid=previous;}
+ }
+
  internal static RaidSettings Read(){try{var file=Path.Combine(Home,"settings.json");var value=File.Exists(file)?JsonSerializer.Deserialize<RaidSettings>(File.ReadAllText(file))??new():new RaidSettings();value.Validate();return value;}catch(Exception e){Log.Warning("Raid loot settings ignored: "+e.Message);return new();}}
  static double Price(string tpl)=>tpl==BitcoinRules.Template&&LiveBitcoin.Effective is double live?live:prices.GetValueOrDefault(tpl);
  static void Status(string? map=null,RaidSettings? settings=null){try{Directory.CreateDirectory(Home);string file=Path.Combine(Home,"server-status.json");File.WriteAllText(file+".tmp",JsonSerializer.Serialize(new{version="2.3.2",serverPid=Environment.ProcessId,ready=true,map,settings,utc=DateTime.UtcNow},json));File.Move(file+".tmp",file,true);}catch(Exception e){Log.Warning("Raid status file: "+e.Message);}}

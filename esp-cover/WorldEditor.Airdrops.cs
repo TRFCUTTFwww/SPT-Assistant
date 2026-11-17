@@ -16,7 +16,7 @@ internal static partial class WorldEditor {
  sealed record AirdropCopy(ItemCopy Contents,EAirdropType Type,AirdropSynchronizableObject.EAirdropViewType View,Quaternion Rotation);
  sealed record AirdropMove(AirdropReference Reference,Vector3 Origin,Quaternion Rotation,Rigidbody? Body,bool Kinematic,bool Gravity,Vector3 Velocity,Vector3 Angular);
  static readonly List<AirdropReference> selectedAirdrops=new();static readonly List<AirdropMove> moveAirdrops=new();
- static string SelectionName=>selectionKind switch{SelectionKind.Ai=>"AI",SelectionKind.Items=>I18n.Text("物品"),SelectionKind.Corpses=>I18n.Text("尸体"),_=>I18n.Text("空投箱")};
+ static string SelectionName=>selectionKind switch{SelectionKind.Ai=>"AI",SelectionKind.Items=>I18n.Text("物品"),SelectionKind.Corpses=>I18n.Text("尸体"),SelectionKind.Containers=>I18n.Text("容器"),_=>I18n.Text("空投箱")};
  static Vector3 AirdropPoint(AirdropSynchronizableObject drop)=>drop.CollisionCollider?.bounds.center??drop.transform.position+Vector3.up*.6f;
  static AirdropCopy CaptureAirdrop(AirdropSynchronizableObject drop){var view=AirdropSynchronizableObject.EAirdropViewType.Default;foreach(var entry in drop.AirdropViews)if(entry?.LootContainerCollider?.gameObject.activeInHierarchy==true){view=entry.ViewType;break;}return new(CaptureItem(AirdropControl.EditorContainer(drop).ItemOwner.RootItem),drop.AirdropType,view,drop.transform.rotation);}
  static void PlaceAirdrop(AirdropCopy copy,Vector3 position)=>AirdropControl.EditorCreate(Current(),CloneItem(copy.Contents),copy.Type,copy.View,position,copy.Rotation);
