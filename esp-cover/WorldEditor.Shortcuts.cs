@@ -21,6 +21,7 @@ internal static partial class WorldEditor {
   Bind(EditorShortcut.Properties,"Editor properties shortcut","编辑：属性",KeyCode.F4);
   Bind(EditorShortcut.Kill,"Editor kill shortcut","编辑：杀死 AI",KeyCode.None);
   Bind(EditorShortcut.ReleaseAir,"Editor release air shortcut","编辑：解除空中固定",KeyCode.None);
+  Bind(EditorShortcut.Undo,"Editor undo shortcut","编辑：撤销",KeyCode.Z,KeyCode.LeftControl);
  }
  static string ShortcutLabel(EditorShortcut action)=>shortcuts.TryGetValue(action,out var key)?ShortcutBindings.Label(key.Value):"None";
  static string ShortcutHint=>I18n.Text("移动")+" "+ShortcutLabel(EditorShortcut.Move)+" · "+I18n.Text("复制")+" "+ShortcutLabel(EditorShortcut.Copy)+" · "+I18n.Text("粘贴")+" "+ShortcutLabel(EditorShortcut.Paste)+" · "+I18n.Text("删除")+" "+ShortcutLabel(EditorShortcut.Delete);
@@ -39,6 +40,7 @@ internal static partial class WorldEditor {
   foreach(var pair in shortcuts)if(ShortcutBindings.Take(pair.Value,true)){action=pair.Key;break;}
   if(action==EditorShortcut.None)return false;
   shortcutFrame=Time.frameCount;
+  if(action==EditorShortcut.Undo){Undo();return true;}
   if(action==EditorShortcut.Create){if(dialog.Length==0)ReadPoint(current,PointerRay(AltDown));BeginCreate();return true;}
   if(action==EditorShortcut.Paste){
    if(clipboard.Length==0){FeatureToasts.Show("剪贴板为空。");return true;}

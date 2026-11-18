@@ -39,6 +39,8 @@ internal static partial class WorldEditor {
   if(kind==SelectionKind.Containers&&selected){Add("rename",true,BeginRename,ShortcutLabel(EditorShortcut.Rename));ContainerLootAvailability.Read(Current());Add("rotate",true,BeginContainerRotation);Add("loot-server",selectedContainers.All(r=>ContainerLootAvailability.Allows(Current(),ContainerScene.Template(r.Resolve()))),()=>RegenerateContainers(false));Add("loot-custom",true,OpenContainerLoot);Pair("container-open",selectedContainers.Select(r=>ContainerScene.Open(r.Resolve())).ToArray(),"开启容器","关闭容器",SetContainersOpen);}
   Add("delete",selected,Delete,ShortcutLabel(EditorShortcut.Delete));if(kind==SelectionKind.Corpses)Add("revive",selected,ReviveCorpses);else if(kind is not (SelectionKind.Airdrops or SelectionKind.Containers))Add("properties",selected,OpenProperties,ShortcutLabel(EditorShortcut.Properties));
   var actions=EditorContextRules.Read(contextOrder.Value).Where(available.ContainsKey).SelectMany(id=>available[id]).ToList();
+  actions.Add(new(I18n.Text("撤销")+(CanUndo?" · "+I18n.Text(UndoLabel):""),CanUndo,Undo,ShortcutLabel(EditorShortcut.Undo)));
+  actions.Add(new("场景蓝图（导入 / 导出 / 恢复）",true,()=>Modal("blueprints")));
   actions.Add(new("自定义右键菜单",true,OpenContextSettings));
   if(SelectionKinds>1)actions.Add(new("返回类别选择",true,OpenContext));SetContext(actions.ToArray());
  }

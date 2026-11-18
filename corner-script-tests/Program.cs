@@ -69,5 +69,9 @@ try{
  var large=Serve(200,"",declaredSize:1048577);
  Reject("return httpGet('"+url+"');","oversized HTTP response is rejected");await large;
  var hanging=Serve(200,"",delay:500);using var timeout=new CancellationTokenSource(100);var clock=Stopwatch.StartNew();Reject("return httpGet('"+url+"');","HTTP request obeys cancellation",timeout.Token);Check(clock.Elapsed<TimeSpan.FromSeconds(2),"cancellation returns promptly");await hanging;
+ var evalGame=core.GetType("LocalSpt5Esp.CornerScript",true)!.GetMethod("EvaluateWithGame",BindingFlags.Static|BindingFlags.NonPublic)!;
+ string RunWithGame(string code,string? gameJson)=>(string)evalGame.Invoke(null,[code,CancellationToken.None,(Func<string,string>)(_=>"{}"),gameJson])!;
+ Check(RunWithGame("return game.map + ':' + game.aliveAi + ':' + game.fps + ':' + game.cultistReady;", """{"inRaid":true,"map":"woods","raidRemainingSeconds":420,"fps":88.5,"aliveAi":7,"alivePlayers":8,"hideoutCraftsReady":2,"cultistReady":true}""")=="woods:7:88.5:true","globalThis.game exposes injected snapshot");
+ Check(RunWithGame("'use strict'; try { game.map = 'hack'; return 'mutated'; } catch { return 'frozen'; }", """{"map":"customs"}""")=="frozen","globalThis.game is frozen");
  Console.WriteLine($"Passed {checks} script and HTTP checks.");
 }finally{resolver.GetMethod("Shutdown",BindingFlags.Static|BindingFlags.NonPublic)!.Invoke(null,null);context.Unload();}

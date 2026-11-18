@@ -13,7 +13,11 @@ internal static class CornerVersionControl {
  static ConfigEntry<bool> enabled=null!;static ConfigEntry<string> text=null!;static PreloaderUI? preloader;static LocalizedText? label;static string original="",written="",draft="";static bool restoring;static float next;
  static readonly Dictionary<long,(TextMeshProUGUI Label,bool Rich)> formats=new();
  static ConfigEntry<bool> dynamic=null!;static ConfigEntry<string> script=null!;static ConfigEntry<double> interval=null!;static ConfigEntry<CornerScriptTimeUnit> intervalUnit=null!;
- static string scriptDraft="",intervalDraft="30",dynamicText="",scriptStatus="尚未运行";static Task<string>? work;static CancellationTokenSource? cancellation;static double nextScript;static GUIStyle? codeStyle;static bool unitDropdown;
+ static string scriptDraft="",intervalDraft="30",dynamicText="",scriptStatus="尚未运行",presetName="";static Task<string>? work;static CancellationTokenSource? cancellation;static double nextScript;static GUIStyle? codeStyle;static bool unitDropdown,presetsLoaded;
+ static Task<string?>? fileDialog;static string fileDialogMode="";
+ sealed record ScriptPreset(string Id,string Name,string Source,double Interval,CornerScriptTimeUnit Unit,string Saved);
+ static readonly List<ScriptPreset> presets=new();
+ static string PresetPath=>System.IO.Path.Combine(BepInEx.Paths.PluginPath,"LocalSpt5ESP","corner-scripts.json");
  static readonly string[] unitNames={"时","分","秒","毫秒"};
  static bool changed;static Vector2 scriptScroll,codeScroll;
  static string measuredCode="";static float measuredWidth=-1,measuredHeight;
@@ -44,7 +48,7 @@ internal static class CornerVersionControl {
  }
  static void Restore(){if(label!=null&&written.Length>0)label.SetLabelText(original);foreach(var entry in formats.Values)if(entry.Label!=null)entry.Label.richText=entry.Rich;formats.Clear();written="";}
  static void CancelScript(){cancellation?.Cancel();cancellation?.Dispose();cancellation=null;if(work is {} pending)_=pending.ContinueWith(t=>{_=t.Exception;},TaskContinuationOptions.OnlyOnFaulted);work=null;}
- static void StartScript(){if(work!=null)return;cancellation=new();var token=cancellation.Token;string source=script.Value;work=Task.Run(()=>CornerScript.Evaluate(source,token),token);scriptStatus="正在后台执行…";}
+ static void StartScript(){if(work!=null)return;cancellation=new();var token=cancellation.Token;string source=script.Value,gameJson=CornerGameSnapshot.CaptureJson();work=Task.Run(()=>CornerScript.EvaluateWithGame(source,token,null,gameJson),token);scriptStatus="正在后台执行…";}
  static void ScriptTick(){
   if(!enabled.Value||!dynamic.Value){if(work!=null)CancelScript();return;}
   if(work?.IsCompleted==true){var finished=work;work=null;cancellation?.Dispose();cancellation=null;nextScript=Time.realtimeSinceStartupAsDouble+IntervalSeconds;try{dynamicText=Clean(finished.GetAwaiter().GetResult());scriptStatus="已更新 · "+DateTime.Now.ToString("HH:mm:ss.fff");changed=true;}catch(Exception e){scriptStatus="执行失败，保留上次文字："+Clean(e.GetBaseException().Message);}}
@@ -60,10 +64,31 @@ internal static class CornerVersionControl {
   if(InterfaceMenu.Button(new(r.x,r.y+120,r.width,32),"JavaScript · "+(dynamic.Value&&enabled.Value?"运行中":"打开编辑器")))InterfaceMenu.Navigate("设置与热键","JavaScript");
  }
  internal static void DrawScript(Rect content){
-  float pageHeight=Math.Max(580,content.height-2)+(unitDropdown?144:0);bool scrolling=pageHeight>content.height;
+  LoadPresets();PollFileDialog();
+  float pageHeight=Math.Max(680+(presets.Count*44),content.height-2)+(unitDropdown?144:0);bool scrolling=pageHeight>content.height;
   var r=new Rect(0,0,content.width-(scrolling?24:4),pageHeight);
   scriptScroll=GUI.BeginScrollView(content,scriptScroll,new Rect(0,0,r.width,pageHeight));
   try{DrawScriptContent(r);}finally{GUI.EndScrollView();}
+ }
+ static void LoadPresets(){if(presetsLoaded)return;presetsLoaded=true;try{presets.Clear();presets.AddRange(PresetStorage.Load<ScriptPreset>(PresetPath));}catch(Exception e){scriptStatus="脚本预设读取失败，原文件保留："+e.Message;}}
+ static void SavePresets()=>PresetStorage.Save(PresetPath,presets);
+ static void PollFileDialog(){
+  if(fileDialog is not {IsCompleted:true} done)return;
+  string mode=fileDialogMode;fileDialog=null;fileDialogMode="";
+  try{
+   string? path=done.GetAwaiter().GetResult();if(string.IsNullOrWhiteSpace(path))return;
+   if(mode=="import"){
+    string source=System.IO.File.ReadAllText(path);if(source.Length>16384)throw new ArgumentException("脚本最多 16384 个字符。");
+    scriptDraft=source;codeScroll=Vector2.zero;if(string.IsNullOrWhiteSpace(presetName))presetName=System.IO.Path.GetFileNameWithoutExtension(path);
+    scriptStatus="已导入脚本："+System.IO.Path.GetFileName(path);FeatureToasts.Show(scriptStatus);
+   }else if(mode=="export"){
+    string safeName=string.Concat((string.IsNullOrWhiteSpace(presetName)?"corner-script":presetName.Trim()).Select(c=>System.IO.Path.GetInvalidFileNameChars().Contains(c)?'_':c));
+    if(string.IsNullOrWhiteSpace(safeName))safeName="corner-script";
+    string file=System.IO.Path.Combine(path,$"{safeName}-{DateTime.Now:yyyyMMdd-HHmmss}.js");
+    System.IO.File.WriteAllText(file,scriptDraft);
+    scriptStatus="已导出脚本到："+file;FeatureToasts.Show(scriptStatus);
+   }
+  }catch(Exception e){scriptStatus="脚本文件操作失败："+e.GetBaseException().Message;FeatureToasts.Show(scriptStatus);}
  }
  static void DrawScriptContent(Rect r){
   InterfaceMenu.Label(new(r.x,r.y,r.width,28),"JavaScript · 左下角文字",InterfaceMenu.Accent,17);
@@ -87,10 +112,35 @@ internal static class CornerVersionControl {
    }
    y+=144;if(close)unitDropdown=false;
   }
-  if(InterfaceMenu.Button(new(r.x,y,Math.Min(180,r.width),30),"填入时间示例")){scriptDraft=CornerScript.Example;codeScroll=Vector2.zero;}
-  if(InterfaceMenu.Button(new(r.x+190,y,Math.Min(180,r.width-190),30),"填入异步联网示例")){scriptDraft=CornerScript.AsyncExample;codeScroll=Vector2.zero;}
-  InterfaceMenu.Paragraph(new(r.x,y+38,r.width,46),scriptStatus,null,12);
-  InterfaceMenu.Paragraph(new(r.x,y+92,r.width,44),"当前显示："+(written.Length>0?written:I18n.Text("原始版本文字")),null,12);
+  if(InterfaceMenu.Button(new(r.x,y,Math.Min(140,r.width),30),"填入时间示例")){scriptDraft=CornerScript.Example;codeScroll=Vector2.zero;}
+  if(InterfaceMenu.Button(new(r.x+148,y,Math.Min(156,r.width-148),30),"填入异步联网示例")){scriptDraft=CornerScript.AsyncExample;codeScroll=Vector2.zero;}
+  if(InterfaceMenu.Button(new(r.x+312,y,Math.Max(120,r.width-312),30),"填入战局状态示例")){scriptDraft=CornerScript.GameExample;codeScroll=Vector2.zero;}
+  y+=38;
+  float halfBtn=Math.Max(80,(r.width-10)/2f);
+  if(InterfaceMenu.Button(new(r.x,y,halfBtn,30),fileDialog!=null?"选择中…":"导入 JS 文件")&&fileDialog==null){fileDialogMode="import";fileDialog=WindowsDialogs.PickOpenFile("导入 JavaScript 脚本","JavaScript (*.js;*.txt)\0*.js;*.txt\0所有文件 (*.*)\0*.*\0");}
+  if(InterfaceMenu.Button(new(r.x+halfBtn+10,y,halfBtn,30),fileDialog!=null?"选择中…":"导出 JS 到文件夹")&&fileDialog==null){fileDialogMode="export";fileDialog=WindowsDialogs.PickFolder("选择 JavaScript 导出目录");}
+  y+=38;
+  InterfaceMenu.Paragraph(new(r.x,y,r.width,42),scriptStatus,null,12);y+=46;
+  InterfaceMenu.Paragraph(new(r.x,y,r.width,40),"当前显示："+(written.Length>0?written:I18n.Text("原始版本文字")),null,12);y+=44;
+  presetName=InterfaceMenu.Field(new(r.x,y,Math.Max(100,r.width-136),30),presetName);
+  if(InterfaceMenu.Button(new(r.xMax-128,y,128,30),"保存为脚本预设")){
+   try{
+    LoadPresets();
+    string title=string.IsNullOrWhiteSpace(presetName)?"脚本 "+DateTime.Now.ToString("MMdd-HHmmss"):presetName.Trim();
+    if(title.Length>60)title=title[..60];
+    double sec=CornerScriptInterval.TrySeconds(intervalDraft,intervalUnit.Value,out var parsed)?parsed:IntervalSeconds;
+    presets.Add(new(Guid.NewGuid().ToString("N"),title,scriptDraft,sec,intervalUnit.Value,DateTime.Now.ToString("yyyy-MM-dd HH:mm")));
+    SavePresets();presetName="";scriptStatus="已保存脚本预设："+title;
+   }catch(Exception e){scriptStatus="保存预设失败："+e.Message;}
+  }
+  y+=40;
+  for(int i=presets.Count-1;i>=0;i--){
+   var p=presets[i];int idx=i;
+   InterfaceMenu.Label(new(r.x,y,Math.Max(100,r.width-186),30),$"{p.Name} ({p.Saved})",null,12,translate:false);
+   if(InterfaceMenu.Button(new(r.xMax-178,y,84,30),"载入")){scriptDraft=p.Source;intervalUnit.Value=p.Unit;intervalDraft=CornerScriptInterval.Format(p.Interval,p.Unit);presetName=p.Name;codeScroll=Vector2.zero;scriptStatus="已载入预设："+p.Name;}
+   if(InterfaceMenu.Button(new(r.xMax-86,y,86,30),"删除")){presets.RemoveAt(idx);SavePresets();scriptStatus="已删除预设："+p.Name;break;}
+   y+=38;
+  }
  }
  static void DrawScriptEditor(Rect viewport){
   const string control="LocalCornerScriptEditor";
@@ -121,5 +171,5 @@ internal static class CornerVersionControl {
   }finally{GUI.EndScrollView();}
  }
  internal static object Diagnostics()=>new{enabled=enabled.Value,found=label!=null,applied=written.Length>0,matches=written.Length>0&&label?.FormattedText==written,length=written.Length};
- internal static void Shutdown(){CancelScript();CornerScriptDependencies.Shutdown();codeStyle=null;measuredCode="";measuredWidth=-1;codeScroll=Vector2.zero;try{Restore();}finally{preloader=null;label=null;formats.Clear();}}
+ internal static void Shutdown(){CancelScript();fileDialog=null;fileDialogMode="";CornerScriptDependencies.Shutdown();codeStyle=null;measuredCode="";measuredWidth=-1;codeScroll=Vector2.zero;try{Restore();}finally{preloader=null;label=null;formats.Clear();}}
 }

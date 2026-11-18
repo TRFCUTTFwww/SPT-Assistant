@@ -63,7 +63,19 @@ public sealed class RaidParameterStore(string directory) {
  static bool MatchesPreset(string path,string map,string? group){try{var value=Object(path);return value["schema"]?.ToString()=="1"&&value["map"]?.ToString()==map&&(group==null||value["group"]?.ToString()==group);}catch{return false;}}
  public void Execute(string action,string map,string group,string name,string revision,JsonObject edits,JsonObject source,Action<JsonObject>? validate=null){lock(Gate){
   if(group is not ("AI" or "战局"))throw new ArgumentException("未知参数分组。");var state=Object(Active);if(revision!=Revision(state,source))throw new ArgumentException("服务端参数已改变，请刷新后重试。");var defs=Definitions(source).Where(d=>d.Group==group).ToDictionary(d=>d.Id);var changes=Changes(state,map).DeepClone().AsObject();
+  if(action=="delete"){string path=Preset(name);if(!File.Exists(path)||!MatchesPreset(path,map,group))throw new ArgumentException("当前地图与分组下不存在该方案。");File.Delete(path);return;}
   if(action=="save"){string path=Preset(name);if(File.Exists(path)&&!MatchesPreset(path,map,group))throw new ArgumentException("此名称已用于其他地图或分组，请更换方案名。");var stored=new JsonObject();var current=Apply(source,changes);foreach(var d in defs.Values)stored[d.Id]=At(current,d.Id)?.DeepClone();Write(path,new(){["schema"]=1,["map"]=map,["group"]=group,["values"]=stored});return;}
+  if(action=="applyAll"){
+   if(edits.Count==0)throw new ArgumentException("请先修改至少一项通用参数。");
+   foreach(var p in edits){if(!defs.TryGetValue(p.Key,out var d))throw new ArgumentException("不允许修改此分组以外的参数："+p.Key);if(p.Key.StartsWith("map/Waves/",StringComparison.Ordinal)||p.Key.StartsWith("map/BossLocationSpawn/",StringComparison.Ordinal))throw new ArgumentException("波次明细仅限单图修改，不能批量应用到全部地图："+p.Key);Validate(d,p.Value);}
+   foreach(string targetMap in new[]{"bigmap","woods","shoreline","interchange","rezervbase","lighthouse","tarkovstreets","laboratory","labyrinth","factory4_day","factory4_night","sandbox","sandbox_high"}){
+    var targetChanges=Changes(state,targetMap).DeepClone().AsObject();
+    foreach(var p in edits)targetChanges[p.Key]=p.Value?.DeepClone();
+    if(targetMap==map){var effectiveCurrent=Apply(source,targetChanges);validate?.Invoke(effectiveCurrent);}
+    state[targetMap]=targetChanges;
+   }
+   Write(Active,state);return;
+  }
   if(action=="load"){var path=Preset(name);if(!File.Exists(path))throw new ArgumentException("方案文件不存在。");var saved=Object(path);if(saved["schema"]?.ToString()!="1"||saved["map"]?.ToString()!=map||saved["group"]?.ToString()!=group)throw new ArgumentException("方案的版本、地图或分组不匹配。");edits=saved["values"] as JsonObject??throw new ArgumentException("方案缺少参数。");}
   else if(action=="defaults"){var defaults=Source(source["map"]!.AsObject(),new());foreach(var d in defs.Values){changes.Remove(d.Id);if(d.Id.StartsWith("assistant/",StringComparison.Ordinal))changes[d.Id]=At(defaults,d.Id)?.DeepClone();}}
   else if(action!="apply")throw new ArgumentException("未知参数操作。");

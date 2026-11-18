@@ -14,7 +14,14 @@ internal static partial class WorldEditor {
  static readonly Dictionary<string,(string Max,string Current)> health=new();
  static ItemComponentEditor? componentEditor;
  internal static void DrawSettings(Rect rect){
-  settingsScroll=GUI.BeginScrollView(rect,settingsScroll,new Rect(0,0,rect.width-22,672));
+  if(showingBlueprints){DrawBlueprints(rect,()=>showingBlueprints=false);return;}
+  float topH=78;
+  float btnW=Math.Max(120,(rect.width-12)/2f);
+  if(InterfaceMenu.Button(new(rect.x,rect.y,btnW,32),"场景蓝图（导入 / 导出 / 恢复）"))showingBlueprints=true;
+  if(InterfaceMenu.Button(new(rect.x+btnW+12,rect.y,btnW,32),CanUndo?I18n.Text("撤销：")+I18n.Text(UndoLabel):I18n.Text("撤销（暂无记录）"),CanUndo))Run(Undo);
+  InterfaceMenu.Label(new(rect.x,rect.y+38,rect.width,24),notice.Length>0?notice:blueprintStatus.Length>0?blueprintStatus:"提示：编辑模式支持 Ctrl+Z 撤销移动/旋转/重命名/删除，并可导出或导入场景蓝图。",InterfaceMenu.Accent,12);
+  var listRect=new Rect(rect.x,rect.y+topH,rect.width,Math.Max(120,rect.height-topH));
+  settingsScroll=GUI.BeginScrollView(listRect,settingsScroll,new Rect(0,0,rect.width-22,672));
   try{var entries=new BepInEx.Configuration.ConfigEntryBase[]{enabled!,toggleEditor!,containerBuildKey!,containerFloating!,throughWallSelection!,moveInvincible!,moveIgnored!};for(int i=0;i<entries.Length;i++)InterfaceMenu.DrawEntry(entries[i],new Rect(0,i*96,rect.width-28,86));}finally{GUI.EndScrollView();}
  }
  internal static void Draw(){
@@ -23,10 +30,10 @@ internal static partial class WorldEditor {
    if(dialog.Length==0){if(containerBuilding){DrawContainerBuild();return;}DrawEditorCrosshair();DrawSelection();return;}
    if(dialog=="context"){DrawContext();return;}
    KeepCursor();GUI.enabled=oldEnabled&&Time.frameCount>dialogFrame;float w=Math.Min(dialog=="rename"?380:actor!=null&&dialog=="properties"?860:700,Screen.width-24),h=Math.Min(dialog=="rename"?174+(SelectionCount>1?38:0):760,Screen.height-24);var rect=new Rect((Screen.width-w)/2,(Screen.height-h)/2,w,h);InterfaceMenu.Panel(rect);float x=rect.x+18,y=rect.y+14,width=w-36;
-   InterfaceMenu.Label(new Rect(x,y,width-90,30),dialog switch{"context-settings"=>"自定义右键菜单","context"=>"场景编辑","create"=>"创建","rename"=>"重命名","container-rotation"=>"旋转容器","container-loot"=>"自定义容器物资",_=>"属性"},InterfaceMenu.Accent,20);
+   InterfaceMenu.Label(new Rect(x,y,width-90,30),dialog switch{"blueprints"=>"场景蓝图","context-settings"=>"自定义右键菜单","context"=>"场景编辑","create"=>"创建","rename"=>"重命名","container-rotation"=>"旋转容器","container-loot"=>"自定义容器物资",_=>"属性"},InterfaceMenu.Accent,20);
    if(InterfaceMenu.Button(new Rect(rect.xMax-94,y,76,30),"关闭")){CloseDialog();return;}y+=44;
    if(dialog is "properties" or "rename")DrawTargetNavigation(x,ref y,width);
-   switch(dialog){case "container-rotation":DrawContainerRotation(new Rect(x,y,width,rect.yMax-y-18));break;case "container-loot":DrawContainerLoot(new Rect(x,y,width,rect.yMax-y-18));break;case "context-settings":DrawContextSettings(new Rect(x,y,width,rect.yMax-y-18));break;case "create":DrawCreate(new Rect(x,y,width,rect.yMax-y-18));break;case "rename":DrawRename(x,y,width);break;case "properties":DrawProperties(new Rect(x,y,width,rect.yMax-y-18));break;}
+   switch(dialog){case "blueprints":DrawBlueprints(new Rect(x,y,width,rect.yMax-y-18));break;case "container-rotation":DrawContainerRotation(new Rect(x,y,width,rect.yMax-y-18));break;case "container-loot":DrawContainerLoot(new Rect(x,y,width,rect.yMax-y-18));break;case "context-settings":DrawContextSettings(new Rect(x,y,width,rect.yMax-y-18));break;case "create":DrawCreate(new Rect(x,y,width,rect.yMax-y-18));break;case "rename":DrawRename(x,y,width);break;case "properties":DrawProperties(new Rect(x,y,width,rect.yMax-y-18));break;}
    var e=Event.current;if(e.isMouse||e.type==EventType.ScrollWheel)e.Use();
   }catch(Exception error){notice=error.Message;CloseDialog();FeatureToasts.Show(notice);}finally{GUI.depth=depth;GUI.enabled=oldEnabled;}
  }
@@ -55,7 +62,7 @@ internal static partial class WorldEditor {
   }
   InterfaceMenu.Paragraph(new Rect(rect.x,rect.yMax-60,rect.width,60),createAi?AiSpawnService.Status:WorldItemPlacement.Status.Length>0?WorldItemPlacement.Status:"显示前 300 项，请输入名称或模板 ID 缩小范围。",InterfaceMenu.Accent,12);
  }
- static void DrawRename(float x,float y,float width){rename=InterfaceMenu.Field(new Rect(x,y,width,32),rename);if(InterfaceMenu.Button(new Rect(x,y+44,width,32),"应用"))Run(()=>{string name=rename.Trim();if(name.Length is <1 or >64)throw new ArgumentException("名称长度须为 1～64 个字符。");if(selectionKind==SelectionKind.Containers)ContainerScene.Rename(selectedContainers[selectionIndex].Resolve(),name);else Actor().Profile.Info.Nickname=name;if(SelectionCount>1){notice="已应用当前对象。";FeatureToasts.Show(notice);}else CloseDialog();});}
+ static void DrawRename(float x,float y,float width){rename=InterfaceMenu.Field(new Rect(x,y,width,32),rename);if(InterfaceMenu.Button(new Rect(x,y+44,width,32),"应用"))Run(()=>{string name=rename.Trim();if(name.Length is <1 or >64)throw new ArgumentException("名称长度须为 1～64 个字符。");string previous=RenameValue;if(selectionKind==SelectionKind.Containers)ContainerScene.Rename(selectedContainers[selectionIndex].Resolve(),name);else Actor().Profile.Info.Nickname=name;PushRenameUndo(selectionKind,selectionIndex,previous);if(SelectionCount>1){notice="已应用当前对象。";FeatureToasts.Show(notice);}else CloseDialog();});}
  static void OpenProperties(){ReadProperties();Modal("properties");}
  static void ReadProperties(){
   health.Clear();componentEditor=null;ReleasePropertyEditors();

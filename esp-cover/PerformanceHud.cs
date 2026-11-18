@@ -7,6 +7,8 @@ internal static class PerformanceHud {
  static ConfigEntry<bool> enabled=null!;static ConfigEntry<float> refresh=null!,opacity=null!;
  static readonly PerformanceWindow window=new();
  static int lastFrame=-1;static float nextRefresh;static bool wasEnabled;
+ static double currentFps;
+ internal static double CurrentFps=>currentFps;
  static string headline="采样中…",frames="",stalls="",cpu="",parts="";static Color state=Color.white;
  internal static void Initialize(){const string section="58. 性能监测";
   enabled=FeatureConfig.Bind(section,"Performance monitor","显示性能监测",true,"显示最近约 5 秒的 FPS、帧时间及辅助 CPU 耗时；位置可通过菜单顶部「布局」调整。");
@@ -19,6 +21,7 @@ internal static class PerformanceHud {
   window.Add(sample with{Frame=milliseconds});
   if(Time.unscaledTime<nextRefresh)return;nextRefresh=Time.unscaledTime+refresh.Value;
   var s=window.Read();if(s.Count==0)return;
+  currentFps=s.Fps;
   headline=$"{s.Fps:F0} FPS   ·   {s.Frame:F1} ms / 帧";
   frames=$"P99 {s.P99:F1} ms     最慢 {s.Peak:F1} ms";
   stalls=$"卡顿帧（>50 ms） {s.Slow} / {s.Count}   ·   {s.Seconds:F1} 秒";
@@ -39,5 +42,5 @@ internal static class PerformanceHud {
   InterfaceMenu.Label(new Rect(r.x+12,r.y+136,r.width-24,22),parts,InterfaceMenu.Text,11);
 
  }
- internal static void Reset(){window.Clear();lastFrame=-1;nextRefresh=0;wasEnabled=false;headline="采样中…";frames=stalls=cpu=parts="";}
+ internal static void Reset(){window.Clear();lastFrame=-1;nextRefresh=0;wasEnabled=false;currentFps=0;headline="采样中…";frames=stalls=cpu=parts="";}
 }

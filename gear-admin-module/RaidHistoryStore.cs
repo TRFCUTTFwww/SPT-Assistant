@@ -34,7 +34,14 @@ public sealed class RaidHistoryStore {
  public void Put(string session,RaidHistoryRecord raid){using var db=new SqliteSnapshots.Db(path);db.Exec("BEGIN IMMEDIATE");using(var existing=db.Prepare("SELECT body FROM raids WHERE id=?")){existing.Text(1,raid.Id);if(existing.Row()&&JsonSerializer.Deserialize<RaidHistoryRecord>(existing.Bytes(0))?.Settled==true){db.Exec("COMMIT");return;}}using var q=db.Prepare("INSERT INTO raids(id,session,started,map,status,body) VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET status=excluded.status,body=excluded.body WHERE raids.session=excluded.session");q.Text(1,raid.Id);q.Text(2,session);q.Text(3,raid.Started.Length>0?raid.Started:raid.Ended);q.Text(4,raid.Map);q.Text(5,raid.Status);q.Blob(6,JsonSerializer.SerializeToUtf8Bytes(raid));q.Done();db.Exec("COMMIT");}
  public object List(string session,int page,string map,string status){page=Math.Clamp(page,0,100000);using var db=new SqliteSnapshots.Db(path);const string filter=" WHERE session=? AND (?='' OR map=?) AND (?='' OR status=?)";
   void Bind(SqliteSnapshots.Query q){q.Text(1,session);q.Text(2,map);q.Text(3,map);q.Text(4,status);q.Text(5,status);}
-  int total;using(var count=db.Prepare("SELECT COUNT(*) FROM raids"+filter)){Bind(count);total=count.Row()?count.Int(0):0;}
-  using var query=db.Prepare("SELECT body FROM raids"+filter+" ORDER BY started DESC,id DESC LIMIT 20 OFFSET "+(page*20));Bind(query);var rows=new List<object>();while(query.Row()){var r=JsonSerializer.Deserialize<RaidHistoryRecord>(query.Bytes(0))!;rows.Add(new{r.Id,r.Map,r.Side,r.Nickname,r.Started,r.Ended,r.Status,r.Seconds,r.Settled,kills=r.Kills.Length,loot=r.Loot.Sum(i=>i.Count)});}return new{rows,total,page,pageSize=20};
+  int total,survived=0,kills=0;using(var count=db.Prepare("SELECT COUNT(*), COALESCE(SUM(CASE WHEN status='SURVIVED' THEN 1 ELSE 0 END),0) FROM raids"+filter)){Bind(count);if(count.Row()){total=count.Int(0);survived=count.Int(1);}else total=0;}
+  using(var sumQ=db.Prepare("SELECT body FROM raids"+filter+" ORDER BY started DESC,id DESC LIMIT 1000")){Bind(sumQ);while(sumQ.Row()){var r=JsonSerializer.Deserialize<RaidHistoryRecord>(sumQ.Bytes(0));if(r!=null)kills+=r.Kills.Length;}}
+  using var query=db.Prepare("SELECT body FROM raids"+filter+" ORDER BY started DESC,id DESC LIMIT 20 OFFSET "+(page*20));Bind(query);var rows=new List<object>();while(query.Row()){var r=JsonSerializer.Deserialize<RaidHistoryRecord>(query.Bytes(0))!;rows.Add(new{r.Id,r.Map,r.Side,r.Nickname,r.Started,r.Ended,r.Status,r.Seconds,r.Settled,kills=r.Kills.Length,loot=r.Loot.Sum(i=>i.Count)});}return new{rows,total,page,pageSize=20,summary=new{total,survived,kills}};
+ }
+ public RaidHistoryRecord[] Export(string session,string map,string status,int limit=500){
+  limit=Math.Clamp(limit,1,2000);using var db=new SqliteSnapshots.Db(path);const string filter=" WHERE session=? AND (?='' OR map=?) AND (?='' OR status=?)";
+  using var query=db.Prepare("SELECT body FROM raids"+filter+" ORDER BY started DESC,id DESC LIMIT "+limit);
+  query.Text(1,session);query.Text(2,map);query.Text(3,map);query.Text(4,status);query.Text(5,status);
+  var rows=new List<RaidHistoryRecord>();while(query.Row())if(JsonSerializer.Deserialize<RaidHistoryRecord>(query.Bytes(0)) is {} r)rows.Add(r);return rows.ToArray();
  }
 }

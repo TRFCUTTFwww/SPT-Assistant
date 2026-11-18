@@ -26,10 +26,15 @@ namespace EFT {
  public class QuestController {public Profile? Profile;}
  public class Profile {public string Id="p";public HideoutData? Hideout=new();}
  public class HideoutData {public Dictionary<string,Hideout.ProductionData> Production=new();}
+ public class AreaInfo { public int Type;public int Level;public Il2CppSystem.Nullable<int> CompleteTime;public bool Constructing; }
 }
+namespace Il2CppSystem { public struct Nullable<T>(T value) where T:struct { public bool HasValue=>true;public T Value=>value; } }
 namespace EFT.UI {public class ItemUiContext {public static ItemUiContext? Instance;public EFT.QuestController? QuestController;} }
 namespace EFT.Hideout {
- public class HideoutRepresentation {public ProductionController? ProductionController;}
+ public enum EAreaType { Generator=4, Workbench=10 }
+ public class AreaTemplate { public EAreaType Type; }
+ public class AreaData { public AreaTemplate? Template;public int CurrentLevel;public int StatusUpdates;public void DecideStatus(int levelToSet)=>StatusUpdates++; }
+ public class HideoutRepresentation {public ProductionController? ProductionController;public AreaInfo[]? Areas;public List<AreaData>? AreaDatas;}
  public class ProductionController {public Dictionary<int,List<ItemsProducerBase>> _areaProducers=new();}
  public class ProductionData {public double Progress;public int StartTimestamp,ProductionTime;public bool InProgress,Interrupted,AvailableForFinish;public string RecipeId="";}
  public class ProducingItemController:Native {

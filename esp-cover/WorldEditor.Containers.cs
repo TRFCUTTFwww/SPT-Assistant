@@ -108,7 +108,7 @@ internal static partial class WorldEditor {
   containerPitchText=values[0];containerAngle=values[1];containerRollText=values[2];
   bool valid=TryRotation(out var rotation);if(valid)foreach(var value in rotateContainers)ContainerScene.Root(value.Reference.Resolve()).rotation=value.Rotation*rotation;
   if(InterfaceMenu.Button(new(rect.x,rect.y+210,rect.width,34),"三轴角度归零"))containerPitchText=containerAngle=containerRollText="0";
-  if(InterfaceMenu.Button(new(rect.x,rect.y+258,rect.width,34),"应用旋转"))Run(()=>{if(!TryRotation(out _))throw new ArgumentException("请填写有效的三轴角度。");rotateContainers.Clear();CompleteOperation();});
+  if(InterfaceMenu.Button(new(rect.x,rect.y+258,rect.width,34),"应用旋转"))Run(()=>{if(!TryRotation(out _))throw new ArgumentException("请填写有效的三轴角度。");PushRotateUndo(rotateContainers);rotateContainers.Clear();CompleteOperation();});
  }
  static bool TryRotation(out Quaternion rotation){rotation=Quaternion.identity;if(!float.TryParse(containerPitchText,NumberStyles.Float,CultureInfo.InvariantCulture,out float pitch)||!float.TryParse(containerAngle,NumberStyles.Float,CultureInfo.InvariantCulture,out float yaw)||!float.TryParse(containerRollText,NumberStyles.Float,CultureInfo.InvariantCulture,out float roll)||!float.IsFinite(pitch)||!float.IsFinite(yaw)||!float.IsFinite(roll))return false;rotation=Quaternion.Euler(ContainerBuildRules.Yaw(pitch),ContainerBuildRules.Yaw(yaw),ContainerBuildRules.Yaw(roll));return true;}
 }

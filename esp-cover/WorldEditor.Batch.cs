@@ -40,7 +40,7 @@ internal static partial class WorldEditor {
   foreach(var value in moveAirdrops)MoveAirdrop(value,positions[i++]);foreach(var value in moveContainers)ContainerScene.Root(value.Reference.Resolve()).position=positions[i++];
  }
  static void FinishMove(bool cancel){
-  if(!moving)return;var errors=new List<string>();
+  if(!moving)return;var errors=new List<string>();var undo=!cancel?CaptureMoveUndo():null;
   // Restoration visits every snapshot even if another entity vanished.
   try{
    int i=0;var positions=cancel?moveOrigins:Translated(moveOrigins,point);
@@ -51,6 +51,7 @@ internal static partial class WorldEditor {
   foreach(var value in moveContainers){try{ContainerScene.Root(value.Reference.Resolve()).SetPositionAndRotation(positions[i],value.Rotation);}catch(Exception e){errors.Add(e.Message);}i++;}
   }finally{moving=false;moveActors.Clear();moveItems.Clear();moveCorpses.Clear();moveAirdrops.Clear();moveContainers.Clear();moveOrigins=Array.Empty<Vector3>();gate.SetOpen(false,Time.frameCount);ClearSelection();}
   if(errors.Count>0)throw new ArgumentException(string.Join("；",errors.Distinct().Take(3)));
+  if(undo!=null)PushUndo("移动",undo);
  }
  static void Copy(){
   ClipboardEntry[] next;
@@ -68,12 +69,13 @@ internal static partial class WorldEditor {
   CompleteOperation();
  }
  static void Delete(){
+  var undo=CaptureDeleteUndo();
   if(selectionKind==SelectionKind.Ai)AiActorControl.Delete(SelectedActors());
   else if(selectionKind==SelectionKind.Corpses){var bodies=selectedCorpses.Select(r=>r.Resolve()).ToArray();foreach(var body in bodies)Current().DestroyLoot(body.Cast<IKillable>());selectedCorpses.Clear();CorpseDisplay.Reset();RaidLoot.Invalidate();}
   else if(selectionKind==SelectionKind.Airdrops){var current=Current();var drops=selectedAirdrops.Select(r=>r.Resolve()).ToArray();foreach(var drop in drops)AirdropControl.EditorRemove(current,drop);}
   else if(selectionKind==SelectionKind.Containers){foreach(var reference in selectedContainers.ToArray())ContainerScene.Remove(Current(),reference.Resolve());}
   else{var items=selectedItems.Select(r=>r.Resolve()).ToArray();var errors=new List<string>();foreach(var value in items)try{Current().DestroyLoot(value.Cast<IKillable>());}catch(Exception e){errors.Add(e.Message);}if(errors.Count>0)throw new ArgumentException(string.Join("；",errors.Distinct()));}
-  if(selectionKind==SelectionKind.Ai)selectedActors.Clear();else selectedItems.Clear();actor=null;loot=null;PruneSelection();CompleteOperation();
+  if(selectionKind==SelectionKind.Ai)selectedActors.Clear();else selectedItems.Clear();actor=null;loot=null;PruneSelection();if(undo!=null)PushUndo("删除",undo);CompleteOperation();
  }
  static void Kill(){var targets=SelectedActors();var errors=new List<string>();foreach(var target in targets)try{target.ActiveHealthController.Kill(EDamageType.Bullet);if(target.HealthController.IsAlive)throw new ArgumentException("AI 仍然存活，请检查无敌或伤害保护设置。");}catch(Exception e){errors.Add(e.Message);}PruneSelection();if(errors.Count>0)throw new ArgumentException(string.Join("；",errors.Distinct()));CompleteOperation();}
  static void ReleaseAir(){foreach(var target in SelectedActors())AiFreePlacement.Release(target);CompleteOperation();}

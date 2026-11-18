@@ -32,4 +32,7 @@ namespace LocalSpt5Esp {
  internal static class RaidRules {internal static string Clock(double seconds)=>TimeSpan.FromSeconds(seconds).ToString();}
  internal static class I18n {internal static string Text(string value)=>value;}
  internal static class AiSpawnCatalog {internal sealed record Option(string Role,string Name);internal static readonly Option[] Options=[];}
+ internal static class LootDisplay {internal static double TemplatePrice(string id)=>0;internal static string Money(double value)=>value>0?"₽"+Math.Round(value).ToString("N0"):"";}
+ internal static class LoadoutPlans {internal static string SaveFromHistory(string title,JsonElement[] items)=>"saved:"+title;}
+ internal static class WindowsDialogs {internal static Func<string?>? StubFolder;internal static Task<string?> PickFolder(string title,string initial="")=>Task.FromResult(StubFolder?.Invoke());}
 }

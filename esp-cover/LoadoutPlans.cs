@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
@@ -22,6 +23,53 @@ internal static class LoadoutPlans {
   void Add(Item item){if(!seen.Add(item.Pointer))return;var node=Capture(item,new());var values=new ItemSpawner.Values(false,0,0,false,0,false,0,false,0,false,0,"",0,node.Parameters);result.Add(new(Guid.NewGuid().ToString("N"),LootDisplay.ItemName(item,false),item.StringTemplateId,Math.Max(1,item.StackObjectsCount),values,node));var compound=item.TryCast<CompoundItem>();if(compound?.Grids!=null)foreach(var grid in compound.Grids)foreach(var content in grid.Items)if(content!=null)Add(content);}
   foreach(var slot in equipment.Slots){if(slot==null||slot.ID is "SecuredContainer" or "Scabbard" or "Dogtag")continue;var item=slot.ContainedItem;if(item==null)continue;if(slot.ID=="Pockets"){var pockets=item.TryCast<CompoundItem>();if(pockets?.Grids!=null)foreach(var grid in pockets.Grids)foreach(var child in grid.Items)if(child!=null)Add(child);}else Add(item);}
   return result;
+ }
+ internal static string SaveFromHistory(string title,JsonElement[] entryItems){
+  Load();if(corrupt)throw new ArgumentException("请先修复方案文件。");
+  title=title.Trim();if(title.Length is <1 or >80)throw new ArgumentException("请输入 1～80 字的方案名称。");
+  if(entryItems.Length==0)throw new ArgumentException("没有可保存的入场装备。");
+  string Text(JsonElement e,string key)=>e.ValueKind==JsonValueKind.Object&&e.TryGetProperty(key,out var p)&&p.ValueKind==JsonValueKind.String?p.GetString()??"":"";
+  int Int(JsonElement e,string key,int fallback=1)=>e.ValueKind==JsonValueKind.Object&&e.TryGetProperty(key,out var p)&&p.ValueKind==JsonValueKind.Number&&p.TryGetInt32(out int v)?Math.Max(1,v):fallback;
+  var byId=new Dictionary<string,JsonElement>(StringComparer.Ordinal);
+  var children=new Dictionary<string,List<JsonElement>>(StringComparer.Ordinal);
+  foreach(var item in entryItems){
+   string id=Text(item,"Id"),tpl=Text(item,"Template");if(id.Length==0||tpl.Length==0)continue;
+   byId[id]=item;
+   string parent=Text(item,"Parent");if(parent.Length>0){if(!children.TryGetValue(parent,out var list))children[parent]=list=new();list.Add(item);}
+  }
+  ItemComponentParameters ReadParams(JsonElement item){
+   var p=new ItemComponentParameters();
+   if(item.TryGetProperty("Raw",out var raw)&&raw.ValueKind==JsonValueKind.Object&&raw.TryGetProperty("upd",out var upd)&&upd.ValueKind==JsonValueKind.Object&&upd.TryGetProperty("SpawnedInSession",out var fir)&&fir.ValueKind is JsonValueKind.True or JsonValueKind.False)p.FoundInRaid=fir.GetBoolean();
+   return p;
+  }
+  ItemAttachmentNode BuildNode(JsonElement item,HashSet<string> visited,int depth){
+   string id=Text(item,"Id"),tpl=Text(item,"Template");
+   if(depth>12||!visited.Add(id))throw new ArgumentException("装备附件结构存在循环或层级过深。");
+   var node=new ItemAttachmentNode{Template=tpl,Parameters=ReadParams(item)};
+   if(children.TryGetValue(id,out var list))foreach(var child in list){
+    string slot=Text(child,"Slot");
+    if(slot=="cartridges"){node.Cartridges.Add(new(Text(child,"Template"),Int(child,"Count"),ReadParams(child)));}
+    else if(slot.StartsWith("mod_",StringComparison.OrdinalIgnoreCase)||slot.StartsWith("soft_armor",StringComparison.OrdinalIgnoreCase)||slot.EndsWith("_plate",StringComparison.OrdinalIgnoreCase)||slot is "patron_in_weapon" or "chambers"||slot.StartsWith("chamber",StringComparison.OrdinalIgnoreCase)){
+     if(!node.Children.ContainsKey(slot))node.Children[slot]=BuildNode(child,visited,depth+1);
+    }
+   }
+   return node;
+  }
+  var result=new List<ItemSpawner.SavedPreset>();
+  foreach(var item in entryItems){
+   string id=Text(item,"Id"),tpl=Text(item,"Template"),parent=Text(item,"Parent"),slot=Text(item,"Slot");
+   if(id.Length==0||tpl.Length==0||slot is "SecuredContainer" or "Scabbard" or "Dogtag")continue;
+   bool topLevel=!byId.ContainsKey(parent)||byId.TryGetValue(parent,out var p)&&Text(p,"Slot")=="Pockets";
+   bool gridInsideBag=byId.TryGetValue(parent,out var owner)&&Text(owner,"Slot")!="Pockets"&&!(slot.StartsWith("mod_",StringComparison.OrdinalIgnoreCase)||slot.StartsWith("soft_armor",StringComparison.OrdinalIgnoreCase)||slot.EndsWith("_plate",StringComparison.OrdinalIgnoreCase)||slot is "cartridges" or "patron_in_weapon" or "chambers"||slot.StartsWith("chamber",StringComparison.OrdinalIgnoreCase));
+   if(!topLevel&&!gridInsideBag)continue;
+   var node=BuildNode(item,new(StringComparer.Ordinal),0);
+   var values=new ItemSpawner.Values(false,0,0,false,0,false,0,false,0,false,0,"",0,node.Parameters);
+   result.Add(new(Guid.NewGuid().ToString("N"),LootDisplay.TemplateName(tpl),tpl,Int(item,"Count"),values,node));
+  }
+  if(result.Count==0)throw new ArgumentException("未找到可保存的常规装备。");
+  var updated=kits.Where(k=>!k.Name.Equals(title,StringComparison.OrdinalIgnoreCase)).Append(new Kit(title,result)).ToList();
+  PresetStorage.Save(FilePath,updated);kits=updated;
+  return "已将入场装备保存为方案："+title+"（"+result.Count+" 组）";
  }
  static void Generate(Kit kit,bool missingOnly){try{if(request!=null)return;var inventory=Singleton<GameWorld>.Instance?.MainPlayer?.Profile;Dictionary<string,long> counts=new();if(missingOnly){if(inventory==null)throw new ArgumentException("进入战局或藏身处后才能读取现有物资并补齐。");counts=TaskNeeds.InventoryCounts(inventory);}var wanted=new List<(ItemSpawner.SavedPreset Preset,int Count)>();foreach(var item in kit.Items){int amount=item.Count;if(missingOnly){counts.TryGetValue(item.Template,out long held);int used=(int)Math.Min(held,amount);amount-=used;counts[item.Template]=held-used;}if(amount>0)wanted.Add((item,amount));}if(wanted.Count==0){status="现有物资已满足此方案。";return;}
   var mail=new List<Dictionary<string,object?>>();int prefix=0;foreach(var entry in wanted){string tag="kit"+prefix+++"_";var parts=ItemSpawner.PresetMail(entry.Preset,entry.Count);foreach(var part in parts){part["ref"]=tag+part["ref"];if(part.TryGetValue("parent",out var parent)&&parent!=null)part["parent"]=tag+parent;mail.Add(part);}}if(mail.Count>100)throw new ArgumentException("整套装备含附件与弹药超过 100 条，请拆分方案。");

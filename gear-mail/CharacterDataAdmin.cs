@@ -42,15 +42,15 @@ public class CharacterDataService(SaveServer saves,JsonUtil json,HttpResponseUti
    if(!CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(key),Encoding.UTF8.GetBytes(request.ApiKey??"")))throw new ArgumentException("认证失败。");
    var profile=saves.GetProfile(session)??throw new ArgumentException("当前角色不存在。");var pmc=profile.CharacterData?.PmcData??throw new ArgumentException("当前角色尚未创建。");
    if(request.Action=="emergencyBackup")return EmergencyBackupService.Handle(request,session,profile,json,http,templates);
-   if(request.Action is "raidHistoryList" or "raidHistoryDetail")return RaidHistoryService.Handle(request,session,http);
+   if(request.Action is "raidHistoryList" or "raidHistoryDetail" or "raidHistoryExport")return RaidHistoryService.Handle(request,session,http);
    if(request.Action is "raidStash" or "saveRaidStash")return await RaidStashService.Handle(request,session,profile,saves,json,http,ct);
    if(request.Action is "miscStatus" or "miscSave")return await MiscService.Handle(request,session,http,ct);
    if(request.Action is "status" or "healthStatus")return Status(profile);
    if(request.Action=="serverStatus")return ServerSettingsService.Handle(request,http,pmc);
    var location=profile.InraidData?.Location;if(!string.IsNullOrEmpty(location)&&location!="none"&&location!="hideout")throw new ArgumentException("请先退出战局。");
-   if(request.Action is "backupList" or "backupCreate" or "backupPreview" or "backupRestore")return await ProfileBackupService.Handle(request,session,profile,saves,json,http,templates,ct);
+   if(request.Action is "backupList" or "backupCreate" or "backupPreview" or "backupRestore" or "backupDelete" or "backupExport" or "backupImport" or "backupSettings")return await ProfileBackupService.Handle(request,session,profile,saves,json,http,templates,ct);
    if(request.Action=="serverSave")return ServerSettingsService.Handle(request,http,pmc);
-   if(request.Action is "finishCrafts" or "craftStatus")return await HideoutCraftService.Handle(request,session,profile,saves,json,http,ct);
+   if(request.Action is "finishCrafts" or "craftStatus" or "finishUpgrades")return await HideoutCraftService.Handle(request,session,profile,saves,json,http,ct);
    if(request.Action is "cultistStatus" or "finishCultist")return await CultistCircleService.Handle(request,session,profile,saves,json,http,ct);
    if(request.Action=="repairRaidStash")return await RaidStashService.Handle(request,session,profile,saves,json,http,ct);
    snapshot=json.Deserialize<SptProfile>(json.Serialize(profile))!;

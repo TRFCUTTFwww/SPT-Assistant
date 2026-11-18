@@ -69,10 +69,11 @@ internal static class LootDisplay {
   if(compound.Slots!=null)for(int i=0;i<compound.Slots.Length;i++){var child=compound.Slots[i]?.ContainedItem;if(child!=null)yield return child;}
   var magazine=item.TryCast<Magazine>();if(magazine?.Cartridges!=null)foreach(var round in magazine.Cartridges.Items)if(round!=null)yield return round;
  }
+ internal static double TemplatePrice(string id)=>id==LocalRaidShared.BitcoinRules.Template&&BitcoinControl.Price is double live?live:prices.TryGetValue(id,out var price)?price:0;
  internal static double Value(Item root)=>Value(root,new HashSet<IntPtr>(),0);
  static double Value(Item item,HashSet<IntPtr> seen,int depth){
   if(item==null||depth>12||!seen.Add(item.Pointer))return 0;
-  double unit=item.StringTemplateId==LocalRaidShared.BitcoinRules.Template&&BitcoinControl.Price is double live?live:prices.TryGetValue(item.StringTemplateId,out var price)?price:0;
+  double unit=TemplatePrice(item.StringTemplateId);
   double total=unit*Math.Max(1,item.StackObjectsCount);
   foreach(var child in Children(item))total+=Value(child,seen,depth+1);
   return total;

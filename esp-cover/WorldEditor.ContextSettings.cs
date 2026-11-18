@@ -17,12 +17,12 @@ internal static partial class WorldEditor {
   InterfaceMenu.Paragraph(new(rect.x,rect.y+36,rect.width,56),"勾选显示项目，↑↓ 调整顺序；单选和多选共用设置，只显示当前对象适用的操作。删除所有武器包含近战；A/B 标记供关系工具使用。",null,12);
   if(InterfaceMenu.Button(new(rect.x,rect.y+94,rect.width,30),I18n.Text("混合状态显示两个按钮")+(splitMixedContext.Value?" ✓":" ○"),splitMixedContext.Value))splitMixedContext.Value=!splitMixedContext.Value;
   var rows=order.Concat(EditorContextRules.Options.Select(o=>o.Id).Except(order)).ToArray();
-  var view=new Rect(rect.x,rect.y+134,rect.width,Math.Max(30,rect.height-134));contextSettingsScroll=GUI.BeginScrollView(view,contextSettingsScroll,new Rect(0,0,rect.width-22,rows.Length*38));
+  var view=new Rect(rect.x,rect.y+134,rect.width,Math.Max(30,rect.height-134));contextSettingsScroll=GUI.BeginScrollView(view,contextSettingsScroll,new Rect(0,0,rect.width-22,rows.Length*50));
   try{for(int i=0;i<rows.Length;i++){
-   string id=rows[i],name=EditorContextRules.Options.First(o=>o.Id==id).Name;int index=Array.IndexOf(order,id);bool on=index>=0;float y=i*38,w=rect.width-28;
-   if(InterfaceMenu.Button(new(0,y,Math.Max(60,w-90),32),(on?"✓  ":"○  ")+name,on))contextOrder.Value=EditorContextRules.Toggle(contextOrder.Value,id);
+   string id=rows[i],name=EditorContextRules.Options.First(o=>o.Id==id).Name;int index=Array.IndexOf(order,id);bool on=index>=0;float y=i*50,w=rect.width-28;
+   if(InterfaceMenu.WrappedButton(new(0,y,Math.Max(60,w-144),44),(on?"✓  ":"○  ")+I18n.Text(name),on))contextOrder.Value=EditorContextRules.Toggle(contextOrder.Value,id);
    bool was=GUI.enabled;
-   try{GUI.enabled=was&&index>0;if(InterfaceMenu.Button(new(w-82,y,36,32),"↑"))contextOrder.Value=EditorContextRules.Move(contextOrder.Value,id,-1);GUI.enabled=was&&on&&index<order.Length-1;if(InterfaceMenu.Button(new(w-40,y,36,32),"↓"))contextOrder.Value=EditorContextRules.Move(contextOrder.Value,id,1);}finally{GUI.enabled=was;}
+   try{GUI.enabled=was&&index>0;if(InterfaceMenu.Button(new(w-136,y,64,44),"上移"))contextOrder.Value=EditorContextRules.Move(contextOrder.Value,id,-1);GUI.enabled=was&&on&&index<order.Length-1;if(InterfaceMenu.Button(new(w-66,y,64,44),"下移"))contextOrder.Value=EditorContextRules.Move(contextOrder.Value,id,1);}finally{GUI.enabled=was;}
   }}finally{GUI.EndScrollView();}
  }
  static void ContextRemoveWeapons(){var targets=SelectedActors();AiEquipmentRemoval.RemoveWeapons(Current(),targets);notice=AiEquipmentRemoval.Status;CompleteOperation();}

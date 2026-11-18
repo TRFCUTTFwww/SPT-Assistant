@@ -66,6 +66,14 @@ static class Tests {
    Check(Get<Task<string>>(Circle,"request")!=null&&producer.Updates==0,"Lost response or applied without a ready profile");
    app._menuOperation=new(){Read=()=>new(){Profile=profile}};At(5,CultistCircleControl.Tick);Check(producer.Updates==1,"Did not resume matching ritual sync");
   });
+  Run("hideout area construction completes and calls DecideStatus",()=>{
+   var app=Reset();var profile=Ready(app);var area=new AreaInfo{Type=4,Level=1,Constructing=true,CompleteTime=new((int)DateTimeOffset.UtcNow.ToUnixTimeSeconds()+3600)};
+   var areaData=new AreaData{Template=new(){Type=EAreaType.Generator},CurrentLevel=1};
+   app._hideout=new(){Areas=[area],AreaDatas=[areaData]};
+   CharacterDataPanel.Handler=_=>Task.FromResult(JsonSerializer.Serialize(new{err=0,data=new{profileId="p",upgradesCompleted=1,areas=new[]{new{type=4,level=1,constructing=true,completeTime=100}}}}));
+   Option("Instant hideout upgrades",true);HideoutCraftControl.Tick();At(2,HideoutCraftControl.Tick);
+   Check(area.CompleteTime.Value==100&&areaData.StatusUpdates==1,"Area upgrade sync did not update CompleteTime and DecideStatus");
+  });
   Run("natural completion in hideout syncs native reward availability with preview and instant completion off",()=>{
    var app=Reset(true);Ready(app);var producer=Live(app);Option("Preview cultist rewards",false);CharacterDataPanel.Handler=_=>Task.FromResult(Ritual(true));
    CultistCircleControl.Tick();At(3,CultistCircleControl.Tick);

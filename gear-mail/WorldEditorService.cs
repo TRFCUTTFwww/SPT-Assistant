@@ -46,7 +46,7 @@ public sealed class WorldEditorService(LocationLootGenerator generator,LocationT
    if(request.Action=="parameters"){
     var parametersBridge=ParameterBridge()??throw new ArgumentException("请更新并重启服务端战局规则模块。");
     string action=request.Parameters.TryGetProperty("operation",out var op)?op.GetString()??"read":"read";
-    if(action is not ("read" or "apply" or "save" or "load" or "defaults"))throw new ArgumentException("未知参数操作。");
+    if(action is not ("read" or "apply" or "applyAll" or "save" or "load" or "delete" or "defaults"))throw new ArgumentException("未知参数操作。");
     string response=(string)parametersBridge.Invoke(null,[action,request.Map.ToLowerInvariant(),map.Base,request.Parameters])!;
     return http.GetBody(JsonSerializer.Deserialize<JsonElement>(response));
    }

@@ -12,6 +12,27 @@ public sealed class SqliteSnapshots {
  public SnapshotInfo Add(string session,string nickname,string label,string json){var body=Encoding.UTF8.GetBytes(json);if(body.Length>128*1024*1024)throw new ArgumentException("存档超过 128 MB，无法备份。");var row=new SnapshotInfo(Guid.NewGuid().ToString("N"),session,nickname,DateTime.UtcNow.ToString("O"),label,Convert.ToHexString(SHA256.HashData(body)),body.Length);using var db=Open();using var q=db.Prepare("INSERT INTO snapshots(id,session,nickname,created,label,sha256,body) VALUES(?,?,?,?,?,?,?)");q.Text(1,row.Id);q.Text(2,session);q.Text(3,nickname);q.Text(4,row.Created);q.Text(5,label);q.Text(6,row.Sha256);q.Blob(7,body);q.Done();return row;}
  public SnapshotInfo[] List(){using var db=Open();using var q=db.Prepare("SELECT id,session,nickname,created,label,sha256,length(body) FROM snapshots ORDER BY created DESC LIMIT 200");var rows=new List<SnapshotInfo>();while(q.Row())rows.Add(new(q.String(0),q.String(1),q.String(2),q.String(3),q.String(4),q.String(5),q.Int(6)));return rows.ToArray();}
  public string Read(string id){if(id.Length!=32||!id.All(Uri.IsHexDigit))throw new ArgumentException("请选择有效备份。");using var db=Open();using var q=db.Prepare("SELECT sha256,body FROM snapshots WHERE id=?");q.Text(1,id);if(!q.Row())throw new ArgumentException("备份不存在。");var digest=q.String(0);var body=q.Bytes(1);if(body.Length>128*1024*1024||Convert.ToHexString(SHA256.HashData(body))!=digest)throw new ArgumentException("备份校验失败，未修改存档。");return Encoding.UTF8.GetString(body);}
+ public bool Delete(string id){
+  if(id.Length!=32||!id.All(Uri.IsHexDigit))throw new ArgumentException("请选择有效备份。");
+  using var db=Open();
+  using var q=db.Prepare("DELETE FROM snapshots WHERE id=@id");
+  q.Text(1,id.ToLowerInvariant());
+  q.Done();
+  using var c=db.Prepare("SELECT changes()");
+  return c.Row()&&c.Int(0)>0;
+ }
+ public int TrimPrefix(string session,string prefix,int keep){
+  if(keep<1)keep=1;
+  string escaped=prefix.Replace("\\","\\\\").Replace("%","\\%").Replace("_","\\_");
+  using var db=Open();
+  var victimIds=new List<string>();
+  using(var q=db.Prepare($"SELECT id FROM snapshots WHERE session=@session AND label LIKE @prefix ESCAPE '\\' ORDER BY created DESC, rowid DESC LIMIT -1 OFFSET {keep}")){
+   q.Text(1,session);q.Text(2,escaped+"%");
+   while(q.Row())victimIds.Add(q.String(0));
+  }
+  foreach(var vid in victimIds){using var dq=db.Prepare("DELETE FROM snapshots WHERE id=@id");dq.Text(1,vid);dq.Done();}
+  return victimIds.Count;
+ }
  internal sealed class Db:IDisposable {
   IntPtr handle;
   public Db(string path){int code=Native.sqlite3_open_v2(Utf8(path),out handle,2|4|0x10000,IntPtr.Zero);if(code!=0){Dispose();throw new IOException("SQLite 数据库无法打开（"+code+"）。");}Native.sqlite3_busy_timeout(handle,10000);}
