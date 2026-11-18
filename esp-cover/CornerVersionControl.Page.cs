@@ -107,7 +107,18 @@ internal static partial class CornerVersionControl {
   }
   y+=36;
   DrawTestOutput(new(x,y,width,bodyHeight),pointerInPage);
-  InterfaceMenu.Paragraph(new(x,y+bodyHeight+8,width,32),testStatus,MutedText,12);
+  y+=bodyHeight+8;
+  const float inspectWidth=120;
+  InterfaceMenu.Paragraph(new(x,y,width-inspectWidth-gap,32),testStatus,MutedText,12);
+  bool wasEnabled=GUI.enabled;
+  try{
+   GUI.enabled=wasEnabled&&testWork==null;
+   if(InterfaceMenu.Button(new(pane.xMax-pad-inspectWidth,y,inspectWidth,28),"查看 game 数据")){
+    testOutput=CornerGameSnapshot.CapturePrettyJson();
+    testOutputScroll=Vector2.zero;
+    testStatus="当前 game 快照";
+   }
+  }finally{GUI.enabled=wasEnabled;}
  }
 
  static void DrawPresets(Rect r){

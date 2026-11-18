@@ -12,7 +12,7 @@ internal static class CornerScript {
  internal sealed record TestRunResult(bool Ok,string Value,string Error,string[] Logs);
  internal const string Example="return \"SPT · \" + new Date().toLocaleTimeString();";
  internal const string AsyncExample="const url = new URL(\"https://example.com/api/status\");\nurl.search = new URLSearchParams({ page: 1 });\nconst response = await fetch(url);\nif (!response.ok) throw new Error(\"HTTP \" + response.status);\nconst data = await response.json();\nreturn data.version;";
- internal const string GameExample="if (!game.inRaid) return \"Hideout · Crafts:\" + game.hideoutCraftsReady + \" · FPS:\" + game.fps;\nreturn game.map + \" · \" + game.raidRemainingSeconds + \"s · AI:\" + game.aliveAi + \" · FPS:\" + game.fps;";
+ internal const string GameExample="if (!game.raid) return `Crafts: ${game.hideout.craftsReady} · FPS: ${game.fps}`;\nconst { mapName, remainingSeconds, population } = game.raid;\nconst hp = game.player?.vitals?.health?.current ?? '—';\nreturn `${mapName} · ${Math.ceil(remainingSeconds ?? 0)}s · AI:${population?.ai ?? '?'} · HP:${hp}`;";
  internal const string VariableExample="const status = game.inRaid ? game.map + \" · AI:\" + game.aliveAi : \"Hideout · FPS:\" + game.fps;";
  internal static string Evaluate(string source,CancellationToken cancellation,Func<string,string>? fetch=null)=>EvaluateWithGame(source,cancellation,fetch,null);
  internal static string EvaluateWithGame(string source,CancellationToken cancellation,Func<string,string>? fetch,string? gameJson)=>EvaluateDisplay(source,"",cancellation,fetch,gameJson);
@@ -41,8 +41,19 @@ internal static class CornerScript {
   engine.SetValue("__cornerParseUrl",new Func<string,string,string>(CornerScriptWeb.ParseUrl));engine.SetValue("__cornerUpdateUrl",new Func<string,string,string,string>(CornerScriptWeb.UpdateUrl));
   if(log!=null)engine.SetValue("__cornerLog",log);
   engine.Execute(CornerScriptWeb.Bootstrap+"\nglobalThis.cornerText = undefined;");
-  if(!string.IsNullOrWhiteSpace(gameJson)){engine.SetValue("__cornerGameJson",gameJson);engine.Execute("globalThis.game = Object.freeze(JSON.parse(__cornerGameJson));");}
-  else engine.Execute("globalThis.game = Object.freeze({inRaid:false,map:'',raidRemainingSeconds:0,fps:0,aliveAi:0,alivePlayers:0,hideoutCraftsReady:0,cultistReady:false});");
+  engine.SetValue("__cornerGameJson",string.IsNullOrWhiteSpace(gameJson)?CornerGameData.EmptyJson:gameJson);
+  engine.Execute("""
+   (() => {
+    const freeze = value => {
+     if (value !== null && typeof value === 'object') {
+      for (const key of Object.keys(value)) freeze(value[key]);
+      Object.freeze(value);
+     }
+     return value;
+    };
+    globalThis.game = freeze(JSON.parse(__cornerGameJson));
+   })();
+   """);
   var result=engine.Evaluate("(async function(){\n"+source+"\n})()");engine.Advanced.ProcessTasks();deadline.Token.ThrowIfCancellationRequested();var value=result.UnwrapIfPromise(TimeSpan.Zero);
   if(value.IsNull()||value.IsUndefined())value=engine.GetValue("cornerText").UnwrapIfPromise(TimeSpan.Zero);
   if(value.IsNull()||value.IsUndefined())throw new ArgumentException("请填写显示表达式，或使用 return、cornerText = value 设置左下角文字。");

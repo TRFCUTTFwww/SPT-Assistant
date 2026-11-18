@@ -23,6 +23,17 @@ internal static partial class AirdropControl {
  static bool Flying(Flight flight)=>flight.Plane!=null&&flight.Plane._syncObject!=null&&flight.Plane._syncObject.IsActive&&flight.Plane._syncObject.ObjectId==flight.Id&&flight.Plane._flyToAirdrop;
  static string DropState(AirdropSynchronizableObject drop){var client=drop.Logic?.TryCast<ClientAirDrop>();var server=drop.Logic?.TryCast<ServerAirDrop>()??client?.OfflineServerLogic;var stage=server?._fallingStage??client?._fallingStage;return stage is EAirdropFallingStage.Landed or EAirdropFallingStage.Contact?"已落地":stage.HasValue?"正在降落":"状态读取中";}
  static float informationError;
+ internal static CornerGameData.Airdrop? ReadSnapshot(){
+  var manager=Manager();
+  if(manager?.IsInited!=true)return null;
+  bool enabled=manager._airdropsEnabled;
+  float count=manager._currentAirdropsCount,max=manager._planeAirdropMax;
+  var timer=manager._spawnAirdropTimer;
+  double? remaining=enabled&&timer?.IsStarted==true&&count<max&&timer.Time<=manager.PlaneAirdropEnd
+   ?AirdropLedger.Remaining(manager._nextSpawnAirdropTime,timer.Time):null;
+  return new(enabled,remaining is double seconds?Math.Round(seconds,2):null,
+   float.IsFinite(count)?(int)count:null,float.IsFinite(max)?(int)max:null,manager._projectileSuccessPositions?.Count??0);
+ }
  static void TickInformationSafe(GameWorld current){try{TickDirect();TickInformation(current);}catch(Exception e){information="空投信息暂时不可用，请稍后刷新。";if(Time.unscaledTime>=informationError){informationError=Time.unscaledTime+20;Plugin.Self.Log.LogWarning("Airdrop information: "+e.Message);}}}
  static void TickInformation(GameWorld current){if(fastPending){if(Time.unscaledTime>fastUntil){fastPending=false;notice="立即投放等待超时，请检查空投是否已生成。";}else{var flight=flights.FirstOrDefault(f=>!fastBefore.Contains(f.Key)&&Flying(f)&&f.Plane._airdrop!=null);if(flight!=null){fastPending=false;Action(()=>DropNow(flight));}}}bool page=InterfaceMenu.AirdropPage;bool recover=(markers.Value||planeMarkers.Value)&&Time.unscaledTime>=nextEspRecovery;if(!page&&!recover)return;if(page&&Time.unscaledTime<nextInformation&&!recover)return;nextInformation=Time.unscaledTime+.5f;nextEspRecovery=Time.unscaledTime+3;flights.RemoveAll(f=>f.Plane==null||f.Plane._syncObject==null||!f.Plane._syncObject.IsActive||f.Plane._syncObject.ObjectId!=f.Id);
   var processor=current.SynchronizableObjectLogicProcessor;var objects=processor?.GetSynchronizableObjects();if(objects!=null)foreach(var item in objects){if(item==null||!item.IsActive)continue;var drop=item.TryCast<AirdropSynchronizableObject>();if(drop!=null){Track(drop);ledger.Observe(Key(drop),Active(drop));}var airplane=item.TryCast<AirplaneSynchronizableObject>();var plane=airplane?.Logic?.TryCast<ServerPlane>()??airplane?.Logic?.TryCast<ClientAirPlane>()?.OfflineServerLogic;if(plane!=null&&!flights.Any(f=>f.Plane.Pointer==plane.Pointer&&f.Id==item.ObjectId))flights.Add(new(){Plane=plane,Id=item.ObjectId,Key=item.ObjectId+"@"+plane.Pointer.ToInt64()});}

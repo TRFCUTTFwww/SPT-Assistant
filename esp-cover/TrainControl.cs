@@ -48,6 +48,17 @@ internal static class TrainControl {
  }
  static void Run(Action action){try{action();}catch(Exception e){notice=e.Message;}nextStatus=0;}
  static string FormatStatus(Locomotive train,float arrived,float departing){double now=Elapsed(train),a=arrived-now,d=departing-now;return d<=0?"列车已发车":a<=0?"列车已到站 · 发车倒计时 "+TrainTimeRules.Clock(d):"到站倒计时 "+TrainTimeRules.Clock(a)+" · 发车倒计时 "+TrainTimeRules.Clock(d);}
+ internal static CornerGameData.Train? ReadSnapshot(){
+  var train=FindTrain(false);
+  if(train==null)return null;
+  var times=train._travelStateTiming;
+  int a=(int)Locomotive.ETravelState.Arrived,d=(int)Locomotive.ETravelState.Departing;
+  if(times==null||a>=times.Length||d>=times.Length||!float.IsFinite(times[a])||!float.IsFinite(times[d]))
+   return new("pending",null,null);
+  double now=Elapsed(train),arrival=times[a]-now,departure=times[d]-now;
+  return new(departure<=0?"departed":arrival<=0?"boarding":"approaching",
+   Math.Round(Math.Max(0,arrival),2),Math.Round(Math.Max(0,departure),2));
+ }
  static string StatusText(){
   if(!RaidClock.Active)return "进入有装甲列车的战局后使用。";
   var train=FindTrain(false);if(train==null)return "当前地图没有装甲列车。";

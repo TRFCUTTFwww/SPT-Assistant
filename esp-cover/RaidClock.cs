@@ -39,6 +39,13 @@ internal static partial class RaidClock {
   try{plugin.Patches.Patch(AccessTools.DeclaredMethod(typeof(BaseLocalGame<EftGamePlayerOwner>),"Stop",new[]{typeof(string),typeof(ExitStatus),typeof(string),typeof(float)}),prefix:new HarmonyMethod(typeof(RaidClock),nameof(BeforeStop)));}catch(Exception e){plugin.Log.LogError("Raid base stop guard failed: "+e);stopHook=false;}
  }
  internal static double? Remaining {get{var timer=Timer;if(timer==null||!timer.SessionTime.HasValue)return null;return deadline.Duration(timer.Pointer.ToInt64(),timer.SessionTime.Value.TotalSeconds)-Elapsed(timer);}}
+ internal sealed record TimeSnapshot(double DurationSeconds,double ElapsedSeconds,double RemainingSeconds);
+ internal static TimeSnapshot? CaptureTime(){
+  var timer=Timer;
+  if(timer?.SessionTime.HasValue!=true)return null;
+  double elapsed=Elapsed(timer),duration=deadline.Duration(timer.Pointer.ToInt64(),timer.SessionTime.Value.TotalSeconds);
+  return double.IsFinite(elapsed)&&double.IsFinite(duration)?new(Math.Round(duration,2),Math.Round(elapsed,2),Math.Round(duration-elapsed,2)):null;
+ }
  static Color RemainingColor=>RaidRules.TimeTone(Remaining,DisplayDuration) switch{RaidTimeTone.Green=>Color.green,RaidTimeTone.Yellow=>Color.yellow,RaidTimeTone.Red=>new Color(1,.42f,.38f,1),_=>InterfaceMenu.Accent};
  internal static string RemainingText=>Remaining is double s?RaidRules.Clock(s)+(PauseRemaining.Value?" · 已暂停":"")+(s<=0&&PreventTimeout.Value?" · 超时保护中":""):"未进入战局 / 计时未同步";
  internal static string GameTime {get{try{return Active?Singleton<GameWorld>.Instance.GameDateTime?.Calculate().ToString("HH:mm:ss")??"未同步":"未进入战局";}catch{return "未同步";}}}
