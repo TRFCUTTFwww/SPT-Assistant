@@ -74,3 +74,8 @@
 !/profile-save-tests/
 !/corner-script-tests/
 !/ai-info-tests/
+
+!/hideout-sync-tests/
+!/timeout-guard-tests/
+!/safety-ui-tests/
+!/raid-history-tests/

@@ -5,7 +5,7 @@ using EFT;
 using HarmonyLib;
 using UnityEngine;
 namespace LocalSpt5Esp;
-internal static class RaidClock {
+internal static partial class RaidClock {
  internal static ConfigEntry<bool> PreventTimeout=null!,ShowClock=null!,PauseRemaining=null!;
  static ConfigEntry<int> hudWidth=null!,hudHeight=null!,hudFont=null!;
 
@@ -25,7 +25,6 @@ internal static class RaidClock {
   if(Math.Abs(protectedDuration-native)>.001){WriteDuration(timer,protectedDuration);if(Time.unscaledTime>=nextPauseSync){nextPauseSync=Time.unscaledTime+.25f;NativeRaidTimer.Changed(timer,protectedDuration);}}
  }catch(Exception e){Warn(e);}}
  static void WriteDuration(GameTimer timer,double duration){timer._SessionTime_k__BackingField=new Il2CppSystem.Nullable<Il2CppSystem.TimeSpan>(Il2CppSystem.TimeSpan.FromSeconds(duration));if(timer.StartDateTime.HasValue)timer._escape=new Il2CppSystem.Nullable<Il2CppSystem.DateTime>(timer.StartDateTime.Value.AddSeconds(duration));}
- internal static void Shutdown(){try{var timer=Timer;if(timer?.SessionTime.HasValue==true)WriteDuration(timer,deadline.Duration(timer.Pointer.ToInt64(),timer.SessionTime.Value.TotalSeconds));}finally{Reset();}}
  internal static bool Active {get{try{return ItemSpawner.InRaid()&&Singleton<GameWorld>.Instance?.MainPlayer?.IsYourPlayer==true;}catch{return false;}}}
  internal static GameTimer? Timer=>Active?Singleton<AbstractGame>.Instance?.GameTimer:null;
  internal static void Initialize(Plugin plugin){
@@ -33,12 +32,12 @@ internal static class RaidClock {
   PauseRemaining=FeatureConfig.Bind("26. 战局时间","Pause remaining time","暂停战局剩余时间",false);
   ShowClock=FeatureConfig.Bind("26. 战局时间","Show clock","常驻显示现实、游戏与剩余时间",true);
   hudWidth=FeatureConfig.Bind("26. 战局时间","Clock width","时间悬浮窗宽度",260,"",new AcceptableValueRange<int>(180,720));hudHeight=FeatureConfig.Bind("26. 战局时间","Clock height","时间悬浮窗高度",84,"",new AcceptableValueRange<int>(70,160));hudFont=FeatureConfig.Bind("26. 战局时间","Clock font size","时间悬浮窗字号",13,"",new AcceptableValueRange<int>(10,24));
+  RestoreTimeoutAfterReload();
   NativeRaidTimer.Initialize(plugin);
   try{plugin.Patches.Patch(AccessTools.Method(typeof(EndByTimerScenario),"Update"),prefix:new HarmonyMethod(typeof(RaidClock),nameof(BeforeTimeout)));scenarioHook=true;}catch(Exception e){plugin.Log.LogError("Raid timeout hook failed: "+e);}
   try{plugin.Patches.Patch(typeof(LocalGame).GetMethod("Stop",new[]{typeof(string),typeof(ExitStatus),typeof(string),typeof(float)}),prefix:new HarmonyMethod(typeof(RaidClock),nameof(BeforeStop)));stopHook=true;}catch(Exception e){plugin.Log.LogError("Raid stop guard failed: "+e);}
+  try{plugin.Patches.Patch(AccessTools.DeclaredMethod(typeof(BaseLocalGame<EftGamePlayerOwner>),"Stop",new[]{typeof(string),typeof(ExitStatus),typeof(string),typeof(float)}),prefix:new HarmonyMethod(typeof(RaidClock),nameof(BeforeStop)));}catch(Exception e){plugin.Log.LogError("Raid base stop guard failed: "+e);stopHook=false;}
  }
- static bool BeforeTimeout(EndByTimerScenario __instance){try{return !(PreventTimeout.Value||PauseRemaining.Value)||!Active||Timer==null||__instance._timer==null||__instance._timer.Pointer!=Timer.Pointer;}catch(Exception e){Warn(e);return true;}}
- static bool BeforeStop(string __0,ExitStatus __1){try{if(RaidEnd.ManualEnding)return true;if((PreventTimeout.Value||PauseRemaining.Value)&&Active&&__1==ExitStatus.MissingInAction&&__0==Singleton<GameWorld>.Instance.MainPlayer.ProfileId&&Remaining is double seconds&&seconds<=1)return false;}catch(Exception e){Warn(e);}return true;}
  internal static double? Remaining {get{var timer=Timer;if(timer==null||!timer.SessionTime.HasValue)return null;return deadline.Duration(timer.Pointer.ToInt64(),timer.SessionTime.Value.TotalSeconds)-Elapsed(timer);}}
  static Color RemainingColor=>RaidRules.TimeTone(Remaining,DisplayDuration) switch{RaidTimeTone.Green=>Color.green,RaidTimeTone.Yellow=>Color.yellow,RaidTimeTone.Red=>new Color(1,.42f,.38f,1),_=>InterfaceMenu.Accent};
  internal static string RemainingText=>Remaining is double s?RaidRules.Clock(s)+(PauseRemaining.Value?" · 已暂停":"")+(s<=0&&PreventTimeout.Value?" · 超时保护中":""):"未进入战局 / 计时未同步";

@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><TargetFramework>net10.0-windows</TargetFramework><UseWindowsForms>true</UseWindowsForms><OutputType>Exe</OutputType><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+ <ItemGroup><Using Remove="System.Drawing"/><Using Remove="System.Windows.Forms"/><Compile Include="../safety-ui/*.cs" Link="SafetyUi/%(Filename)%(Extension)"/></ItemGroup>
+</Project>

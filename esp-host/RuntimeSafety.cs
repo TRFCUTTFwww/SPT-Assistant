@@ -44,7 +44,7 @@ public sealed partial class RuntimeReloader {
  void ContinueRollback(){if(rollbackPreparing?.IsCompleted!=true)return;var pendingRollback=rollbackPreparing;rollbackPreparing=null;try{var prepared=pendingRollback.GetAwaiter().GetResult();rollingBack=true;candidate=prepared;painted=stepCount=0;peakMs=0;phase="正在清理当前模块并回退…";sequence=new ReloadSequence(Swap(prepared));}catch(Exception e){SafetyFailure(e);}}
  bool RecoveryBusy=>!simulation&&rescueAttempted&&module?.GetType().GetProperty("EmergencyBusy")?.GetValue(module) is true;
  public bool FriendlyErrorUi=>true;
- public int SafetyUiRevision=>3;
+ public int SafetyUiRevision=>4;
  void DrawSafety(){if(Event.current.type==EventType.Repaint)painted++;try{DrawFriendlySafety();}catch(Exception e){Diagnostics.Record("WARNING","Error UI",e.Message);DrawLegacySafety();}}
  void DrawLegacySafety(){
   if(Event.current.type==EventType.Repaint)painted++;Diagnostics.Tick();int oldDepth=GUI.depth;var oldColor=GUI.color;GUI.depth=-100000;

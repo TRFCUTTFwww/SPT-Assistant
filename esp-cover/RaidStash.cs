@@ -39,7 +39,7 @@ internal static class RaidStash {
  static void Save(){if(!ready||request!=null||Local?.InventoryController?.HasActiveEvents==true)return;string current=Snapshot();if(current==saved)return;sent=current;request=Call(new(){{"action","saveRaidStash"},{"stashRevision",revision},{"stashItems",JsonSerializer.Deserialize<JsonElement>(current)}});}
  static bool BeforeStop(LocalGame __instance,string __0,ExitStatus __1,string __2,float __3){
   if(stopping||!ready||__0!=Local?.ProfileId)return true;
-  if(__1==ExitStatus.MissingInAction&&RaidClock.PreventTimeout.Value&&!RaidEnd.ManualEnding&&RaidClock.Remaining is <=1)return true;
+  if(!RaidClock.AllowAutomaticEnd(__instance,__0,__1))return false;
   try{Save();if(request==null&&Local?.InventoryController?.HasActiveEvents!=true)return true;finishStop=()=>{stopping=true;try{__instance.Stop(__0,__1,__2,__3);}finally{stopping=false;}};return false;}catch(Exception e){Fail(e.Message);return false;}
  }
  static void RestoreCapacity(Stash target,BonusController bonuses){

@@ -15,4 +15,5 @@ internal sealed class RaidDeadlineState {
   extended=written!=visible;return written;
  }
  internal void Reset(){owner=0;visible=written=0;extended=false;}
+ internal void Restore(long timer,double duration,double native){owner=timer;visible=duration;written=native;extended=Math.Abs(native-duration)>.001;}
 }

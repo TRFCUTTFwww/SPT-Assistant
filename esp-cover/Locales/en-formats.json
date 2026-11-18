@@ -533,5 +533,8 @@
   "黑墙调用失败：{0}": "Blackwall action failed: {0}",
   "黑墙更新失败：{0}": "Blackwall update failed: {0}",
   "JavaScript · {0}": "JavaScript · {0}",
-  "当前显示：{0}": "Current text: {0}"
+  "当前显示：{0}": "Current text: {0}",
+  "已更新 · {0}": "Updated · {0}",
+  "执行失败，保留上次文字：{0}": "Execution failed; keeping previous text: {0}",
+  "动态 JavaScript · {0}": "Dynamic JavaScript · {0}"
 }

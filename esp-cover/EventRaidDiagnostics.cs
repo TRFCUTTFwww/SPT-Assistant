@@ -27,6 +27,7 @@ internal static class EventRaidDiagnostics {
   else if(action=="native-lab-state"||action=="native-lab-check")Write(action,NativeEventControl.Diagnostics(app,action=="native-lab-check"));
   else if(action=="corner-version-state")Write("corner-version-state",CornerVersionControl.Diagnostics());
   else if(action=="raid-clock-state")Write("raid-clock-state",RaidClock.Diagnostics());
+  else if(action is "raid-history-state" or "raid-history-check")Write("raid-history-state",RaidHistoryPanel.Diagnostics(action=="raid-history-check"));
   else if(action=="season-selection-state")Write("season-selection-state",SeasonSelectionControl.Diagnostics());
   else if(action=="season-menu-state")Write("season-menu-state",SeasonMenuControl.Diagnostics());
   else if(action=="ai-difficulty-state")Write("ai-difficulty-state",AiDifficultyControl.Diagnostics());
