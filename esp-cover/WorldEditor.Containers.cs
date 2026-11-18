@@ -45,7 +45,7 @@ internal static partial class WorldEditor {
   if(job.Target is {} reference){var target=reference.Resolve();if(target.ItemOwner?.RootItem?.Id.ToString()!=job.ExpectedRoot)throw new ArgumentException("容器库存已改变，请重新选择后操作。");ContainerScene.RequireIdle(target);}
   return current;
  }
- internal static bool PrepareContainersForReload(){StopContainerBuild();containerDraining=true;containerJobs.Clear();return !ContainerLibrary.Busy&&(containerLoading==null||containerLoading.IsCompleted);}
+ internal static bool PrepareContainersForReload(){StopContainerBuild();containerDraining=true;containerJobs.Clear();return !ContainerLibrary.Busy&&!MineLibrary.Busy&&(containerLoading==null||containerLoading.IsCompleted);}
  internal static void TickContainers(){
   if(containerDraining)return;
   if(containerJob==null&&containerJobs.Count>0)containerJob=containerJobs.Dequeue();var job=containerJob;if(job==null)return;

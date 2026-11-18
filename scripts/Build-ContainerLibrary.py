@@ -18,6 +18,7 @@ parser.add_argument('--game', required=True, type=pathlib.Path)
 parser.add_argument('--output', required=True, type=pathlib.Path)
 parser.add_argument('--modules', type=str)
 parser.add_argument('--template', default='')
+parser.add_argument('--claymore', action='store_true', help='Extract a local native directional mine instead of containers (EFT 48558).')
 args = parser.parse_args()
 if args.modules:
     sys.path.insert(0, args.modules)
@@ -25,10 +26,14 @@ import UnityPy
 from UnityPy.streams import EndianBinaryReader
 from UnityPy.files.SerializedFile import FileIdentifier
 from UnityPy.helpers.Tpk import get_typetree_node
+from UnityPy.helpers.TypeTreeNode import TypeTreeNode
 
 data = args.game / 'EscapeFromTarkov_Data'
 items = json.loads((args.game / 'SPT_Runtime/SPT_Data/database/templates/items.json').read_text(encoding='utf-8'))
 templates = {k: v['_name'] for k, v in items.items() if v.get('_parent') == '566965d44bdc2d814c8b4571'}
+if args.claymore:
+    templates = {'claymore': 'Native MON-50'}
+    args.template = 'claymore'
 args.output.mkdir(parents=True, exist_ok=True)
 index_path = args.output / 'catalog.json'
 index = json.loads(index_path.read_text(encoding='utf-8')) if index_path.exists() else {}
@@ -42,6 +47,31 @@ native_prefab = data / 'StreamingAssets/Windows/assets/content/prefabs/levelobje
 for obj in UnityPy.load(str(native_prefab)).objects:
     if obj.type.name == 'MonoBehaviour' and obj.serialized_type.node:
         script_nodes[obj.serialized_type.script_id] = obj.serialized_type.node
+
+
+def mine_schema(name):
+    # Actual 48558 serialized fields. Validate byte-for-byte before exporting;
+    # fail on other layouts rather than inventing damage/trigger parameters.
+    sample = next(iter(script_nodes.values()))
+    keys = ('m_Level', 'm_Type', 'm_Name', 'm_ByteSize', 'm_MetaFlag', 'm_Version')
+    nodes = [{k: getattr(n, k) for k in keys} for n in list(sample.traverse())[:12]]
+    def add(level, kind, field, size=4, flags=0):
+        nodes.append(dict(m_Level=level, m_Type=kind, m_Name=field, m_ByteSize=size, m_MetaFlag=flags, m_Version=1))
+    def string(field):
+        add(2, 'string', field, -1, 32768); add(3, 'Array', 'Array', -1, 16384)
+        add(4, 'int', 'size'); add(4, 'char', 'data', 1)
+    if name == 'MineDirectional':
+        add(1, 'MineSettings', '_mineData', -1, 32768)
+        for field in ('_blindness', '_contusion', '_armorDistanceDistanceDamage'):
+            add(2, 'Vector3f', field, 12)
+            for axis in ('x', 'y', 'z'): add(3, 'float', axis)
+        for field in ('_minExplosionDistance', '_maxExplosionDistance'): add(2, 'float', field)
+        add(2, 'int', '_fragmentsCount'); add(2, 'float', '_strength'); string('_tag')
+        for field in ('_armorDamage', '_staminaBurnRate', '_penetrationPower'): add(2, 'float', field)
+        string('_fragmentType'); string('_fxName'); add(2, 'int', '_ignoreRole')
+        add(2, 'float', '_directionalDamageAngle'); add(2, 'float', '_directionalDamageMultiplier')
+    for i, n in enumerate(nodes): n.update(m_Index=i, m_TypeFlags=0, m_RefTypeHash=0)
+    return TypeTreeNode.from_list(nodes)
 
 
 def ptrs(tree):
@@ -65,7 +95,15 @@ def build(level, template):
             files[name] = next(iter(env.files.values()))
         return files[name]
     scene = load(level)
-    source = next(o for o in scene.objects.values() if o.type.name == 'MonoBehaviour' and template.encode() in o.get_raw_data())
+    if args.claymore:
+        scripts = load('globalgamemanagers.assets')
+        def script_name(obj):
+            fid, pid = struct.unpack_from('<iq', obj.get_raw_data(), 16)
+            if not fid or pathlib.Path(scene.externals[fid-1].path).name != 'globalgamemanagers.assets': return ''
+            return scripts.objects[pid].read_typetree()['m_ClassName']
+        source = next(o for o in scene.objects.values() if o.type.name == 'MonoBehaviour' and script_name(o) == 'MineDirectional')
+    else:
+        source = next(o for o in scene.objects.values() if o.type.name == 'MonoBehaviour' and template.encode() in o.get_raw_data())
     goid = struct.unpack_from('<q', source.get_raw_data(), 4)[0]
     def transform(go):
         return next(scene.objects[c['component']['m_PathID']] for c in go.read_typetree()['m_Component'] if scene.objects[c['component']['m_PathID']].type.name == 'Transform')
@@ -74,7 +112,7 @@ def build(level, template):
     # never its LOOTABLE / building / map parent.
     tr = transform(root).read_typetree()
     father = tr['m_Father']['m_PathID']
-    if father:
+    if father and not args.claymore:
         parent = scene.objects[scene.objects[father].read_typetree()['m_GameObject']['m_PathID']]
         name = parent.read_typetree()['m_Name'].lower()
         if name not in ('lootable', 'loot', 'containers', 'oo') and any(s in name for s in ('card_file', 'safe', 'crate', 'box', 'case', 'register', 'computer', 'pc_', 'bag', 'jacket', 'cache', 'corpse', 'container', 'medkit')):
@@ -84,10 +122,20 @@ def build(level, template):
         if go.path_id in hierarchy:
             return
         hierarchy.add(go.path_id)
-        for component in go.read_typetree()['m_Component']:
+        go_tree = go.read_typetree()
+        if args.claymore:
+            # Navigation authoring is map-specific; native mine triggers remain.
+            go_tree['m_Component'] = [c for c in go_tree['m_Component'] if scene.objects[c['component']['m_PathID']].type.name != 'MonoBehaviour' or script_name(scene.objects[c['component']['m_PathID']]) in ('MineDirectional', 'MineDirectionalColliders')]
+            go.save_typetree(go_tree)
+        for component in go_tree['m_Component']:
             cid = component['component']['m_PathID']
             hierarchy.add(cid)
             comp = scene.objects[cid]
+            if args.claymore and comp.type.name == 'MonoBehaviour':
+                node = mine_schema(script_name(comp)); before = comp.get_raw_data()
+                tree = comp.read_typetree(nodes=node); comp.save_typetree(tree, nodes=node)
+                if before != comp.get_raw_data(): raise ValueError('Native mine schema round-trip mismatch')
+                script_nodes[comp.serialized_type.script_id] = node
             if comp.type.name == 'Transform':
                 for child in comp.read_typetree()['m_Children']:
                     subtree(scene.objects[scene.objects[child['m_PathID']].read_typetree()['m_GameObject']['m_PathID']])
@@ -256,7 +304,8 @@ def build(level, template):
 levels = sorted((p for p in data.glob('level*') if p.name[5:].isdigit()), key=lambda p: p.stat().st_size)
 remaining = {args.template} if args.template else set(templates) - {k for k,v in index.items() if v.get("version")==2}
 for level in levels:
-    hits = set(t.decode() for t in re.findall(rb'[a-f0-9]{24}', level.read_bytes())) & remaining
+    raw = level.read_bytes()
+    hits = ({'claymore'} if b'MineDirectional' in raw else set()) if args.claymore else set(t.decode() for t in re.findall(rb'[a-f0-9]{24}', raw)) & remaining
     for template in sorted(hits):
         try:
             index[template] = build(level.name, template)

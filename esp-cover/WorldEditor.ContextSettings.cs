@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using BepInEx.Configuration;
+using EFT.Interactive;
 using UnityEngine;
 namespace LocalSpt5Esp;
 internal static partial class WorldEditor {
@@ -8,6 +9,7 @@ internal static partial class WorldEditor {
  static void InitializeContextSettings(){
   contextOrder=FeatureConfig.Bind("63. 场景编辑","Context menu actions","右键菜单项目与顺序",EditorContextRules.Default,"在编辑模式设置中勾选、隐藏和排序；按对象类型显示适用项目。删除所有武器包含近战；A/B 仅作队伍标记。");
   splitMixedContext=FeatureConfig.Bind("63. 场景编辑","Show both actions for mixed states","混合状态显示两个按钮",true,"开启：状态不一致时同时显示两个明确操作；关闭：只显示一个按钮，先统一暂停、开启无敌或停战（A/B 则统一敌对）。状态一致时始终只显示反向操作。");
+  var migrated=FeatureConfig.Bind("63. 场景编辑","Door menu migration","门菜单已初始化",false);if(!migrated.Value){contextOrder.Value=string.Join(",",EditorContextRules.Read(contextOrder.Value).Concat(new[]{"door-lock","door-unlock","door-open","door-close"}).Distinct());migrated.Value=true;}
  }
  static void OpenContextSettings(){contextSettingsScroll=Vector2.zero;Modal("context-settings");}
  internal static void DrawContextSettings(Rect rect){
@@ -33,4 +35,12 @@ internal static partial class WorldEditor {
  static void ContextPlayerRelation(int mode){var current=Current();foreach(var target in SelectedActors())AiActorControl.CommandRelations(current,target,mode,null);FeatureToasts.Show(mode==0?"已恢复所选 AI 对玩家的默认关系。":mode==1?"所选 AI 已对玩家停战。":"所选 AI 已对玩家敌对。");CompleteOperation();}
  static void ContextInvincible(bool value){var current=Current();foreach(var target in SelectedActors()){var state=AiActorControl.EditorState(target);AiActorControl.ApplyEditorState(current,target,value,state.Damage);}FeatureToasts.Show(value?"所选 AI 已开启无敌。":"所选 AI 已关闭无敌。");CompleteOperation();}
  static void ContextClearEffects(){foreach(var target in SelectedActors())CharacterBuffs.ClearBirthEffects(target);FeatureToasts.Show("已清除所选 AI 可移除的异常状态。");CompleteOperation();}
+ static void SetDoors(EDoorState state,bool unlockOnly=false){
+  Current();
+  var snapshot=selectedDoors.Select(reference=>{var door=reference.Resolve();return (reference,previous:door.DoorState);}).ToArray();
+  foreach(var entry in snapshot)DoorReference.RequireIdle(entry.reference.Resolve());
+  foreach(var entry in snapshot)if(!unlockOnly||entry.previous==EDoorState.Locked)DoorReference.Set(entry.reference.Resolve(),state==EDoorState.Shut&&!unlockOnly&&entry.previous==EDoorState.Locked?EDoorState.Locked:state);
+  PushUndo(state==EDoorState.Locked?"门上锁":state==EDoorState.Open?"打开门":state==EDoorState.Shut?"关闭门":"修改门状态",()=>{foreach(var entry in snapshot)try{DoorReference.Set(entry.reference.Resolve(),entry.previous);}catch{}});
+  FeatureToasts.Show(state==EDoorState.Locked?"已上锁。":state==EDoorState.Open?"已打开。":state==EDoorState.Shut?"已关闭。":"已修改门状态。");CompleteOperation();
+ }
 }

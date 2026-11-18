@@ -35,6 +35,13 @@ static class Tests {
  static string Crafts()=>JsonSerializer.Serialize(new{err=0,data=new{profileId="p",productions=new[]{new{id="ritual",startTimestamp=1234,productionTime=100,progress=100,availableForFinish=true}}}});
  static void Run(string name,Action check){check();Console.WriteLine("PASS "+name);}
  static void Main(){
+  Run("hideout world works when the AbstractGame singleton is absent",()=>{
+   var app=Reset();Singleton<GameWorld>.Instance=new HideoutGameWorld{MainPlayer=new(){Profile=new(){Id="p"}}};Live(app);
+   CharacterDataPanel.Handler=_=>Task.FromResult(Ritual(true));int synced=0;CultistCircleControl.SyncStash=_=>synced++;
+   CultistCircleControl.Tick();At(3,CultistCircleControl.Tick);
+   Check(CultistCircleControl.InHideout&&HideoutCraftControl.CurrentProfile?.Id=="p"&&synced==1,"Hideout world was not recognized or reward sync did not run");
+   Singleton<GameWorld>.Instance=null;CultistCircleControl.SyncStash=null;
+  });
   Run("unready character never calls native GetProfileForLocalGame; hideout controller fallback is allowed",()=>{
    var app=Reset();EFT.UI.ItemUiContext.Instance=new(){QuestController=new(){Profile=new(){Id="stale"}}};
    Check(HideoutCraftControl.CurrentProfile==null,"Unloaded menu reused stale UI profile");

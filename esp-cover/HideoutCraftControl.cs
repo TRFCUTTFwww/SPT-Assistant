@@ -31,7 +31,7 @@ internal static class HideoutCraftControl {
  static Profile? Profile(){
   var app=App();var menu=app?._menuOperation;
   var profile=menu?.QuestController?.Profile;
-  if(profile==null&&Singleton<AbstractGame>.Instance?.TryCast<HideoutGame>()!=null)profile=EFT.UI.ItemUiContext.Instance?.QuestController?.Profile;
+  if(profile==null&&CultistCircleControl.InHideout)profile=EFT.UI.ItemUiContext.Instance?.QuestController?.Profile??Singleton<GameWorld>.Instance?.MainPlayer?.Profile;
   return string.IsNullOrEmpty(profile?.Id)?null:profile;
  }
  internal static object Diagnostics(){

@@ -59,6 +59,7 @@ internal static partial class WorldEditor {
  }
  static void ApplyShortcut(EditorShortcut action,SelectionKind kind){
   selectionKind=kind;TargetAt(0);
+  if(kind==SelectionKind.Doors){FeatureToasts.Show("请在右键菜单设置门的状态。");return;}
   switch(action){
    case EditorShortcut.Copy:Copy();FeatureToasts.Show(notice);break;
    case EditorShortcut.Duplicate:Copy();Paste();break;

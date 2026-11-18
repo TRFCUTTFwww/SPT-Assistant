@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using EFT;
 using EFT.InventoryLogic;
 using EFT.UI;
+using EFT.UI.DragAndDrop;
 using HarmonyLib;
 namespace LocalSpt5Esp;
 internal static class ItemFirContext {
@@ -36,7 +37,14 @@ internal static class ItemFirContext {
   pending=item;profile=owner;desired=value;fromCommand=command;
   request=CharacterDataPanel.Call("/local/gear/data","characterData",new Dictionary<string,object?>{{"action","itemFoundInRaid"},{"id",item.Id},{"unlocked",value},{"expectedValue",item.SpawnedInSession?1:0},{"categories",new[]{owner.Side==EPlayerSide.Savage?"scav":"pmc"}}});
  }
- static void Apply(Profile owner,Item item,bool value){item.SpawnedInSession=value;owner.Inventory.Equipment?.RaiseRefreshEvent(false,true);owner.Inventory.Stash?.RaiseRefreshEvent(false,true);FeatureToasts.Show(value?"已添加战局内发现标记":"已移除战局内发现标记");}
+ static void Apply(Profile owner,Item item,bool value){
+  item.SpawnedInSession=value;owner.Inventory.Equipment?.RaiseRefreshEvent(false,true);owner.Inventory.Stash?.RaiseRefreshEvent(false,true);
+  // Refresh the already-visible native item views in place. The inventory
+  // events update data, but some grid views defer the quest/FIR sprite until
+  // the next full redraw, which made the toggle appear broken.
+  foreach(var view in UnityEngine.Object.FindObjectsOfType<ItemView>(true))try{if(view?.Item?.Id==item.Id){view.RefreshIcon();view.SetQuestItemViewPanel();}}catch{}
+  FeatureToasts.Show(value?"已添加战局内发现标记":"已移除战局内发现标记");
+ }
  internal static void Tick(){if(request?.IsCompleted!=true)return;string message;try{using var doc=JsonDocument.Parse(request.GetAwaiter().GetResult());var root=doc.RootElement;if(root.TryGetProperty("err",out var err)&&err.GetInt32()!=0)throw new ArgumentException(root.TryGetProperty("errmsg",out var msg)?msg.GetString():"保存失败。");if(profile!=null&&pending!=null&&Owned(profile,pending))Apply(profile,pending,desired);message=desired?"已添加战局内发现标记并保存。":"已移除战局内发现标记并保存。";}catch(Exception e){message=e.Message;FeatureToasts.Show(message);}if(fromCommand)RaidChat.Output(message);request=null;pending=null;profile=null;fromCommand=false;}
  internal static void Reset(){ItemUiContext.Instance?.ContextMenu?.Close();request=null;pending=null;profile=null;fromCommand=false;}
 }

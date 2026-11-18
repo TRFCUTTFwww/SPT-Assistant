@@ -25,12 +25,12 @@ internal static partial class WorldEditor {
  static Player Actor(){var value=actor?.Resolve()??throw new ArgumentException("请先选择 AI。");if(!Editable(value))throw new ArgumentException("只允许编辑本机控制的普通 AI。");return value;}
  static void Run(Action work){try{work();}catch(Exception e){notice=e.Message;FeatureToasts.Show(notice);}}
  static void Modal(string value){dialog=value;dialogFrame=Time.frameCount;scroll=Vector2.zero;SyncCursor();}
- static void CloseDialog(){if(dialog=="container-rotation")CancelContainerRotation();bool clear=EditorSelectionRules.ClearAfterEditing(dialog,selectedActors.Count+selectedItems.Count+selectedCorpses.Count+selectedAirdrops.Count+selectedContainers.Count);ReleasePropertyEditors();dialog="";if(clear)ClearSelection();altCursor=!moving&&altCursor&&AltDown;SyncCursor();}
+ static void CloseDialog(){if(dialog=="container-rotation")CancelContainerRotation();bool clear=EditorSelectionRules.ClearAfterEditing(dialog,selectedActors.Count+selectedItems.Count+selectedCorpses.Count+selectedAirdrops.Count+selectedContainers.Count+selectedDoors.Count+selectedMines.Count);ReleasePropertyEditors();dialog="";if(clear)ClearSelection();altCursor=!moving&&altCursor&&AltDown;SyncCursor();}
  static void CompleteOperation(){CloseDialog();ClearSelection();}
  static void CancelContext(){CloseDialog();ClearSelection();}
  internal static void KeepCursor(){if(cursorOwned){Cursor.lockState=CursorLockMode.None;Cursor.visible=true;}}
  internal static void Suspend(){StopContainerBuild();if(moving)Run(()=>FinishMove(true));altCursor=false;dragging=false;CloseDialog();}
- internal static void Reset(){Suspend();ResetUndo();ResetBlueprints();gate.Reset();ClearSelection();LootReference.ClearCache();ContainerScene.Reset();ContainerRendering.Reset();ContainerLootAvailability.Reset();ClearContainerPreview();ResetContainerJobs();clipboard=Array.Empty<ClipboardEntry>();world=IntPtr.Zero;frame=shortcutFrame=-1;}
+ internal static void Reset(){Suspend();EditorTargetHighlight.Clear();ResetUndo();ResetBlueprints();gate.Reset();ClearSelection();LootReference.ClearCache();ContainerScene.Reset();ContainerRendering.Reset();ContainerLootAvailability.Reset();ClearContainerPreview();ResetContainerJobs();clipboard=Array.Empty<ClipboardEntry>();world=IntPtr.Zero;frame=shortcutFrame=-1;}
  internal static void CaptureInput(){
   if(frame==Time.frameCount)return;frame=Time.frameCount;
   gate.Tick(frame,Input.GetMouseButton(0)||Input.GetMouseButton(1)||Input.GetMouseButton(2));ToggleShortcut();
@@ -40,6 +40,7 @@ internal static partial class WorldEditor {
   try{
    if(Input.GetKeyDown(KeyCode.Escape)){if(containerBuilding){StopContainerBuild();return;}if(moving)FinishMove(true);else if(dialog=="context")CancelContext();else if(dialog.Length>0)CloseDialog();else ClearSelection();return;}
    if(ContainerBuildInput(current))return;
+   if(dialog.Length==0&&!moving)EditorTargetHighlight.Tick(current,PointerRay(AltDown),100);else EditorTargetHighlight.Clear();
    if(ShortcutInput(current))return;
    if(dialog.Length>0){KeepCursor();if(dialog=="context")ContextInput();return;}
    if(moving){

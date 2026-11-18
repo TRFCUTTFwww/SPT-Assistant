@@ -19,7 +19,8 @@ internal static partial class WorldEditor {
   step.Apply();notice=I18n.Text("已撤销：")+I18n.Text(step.Label);FeatureToasts.Show(notice);
  }
  static Action? CaptureMoveUndo(){
-  if(moveActors.Count+moveItems.Count+moveCorpses.Count+moveAirdrops.Count+moveContainers.Count==0)return null;
+  if(moveActors.Count+moveItems.Count+moveCorpses.Count+moveAirdrops.Count+moveContainers.Count+moveMines.Count==0)return null;
+  var mines=moveMines.ToArray();
   var actors=moveActors.Select(v=>(v.Reference,v.Origin,v.Paused,v.Pinned)).ToArray();
   var items=moveItems.Select(v=>(v.Reference,v.Origin,v.Rotation)).ToArray();
   var corpses=moveCorpses.Select(v=>(v.Reference,v.Origin)).ToArray();
@@ -27,6 +28,7 @@ internal static partial class WorldEditor {
   var containers=moveContainers.Select(v=>(v.Reference,v.Origin,v.Rotation)).ToArray();
   return ()=>{
    var worldNow=Current();
+   foreach(var entry in mines){var current=CaptureMineMove(entry.Reference);FreezeMine(current);try{entry.Reference.Resolve().transform.SetPositionAndRotation(entry.Origin,entry.Rotation);}finally{ThawMine(current);}}
    foreach(var entry in actors)try{var target=entry.Reference.Resolve();target.Teleport(entry.Origin,true);if(entry.Pinned)AiFreePlacement.Place(worldNow,target,entry.Origin,entry.Paused,true);else{AiFreePlacement.Release(target);AiTestControl.SetPaused(new[]{target},entry.Paused);}}catch{}
    foreach(var entry in items)try{var item=entry.Reference.Resolve();item.transform.SetPositionAndRotation(entry.Origin,entry.Rotation);if(item.RigidBody!=null){item.RigidBody.position=entry.Origin;item.RigidBody.velocity=Vector3.zero;item.RigidBody.angularVelocity=Vector3.zero;}}catch{}
    foreach(var entry in corpses)try{var move=CaptureCorpseMove(entry.Reference);try{FreezeCorpse(move);MoveCorpse(move,entry.Origin);}finally{RestoreCorpsePhysics(move,true);}}catch{}
@@ -50,6 +52,7 @@ internal static partial class WorldEditor {
  }
  static Action? CaptureDeleteUndo(){
   var current=Current();
+  if(selectionKind==SelectionKind.Mines){var mines=selectedMines.ToArray();return ()=>{foreach(var reference in mines)RestoreMine(reference);};}
   if(selectionKind==SelectionKind.Ai){
    var saved=SelectedActors().Select(t=>(Pos:t.Position,Template:SceneTemplates.Capture(t,t.Profile.Nickname))).ToArray();
    return saved.Length==0?null:()=>{var w=Current();foreach(var entry in saved)SceneTemplates.Spawn(w,entry.Pos,entry.Template with{Id=Guid.NewGuid().ToString("N"),Count=1});};

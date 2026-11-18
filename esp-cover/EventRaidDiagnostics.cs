@@ -46,6 +46,7 @@ internal static class EventRaidDiagnostics {
   else if(action=="airdrop-editor-check")Write("airdrop-editor-check",WorldEditor.CheckAirdrop());
   else if(action=="server-controls-state"){if(serverTask!=null)throw new InvalidOperationException("Server check already running");serverTask=ServerControlPanel.Diagnostics();}
   else if(action=="hideout-craft-state")Write("hideout-craft-state",HideoutCraftControl.Diagnostics());
+  else if(action=="cultist-stash-state")Write("cultist-stash-state",CultistStashSync.Diagnostics());
   else if(action=="coordinates-state")Write("coordinates-state",CoordinateReader.Diagnostics());
   else if(action=="visual-lifecycle-state")Write("visual-lifecycle-state",PlayerVisualGuard.Diagnostics());
   else if(action=="chat-selection-state")Write("chat-selection-state",ChatSelectionGuard.Diagnostics());

@@ -26,7 +26,7 @@ internal static partial class WorldEditor {
   containerGhost=ContainerScene.Visual(source);var shader=Shader.Find("Sprites/Default")??Shader.Find("Unlit/Color");if(shader!=null){containerGhostMaterial=new Material(shader);foreach(var renderer in containerGhost.GetComponentsInChildren<MeshRenderer>())renderer.sharedMaterial=containerGhostMaterial;}
   containerBuilding=true;shortcutFrame=Time.frameCount;Current().MainPlayer.HandsController?.TryCast<Player.FirearmController>()?.SetTriggerPressed(false);
  }
- static void StopContainerBuild(){containerBuilding=false;containerValid=false;if(containerGhost!=null)UnityEngine.Object.Destroy(containerGhost);containerGhost=null;if(containerGhostMaterial!=null)UnityEngine.Object.Destroy(containerGhostMaterial);containerGhostMaterial=null;shortcutFrame=Time.frameCount;}
+ static void StopContainerBuild(){containerBuilding=false;containerValid=false;EditorTargetHighlight.Clear();if(containerGhost!=null)UnityEngine.Object.Destroy(containerGhost);containerGhost=null;if(containerGhostMaterial!=null)UnityEngine.Object.Destroy(containerGhostMaterial);containerGhostMaterial=null;shortcutFrame=Time.frameCount;}
  static bool ContainerBuildInput(GameWorld current){
   if(containerBuildKey!=null&&(dialog is "" or "context")&&!moving&&!dragging&&!RaidChat.InputBlocked&&!FloatingStatus.Capturing&&!DirectorStage.FreeActive&&(!Cursor.visible||cursorOwned)&&ShortcutBindings.Take(containerBuildKey,true)){
    shortcutFrame=Time.frameCount;if(containerBuilding)StopContainerBuild();else BeginContainerBuild();return true;
@@ -41,7 +41,7 @@ internal static partial class WorldEditor {
   if(Input.GetKeyDown(KeyCode.PageUp))containerPitch=ContainerBuildRules.Yaw(containerPitch-step);if(Input.GetKeyDown(KeyCode.PageDown))containerPitch=ContainerBuildRules.Yaw(containerPitch+step);
   if(Input.GetKeyDown(KeyCode.Home))containerPitch=containerYaw=containerRoll=0;
   if(Input.GetKeyDown(KeyCode.X))containerGrid=!containerGrid;
-  UpdateContainerGhost(current);
+  UpdateContainerGhost(current);EditorTargetHighlight.Tick(current,PointerRay(false),20);
   if(Time.frameCount<=shortcutFrame||gate.Blocked)return true;
   if(Input.GetMouseButtonDown(0)){
    var ray=PointerRay(false);var target=ContainerAtRay(current,ray,20);

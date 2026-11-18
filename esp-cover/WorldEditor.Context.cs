@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using EFT.Interactive;
 using UnityEngine;
 namespace LocalSpt5Esp;
 internal static partial class WorldEditor {
@@ -15,16 +16,16 @@ internal static partial class WorldEditor {
   if(SelectionKinds>1){categoryMenu=true;contextTitle="选择对象类别";SetContext(CategoryActions(OpenEditContext));return;}
   OpenEditContext(FirstSelectionKind);
  }
- static int SelectionKinds=>(selectedActors.Count>0?1:0)+(selectedItems.Count>0?1:0)+(selectedCorpses.Count>0?1:0)+(selectedAirdrops.Count>0?1:0)+(selectedContainers.Count>0?1:0);
- static SelectionKind FirstSelectionKind=>selectedActors.Count>0?SelectionKind.Ai:selectedItems.Count>0?SelectionKind.Items:selectedCorpses.Count>0?SelectionKind.Corpses:selectedAirdrops.Count>0?SelectionKind.Airdrops:selectedContainers.Count>0?SelectionKind.Containers:SelectionKind.Items;
- static ContextAction[] CategoryActions(Action<SelectionKind> apply){var result=new System.Collections.Generic.List<ContextAction>();if(selectedActors.Count>0)result.Add(new("AI ×"+selectedActors.Count,true,()=>apply(SelectionKind.Ai)));if(selectedItems.Count>0)result.Add(new(I18n.Text("物品")+" ×"+selectedItems.Count,true,()=>apply(SelectionKind.Items)));if(selectedCorpses.Count>0)result.Add(new(I18n.Text("尸体")+" ×"+selectedCorpses.Count,true,()=>apply(SelectionKind.Corpses)));if(selectedAirdrops.Count>0)result.Add(new(I18n.Text("空投箱")+" ×"+selectedAirdrops.Count,true,()=>apply(SelectionKind.Airdrops)));if(selectedContainers.Count>0)result.Add(new(I18n.Text("容器")+" ×"+selectedContainers.Count,true,()=>apply(SelectionKind.Containers)));return result.ToArray();}
+ static int SelectionKinds=>(selectedActors.Count>0?1:0)+(selectedItems.Count>0?1:0)+(selectedCorpses.Count>0?1:0)+(selectedAirdrops.Count>0?1:0)+(selectedContainers.Count>0?1:0)+(selectedDoors.Count>0?1:0)+(selectedMines.Count>0?1:0);
+ static SelectionKind FirstSelectionKind=>selectedActors.Count>0?SelectionKind.Ai:selectedItems.Count>0?SelectionKind.Items:selectedCorpses.Count>0?SelectionKind.Corpses:selectedAirdrops.Count>0?SelectionKind.Airdrops:selectedContainers.Count>0?SelectionKind.Containers:selectedDoors.Count>0?SelectionKind.Doors:selectedMines.Count>0?SelectionKind.Mines:SelectionKind.Items;
+ static ContextAction[] CategoryActions(Action<SelectionKind> apply){var result=new System.Collections.Generic.List<ContextAction>();if(selectedActors.Count>0)result.Add(new("AI ×"+selectedActors.Count,true,()=>apply(SelectionKind.Ai)));if(selectedItems.Count>0)result.Add(new(I18n.Text("物品")+" ×"+selectedItems.Count,true,()=>apply(SelectionKind.Items)));if(selectedCorpses.Count>0)result.Add(new(I18n.Text("尸体")+" ×"+selectedCorpses.Count,true,()=>apply(SelectionKind.Corpses)));if(selectedAirdrops.Count>0)result.Add(new(I18n.Text("空投箱")+" ×"+selectedAirdrops.Count,true,()=>apply(SelectionKind.Airdrops)));if(selectedContainers.Count>0)result.Add(new(I18n.Text("容器")+" ×"+selectedContainers.Count,true,()=>apply(SelectionKind.Containers)));if(selectedDoors.Count>0)result.Add(new(I18n.Text("门")+" ×"+selectedDoors.Count,true,()=>apply(SelectionKind.Doors)));if(selectedMines.Count>0)result.Add(new("阔剑 ×"+selectedMines.Count,true,()=>apply(SelectionKind.Mines)));return result.ToArray();}
  static void SetContext(ContextAction[] actions){contextActions=actions;contextChoice=EditorMenuRules.Next(Array.ConvertAll(actions,a=>a.Enabled),-1,1);contextTop=0;contextFrame=Time.frameCount;contextPointer=MousePosition;Modal("context");}
  static void OpenEditContext(SelectionKind kind){
   selectionKind=kind;TargetAt(0);categoryMenu=false;contextTitle="场景编辑";bool selected=SelectionCount>0;
   var available=new System.Collections.Generic.Dictionary<string,ContextAction[]>();
   void Add(string id,bool enabled,Action execute,string shortcut="")=>available[id]=new[]{new ContextAction(EditorContextRules.Options.First(o=>o.Id==id).Name,enabled,execute,shortcut)};
   void Pair(string id,bool[] states,string on,string off,Action<bool> execute)=>available[id]=states.Length==0?new[]{new ContextAction(on,false,()=>{})}:EditorContextRules.NextActions(states,splitMixedContext.Value).Select(value=>new ContextAction(value?on:off,true,()=>execute(value))).ToArray();
-  Add("create",true,BeginCreate,ShortcutLabel(EditorShortcut.Create));Add("move",selected,BeginMove,ShortcutLabel(EditorShortcut.Move));Add("copy",selected,Copy,ShortcutLabel(EditorShortcut.Copy));Add("paste",clipboard.Length>0,Paste,ShortcutLabel(EditorShortcut.Paste));Add("duplicate",selected,()=>ApplyShortcut(EditorShortcut.Duplicate,selectionKind),ShortcutLabel(EditorShortcut.Duplicate));
+  Add("create",true,BeginCreate,ShortcutLabel(EditorShortcut.Create));Add("move",selected&&kind!=SelectionKind.Doors,BeginMove,ShortcutLabel(EditorShortcut.Move));Add("copy",selected&&kind!=SelectionKind.Doors,Copy,ShortcutLabel(EditorShortcut.Copy));Add("paste",clipboard.Length>0,Paste,ShortcutLabel(EditorShortcut.Paste));Add("duplicate",selected&&kind!=SelectionKind.Doors,()=>ApplyShortcut(EditorShortcut.Duplicate,selectionKind),ShortcutLabel(EditorShortcut.Duplicate));
   if(kind==SelectionKind.Ai&&selected){
    Add("rename",true,BeginRename,ShortcutLabel(EditorShortcut.Rename));Add("kill",true,Kill,ShortcutLabel(EditorShortcut.Kill));
    if(SelectedActors().Any(AiFreePlacement.Pinned))Add("release-air",true,ReleaseAir,ShortcutLabel(EditorShortcut.ReleaseAir));
@@ -37,9 +38,12 @@ internal static partial class WorldEditor {
    Pair("invincible-toggle",targets.Select(p=>AiActorControl.EditorState(p).Invincible).ToArray(),"开启无敌","关闭无敌",ContextInvincible);Add("clear-effects",true,ContextClearEffects);
   }
   if(kind==SelectionKind.Containers&&selected){Add("rename",true,BeginRename,ShortcutLabel(EditorShortcut.Rename));ContainerLootAvailability.Read(Current());Add("rotate",true,BeginContainerRotation);Add("loot-server",selectedContainers.All(r=>ContainerLootAvailability.Allows(Current(),ContainerScene.Template(r.Resolve()))),()=>RegenerateContainers(false));Add("loot-custom",true,OpenContainerLoot);Pair("container-open",selectedContainers.Select(r=>ContainerScene.Open(r.Resolve())).ToArray(),"开启容器","关闭容器",SetContainersOpen);}
-  Add("delete",selected,Delete,ShortcutLabel(EditorShortcut.Delete));if(kind==SelectionKind.Corpses)Add("revive",selected,ReviveCorpses);else if(kind is not (SelectionKind.Airdrops or SelectionKind.Containers))Add("properties",selected,OpenProperties,ShortcutLabel(EditorShortcut.Properties));
+  if(kind==SelectionKind.Doors&&selected){contextTitle="门 · "+(selectedDoors.Count==1?DoorReference.State(selectedDoors[0].Resolve()):"批量编辑");Add("door-lock",true,()=>SetDoors(EDoorState.Locked));Add("door-unlock",true,()=>SetDoors(EDoorState.Shut,true));Add("door-open",true,()=>SetDoors(EDoorState.Open));Add("door-close",true,()=>SetDoors(EDoorState.Shut));}
+  Add("delete",selected&&kind!=SelectionKind.Doors,Delete,ShortcutLabel(EditorShortcut.Delete));if(kind==SelectionKind.Corpses)Add("revive",selected,ReviveCorpses);else if(kind is not (SelectionKind.Airdrops or SelectionKind.Containers or SelectionKind.Doors or SelectionKind.Mines))Add("properties",selected,OpenProperties,ShortcutLabel(EditorShortcut.Properties));
   var actions=EditorContextRules.Read(contextOrder.Value).Where(available.ContainsKey).SelectMany(id=>available[id]).ToList();
   actions.Add(new(I18n.Text("撤销")+(CanUndo?" · "+I18n.Text(UndoLabel):""),CanUndo,Undo,ShortcutLabel(EditorShortcut.Undo)));
+  if(kind==SelectionKind.Mines&&selected){actions.Insert(0,new("阔剑：向左旋转 15°",true,()=>RotateMines(-15)));actions.Insert(1,new("阔剑：向右旋转 15°",true,()=>RotateMines(15)));}
+  actions.Add(new("放置阔剑",true,CreateMine));
   actions.Add(new("场景蓝图（导入 / 导出 / 恢复）",true,()=>Modal("blueprints")));
   actions.Add(new("自定义右键菜单",true,OpenContextSettings));
   if(SelectionKinds>1)actions.Add(new("返回类别选择",true,OpenContext));SetContext(actions.ToArray());

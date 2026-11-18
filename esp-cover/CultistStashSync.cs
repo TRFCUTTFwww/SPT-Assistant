@@ -10,16 +10,39 @@ using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Newtonsoft.Json.Linq;
 namespace LocalSpt5Esp;
 internal static class CultistStashSync {
+ static readonly HashSet<string> refreshed=new();
+ static string diagnostic="尚未同步";
+ internal static object Diagnostics(){
+  var hideout=HideoutCraftControl.CurrentHideout;var rows=new List<object>();
+  void Inspect(string source,InventoryController? controller){if(controller?.Inventory?.HideoutAreaStashes?.TryGetValue(EAreaType.CircleOfCultists,out var stash)!=true||stash==null){rows.Add(new{source,ready=false});return;}rows.Add(new{source,ready=true,controller=controller.Pointer.ToInt64(),stash=stash.Pointer.ToInt64(),grids=stash.Grids.Select(g=>new{id=g.ID,items=g.Items.Select(i=>i.Id.ToString()).ToArray()}).ToArray()});}
+  Inspect("hideout",hideout?._inventoryController);Inspect("ui",EFT.UI.ItemUiContext.Instance?._inventoryController);Inspect("player",Singleton<GameWorld>.Instance?.MainPlayer?.InventoryController);
+  if(hideout?.AreaDatas!=null)foreach(var area in hideout.AreaDatas)if(area?.Template?.Type==EAreaType.CircleOfCultists)Inspect("display",area.StashController?._inventoryController);
+  return new{inHideout=CultistCircleControl.InHideout,diagnostic,rows};
+ }
  internal static void Initialize()=>CultistCircleControl.SyncStash=Apply;
  internal static void Apply(JsonElement data){
+  if(!CultistCircleControl.InHideout||ItemSpawner.InRaid())return;
+  var hideout=HideoutCraftControl.CurrentHideout;
+  var controllers=new[]{hideout?._inventoryController,EFT.UI.ItemUiContext.Instance?._inventoryController,Singleton<GameWorld>.Instance?.MainPlayer?.InventoryController};
+  var seen=new HashSet<IntPtr>();
+  foreach(var controller in controllers)if(controller!=null&&seen.Add(controller.Pointer))ApplyTo(data,controller);
+  if(hideout?.AreaDatas==null)return;
+  foreach(var area in hideout.AreaDatas)if(area?.Template?.Type==EAreaType.CircleOfCultists&&area.StashController is {} display&&display._areaStash is {} stash){
+   // Entering the hideout creates another inventory/controller. Refresh the
+   // controller that actually owns the displayed grid, not only the menu one.
+   if(display._inventoryController is {} controller&&seen.Add(controller.Pointer))ApplyTo(data,controller);
+   string signature=display.Pointer+":"+stash.Pointer+":"+string.Join(",",stash.GetAllItems().Select(i=>i.Id.ToString()).OrderBy(i=>i));
+   if(refreshed.Count>128)refreshed.Clear();
+   if(refreshed.Add(signature)){area.DecideStatus(area.CurrentLevel);display.UpdateStash(true);}
+  }
+ }
+ static void ApplyTo(JsonElement data,InventoryController controller){
   if(!data.TryGetProperty("stashId",out var stashProp)||stashProp.ValueKind!=JsonValueKind.String)return;
   string stashId=stashProp.GetString()??"";
   if(stashId.Length==0||!data.TryGetProperty("stashItems",out var itemsProp)||itemsProp.ValueKind!=JsonValueKind.Array||itemsProp.GetArrayLength()==0)return;
-  var hideout=HideoutCraftControl.CurrentHideout;
-  var controller=hideout?._inventoryController??EFT.UI.ItemUiContext.Instance?._inventoryController;
   if(controller?.Inventory?.HideoutAreaStashes==null)return;
   if(!controller.Inventory.HideoutAreaStashes.TryGetValue(EAreaType.CircleOfCultists,out var stash)||stash==null||stash.Id.ToString()!=stashId||stash.Grids==null||stash.Grids.Length==0)return;
-  var grid=stash.Grids.FirstOrDefault(g=>g?.ID=="CircleOfCultistsGrid1")??stash.Grids[0];
+  var grid=stash.Grids.FirstOrDefault(g=>g?.ID=="CircleOfCultistsGrid1");
   if(grid==null)return;
   var factory=Singleton<ItemFactory>.Instance;if(factory==null)return;
   var existing=new HashSet<string>(StringComparer.Ordinal);
@@ -27,10 +50,14 @@ internal static class CultistStashSync {
   var all=new List<JsonElement>();
   foreach(var entry in itemsProp.EnumerateArray())all.Add(entry);
   var roots=all.Where(e=>e.TryGetProperty("_id",out var idProp)&&!existing.Contains(idProp.GetString()??"")&&e.TryGetProperty("parentId",out var pProp)&&pProp.GetString()==stashId&&e.TryGetProperty("slotId",out var sProp)&&sProp.GetString()=="CircleOfCultistsGrid1").ToArray();
+  diagnostic=$"待同步奖励 {roots.Length}，本地物品 {existing.Count}";
   if(roots.Length==0)return;
   int added=0;
   foreach(var root in roots){
    string rootId=root.GetProperty("_id").GetString()!;
+   // A reward moved to the player's inventory while the response was pending
+   // must never be recreated in the ritual grid.
+   if(controller.TryFindItem(rootId,out var owned)&&owned!=null)continue;
    var subtree=CollectSubtree(all,rootId);
    var flat=new Il2CppReferenceArray<JsonType.FlatItem>(subtree.Count);
    for(int i=0;i<subtree.Count;i++){
@@ -48,14 +75,23 @@ internal static class CultistStashSync {
    var tree=factory.FlatItemsToTree(flat,false,null);
    if(tree?.Items==null||!tree.Items.ContainsKey(rootId))continue;
    var item=tree.Items[rootId];
-   var loc=ReadLocation(root);
-   var address=grid.HasFreeSpace(item,loc)?grid.CreateItemAddress(loc):grid.FindLocationForItem(item);
-   if(address==null||!ItemManipulator.Add(item,address,controller,true).Succeeded)continue;
-   controller.AddAndRaiseEvents(item,address);
+   // Server locations are only hints. The hideout grid can have changed size,
+   // rotation rules or occupied cells since the ritual response was produced.
+   // Prefer the recorded location when it is valid, then retry with the native
+   // first-fit search instead of leaving the reward invisible.
+   var preferred=ReadLocation(root);
+   var address=grid.HasFreeSpace(item,preferred)?grid.CreateItemAddress(preferred):null;
+   var result=address==null?default:ItemManipulator.Add(item,address,controller,true);
+   if (result is { Succeeded: true }) { controller.AddAndRaiseEvents(item,address!); if(item.CurrentAddress!=null)added++; continue; }
+   var fallback=grid.FindLocationForItem(item);
+   if(fallback==null)continue;
+   result=ItemManipulator.Add(item,fallback,controller,true);
+   if(!result.Succeeded)continue;
+   controller.AddAndRaiseEvents(item,fallback);
    if(item.CurrentAddress!=null)added++;
   }
-  if(added>0&&hideout?.AreaDatas!=null){
-   foreach(var ad in hideout.AreaDatas)if(ad?.Template?.Type==EAreaType.CircleOfCultists){ad.DecideStatus(ad.CurrentLevel);ad.StashController?.UpdateStash(false);}
+  diagnostic=$"已同步奖励 {added}/{roots.Length}";
+  if(added>0){
    Plugin.Self.Log.LogInfo($"Cultist stash sync: added {added} reward item(s) to CircleOfCultistsGrid1 in hideout");
   }
  }

@@ -14,7 +14,7 @@ internal static class CultistCircleControl {
  static readonly Dictionary<string,Capture> captures=new();
  static Task<string>? request;static JsonElement? snapshot;static string owner="",requestedOwner="",status="";static bool draining;static float next,visibleUntil;static Vector2 scroll;
  internal static Action<JsonElement>? SyncStash;
- static bool InHideout=>Singleton<AbstractGame>.Instance?.TryCast<HideoutGame>()!=null;
+ internal static bool InHideout=>Singleton<AbstractGame>.Instance?.TryCast<HideoutGame>()!=null||Singleton<GameWorld>.Instance?.TryCast<HideoutGameWorld>()!=null;
  internal static void Initialize(Plugin plugin){
   preview=FeatureConfig.Bind("69. 仪式圈","Preview cultist rewards","提前预览仪式圈奖励",true,"献祭开始后查看本次已生成的奖励；不会重新抽取或提前领取。");
   instant=FeatureConfig.Bind("69. 仪式圈","Instant cultist circle","仪式圈自动秒完成",false,"献祭材料照常消耗；仪式完成后仍需手动领取奖励。");

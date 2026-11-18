@@ -18,6 +18,9 @@ namespace EFT {
  public class AbstractApplication:Native { }
  public class AbstractGame:Native {public bool InRaid;}
  public class HideoutGame:AbstractGame { }
+ public class GameWorld:Native {public Player? MainPlayer;}
+ public class HideoutGameWorld:GameWorld { }
+ public class Player {public Profile? Profile;}
  public class TarkovApplication:AbstractApplication {
   public Menu? _menuOperation;public Hideout.HideoutRepresentation? _hideout;public int UnsafeCalls;
   public Profile? GetProfileForLocalGame(){UnsafeCalls++;throw new NullReferenceException("Native profile is not ready");}
