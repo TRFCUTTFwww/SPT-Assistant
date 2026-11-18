@@ -91,5 +91,16 @@ static class Tests {
    app=Reset(true);Ready(app);producer=Live(app);CharacterDataPanel.Handler=_=>Task.FromResult(Ritual(true));CultistCircleControl.Tick();producer.ProducingItems["ritual"]._producingProcess=new(){Pointer=new(999)};At(3,CultistCircleControl.Tick);Check(producer.Updates==0,"Old response updated a replacement process");
    app=Reset(true);Ready(app);producer=Live(app);CharacterDataPanel.Handler=_=>Task.FromResult(Ritual(true));CultistCircleControl.Tick();Singleton<AbstractGame>.Instance=new(){InRaid=true};At(3,CultistCircleControl.Tick);Check(producer.Updates==0&&CharacterDataPanel.Calls.Count==1,"Raid entry synced or requested hideout production");
   });
+  Run("cultist sync allows duration mismatch and invokes stash sync callback in hideout",()=>{
+   Check(CultistCircleSyncRules.CanApply("p","p",false,1,1,2,2,100.0,1234,5,true,false),"CanApply rejected ritual with overridden server duration");
+   var app=Reset(true);Ready(app);var producer=Live(app);int stashSyncs=0;CultistCircleControl.SyncStash=_=>stashSyncs++;
+   CharacterDataPanel.Handler=_=>Task.FromResult(Ritual(true));
+   CultistCircleControl.Tick();At(3,CultistCircleControl.Tick);
+   Check(producer.Updates==1&&stashSyncs==1,"Completed ritual in hideout did not invoke SyncStash");
+   CharacterDataPanel.Handler=_=>Task.FromResult(JsonSerializer.Serialize(new{err=0,data=new{profileId="p",active=false,completed=false,revision="",production=(object?)null,items=Array.Empty<object>()}}));
+   At(6,CultistCircleControl.Tick);
+   Check(stashSyncs==2,"Inactive ritual in hideout with orphaned stash items did not invoke SyncStash");
+   CultistCircleControl.SyncStash=null;
+  });
  }
 }

@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text.Json;
 using SPTarkov.Server.Core.Models.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Models.Eft.Hideout;
@@ -27,6 +28,11 @@ public static class CultistCircleService {
     hideout.Production=copy;try{await saves.SaveProfileAsync(session);}catch{hideout.Production=previous;throw;}production=updated;
    }
   }
-  return http.GetBody(new{ok=true,profileId=pmc.Id.ToString(),active=production!=null,completed,revision,production=production==null?null:new{id=selected.Key.ToString(),startTimestamp=production.StartTimestamp??0,productionTime=production.ProductionTime??0,progress=production.Progress??0,inProgress=production.InProgress==true,availableForFinish=production.AvailableForFinish==true},items=rewards.Select(item=>new{id=item.Id.ToString(),tpl=item.Template.ToString(),count=Math.Max(1,item.Upd?.StackObjectsCount??1)})});
+  string stashId="";JsonElement stashItems=default;
+  if(production==null||production.AvailableForFinish==true){
+   var tree=CultistCircleRules.StashTree(pmc,out stashId);
+   stashItems=JsonSerializer.Deserialize<JsonElement>(tree.Length==0?"[]":json.Serialize(tree)??"[]");
+  }else stashItems=JsonSerializer.Deserialize<JsonElement>("[]");
+  return http.GetBody(new{ok=true,profileId=pmc.Id.ToString(),active=production!=null,completed,revision,production=production==null?null:new{id=selected.Key.ToString(),startTimestamp=production.StartTimestamp??0,productionTime=production.ProductionTime??0,progress=production.Progress??0,inProgress=production.InProgress==true,availableForFinish=production.AvailableForFinish==true},items=rewards.Select(item=>new{id=item.Id.ToString(),tpl=item.Template.ToString(),count=Math.Max(1,item.Upd?.StackObjectsCount??1)}),stashId,stashItems});
  }
 }

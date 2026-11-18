@@ -13,6 +13,7 @@ internal static class CultistCircleControl {
  sealed record Capture(CultistsProducer Producer,ProducingItemController Item,ProducingItemController.ProducingProcess Process);
  static readonly Dictionary<string,Capture> captures=new();
  static Task<string>? request;static JsonElement? snapshot;static string owner="",requestedOwner="",status="";static bool draining;static float next,visibleUntil;static Vector2 scroll;
+ internal static Action<JsonElement>? SyncStash;
  static bool InHideout=>Singleton<AbstractGame>.Instance?.TryCast<HideoutGame>()!=null;
  internal static void Initialize(Plugin plugin){
   preview=FeatureConfig.Bind("69. 仪式圈","Preview cultist rewards","提前预览仪式圈奖励",true,"献祭开始后查看本次已生成的奖励；不会重新抽取或提前领取。");
@@ -39,8 +40,9 @@ internal static class CultistCircleControl {
    if(root.TryGetProperty("err",out var err)&&err.GetInt32()!=0)throw new InvalidOperationException(root.GetProperty("errmsg").GetString());
    var data=CharacterDataPanel.Data(root);
    if(ItemSpawner.InRaid()||profile?.Id!=requestedOwner||data.GetProperty("profileId").GetString()!=requestedOwner){snapshot=null;status="仪式状态已过期，请刷新。";return;}
-   owner=requestedOwner;snapshot=data.Clone();status=data.GetProperty("active").GetBoolean()?data.GetProperty("production").GetProperty("availableForFinish").GetBoolean()?"仪式已完成，请前往仪式圈领取奖励。":"仪式进行中，可以预览本次奖励。":"当前没有进行中的仪式。";
-   if(data.GetProperty("active").GetBoolean()&&data.GetProperty("production").GetProperty("availableForFinish").GetBoolean())Apply(data);captures.Clear();
+   bool active=data.GetProperty("active").GetBoolean(),ready=active&&data.GetProperty("production").GetProperty("availableForFinish").GetBoolean();
+   owner=requestedOwner;snapshot=data.Clone();status=active?ready?"仪式已完成，请前往仪式圈领取奖励。":"仪式进行中，可以预览本次奖励。":"当前没有进行中的仪式。";
+   if(ready)Apply(data);if(watchHideout&&(!active||ready))SyncStash?.Invoke(data);captures.Clear();
   }
   if(!draining&&!ItemSpawner.InRaid()&&Time.unscaledTime>=next&&(instant.Value||watchHideout||preview.Value&&Time.unscaledTime<visibleUntil)){
    bool finish=instant.Value&&snapshot is {} s&&owner==profile?.Id&&s.GetProperty("active").GetBoolean()&&!s.GetProperty("production").GetProperty("availableForFinish").GetBoolean();Begin(finish);

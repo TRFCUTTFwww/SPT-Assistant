@@ -24,6 +24,7 @@ internal static class HideoutCraftControl {
  static TarkovApplication? application;
  static TarkovApplication? App()=>application!=null?application:application=Singleton<TarkovApplication>.Instance??Singleton<AbstractApplication>.Instance?.TryCast<TarkovApplication>()??UnityEngine.Object.FindObjectOfType<TarkovApplication>();
  internal static ProductionController? CurrentController=>App()?._hideout?.ProductionController??controller;
+ internal static HideoutRepresentation? CurrentHideout=>App()?._hideout;
  internal static Profile? CurrentProfile=>Profile();
  // The native GetProfileForLocalGame assumes a loaded menu/matchmaker. It
  // can throw during login and character switches; wait for a live controller.

@@ -20,7 +20,9 @@ internal static class CultistCircleChecks {
   production.StartTimestamp++;Check(CultistCircleRules.Revision(pmc.Id.Value,recipe,production,rewards)!=revision,"New sacrifice reused stale identity");
   try{CultistCircleRules.RequireCurrent(recipe.ToString(),revision,recipe,"changed");throw new Exception("Stale request accepted");}catch(ArgumentException){}
   foreach(var invalid in new[]{new Production{InProgress=true,ProductionTime=20,StartTimestamp=1},new Production{SptIsCultistCircle=true,SptIsScavCase=true,InProgress=true,ProductionTime=20,StartTimestamp=1},new Production{SptIsCultistCircle=true,SptIsContinuous=true,InProgress=true,ProductionTime=20,StartTimestamp=1},new Production{SptIsCultistCircle=true,Interrupted=true,InProgress=true,ProductionTime=20,StartTimestamp=1}}){Check(!CultistCircleRules.Eligible(invalid),"Invalid ritual accepted");try{CultistCircleRules.Finish(invalid);throw new Exception("Invalid completion accepted");}catch(ArgumentException){}}
-  pmc.Inventory.HideoutAreaStashes.Clear();Check(CultistCircleRules.Rewards(pmc).Length==0,"Missing stash exposed unrelated inventory");
+  var tree=CultistCircleRules.StashTree(pmc,out string stashId);
+  Check(stashId==stash.ToString()&&tree.Length==2&&ReferenceEquals(tree[0],reward)&&ReferenceEquals(tree[1],child),"StashTree did not collect exact reward subtree and exclude unrelated stash items");
+  pmc.Inventory.HideoutAreaStashes.Clear();Check(CultistCircleRules.Rewards(pmc).Length==0&&CultistCircleRules.StashTree(pmc,out stashId).Length==0&&stashId=="","Missing stash exposed unrelated inventory");
   Console.WriteLine("PASS Cultist Circle native completion, idempotence, reward identity/isolation and stale sacrifice rejection");
  }
 }

@@ -125,6 +125,7 @@ internal class Plugin {
   yield return ()=>BitcoinControl.Initialize(this);
   yield return ()=>HideoutCraftControl.Initialize(this);
   yield return ()=>CultistCircleControl.Initialize(this);
+  yield return ()=>CultistStashSync.Initialize();
   yield return ()=>SeasonMenuControl.Initialize(this);
   yield return ()=>SeasonSelectionControl.Initialize(this);
   yield return ()=>CornerVersionControl.Initialize(this);
