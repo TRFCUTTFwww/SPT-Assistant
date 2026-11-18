@@ -237,6 +237,7 @@ internal static partial class InterfaceMenu {
     case ("模型与镜头","自由镜头"):DirectorStage.Draw(content);break;
     case ("镜头与画面","界面布局"):DrawAppearance(content);break;
     case ("战局与物资","时间与环境"):scroll=GUI.BeginScrollView(content,scroll,new Rect(0,0,content.width-20,1160));RaidClock.DrawPanel(new Rect(4,4,content.width-32,1144));GUI.EndScrollView();break;
+    case ("战局与物资","战局信息"):RaidParameterPanel.DrawRaid(content);break;
     case ("战局与物资","本局物资"):RaidLoot.Draw(content);break;
     case ("战局与物资","范围拾取"):ForceLoot.Draw(content);break;
     case ("物品与装备","修理与耐久"):ArmorCare.Draw(content);break;

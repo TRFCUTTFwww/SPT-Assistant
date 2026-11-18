@@ -38,7 +38,7 @@ public static partial class Patches {
  public sealed class Scope {internal RaidSettings? Previous;}
  // Explicit scope for editor regeneration: apply current rules without mutating map tables.
  public static object GenerateEditorContainer(object generator,object shell,object distribution,object ammo,string map,bool serverRules){
-  var previous=raid;try{raid=serverRules?Read():null;
+  var previous=raid;try{raid=serverRules?RaidParameters.Settings(map.ToLowerInvariant(),Read()):null;
    return typeof(LocationLootGenerator).GetMethod("AddLootToContainer",BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic)!.Invoke(generator,[shell,Array.Empty<StaticForced>(),distribution,ammo,map])!;
   }finally{raid=previous;}
  }
@@ -63,8 +63,8 @@ public static partial class Patches {
  static void RestoreDeathInsurance(InsuranceScope? __state){if(__state!=null)__state.Request.LostInsuredItems=__state.Original;}
  static bool AllowDeathLoss(PmcData __0)=>!KeepsDeathInventory(Read(),__0);
  static bool KeepDeathItems(PmcData __0,ref IEnumerable<Item> __result){if(!KeepsDeathInventory(Read(),__0))return true;__result=Array.Empty<Item>();return false;}
- static void BeginLocation(string __1,out Scope __state){__state=new(){Previous=generation};generation=Read();if(!__1.Equals("hideout",StringComparison.OrdinalIgnoreCase))Status(__1,generation);}
- static void FinishLocation(string __1,ref LocationBase __result){if(generation==null||__1.Equals("hideout",StringComparison.OrdinalIgnoreCase))return;__result=RaidGenerationRules.Apply(__result,generation);Log.Info($"Raid advanced {__1}: noAI={generation.NoAi}, noLoot={generation.NoLoot}, factions={generation.AiEnabled}, waves={__result.Waves?.Count}, squads={__result.BossLocationSpawn?.Count}");}
+ static void BeginLocation(string __1,out Scope __state){__state=new(){Previous=generation};generation=RaidParameters.Settings(__1.ToLowerInvariant(),Read());if(!__1.Equals("hideout",StringComparison.OrdinalIgnoreCase))Status(__1,generation);}
+ static void FinishLocation(string __1,ref LocationBase __result){if(generation==null||__1.Equals("hideout",StringComparison.OrdinalIgnoreCase))return;__result=RaidGenerationRules.Apply(RaidParameters.Apply(__1.ToLowerInvariant(),__result),generation);__result=RaidParameters.Duration(__result,generation.NextRaidMinutes);Log.Info($"Raid advanced {__1}: noAI={generation.NoAi}, noLoot={generation.NoLoot}, factions={generation.AiEnabled}, waves={__result.Waves?.Count}, squads={__result.BossLocationSpawn?.Count}");}
  static void EndLocation(Scope? __state){if(__state!=null)generation=__state.Previous;}
  static void FinishLoot(ref List<SpawnpointTemplate> __result){if(raid?.NoLoot==true)__result=RaidGenerationRules.EmptyLoot(__result);}
  static bool AllowDynamic(ref List<SpawnpointTemplate> __result){if(raid?.NoLoot!=true)return true;__result=[];return false;}

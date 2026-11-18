@@ -33,7 +33,7 @@ internal static class RaidSpawnControl {
   }
   plugin.Log.LogInfo("No-AI guard ready: concrete creator interception, persistent manual profile allowlist, world reconciliation");
  }
- static void Created(LocalGame __result){Reset();if(__result==null)return;game=__result.Pointer;try{Configure(NextRaidLoot.Read().NoAi);Plugin.Self.Log.LogInfo("No-AI raid captured: "+noAi);}catch(Exception e){Plugin.Self.Log.LogWarning("No-AI raid settings: "+e.Message);}}
+ static void Created(LocalGame __result){Reset();if(__result==null)return;game=__result.Pointer;try{Configure(NextRaidLoot.GeneratedNoAi());Plugin.Self.Log.LogInfo("No-AI raid captured: "+noAi);}catch(Exception e){Plugin.Self.Log.LogWarning("No-AI raid settings: "+e.Message);}}
  static void Cleaned(LocalGame __instance){if(game==__instance.Pointer)Reset();}
  static bool Activate(BotCreationData __2,ref NativeTask __result){if(!Block(__2!=null&&manual.Contains(__2.Pointer)))return true;__result=NativeTask.CompletedTask;return false;}
  static bool CreatorData(BotCreationData __0,ref NativeTask __result){if(!Block(__0!=null&&manual.Contains(__0.Pointer)))return true;__result=NativeTask.CompletedTask;return false;}
@@ -41,7 +41,7 @@ internal static class RaidSpawnControl {
  static bool Btr(ref NativeTask __result){if(!NoAiActive)return true;blocked++;__result=NativeTask.CompletedTask;return false;}
  internal static void Tick(GameWorld? current){
   if(current==null){spawnPaused=false;if(world!=IntPtr.Zero){world=IntPtr.Zero;pending.Clear();manual.Clear();manualProfiles.Clear();}return;}
-  if(world!=current.Pointer){if(world!=IntPtr.Zero)spawnPaused=false;world=current.Pointer;pending.Clear();nextSweep=0;try{Configure(NextRaidLoot.Read().NoAi);}catch{}Plugin.Self.Log.LogInfo($"No-AI world bound: {world}; enabled={noAi}");}
+  if(world!=current.Pointer){if(world!=IntPtr.Zero)spawnPaused=false;world=current.Pointer;pending.Clear();nextSweep=0;try{Configure(NextRaidLoot.GeneratedNoAi(current.LocationId));}catch{}Plugin.Self.Log.LogInfo($"No-AI world bound: {world}; enabled={noAi}");}
   if(!(NoAiActive||SceneTemplates.Exclusive)||Time.unscaledTime<nextSweep)return;nextSweep=Time.unscaledTime+1;
   try{
    var actors=AiRemoval.Gather(current);var candidates=new List<Player>();var seen=new HashSet<IntPtr>();

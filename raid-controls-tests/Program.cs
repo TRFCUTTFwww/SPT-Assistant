@@ -10,6 +10,7 @@ using SPTarkov.Server.Core.Models.Spt.Config;
 using SPTarkov.Server.Core.Generators.Loot;
 using SPTarkov.Common.Models.Logging;
 try{
+ ParameterTests.Run();
  AppContext.SetSwitch("LocalRaidControls.Tests",true);
  void Check(bool value,string name){if(!value)throw new Exception(name);}
  var legacy=JsonSerializer.Deserialize<RaidSettings>("{\"Schema\":1,\"LootEnabled\":true,\"LooseMultiplier\":50}")!;legacy.Validate();Check(!legacy.NoAi&&!legacy.NoLoot&&!legacy.AiEnabled&&legacy.SpawnMultiplier("pmcUSEC")==1,"old configuration keeps existing behavior");
@@ -37,6 +38,7 @@ try{
  var config=Activator.CreateInstance<LocationConfig>();config.LooseLootMultiplier=new(){["test"]=2};config.StaticLootMultiplier=new(){["test"]=4};var generator=new LocationLootGenerator(null!,null!,null!,null!,null!,null!,null!,null!,config,null!,null!,null!);
  typeof(Patches).GetField("raid",BindingFlags.Static|BindingFlags.NonPublic)!.SetValue(null,settings);double loose=(double)typeof(LocationLootGenerator).GetMethod("GetLooseLootMultiplierForLocation",BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic)!.Invoke(generator,new object[]{"test"})!;Check(loose==6,"live Harmony quantity postfix attached");typeof(Patches).GetField("raid",BindingFlags.Static|BindingFlags.NonPublic)!.SetValue(null,null);loose=(double)typeof(LocationLootGenerator).GetMethod("GetLooseLootMultiplierForLocation",BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic)!.Invoke(generator,new object[]{"test"})!;Check(loose==2,"no multiplier leaks outside raid generation scope");
  Console.WriteLine("PASS actual server Harmony patch registration, quantity multiplier application and generation-scope isolation");
+ ParameterTests.Generation();
  var noLootSettings=new RaidSettings{NoLoot=true};typeof(Patches).GetField("raid",BindingFlags.Static|BindingFlags.NonPublic)!.SetValue(null,noLootSettings);var dynamicMethod=typeof(LocationLootGenerator).GetMethod("GenerateDynamicLoot",BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic)!;var suppressed=(List<SpawnpointTemplate>)dynamicMethod.Invoke(generator,new object?[]{source,null,"test"})!;Check(suppressed.Count==0,"native dynamic generation skipped before any dependencies or forced items are touched");var addContainer=typeof(LocationLootGenerator).GetMethod("AddLootToContainer",BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic)!;var emptyStatic=(StaticContainerData)addContainer.Invoke(generator,new object?[]{new StaticContainerData{Template=shell},null,null,null,"test"})!;Check(emptyStatic.Template!.Items!.Count()==1,"native static generation bypasses forced container rewards");typeof(Patches).GetField("raid",BindingFlags.Static|BindingFlags.NonPublic)!.SetValue(null,null);
  Console.WriteLine("PASS live Harmony no-loot prefixes suppress native loose and forced container item generation");
  var priceMap=(Dictionary<string,double>)typeof(Patches).GetField("prices",BindingFlags.Static|BindingFlags.NonPublic)!.GetValue(null)!;priceMap[rare.ToString()]=200000;

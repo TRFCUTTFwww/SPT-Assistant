@@ -23,6 +23,7 @@ public sealed class WorldEditorRequest:IRequestData {
  [JsonPropertyName("template")]public string Template{get;set;}="";
  [JsonPropertyName("role")]public string Role{get;set;}="";
  [JsonPropertyName("options")]public ContainerLootOptions Options{get;set;}=new();
+ [JsonPropertyName("parameters")]public JsonElement Parameters{get;set;}
 }
 [Injectable]
 public sealed class WorldEditorRouter:StaticRouter {
@@ -42,10 +43,18 @@ public sealed class WorldEditorService(LocationLootGenerator generator,LocationT
     return http.GetBody(new{ok=true,profile=pmc.Id.ToString(),money=currencies.Select(t=>pmc.Inventory?.Items?.Where(i=>i.Template.ToString()==t).Sum(i=>(long)(i.Upd?.StackObjectsCount??1))??0).ToArray()});
    }
    var map=locations.GetLocation(request.Map)??throw new ArgumentException("地图不存在。");
+   if(request.Action=="parameters"){
+    var parametersBridge=ParameterBridge()??throw new ArgumentException("请更新并重启服务端战局规则模块。");
+    string action=request.Parameters.TryGetProperty("operation",out var op)?op.GetString()??"read":"read";
+    if(action is not ("read" or "apply" or "save" or "load" or "defaults"))throw new ArgumentException("未知参数操作。");
+    string response=(string)parametersBridge.Invoke(null,[action,request.Map.ToLowerInvariant(),map.Base,request.Parameters])!;
+    return http.GetBody(JsonSerializer.Deserialize<JsonElement>(response));
+   }
    if(request.Action=="catalog")return http.GetBody(new{ok=true,map=request.Map,serverLootReady=AppDomain.CurrentDomain.GetAssemblies().Any(a=>a.GetType("LocalRaidControls.Patches")?.GetMethod("GenerateEditorContainer",BindingFlags.Public|BindingFlags.Static)!=null),serverLootTemplates=(map.StaticLoot?.Value?.Keys??Enumerable.Empty<MongoId>()).Select(k=>k.ToString()).ToArray(),containers=templates.Items.Where(p=>p.Value.Parent.ToString()=="566965d44bdc2d814c8b4571").Select(p=>new{id=p.Key.ToString(),name=p.Value.Name})});
    if(request.Action=="aiInfo"){
     request.Role=(request.Role??"").Trim().ToLowerInvariant();var role=string.IsNullOrWhiteSpace(request.Role)?null:bots.Types.GetValueOrDefault(request.Role);if(request.Role.Length>0&&role==null)throw new ArgumentException("未知角色代号，请在角色目录中查找。");
-    return http.GetBody(new{ok=true,map=request.Map,updatedUtc=DateTime.UtcNow,source="live-server",botConfig,pmcConfig,locationConfig,core=bots.Core,mapAi=AiMap(map.Base),roles=bots.Types.Keys.Order().ToArray(),role=role==null?null:new{request.Role,configuration=role},assistant=AssistantSettings()});
+    JsonElement? effective=null;if(ParameterBridge() is {} parameterBridge)effective=JsonSerializer.Deserialize<JsonElement>((string)parameterBridge.Invoke(null,["read",request.Map.ToLowerInvariant(),map.Base,default(JsonElement)])!);
+    return http.GetBody(new{ok=true,map=request.Map,updatedUtc=DateTime.UtcNow,source="live-server",botConfig,pmcConfig,locationConfig,core=bots.Core,mapAi=effective is {} e?(object)e.GetProperty("effectiveMap"):AiMap(map.Base),roles=bots.Types.Keys.Order().ToArray(),role=role==null?null:new{request.Role,configuration=role},assistant=effective is {} a?a.GetProperty("assistant"):AssistantSettings()});
    }
    if(request.Action!="loot")throw new ArgumentException("未知编辑器操作。");
    request.Options??=new();request.Options.Validate();
@@ -68,5 +77,6 @@ public sealed class WorldEditorService(LocationLootGenerator generator,LocationT
   finally{gate.Release();}
  }
  static object AiMap(LocationBase map)=>map.GetType().GetProperties().Where(p=>p.Name.Contains("Bot",StringComparison.OrdinalIgnoreCase)||p.Name.Contains("Spawn",StringComparison.OrdinalIgnoreCase)||p.Name.Contains("Wave",StringComparison.OrdinalIgnoreCase)||p.Name is "Name" or "Id" or "NewSpawn" or "OldSpawn" or "OpenZones").ToDictionary(p=>p.Name,p=>p.GetValue(map));
+ static MethodInfo? ParameterBridge()=>AppDomain.CurrentDomain.GetAssemblies().Select(a=>a.GetType("LocalRaidControls.RaidParameters")?.GetMethod("Handle",BindingFlags.Static|BindingFlags.Public)).FirstOrDefault(m=>m!=null);
  static JsonElement? AssistantSettings(){try{using var d=JsonDocument.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"user","mods","LocalRaidControls","settings.json")));return d.RootElement.Clone();}catch{return null;}}
 }
