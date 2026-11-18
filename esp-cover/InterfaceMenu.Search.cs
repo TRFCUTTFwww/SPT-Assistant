@@ -26,7 +26,7 @@ internal static partial class InterfaceMenu {
     ("战局与物资","本局物资")=>"仓库 战局仓库 stash inventory loot",
     ("载具与空投","BTR 控制")=>"下一站 设置下一站 立即发车 停留 路线 免费 物品转移 秒转移 叫车 扩展 转移仓 destination next stop route departure free delivery call expanded container",
     ("剧情","等待时间")=>"跳过 支线 主线 商人任务 冷却 skip quest wait cooldown",
-    ("设置与热键","JavaScript")=>"动态 左下角 版本文字 脚本 联网 API HTTP JavaScript corner version script",
+    ("设置与热键","JavaScript")=>"动态 左下角 版本文字 脚本 显示表达式 变量 联网 API HTTP JavaScript corner version script expression",
     _=>""
    };
    items.Add(new(section,page,page,Bilingual(section,MenuSections.DisplayName(section),page,MenuSections.Subtitle(section),extra)));
@@ -36,7 +36,7 @@ internal static partial class InterfaceMenu {
    var entry=pair.Value;var attributes=Metadata(entry);var source=attributes!=null?I18n.Source(attributes):(entry.Definition.Key,entry.Definition.Section,entry.Description.Description);
    string section=MenuSections.Group(entry.Definition.Section,entry.Definition.Key);string page=MenuSections.Pages(section).FirstOrDefault(candidate=>MenuSections.OnPage(section,candidate,entry.Definition.Section,entry.Definition.Key))??MenuSections.Pages(section)[0];
    if(MenuSections.Number(entry.Definition.Section) is 24 or 32){section="设置与热键";page="主题与布局";}
-   if(entry.Definition.Section=="24. Interface"&&entry.Definition.Key is "Dynamic corner version" or "Corner version script" or "Corner script interval")page="JavaScript";
+   if(entry.Definition.Section=="24. Interface"&&entry.Definition.Key is "Dynamic corner version" or "Corner version script" or "Corner display expression" or "Corner script interval")page="JavaScript";
    items.Add(new(section,page,source.Item1,Bilingual(source.Item1,source.Item2,source.Item3,entry.Definition.Section,entry.Definition.Key,section,page),entry));
   }
   searchIndex=items.ToArray();cachedEnglish=I18n.English;cachedQuery="";

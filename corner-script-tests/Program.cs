@@ -74,6 +74,15 @@ try{
  Check(RunWithGame("return game.map + ':' + game.aliveAi + ':' + game.fps + ':' + game.cultistReady;", """{"inRaid":true,"map":"woods","raidRemainingSeconds":420,"fps":88.5,"aliveAi":7,"alivePlayers":8,"hideoutCraftsReady":2,"cultistReady":true}""")=="woods:7:88.5:true","globalThis.game exposes injected snapshot");
  Check(RunWithGame("'use strict'; try { game.map = 'hack'; return 'mutated'; } catch { return 'frozen'; }", """{"map":"customs"}""")=="frozen","globalThis.game is frozen");
  Check(Run("console.log('ignored', {a:1}); return 'ok';")=="ok","console.log is safe during regular evaluation");
+ var evaluateDisplay=core.GetType("LocalSpt5Esp.CornerScript",true)!.GetMethod("EvaluateDisplay",BindingFlags.Static|BindingFlags.NonPublic)!;
+ string RunDisplay(string code,string expression,string? gameJson=null)=>(string)evaluateDisplay.Invoke(null,[code,expression,CancellationToken.None,null,gameJson])!;
+ Check(RunDisplay("const stats = { fps: game.fps }; // last line","stats.fps + ' FPS'","""{"fps":88.5}""")=="88.5 FPS","display expression reads local variables and the game snapshot");
+ Check(RunDisplay("","game.map","""{"map":"woods"}""")=="woods","display expression runs without a script body");
+ Check(RunDisplay("const status = await Promise.resolve('ready');","status")=="ready","display expression reads awaited values");
+ Check(RunDisplay("return 'legacy';","missingVariable")=="legacy","explicit return keeps its normal precedence");
+ Check(Run("cornerText = 0;")=="0"&&Run("cornerText = false;")=="false"&&Run("return '';")=="","assigned and legacy falsy values remain valid");
+ var export=core.GetType("LocalSpt5Esp.CornerScript",true)!.GetMethod("SourceWithExpression",BindingFlags.Static|BindingFlags.NonPublic)!;
+ Check(Run((string)export.Invoke(null,["const status = 42;","status"])!)=="42","exported script includes its display expression");
  var evalTest=core.GetType("LocalSpt5Esp.CornerScript",true)!.GetMethod("EvaluateTest",BindingFlags.Static|BindingFlags.NonPublic)!;
  object RunTest(string code,string? gameJson=null)=>evalTest.Invoke(null,[code,CancellationToken.None,null,gameJson])!;
  T Field<T>(object target,string name)=>(T)target.GetType().GetProperty(name)!.GetValue(target)!;
@@ -81,5 +90,8 @@ try{
  Check(Field<bool>(okTest,"Ok")&&Field<string>(okTest,"Value")=="reserve:42"&&Field<string[]>(okTest,"Logs").SequenceEqual(new[]{"[LOG] step 1","[WARN] hint"}),"EvaluateTest captures console logs and return value");
  var errTest=RunTest("console.info('before fail'); throw new Error('boom');");
  Check(!Field<bool>(errTest,"Ok")&&Field<string>(errTest,"Error").Contains("boom")&&Field<string[]>(errTest,"Logs").SequenceEqual(new[]{"[INFO] before fail"}),"EvaluateTest preserves logs and error details on failure");
+ var displayTest=core.GetType("LocalSpt5Esp.CornerScript",true)!.GetMethod("EvaluateDisplayTest",BindingFlags.Static|BindingFlags.NonPublic)!;
+ var withExpression=displayTest.Invoke(null,["const status = 42; console.log(status);","status",CancellationToken.None,null,null])!;
+ Check(Field<bool>(withExpression,"Ok")&&Field<string>(withExpression,"Value")=="42"&&Field<string[]>(withExpression,"Logs").SequenceEqual(new[]{"[LOG] 42"}),"test runs use the same display expression and keep logs");
  Console.WriteLine($"Passed {checks} script and HTTP checks.");
 }finally{resolver.GetMethod("Shutdown",BindingFlags.Static|BindingFlags.NonPublic)!.Invoke(null,null);context.Unload();}
