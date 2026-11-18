@@ -11,7 +11,7 @@ namespace LocalSpt5Esp;
 // new screen. Future hosts render the same shared screen without this patch.
 internal static class SafetyUiBridge {
  static RuntimeReloader? runtime;static Type? type;static float nextError;
- internal static void Initialize(object services,Harmony harmony){if(services is not RuntimeReloader host)return;runtime=host;type=host.GetType();if(type.GetProperty("SafetyUiRevision")?.GetValue(host) is int revision&&revision>=3)return;var draw=type.GetMethod("DrawSafety",BindingFlags.Instance|BindingFlags.NonPublic);if(draw!=null){var ui=new Harmony("local.spt5.esp.safety-ui");ui.UnpatchSelf();ui.Patch(draw,prefix:new HarmonyMethod(typeof(SafetyUiBridge),nameof(Draw)));}}
+ internal static void Initialize(object services,Harmony harmony){if(services is not RuntimeReloader host)return;runtime=host;type=host.GetType();if(type.GetProperty("SafetyUiRevision")?.GetValue(host) is int revision&&revision>=4)return;var draw=type.GetMethod("DrawSafety",BindingFlags.Instance|BindingFlags.NonPublic);if(draw!=null){var ui=new Harmony("local.spt5.esp.safety-ui");ui.UnpatchSelf();ui.Patch(draw,prefix:new HarmonyMethod(typeof(SafetyUiBridge),nameof(Draw)));}}
  static object? Get(string name)=>type?.GetField(name,BindingFlags.Instance|BindingFlags.NonPublic)?.GetValue(runtime);
  static bool Flag(string name)=>Get(name) is true;
  static string Text(string name)=>Get(name) as string??"";

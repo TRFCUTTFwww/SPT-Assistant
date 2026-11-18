@@ -12,7 +12,7 @@ public sealed class SqliteSnapshots {
  public SnapshotInfo Add(string session,string nickname,string label,string json){var body=Encoding.UTF8.GetBytes(json);if(body.Length>128*1024*1024)throw new ArgumentException("存档超过 128 MB，无法备份。");var row=new SnapshotInfo(Guid.NewGuid().ToString("N"),session,nickname,DateTime.UtcNow.ToString("O"),label,Convert.ToHexString(SHA256.HashData(body)),body.Length);using var db=Open();using var q=db.Prepare("INSERT INTO snapshots(id,session,nickname,created,label,sha256,body) VALUES(?,?,?,?,?,?,?)");q.Text(1,row.Id);q.Text(2,session);q.Text(3,nickname);q.Text(4,row.Created);q.Text(5,label);q.Text(6,row.Sha256);q.Blob(7,body);q.Done();return row;}
  public SnapshotInfo[] List(){using var db=Open();using var q=db.Prepare("SELECT id,session,nickname,created,label,sha256,length(body) FROM snapshots ORDER BY created DESC LIMIT 200");var rows=new List<SnapshotInfo>();while(q.Row())rows.Add(new(q.String(0),q.String(1),q.String(2),q.String(3),q.String(4),q.String(5),q.Int(6)));return rows.ToArray();}
  public string Read(string id){if(id.Length!=32||!id.All(Uri.IsHexDigit))throw new ArgumentException("请选择有效备份。");using var db=Open();using var q=db.Prepare("SELECT sha256,body FROM snapshots WHERE id=?");q.Text(1,id);if(!q.Row())throw new ArgumentException("备份不存在。");var digest=q.String(0);var body=q.Bytes(1);if(body.Length>128*1024*1024||Convert.ToHexString(SHA256.HashData(body))!=digest)throw new ArgumentException("备份校验失败，未修改存档。");return Encoding.UTF8.GetString(body);}
- sealed class Db:IDisposable {
+ internal sealed class Db:IDisposable {
   IntPtr handle;
   public Db(string path){int code=Native.sqlite3_open_v2(Utf8(path),out handle,2|4|0x10000,IntPtr.Zero);if(code!=0){Dispose();throw new IOException("SQLite 数据库无法打开（"+code+"）。");}Native.sqlite3_busy_timeout(handle,10000);}
   public void Check(int code){if(code!=0)throw new IOException("SQLite 操作失败（"+code+"），未完成备份。");}
@@ -20,7 +20,7 @@ public sealed class SqliteSnapshots {
   public Query Prepare(string sql){Check(Native.sqlite3_prepare_v2(handle,Utf8(sql),-1,out var statement,IntPtr.Zero));return new(this,statement);}
   public void Dispose(){if(handle!=IntPtr.Zero){Native.sqlite3_close_v2(handle);handle=IntPtr.Zero;}}
  }
- sealed class Query(Db owner,IntPtr statement):IDisposable {
+ internal sealed class Query(Db owner,IntPtr statement):IDisposable {
   public void Text(int n,string text){byte[] bytes=Utf8(text);owner.Check(Native.sqlite3_bind_text(statement,n,bytes,bytes.Length-1,new IntPtr(-1)));}
   public void Blob(int n,byte[] bytes)=>owner.Check(Native.sqlite3_bind_blob(statement,n,bytes,bytes.Length,new IntPtr(-1)));
   public bool Row(){int code=Native.sqlite3_step(statement);if(code==100)return true;if(code==101)return false;owner.Check(code);return false;}

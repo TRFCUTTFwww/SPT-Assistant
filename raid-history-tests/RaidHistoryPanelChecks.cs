@@ -1,0 +1,46 @@
+using System.Text.Json;
+using Comfort.Common;
+using EFT;
+using LocalSpt5Esp;
+using UnityEngine;
+internal static class RaidHistoryPanelChecks {
+ internal static void Run(Action<bool,string> check){
+  JsonElement State()=>JsonSerializer.SerializeToElement(RaidHistoryPanel.Diagnostics());
+  const string row="""{"Id":"real-raid","Map":"Shoreline","Side":"PMC","Started":"2026-11-18T05:37:37Z","Status":"SURVIVED","Seconds":193,"kills":7}""";
+  string Full(string rows,int count)=>"{\"err\":0,\"data\":{\"ok\":true,\"history\":{\"rows\":["+rows+"],\"total\":"+count+"},\"warning\":\"\"}}";
+  Singleton<TarkovApplication>.Instance=null;Singleton<AbstractApplication>.Instance=null;
+  UnityEngine.Object.Scene=null;Time.unscaledTime=100;RaidHistoryPanel.Reset();CharacterDataPanel.Calls=0;
+  RaidHistoryPanel.Tick();RaidHistoryPanel.Tick();
+  check(CharacterDataPanel.Calls==0&&RaidHistoryPanel.EmptyText=="等待角色就绪","unavailable profile is waiting, never an empty history");
+  int searches=UnityEngine.Object.Searches;Time.unscaledTime=101;RaidHistoryPanel.Tick();
+  check(UnityEngine.Object.Searches==searches,"missing application search throttled to two seconds");
+  var app=new TarkovApplication{Backend=new(){Profile=new(){Id="profile-a"}}};UnityEngine.Object.Scene=app;
+  var pending=new TaskCompletionSource<string>();CharacterDataPanel.Response=()=>pending.Task;
+  Time.unscaledTime=102;RaidHistoryPanel.Tick();
+  check(CharacterDataPanel.Calls==1&&State().GetProperty("identityReady").GetBoolean(),"live scene application starts HTTP history request despite BOTH empty native singletons");
+  check(RaidHistoryPanel.EmptyText=="读取中…","pending request never claims there are no raids");
+  pending.SetResult(Full(row,1));RaidHistoryPanel.Tick();
+  check(State().GetProperty("rows").GetInt32()==1&&State().GetProperty("total").GetInt32()==1,"actual PascalCase server list response accepted by production client panel");
+  InterfaceMenu.Labels.Clear();RaidHistoryPanel.Draw(new(0,0,1000,700));
+  check(InterfaceMenu.Labels.Any(s=>s.Contains("海岸线")&&s.Contains("成功撤离"))&&InterfaceMenu.Labels.Any(s=>s.Contains("击杀 7")),"production draw renders recorded map, result and kill count");
+  check(!InterfaceMenu.Labels.Contains("暂无战局记录"),"existing record never draws empty placeholder");
+  int requests=CharacterDataPanel.Calls;RaidHistoryPanel.Tick();check(CharacterDataPanel.Calls==requests,"layout/repaint callbacks do not duplicate requests");
+  CharacterDataPanel.Response=()=>Task.FromResult("{\"err\":228,\"errmsg\":\"连接失败\"}");Time.unscaledTime=117;RaidHistoryPanel.Tick();RaidHistoryPanel.Tick();
+  check(State().GetProperty("rows").GetInt32()==1&&State().GetProperty("notice").GetString()=="连接失败","failed refresh preserves last confirmed list and exposes error");
+  app.Backend!.Profile=new(){Id="profile-b"};var other=new TaskCompletionSource<string>();CharacterDataPanel.Response=()=>other.Task;RaidHistoryPanel.Tick();
+  check(State().GetProperty("rows").GetInt32()==0&&RaidHistoryPanel.EmptyText=="读取中…","profile switch immediately clears prior account records and loads current account");
+  other.SetResult(Full("",0));RaidHistoryPanel.Tick();
+  check(RaidHistoryPanel.EmptyText=="暂无战局记录","empty text appears only after a successful empty response");
+  RaidHistoryPanel.Reset();CharacterDataPanel.Response=()=>Task.FromResult("{\"err\":228,\"errmsg\":\"连接失败\"}");RaidHistoryPanel.Tick();RaidHistoryPanel.Tick();
+  check(RaidHistoryPanel.EmptyText=="连接失败","initial request failure never masquerades as empty database");
+  CharacterDataPanel.Response=()=>Task.FromResult("{}");Time.unscaledTime+=3;RaidHistoryPanel.Tick();RaidHistoryPanel.Tick();
+  check(RaidHistoryPanel.EmptyText=="服务响应无法读取，请刷新。","malformed successful response exposes an error rather than empty history");
+  app.Backend=null;app._menuOperation=new(){QuestController=new(){Profile=new(){Id="profile-menu"}}};CharacterDataPanel.Response=()=>Task.FromResult(Full(row,1));RaidHistoryPanel.Reset();RaidHistoryPanel.Tick();RaidHistoryPanel.Tick();
+  check(State().GetProperty("rows").GetInt32()==1,"ready menu profile is fallback if backend profile unavailable");
+  var delayed=new TaskCompletionSource<string>();CharacterDataPanel.Response=()=>delayed.Task;Time.unscaledTime+=15;RaidHistoryPanel.Tick();
+  app._menuOperation!.QuestController!.Profile=new(){Id="profile-next"};CharacterDataPanel.Response=()=>Task.FromResult(Full("",0));RaidHistoryPanel.Tick();
+  delayed.SetResult(Full(row,1));RaidHistoryPanel.Tick();
+  check(State().GetProperty("total").GetInt32()==0,"late response belonging to previous profile is discarded");
+  RaidHistoryPanel.Reset();UnityEngine.Object.Scene=null;
+ }
+}

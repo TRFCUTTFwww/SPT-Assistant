@@ -25,7 +25,14 @@ internal static class HideoutCraftControl {
  static TarkovApplication? App()=>application!=null?application:application=Singleton<TarkovApplication>.Instance??Singleton<AbstractApplication>.Instance?.TryCast<TarkovApplication>()??UnityEngine.Object.FindObjectOfType<TarkovApplication>();
  internal static ProductionController? CurrentController=>App()?._hideout?.ProductionController??controller;
  internal static Profile? CurrentProfile=>Profile();
- static Profile? Profile()=>(App()?._menuOperation?.QuestController??EFT.UI.ItemUiContext.Instance?.QuestController)?.Profile??App()?.GetProfileForLocalGame();
+ // The native GetProfileForLocalGame assumes a loaded menu/matchmaker. It
+ // can throw during login and character switches; wait for a live controller.
+ static Profile? Profile(){
+  var app=App();var menu=app?._menuOperation;
+  var profile=menu?.QuestController?.Profile;
+  if(profile==null&&Singleton<AbstractGame>.Instance?.TryCast<HideoutGame>()!=null)profile=EFT.UI.ItemUiContext.Instance?.QuestController?.Profile;
+  return string.IsNullOrEmpty(profile?.Id)?null:profile;
+ }
  internal static object Diagnostics(){
   var profile=Profile();var rows=new List<object>();
   if(profile?.Hideout?.Production is {} productions)foreach(var pair in productions){var p=pair.Value;rows.Add(new{id=pair.Key,p.Progress,p.StartTimestamp,p.ProductionTime,p.InProgress,p.Interrupted,p.AvailableForFinish,p.RecipeId});}
@@ -41,19 +48,23 @@ internal static class HideoutCraftControl {
   return false;
  }
  static void Observe(ProductionController __instance){controller=__instance;}
- static void Begin(){if(request!=null||ItemSpawner.InRaid()||draining)return;var profile=Profile();if(profile==null){status="角色尚未就绪，请稍后重试。";next=Time.unscaledTime+2;return;}requestProfile=profile.Id;requestedCrafts.Clear();controller=App()?._hideout?.ProductionController??controller;if(controller?._areaProducers is {} areas)foreach(var area in areas)foreach(var producer in area.Value)foreach(var pair in producer.ProducingItems){var process=pair.Value._producingProcess;if(process!=null)requestedCrafts[pair.Key]=new(producer,pair.Value,process);}status="正在完成并同步制作…";request=CharacterDataPanel.Call("/local/gear/data","characterData",new(){{"action","finishCrafts"}});next=Time.unscaledTime+2;}
+ static void Begin(){if(request!=null||sync.HasValue||ItemSpawner.InRaid()||draining||Time.unscaledTime<next)return;var profile=Profile();if(profile==null){status="角色尚未就绪，请稍后重试。";next=Time.unscaledTime+2;return;}requestProfile=profile.Id;requestedCrafts.Clear();controller=App()?._hideout?.ProductionController??controller;if(controller?._areaProducers is {} areas)foreach(var area in areas)foreach(var producer in area.Value)foreach(var pair in producer.ProducingItems){var process=pair.Value._producingProcess;if(process!=null)requestedCrafts[pair.Key]=new(producer,pair.Value,process);}status="正在完成并同步制作…";request=CharacterDataPanel.Call("/local/gear/data","characterData",new(){{"action","finishCrafts"}});next=Time.unscaledTime+2;}
  internal static void Tick(){try{
-  if(request?.IsCompleted==true){var completed=request;request=null;using var doc=JsonDocument.Parse(completed.GetAwaiter().GetResult());var root=doc.RootElement;
+  if(Time.unscaledTime<next)return;
+  if(request?.IsCompleted==true){
+   var profile=Profile();if(!ItemSpawner.InRaid()&&profile==null){status="角色尚未就绪，制作结果将在就绪后同步。";next=Time.unscaledTime+2;return;}
+   var completed=request;request=null;using var doc=JsonDocument.Parse(completed.GetAwaiter().GetResult());var root=doc.RootElement;
    if(root.TryGetProperty("err",out var err)&&err.GetInt32()!=0){status=root.GetProperty("errmsg").GetString()??"制作处理失败";next=Time.unscaledTime+10;return;}
    var data=CharacterDataPanel.Data(root);
-   if(ItemSpawner.InRaid()||Profile()?.Id!=requestProfile||!data.TryGetProperty("profileId",out var owner)||owner.GetString()!=requestProfile){sync=null;status="制作同步已过期，请刷新。";return;}
-   sync=data.Clone();Apply();
+   if(ItemSpawner.InRaid()||profile?.Id!=requestProfile||!data.TryGetProperty("profileId",out var owner)||owner.GetString()!=requestProfile){sync=null;requestedCrafts.Clear();status="制作同步已过期，请刷新。";return;}
+   sync=data.Clone();
   }
-  if(!draining&&instant.Value&&!ItemSpawner.InRaid()&&Time.unscaledTime>=next)Begin();
+  if(sync.HasValue)Apply();
+  if(!sync.HasValue&&!draining&&instant.Value&&!ItemSpawner.InRaid()&&Time.unscaledTime>=next)Begin();
  }catch(Exception error){requestedCrafts.Clear();request=null;sync=null;next=Time.unscaledTime+10;status="制作同步失败，请重试。";Plugin.Self.Error(error);}}
  static void Apply(){
-  if(sync is not {} data||controller==null)return;
-  var profile=Profile();if(ItemSpawner.InRaid()||profile?.Id!=requestProfile){sync=null;requestedCrafts.Clear();return;}
+  if(sync is not {} data)return;if(controller==null){next=Time.unscaledTime+2;return;}
+  var profile=Profile();if(!ItemSpawner.InRaid()&&profile==null){next=Time.unscaledTime+2;return;}if(ItemSpawner.InRaid()||profile?.Id!=requestProfile){sync=null;requestedCrafts.Clear();return;}
   int ready=0,applied=0,stale=0,stored=0;
   foreach(var row in data.GetProperty("productions").EnumerateArray()){
    if(!row.GetProperty("availableForFinish").GetBoolean())continue;ready++;

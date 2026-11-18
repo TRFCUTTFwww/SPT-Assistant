@@ -34,6 +34,7 @@ public class CharacterDataService(SaveServer saves,JsonUtil json,HttpResponseUti
  readonly bool seasonsReady=SeasonProfiles.Install(saves,json);
  readonly bool miscReady=MiscService.Install(saves,json,templates);
  readonly bool containerRewardsReady=ArmoredCaseRewards.Install(templates);
+ readonly bool historyReady=RaidHistoryService.Install(saves,json);
  public async ValueTask<string> Handle(CharacterDataRequest request,MongoId session,CancellationToken ct){
   var gate=GearMailService.SessionLock(session);await gate.WaitAsync(ct);SptProfile? snapshot=null;bool committed=false;
   try{
@@ -41,6 +42,7 @@ public class CharacterDataService(SaveServer saves,JsonUtil json,HttpResponseUti
    if(!CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(key),Encoding.UTF8.GetBytes(request.ApiKey??"")))throw new ArgumentException("认证失败。");
    var profile=saves.GetProfile(session)??throw new ArgumentException("当前角色不存在。");var pmc=profile.CharacterData?.PmcData??throw new ArgumentException("当前角色尚未创建。");
    if(request.Action=="emergencyBackup")return EmergencyBackupService.Handle(request,session,profile,json,http,templates);
+   if(request.Action is "raidHistoryList" or "raidHistoryDetail")return RaidHistoryService.Handle(request,session,http);
    if(request.Action is "raidStash" or "saveRaidStash")return await RaidStashService.Handle(request,session,profile,saves,json,http,ct);
    if(request.Action is "miscStatus" or "miscSave")return await MiscService.Handle(request,session,http,ct);
    if(request.Action is "status" or "healthStatus")return Status(profile);
