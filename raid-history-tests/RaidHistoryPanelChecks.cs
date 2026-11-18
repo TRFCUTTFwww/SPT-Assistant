@@ -45,6 +45,15 @@ internal static class RaidHistoryPanelChecks {
   app._menuOperation!.QuestController!.Profile=new(){Id="profile-next"};CharacterDataPanel.Response=()=>Task.FromResult(Full("",0));RaidHistoryPanel.Tick();
   delayed.SetResult(Full(row,1));RaidHistoryPanel.Tick();
   check(State().GetProperty("total").GetInt32()==0,"late response belonging to previous profile is discarded");
+  CharacterDataPanel.Response=()=>Task.FromResult("""{"err":0,"data":{"ok":true,"raid":{"Id":"partial","Map":"labyrinth","Side":"PMC","Status":"SURVIVED","Entry":[{"Id":"x","Template":"tpl","Slot":"FirstPrimaryWeapon"}],"Kills":[{"Name":"bot"}]},"warning":""}}""");
+  RaidHistoryPanel.Reset();RaidHistoryPanel.Tick();
+  CharacterDataPanel.Response=()=>Task.FromResult("""{"err":0,"data":{"ok":true,"history":{"rows":[{"Id":"partial","Map":"labyrinth","Side":"PMC","Status":"SURVIVED"}],"total":1},"warning":""}}""");
+  RaidHistoryPanel.Reset();RaidHistoryPanel.Tick();RaidHistoryPanel.Tick();
+  RaidHistoryPanel.Draw(new(0,0,1000,700));
+  CharacterDataPanel.Response=()=>Task.FromResult("""{"err":0,"data":{"ok":true,"raid":{"Id":"partial","Map":"labyrinth","Side":"PMC","Status":"SURVIVED","Entry":[{"Id":"x","Template":"tpl","Slot":"FirstPrimaryWeapon"}],"Kills":[{"Name":"bot"}]},"warning":""}}""");
+  InterfaceMenu.Clicks.Add("查看详情");RaidHistoryPanel.Draw(new(0,0,1000,700));RaidHistoryPanel.Tick();RaidHistoryPanel.Draw(new(0,0,1000,700));
+  InterfaceMenu.Clicks.Add("入场装备");RaidHistoryPanel.Draw(new(0,0,1000,700));
+  InterfaceMenu.Clicks.Add("击杀名单");RaidHistoryPanel.Draw(new(0,0,1000,700));
   RaidHistoryPanel.Reset();UnityEngine.Object.Scene=null;
  }
 }

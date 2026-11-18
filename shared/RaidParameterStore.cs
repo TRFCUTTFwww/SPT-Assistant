@@ -51,7 +51,7 @@ public sealed class RaidParameterStore(string directory) {
  static void Ranges(JsonObject result){
   void Pair(JsonNode owner,string lo,string hi){var a=owner[lo];var b=owner[hi];if(a!=null&&b!=null&&double.TryParse(a.ToString(),NumberStyles.Float,CultureInfo.InvariantCulture,out double x)&&double.TryParse(b.ToString(),NumberStyles.Float,CultureInfo.InvariantCulture,out double y)&&x>y)throw new ArgumentException(lo+"不能大于 "+hi+"。");}
   foreach(string stem in new[]{"BotSpawnTimeOn","BotSpawnTimeOff"})Pair(result["map"]!,stem+"Min",stem+"Max");
-  if(result["map"]?["Waves"] is JsonArray waves)foreach(var w in waves)if(w!=null){Pair(w,"slots_min","slots_max");Pair(w,"SlotsMin","SlotsMax");Pair(w,"time_min","time_max");}
+  if(result["map"]?["Waves"] is JsonArray waves)foreach(var w in waves)if(w!=null){Pair(w,"slots_min","slots_max");Pair(w,"SlotsMin","SlotsMax");Pair(w,"time_min","time_max");Pair(w,"TimeMin","TimeMax");}
   result["assistant"]!.Deserialize<RaidSettings>()!.Validate();
  }
  static JsonObject Apply(JsonObject source,JsonObject changes){var result=source.DeepClone().AsObject();var defs=Definitions(source).ToDictionary(d=>d.Id);foreach(var p in changes){if(!defs.TryGetValue(p.Key,out var d))throw new ArgumentException("参数在当前地图或版本中不可用："+p.Key);Validate(d,p.Value);Set(result,p.Key,p.Value);}Ranges(result);return result;}

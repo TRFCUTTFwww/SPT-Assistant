@@ -20,8 +20,12 @@ internal static class CornerScriptWeb {
   string method=root.TryGetProperty("method",out var m)?m.GetString()??"GET":"GET";
   using var request=new HttpRequestMessage(new HttpMethod(method),uri);
   if(root.TryGetProperty("body",out var body)&&body.ValueKind==JsonValueKind.String){string value=body.GetString()!;if(Encoding.UTF8.GetByteCount(value)>1048576)throw new InvalidOperationException("请求正文超过 1 MiB。");request.Content=new StringContent(value,Encoding.UTF8);}
-  if(root.TryGetProperty("headers",out var headers))foreach(var pair in headers.EnumerateObject())if(!request.Headers.TryAddWithoutValidation(pair.Name,pair.Value.GetString())){
-   request.Content??=new ByteArrayContent(Array.Empty<byte>());request.Content.Headers.Remove(pair.Name);request.Content.Headers.TryAddWithoutValidation(pair.Name,pair.Value.GetString());
+  if(root.TryGetProperty("headers",out var headers)&&headers.ValueKind==JsonValueKind.Object)foreach(var pair in headers.EnumerateObject()){
+   string? headerValue=pair.Value.ValueKind==JsonValueKind.String?pair.Value.GetString():pair.Value.ToString();
+   if(!request.Headers.TryAddWithoutValidation(pair.Name,headerValue)){
+    if(request.Content==null&&request.Method!=HttpMethod.Get&&request.Method!=HttpMethod.Head)request.Content=new ByteArrayContent(Array.Empty<byte>());
+    if(request.Content!=null){request.Content.Headers.Remove(pair.Name);request.Content.Headers.TryAddWithoutValidation(pair.Name,headerValue);}
+   }
   }
   using var response=client.SendAsync(request,HttpCompletionOption.ResponseHeadersRead,deadline.Token).GetAwaiter().GetResult();
   if(response.Content.Headers.ContentLength>1048576)throw new InvalidOperationException("API 响应超过 1 MiB。");

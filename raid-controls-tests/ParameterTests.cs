@@ -49,8 +49,9 @@ internal static class ParameterTests {
    Reject(()=>Execute("load","战局"),"wrong preset group");Reject(()=>Execute("save","AI",name:"../escape"),"path traversal");Reject(()=>store.Execute("load","woods","AI","方案一",store.Read("woods",source).Revision,new(),source),"wrong preset map");
    Check(Directory.GetFiles(directory,"*.tmp",SearchOption.AllDirectories).Length==0,"no temporary file leak");
    Execute("defaults","战局");Check(store.Effective("bigmap",source)["map"]!["EscapeTimeLimit"]!.GetValue<int>()==40&&!store.EffectiveAssistant("bigmap",original).NoLoot,"raid defaults");
-   var native=Activator.CreateInstance<LocationBase>() with {BotMax=20,EscapeTimeLimit=40,Waves=[]};var nativeSource=RaidParameters.MapSource(native);Check(nativeSource.ContainsKey("EscapeTimeLimit")&&nativeSource.ContainsKey("BotMax"),"native reflection schema");
-   var timed=RaidParameters.Duration(native,55);Check(timed.EscapeTimeLimit==55&&native.EscapeTimeLimit==40,"duration clone");
+   var camelMap=JsonNode.Parse("""{"Waves":[{"TimeMin":10,"TimeMax":60}]}""")!.AsObject();var camelSource=RaidParameterStore.Source(camelMap,new());var camelStore=new RaidParameterStore(Path.Combine(directory,"camel"));Reject(()=>camelStore.Execute("apply","bigmap","AI","",camelStore.Read("bigmap",camelSource).Revision,new(){["map/Waves/0/TimeMin"]=70},camelSource),"camelCase wave time min max");
+   var native=Activator.CreateInstance<LocationBase>() with {BotMax=20,EscapeTimeLimit=40,EscapeTimeLimitCoop=40,EscapeTimeLimitPVE=40,Waves=[]};var nativeSource=RaidParameters.MapSource(native);Check(nativeSource.ContainsKey("EscapeTimeLimit")&&nativeSource.ContainsKey("BotMax"),"native reflection schema");
+   var timed=RaidParameters.Duration(native,90.5);Check(timed.EscapeTimeLimit==90.5&&timed.EscapeTimeLimitCoop==91&&timed.EscapeTimeLimitPVE==91&&native.EscapeTimeLimit==40,"fractional duration clone");
    string game=Environment.GetEnvironmentVariable("SPT_GAME_ROOT")??"D:/SPT-5.0.0-48558";
    var nativeJson=new SPTarkov.Server.Core.Utils.JsonUtil([new SPTarkov.Server.Core.Utils.Json.SptJsonConverterRegistrator()]);int realMaps=0;
    foreach(string id in new[]{"bigmap","woods","shoreline","interchange","rezervbase","lighthouse","tarkovstreets","laboratory","factory4_day","factory4_night","sandbox","sandbox_high"}){

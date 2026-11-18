@@ -110,11 +110,13 @@ internal static class CornerVersionControl {
    GUI.SetNextControlName(control);
    scriptDraft=GUI.TextArea(new Rect(0,0,width,height),scriptDraft,16384,codeStyle);
    if(revealCaret){
-    var editor=GUIUtility.GetStateObject(Il2CppInterop.Runtime.Il2CppType.Of<TextEditor>(),GUIUtility.keyboardControl).Cast<TextEditor>();
-    var caret=codeStyle.GetCursorPixelPosition(new Rect(0,0,width,height),new GUIContent(scriptDraft),Math.Clamp(editor.cursorIndex,0,scriptDraft.Length));
-    float lineHeight=Math.Max(18,codeStyle.lineHeight);
-    if(caret.y<codeScroll.y+8)codeScroll.y=Math.Max(0,caret.y-8);
-    else if(caret.y+lineHeight>codeScroll.y+viewport.height-8)codeScroll.y=caret.y+lineHeight-viewport.height+8;
+    var editor=GUIUtility.GetStateObject(Il2CppInterop.Runtime.Il2CppType.Of<TextEditor>(),GUIUtility.keyboardControl)?.TryCast<TextEditor>();
+    if(editor!=null){
+     var caret=codeStyle.GetCursorPixelPosition(new Rect(0,0,width,height),new GUIContent(scriptDraft),Math.Clamp(editor.cursorIndex,0,scriptDraft.Length));
+     float lineHeight=Math.Max(18,codeStyle.lineHeight);
+     if(caret.y<codeScroll.y+8)codeScroll.y=Math.Max(0,caret.y-8);
+     else if(caret.y+lineHeight>codeScroll.y+viewport.height-8)codeScroll.y=caret.y+lineHeight-viewport.height+8;
+    }
    }
   }finally{GUI.EndScrollView();}
  }

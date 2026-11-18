@@ -7,7 +7,7 @@ internal static class AiSpawnInfoRows {
  internal sealed record Row(string Group,string Name,string Value,string Help,string Path);
  internal static readonly string[] Groups={"全部参数","人数与上限","生成时间","难度与阵营","普通波次","Boss / PMC 波次","助手刷新规则"};
  internal static string NormalizeMap(string? map)=>(map??"").Trim().ToLowerInvariant();
- internal static string MapName(string map)=>map switch{"bigmap"=>"海关","laboratory"=>"实验室","woods"=>"森林","shoreline"=>"海岸线","interchange"=>"立交桥","rezervbase"=>"储备站","lighthouse"=>"灯塔","tarkovstreets"=>"塔科夫街区","factory4_day"=>"工厂（日间）","factory4_night"=>"工厂（夜间）","sandbox"=>"中心区","sandbox_high"=>"中心区（高等级）",_=>map};
+ internal static string MapName(string map)=>map switch{"bigmap"=>"海关","laboratory"=>"实验室","labyrinth"=>"迷宫","woods"=>"森林","shoreline"=>"海岸线","interchange"=>"立交桥","rezervbase"=>"储备站","lighthouse"=>"灯塔","tarkovstreets"=>"塔科夫街区","factory4_day"=>"工厂（日间）","factory4_night"=>"工厂（夜间）","sandbox" or "sandbox_start"=>"中心区","sandbox_high"=>"中心区（高等级）",_=>map};
  internal static JsonElement Get(JsonElement value,string key){if(value.ValueKind==JsonValueKind.Object)foreach(var p in value.EnumerateObject())if(p.Name.Equals(key,StringComparison.OrdinalIgnoreCase))return p.Value;return default;}
  static bool Missing(JsonElement v)=>v.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null;
  static string Text(JsonElement v)=>Missing(v)?"未提供（不等于 0）":v.ValueKind switch{JsonValueKind.True=>"开启",JsonValueKind.False=>"关闭",JsonValueKind.Array=>v.GetArrayLength()==0?"无条目":string.Join("、",v.EnumerateArray().Select(Text)),JsonValueKind.String=>v.GetString() is {Length:>0} s?Translate(s):"未指定",_=>v.ToString()};
