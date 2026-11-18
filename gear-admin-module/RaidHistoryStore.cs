@@ -7,9 +7,11 @@ public sealed record HistoryKill(string Name,string Side,string Role,int Level,s
 public sealed record RaidHistoryRecord {
  public string Id{get;init;}="";public string ServerId{get;init;}="";public string Map{get;init;}="";public string Side{get;init;}="";public string Nickname{get;init;}="";
  public string Started{get;init;}="";public string Ended{get;init;}="";public string Status{get;init;}="PENDING";public string Exit{get;init;}="";public double? Seconds{get;init;}
+ public string[] Route{get;init;}=[];public string TransitDestination{get;init;}="";public string TransitionRaidId{get;init;}="";
  public bool EntryKnown{get;init;}public bool Settled{get;init;}public HistoryItem[] Entry{get;init;}=[];public HistoryItem[] Returned{get;init;}=[];public HistoryItem[] Loot{get;init;}=[];public HistoryItem[] Final{get;init;}=[];public HistoryKill[] Kills{get;init;}=[];
 }
 public static class RaidHistoryRules {
+ public static string[] Route(IEnumerable<string>? visited,string current){var route=(visited??[]).Where(s=>!string.IsNullOrWhiteSpace(s)).Select(s=>s.Trim().ToLowerInvariant()).ToList();current=(current??"").Trim().ToLowerInvariant();if(current.Length>0&&(route.Count==0||route[^1]!=current))route.Add(current);return route.ToArray();}
  public static string Id(string session,string server)=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(session+"\n"+server)));
  public static JsonElement Field(JsonElement root,string key){if(root.ValueKind==JsonValueKind.Object)foreach(var p in root.EnumerateObject())if(p.Name.Equals(key,StringComparison.OrdinalIgnoreCase))return p.Value;return default;}
  public static string Text(JsonElement root,string key){var value=Field(root,key);return value.ValueKind==JsonValueKind.String?value.GetString()??"":value.ValueKind==JsonValueKind.Number?value.ToString():"";}

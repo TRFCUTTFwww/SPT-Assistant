@@ -4149,5 +4149,12 @@
   "狗牌": "Dog tag",
   "瞄具": "Sight",
   "弹匣": "Magazine",
-  "正在读取战局记录…": "Loading raid history…"
+  "正在读取战局记录…": "Loading raid history…",
+  "转移路线": "Transit route",
+  "原装备的新增部件": "New parts on existing equipment",
+  "本段地图": "This raid segment",
+  "此旧记录没有保存转移路线；只知道本段地图，无法还原此前经过。": "This older record has no transit route. Only this segment's map is known; earlier travel cannot be reconstructed.",
+  "按服务端记录顺序显示经过的地图。本段装备、时长和击杀仍属于当前记录。": "Visited maps are shown in server-recorded order. Equipment, duration and kills belong to this segment.",
+  "转移目的地（结算请求）；是否到达请以目的地图的新记录为准。": "Transit destination requested at settlement. Check the new destination record to confirm arrival.",
+  "已记录地图转移，但服务端未提供目的地。": "Transit was recorded, but the server did not provide a destination."
 }

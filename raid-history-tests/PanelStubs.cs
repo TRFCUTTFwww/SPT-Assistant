@@ -17,7 +17,8 @@ namespace EFT {
 namespace LocalSpt5Esp {
  internal static class InterfaceMenu {
   internal static readonly List<string> Labels=[];internal static UnityEngine.Color Accent=new(),Background=new(),Text=new();
-  internal static bool Button(UnityEngine.Rect rect,string value,bool selected=false)=>false;
+  internal static readonly HashSet<string> Clicks=[];
+  internal static bool Button(UnityEngine.Rect rect,string value,bool selected=false)=>UnityEngine.GUI.enabled&&Clicks.Remove(value);
   internal static void Surface(UnityEngine.Rect rect,UnityEngine.Color color,int radius){}
   internal static void Label(UnityEngine.Rect rect,string value,UnityEngine.Color? color=null,int size=14,bool translate=true)=>Labels.Add(value);
   internal static void Paragraph(UnityEngine.Rect rect,string value,UnityEngine.Color? color=null,int size=14)=>Labels.Add(value);

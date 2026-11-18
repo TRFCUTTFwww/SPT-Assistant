@@ -12,6 +12,7 @@ $files=[ordered]@{
  'esp-cover/bin/Release/net10.0/Local.Spt5.ESP.Core.dll'='Local.Spt5.ESP.Core.module'
  'esp-host/bin/Release/net10.0/Local.Spt5.ESP.dll'='Local.Spt5.ESP.dll'
  'gear-mail/bin/Release/net10.0/LocalGearMail.dll'='LocalGearMail.dll'
+ 'gear-admin-module/bin/Release/net10.0/LocalGearAdmin.dll'='LocalGearAdmin.module'
  'raid-controls-server/bin/Release/net10.0/LocalRaidControls.dll'='LocalRaidControls.dll'
 }
 $hashes=[ordered]@{}
@@ -32,6 +33,7 @@ $entries=[ordered]@{
  'Local.Spt5.ESP.Core.module'='BepInEx/plugins/LocalSpt5ESP/runtime/Local.Spt5.ESP.Core.module'
  'Local.Spt5.ESP.dll'='BepInEx/plugins/LocalSpt5ESP/Local.Spt5.ESP.dll'
  'LocalGearMail.dll'='SPT_Runtime/user/mods/LocalGearMail/LocalGearMail.dll'
+ 'LocalGearAdmin.module'='SPT_Runtime/user/mods/LocalGearMail/LocalGearAdmin.module'
  'LocalRaidControls.dll'='SPT_Runtime/user/mods/LocalRaidControls/LocalRaidControls.dll'
 }
 $hashes=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'checksums.json') -Raw|ConvertFrom-Json
@@ -42,7 +44,7 @@ foreach($entry in $entries.GetEnumerator()){
  if(!$target.StartsWith($GameRoot.TrimEnd('\')+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'Destination escapes game root.'}
  if(!(Test-Path -LiteralPath $target -PathType Leaf)){throw ('Existing installation missing: '+$entry.Value)}
 }
-if($VerifyOnly){Write-Output 'Verified four payload checksums and existing installation paths; no files changed.';exit 0}
+if($VerifyOnly){Write-Output 'Verified five payload checksums and existing installation paths; no files changed.';exit 0}
 if(Get-Process -Name EscapeFromTarkov,SPT.Server -ErrorAction SilentlyContinue){throw 'Close EscapeFromTarkov and SPT.Server before applying this update. No process was stopped.'}
 # Preflight every destination before replacing any component.
 foreach($entry in $entries.GetEnumerator()){$stream=[IO.File]::Open((Join-Path $GameRoot $entry.Value),[IO.FileMode]::Open,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None);$stream.Dispose()}
@@ -63,7 +65,7 @@ try{
  foreach($name in $changed){Copy-Item -LiteralPath (Join-Path $backup $name) -Destination (Join-Path $GameRoot $entries[$name]) -Force}
  throw
 }
-Write-Output ('Installed four components. Previous binaries: '+$backup)
+Write-Output ('Installed five components. Previous binaries: '+$backup)
 Write-Output 'Start the SPT server and game normally. Configuration and profiles were not modified.'
 '@
 $apply=$apply.Replace('__GAME_ROOT__',$GameRoot.Replace("'","''"))
@@ -72,4 +74,4 @@ $launcher="@echo off`r`npowershell.exe -NoProfile -ExecutionPolicy Bypass -File 
 [IO.File]::WriteAllText((Join-Path $OutputDirectory 'Apply.cmd'),$launcher,[Text.Encoding]::ASCII)
 Copy-Item -LiteralPath (Join-Path $repo 'docs/world-editor.md') -Destination (Join-Path $OutputDirectory 'world-editor.md')
 Copy-Item -LiteralPath (Join-Path $repo 'docs/error-protection-tests.md') -Destination (Join-Path $OutputDirectory 'error-protection-tests.md')
-Write-Output ('Staged four-component update: '+$OutputDirectory)
+Write-Output ('Staged five-component update: '+$OutputDirectory)
