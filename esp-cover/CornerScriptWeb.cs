@@ -46,7 +46,19 @@ internal static class CornerScriptWeb {
   return Parts(builder.Uri);
  }
  internal const string Bootstrap="""
- (function(request, parseUrl, updateUrl) {
+ (function(request, parseUrl, updateUrl, log) {
+   const formatLog = args => args.map(value => {
+     if (value === undefined) return 'undefined';
+     if (value === null) return 'null';
+     if (typeof value === 'string') return value;
+     try { return JSON.stringify(value); } catch { return String(value); }
+   }).join(' ');
+   globalThis.console = {
+     log: (...args) => log && log('LOG', formatLog(args)),
+     info: (...args) => log && log('INFO', formatLog(args)),
+     warn: (...args) => log && log('WARN', formatLog(args)),
+     error: (...args) => log && log('ERROR', formatLog(args))
+   };
    const decode = s => { try { return decodeURIComponent(s.replace(/\+/g, ' ')); } catch { return s; } };
    const encode = s => encodeURIComponent(String(s)).replace(/[!'()~]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase()).replace(/%20/g, '+');
    class URLSearchParams {
@@ -113,7 +125,7 @@ internal static class CornerScriptWeb {
    }
    globalThis.URLSearchParams = URLSearchParams; globalThis.URL = URL; globalThis.Headers = Headers; globalThis.Response = Response; globalThis.fetch = fetch;
    globalThis.httpGet = url => { const result = JSON.parse(request(String(url), '{}')); if (result.status < 200 || result.status >= 300) throw new Error('HTTP ' + result.status + ' ' + result.statusText); return result.body; };
- })(__cornerRequest, __cornerParseUrl, __cornerUpdateUrl);
- delete globalThis.__cornerRequest; delete globalThis.__cornerParseUrl; delete globalThis.__cornerUpdateUrl;
+ })(__cornerRequest, __cornerParseUrl, __cornerUpdateUrl, typeof __cornerLog === 'function' ? __cornerLog : null);
+ delete globalThis.__cornerRequest; delete globalThis.__cornerParseUrl; delete globalThis.__cornerUpdateUrl; delete globalThis.__cornerLog;
  """;
 }

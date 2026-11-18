@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,8 +20,10 @@ internal static class CornerVersionControl {
  static readonly List<ScriptPreset> presets=new();
  static string PresetPath=>System.IO.Path.Combine(BepInEx.Paths.PluginPath,"LocalSpt5ESP","corner-scripts.json");
  static readonly string[] unitNames={"时","分","秒","毫秒"};
- static bool changed;static Vector2 scriptScroll,codeScroll;
- static string measuredCode="";static float measuredWidth=-1,measuredHeight;
+ static bool changed;static Vector2 scriptScroll,codeScroll,testOutputScroll;
+ static string measuredCode="",measuredOutput="";static float measuredWidth=-1,measuredHeight,measuredOutputWidth=-1,measuredOutputHeight;
+ static Task<CornerScript.TestRunResult>? testWork;static CancellationTokenSource? testCancel;static Stopwatch? testClock;
+ static string testStatus="点击“测试运行一次”验证当前脚本（不影响左下角显示）。",testOutput="";static GUIStyle? outputStyle;
  // Retain the existing seconds-based config key so saved intervals keep their meaning.
  static double IntervalSeconds=>CornerScriptInterval.Normalize(interval.Value);
  internal static void Initialize(Plugin plugin){
@@ -54,7 +57,29 @@ internal static class CornerVersionControl {
   if(work?.IsCompleted==true){var finished=work;work=null;cancellation?.Dispose();cancellation=null;nextScript=Time.realtimeSinceStartupAsDouble+IntervalSeconds;try{dynamicText=Clean(finished.GetAwaiter().GetResult());scriptStatus="已更新 · "+DateTime.Now.ToString("HH:mm:ss.fff");changed=true;}catch(Exception e){scriptStatus="执行失败，保留上次文字："+Clean(e.GetBaseException().Message);}}
   if(work==null&&Time.realtimeSinceStartupAsDouble>=nextScript)StartScript();
  }
- internal static void Tick(){ScriptTick();if(!enabled.Value&&written.Length==0||!changed&&Time.unscaledTime<next)return;changed=false;next=Time.unscaledTime+.5f;try{preloader??=PreloaderUI.Instance??UnityEngine.Object.FindObjectOfType<PreloaderUI>();Apply();}catch(Exception error){next=Time.unscaledTime+10;Plugin.Self.Error(error);}}
+ static void CancelTest(){testCancel?.Cancel();testCancel?.Dispose();testCancel=null;if(testWork is {} pending)_=pending.ContinueWith(t=>{_=t.Exception;},TaskContinuationOptions.OnlyOnFaulted);testWork=null;testClock=null;}
+ static void StartTest(){CancelTest();testCancel=new();var token=testCancel.Token;string source=scriptDraft,gameJson=CornerGameSnapshot.CaptureJson();testClock=Stopwatch.StartNew();testOutput="";testOutputScroll=Vector2.zero;testStatus="正在测试运行…";testWork=Task.Run(()=>CornerScript.EvaluateTest(source,token,null,gameJson),token);}
+ static void PollTest(){
+  if(testWork is not {IsCompleted:true} finished)return;
+  testWork=null;testCancel?.Dispose();testCancel=null;long ms=testClock?.ElapsedMilliseconds??0;testClock=null;
+  if(finished.IsCanceled){testStatus=$"测试已取消 · {ms} ms";return;}
+  try{
+   var res=finished.GetAwaiter().GetResult();
+   string logs=res.Logs.Length>0?string.Join("\n",res.Logs):"";
+   if(res.Ok){
+    testOutput=logs.Length>0?$"{logs}\n--- 返回值 ---\n{res.Value}":res.Value;
+    string preview=Clean(res.Value);
+    testStatus=preview==res.Value?$"测试成功 · {ms} ms · {DateTime.Now:HH:mm:ss.fff}":$"测试成功 · {ms} ms · {DateTime.Now:HH:mm:ss.fff}（左下角将截取并过滤为 {preview.Length} 字）";
+   }else{
+    testOutput=logs.Length>0?$"{logs}\n[错误] {res.Error}":"[错误] "+res.Error;
+    testStatus=$"测试失败 · {ms} ms · {DateTime.Now:HH:mm:ss.fff}";
+   }
+  }catch(Exception e){
+   testOutput="[错误] "+e.GetBaseException().Message;
+   testStatus=$"测试失败 · {ms} ms · {DateTime.Now:HH:mm:ss.fff}";
+  }
+ }
+ internal static void Tick(){PollTest();ScriptTick();if(!enabled.Value&&written.Length==0||!changed&&Time.unscaledTime<next)return;changed=false;next=Time.unscaledTime+.5f;try{preloader??=PreloaderUI.Instance??UnityEngine.Object.FindObjectOfType<PreloaderUI>();Apply();}catch(Exception error){next=Time.unscaledTime+10;Plugin.Self.Error(error);}}
  internal static void Draw(Rect r){
   InterfaceMenu.Label(new(r.x,r.y,r.width,28),"左下角版本文字",InterfaceMenu.Accent,17);
   if(InterfaceMenu.Button(new(r.x,r.y+34,Math.Min(340,r.width),32),I18n.Text("自定义左下角版本")+" · "+I18n.Text(enabled.Value?"开启":"关闭"),enabled.Value)){enabled.Value=!enabled.Value;Apply();}
@@ -64,8 +89,8 @@ internal static class CornerVersionControl {
   if(InterfaceMenu.Button(new(r.x,r.y+120,r.width,32),"JavaScript · "+(dynamic.Value&&enabled.Value?"运行中":"打开编辑器")))InterfaceMenu.Navigate("设置与热键","JavaScript");
  }
  internal static void DrawScript(Rect content){
-  LoadPresets();PollFileDialog();
-  float pageHeight=Math.Max(680+(presets.Count*44),content.height-2)+(unitDropdown?144:0);bool scrolling=pageHeight>content.height;
+  LoadPresets();PollFileDialog();PollTest();
+  float pageHeight=Math.Max(920+(presets.Count*44),content.height-2)+(unitDropdown?144:0);bool scrolling=pageHeight>content.height;
   var r=new Rect(0,0,content.width-(scrolling?24:4),pageHeight);
   scriptScroll=GUI.BeginScrollView(content,scriptScroll,new Rect(0,0,r.width,pageHeight));
   try{DrawScriptContent(r);}finally{GUI.EndScrollView();}
@@ -95,7 +120,7 @@ internal static class CornerVersionControl {
   bool running=dynamic.Value&&enabled.Value;
   if(InterfaceMenu.Button(new(r.x,r.y+38,r.width,32),"动态 JavaScript · "+(running?"开启":"关闭"),running)){dynamic.Value=!running;if(dynamic.Value)enabled.Value=true;CancelScript();nextScript=0;dynamicText="";Apply();}
   float y=r.y+84;
-  float height=Math.Clamp(r.yMax-y-216-(unitDropdown?144:0),220,520);
+  float height=Math.Clamp(r.yMax-y-448-(presets.Count*44)-(unitDropdown?144:0),220,440);
   DrawScriptEditor(new Rect(r.x,y,r.width,height));y+=height+10;
   InterfaceMenu.Label(new(r.x,y,96,30),"刷新间隔",null,12);float fieldWidth=Math.Clamp(r.width-330,80,140),unitX=r.x+108+fieldWidth;
   intervalDraft=InterfaceMenu.Field(new(r.x+100,y,fieldWidth,30),intervalDraft);
@@ -120,6 +145,15 @@ internal static class CornerVersionControl {
   if(InterfaceMenu.Button(new(r.x,y,halfBtn,30),fileDialog!=null?"选择中…":"导入 JS 文件")&&fileDialog==null){fileDialogMode="import";fileDialog=WindowsDialogs.PickOpenFile("导入 JavaScript 脚本","JavaScript (*.js;*.txt)\0*.js;*.txt\0所有文件 (*.*)\0*.*\0");}
   if(InterfaceMenu.Button(new(r.x+halfBtn+10,y,halfBtn,30),fileDialog!=null?"选择中…":"导出 JS 到文件夹")&&fileDialog==null){fileDialogMode="export";fileDialog=WindowsDialogs.PickFolder("选择 JavaScript 导出目录");}
   y+=38;
+  float testBtnWidth=Math.Max(100,r.width-112);
+  bool testRunning=testWork!=null;
+  if(InterfaceMenu.Button(new(r.x,y,testBtnWidth,30),testRunning?"停止测试":"测试运行一次",testRunning)){
+   if(testRunning){CancelTest();testStatus="测试已取消。";}else StartTest();
+  }
+  if(InterfaceMenu.Button(new(r.x+testBtnWidth+10,y,102,30),"清空输出")){testOutput="";testOutputScroll=Vector2.zero;testStatus="已清空测试输出。";}
+  y+=38;
+  InterfaceMenu.Paragraph(new(r.x,y,r.width,28),testStatus,null,12);y+=30;
+  DrawTestOutput(new Rect(r.x,y,r.width,104));y+=114;
   InterfaceMenu.Paragraph(new(r.x,y,r.width,42),scriptStatus,null,12);y+=46;
   InterfaceMenu.Paragraph(new(r.x,y,r.width,40),"当前显示："+(written.Length>0?written:I18n.Text("原始版本文字")),null,12);y+=44;
   presetName=InterfaceMenu.Field(new(r.x,y,Math.Max(100,r.width-136),30),presetName);
@@ -143,33 +177,40 @@ internal static class CornerVersionControl {
   }
  }
  static void DrawScriptEditor(Rect viewport){
-  const string control="LocalCornerScriptEditor";
   codeStyle??=new GUIStyle(GUI.skin.textArea){fontSize=13,wordWrap=true,richText=false,padding=new RectOffset(8,8,8,8)};
+  scriptDraft=DrawTextBox(viewport,scriptDraft,"LocalCornerScriptEditor",codeStyle,ref codeScroll,ref measuredCode,ref measuredWidth,ref measuredHeight,editable:true);
+ }
+ static void DrawTestOutput(Rect viewport){
+  outputStyle??=new GUIStyle(GUI.skin.textArea){fontSize=12,wordWrap=true,richText=false,padding=new RectOffset(8,8,8,8)};
+  DrawTextBox(viewport,testOutput,"LocalCornerScriptOutput",outputStyle,ref testOutputScroll,ref measuredOutput,ref measuredOutputWidth,ref measuredOutputHeight,editable:false);
+ }
+ static string DrawTextBox(Rect viewport,string content,string control,GUIStyle style,ref Vector2 boxScroll,ref string measured,ref float prevWidth,ref float prevHeight,bool editable){
   var bar=GUI.skin.verticalScrollbar;
   float barWidth=Math.Max(18,bar.fixedWidth)+bar.margin.left+bar.margin.right;
   float width=Math.Max(1,viewport.width-barWidth-2);
-  if(measuredCode!=scriptDraft||measuredWidth!=width){measuredCode=scriptDraft;measuredWidth=width;measuredHeight=codeStyle.CalcHeight(new GUIContent(scriptDraft+"\n"),width)+12;}
-  float height=Math.Max(viewport.height,measuredHeight);
-  codeScroll.x=0;codeScroll.y=Math.Clamp(codeScroll.y,0,Math.Max(0,height-viewport.height));
+  if(measured!=content||prevWidth!=width){measured=content;prevWidth=width;prevHeight=style.CalcHeight(new GUIContent(content+"\n"),width)+12;}
+  float height=Math.Max(viewport.height,prevHeight);
+  boxScroll.x=0;boxScroll.y=Math.Clamp(boxScroll.y,0,Math.Max(0,height-viewport.height));
   var ev=Event.current;
   // Consume the wheel here so the surrounding settings page stays in place.
-  if(ev.type==EventType.ScrollWheel&&viewport.Contains(ev.mousePosition)){codeScroll.y=Math.Clamp(codeScroll.y+ev.delta.y*42,0,Math.Max(0,height-viewport.height));ev.Use();}
-  bool revealCaret=ev.type==EventType.KeyDown&&GUI.GetNameOfFocusedControl()==control;
-  codeScroll=GUI.BeginScrollView(viewport,codeScroll,new Rect(0,0,width,height),false,true,GUIStyle.none,bar);
+  if(ev.type==EventType.ScrollWheel&&viewport.Contains(ev.mousePosition)){boxScroll.y=Math.Clamp(boxScroll.y+ev.delta.y*42,0,Math.Max(0,height-viewport.height));ev.Use();}
+  bool revealCaret=editable&&ev.type==EventType.KeyDown&&GUI.GetNameOfFocusedControl()==control;
+  boxScroll=GUI.BeginScrollView(viewport,boxScroll,new Rect(0,0,width,height),false,true,GUIStyle.none,bar);
   try{
    GUI.SetNextControlName(control);
-   scriptDraft=GUI.TextArea(new Rect(0,0,width,height),scriptDraft,16384,codeStyle);
+   string nextText=GUI.TextArea(new Rect(0,0,width,height),content,16384,style);
    if(revealCaret){
     var editor=GUIUtility.GetStateObject(Il2CppInterop.Runtime.Il2CppType.Of<TextEditor>(),GUIUtility.keyboardControl)?.TryCast<TextEditor>();
     if(editor!=null){
-     var caret=codeStyle.GetCursorPixelPosition(new Rect(0,0,width,height),new GUIContent(scriptDraft),Math.Clamp(editor.cursorIndex,0,scriptDraft.Length));
-     float lineHeight=Math.Max(18,codeStyle.lineHeight);
-     if(caret.y<codeScroll.y+8)codeScroll.y=Math.Max(0,caret.y-8);
-     else if(caret.y+lineHeight>codeScroll.y+viewport.height-8)codeScroll.y=caret.y+lineHeight-viewport.height+8;
+     var caret=style.GetCursorPixelPosition(new Rect(0,0,width,height),new GUIContent(nextText),Math.Clamp(editor.cursorIndex,0,nextText.Length));
+     float lineHeight=Math.Max(18,style.lineHeight);
+     if(caret.y<boxScroll.y+8)boxScroll.y=Math.Max(0,caret.y-8);
+     else if(caret.y+lineHeight>boxScroll.y+viewport.height-8)boxScroll.y=caret.y+lineHeight-viewport.height+8;
     }
    }
+   return editable?nextText:content;
   }finally{GUI.EndScrollView();}
  }
  internal static object Diagnostics()=>new{enabled=enabled.Value,found=label!=null,applied=written.Length>0,matches=written.Length>0&&label?.FormattedText==written,length=written.Length};
- internal static void Shutdown(){CancelScript();fileDialog=null;fileDialogMode="";CornerScriptDependencies.Shutdown();codeStyle=null;measuredCode="";measuredWidth=-1;codeScroll=Vector2.zero;try{Restore();}finally{preloader=null;label=null;formats.Clear();}}
+ internal static void Shutdown(){CancelScript();CancelTest();fileDialog=null;fileDialogMode="";CornerScriptDependencies.Shutdown();codeStyle=null;outputStyle=null;measuredCode="";measuredOutput="";measuredWidth=-1;measuredOutputWidth=-1;codeScroll=Vector2.zero;testOutputScroll=Vector2.zero;try{Restore();}finally{preloader=null;label=null;formats.Clear();}}
 }

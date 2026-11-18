@@ -73,5 +73,13 @@ try{
  string RunWithGame(string code,string? gameJson)=>(string)evalGame.Invoke(null,[code,CancellationToken.None,(Func<string,string>)(_=>"{}"),gameJson])!;
  Check(RunWithGame("return game.map + ':' + game.aliveAi + ':' + game.fps + ':' + game.cultistReady;", """{"inRaid":true,"map":"woods","raidRemainingSeconds":420,"fps":88.5,"aliveAi":7,"alivePlayers":8,"hideoutCraftsReady":2,"cultistReady":true}""")=="woods:7:88.5:true","globalThis.game exposes injected snapshot");
  Check(RunWithGame("'use strict'; try { game.map = 'hack'; return 'mutated'; } catch { return 'frozen'; }", """{"map":"customs"}""")=="frozen","globalThis.game is frozen");
+ Check(Run("console.log('ignored', {a:1}); return 'ok';")=="ok","console.log is safe during regular evaluation");
+ var evalTest=core.GetType("LocalSpt5Esp.CornerScript",true)!.GetMethod("EvaluateTest",BindingFlags.Static|BindingFlags.NonPublic)!;
+ object RunTest(string code,string? gameJson=null)=>evalTest.Invoke(null,[code,CancellationToken.None,null,gameJson])!;
+ T Field<T>(object target,string name)=>(T)target.GetType().GetProperty(name)!.GetValue(target)!;
+ var okTest=RunTest("console.log('step', 1); console.warn('hint'); return game.map + ':' + 42;", """{"map":"reserve"}""");
+ Check(Field<bool>(okTest,"Ok")&&Field<string>(okTest,"Value")=="reserve:42"&&Field<string[]>(okTest,"Logs").SequenceEqual(new[]{"[LOG] step 1","[WARN] hint"}),"EvaluateTest captures console logs and return value");
+ var errTest=RunTest("console.info('before fail'); throw new Error('boom');");
+ Check(!Field<bool>(errTest,"Ok")&&Field<string>(errTest,"Error").Contains("boom")&&Field<string[]>(errTest,"Logs").SequenceEqual(new[]{"[INFO] before fail"}),"EvaluateTest preserves logs and error details on failure");
  Console.WriteLine($"Passed {checks} script and HTTP checks.");
 }finally{resolver.GetMethod("Shutdown",BindingFlags.Static|BindingFlags.NonPublic)!.Invoke(null,null);context.Unload();}
