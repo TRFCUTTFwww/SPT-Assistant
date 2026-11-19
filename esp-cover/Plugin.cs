@@ -107,6 +107,7 @@ internal class Plugin {
   yield return ()=>FloatingStatus.Initialize();
   yield return ()=>ConfigProfiles.Initialize();
   yield return ()=>GroundNavigation.Initialize();
+  yield return ()=>AiRouteDisplay.Initialize();
   yield return ()=>AiTestControl.Initialize(this);
   yield return ()=>PlayerDamageControl.Initialize();
   yield return ()=>AiActorControl.Initialize(this);
@@ -288,6 +289,7 @@ internal class Overlay {
   yield return ()=>AiActorControl.Reset();
   yield return ()=>IncomingDamage.Reset();
   yield return ()=>GroundNavigation.Shutdown();
+  yield return ()=>AiRouteDisplay.Clear();
   yield return ()=>NativeRaidTimer.Reset();
   yield return ()=>RaidEnd.CancelConfirmation();
   yield return ()=>RaidLoot.Shutdown();
@@ -322,7 +324,7 @@ internal class Overlay {
  void Warn(Exception e){if(Time.unscaledTime<nextError)return;nextError=Time.unscaledTime+20;Plugin.Self.Error(e);}
  public void OnGUI(){try{
   camera=OverlayProjection.MainCamera;
-  if(world==null||me==null||camera==null)return;
+  if(world==null||me==null||camera==null){AiRouteDisplay.Clear();return;}
   if(Event.current.type!=EventType.Repaint){if(style!=null)ArmorAnalysis.Draw(world,me,camera,style);return;}
   OverlayProjection.BeginGui();
   var s=Plugin.Self;
@@ -351,6 +353,7 @@ internal class Overlay {
   if(s.Loot.Value||s.People.Value)DrawLoot();
   AiBuffHud.Draw(style);
   NoclipControl.Draw();RaidClock.DrawHud();GroundNavigation.DrawHud(camera,me);RaidLoot.DrawMarkers(camera,me);GrenadeAlert.Draw(camera,me);
+  AiRouteDisplay.Draw(world,me,camera);
   HitDisplay.Draw();GlobalKillFeed.Draw();IncomingDamage.Draw(camera,me);AiTestControl.DrawMarker(camera);AirdropControl.DrawMarkers(camera,me);BtrDisplay.DrawMarker(camera,me);InteractionPoints.DrawMarkers(camera,me);TeleportControl.DrawPlayerMarker(camera,me);TripwireHighlight.Draw(camera);ClaymoreHighlight.Draw(camera);EventCabinetDisplay.Draw(camera);QuestLocations.DrawMarkers(camera,me);
   RaidPopulation.Draw(style);
   VitalsDisplay.Draw(me,style);
