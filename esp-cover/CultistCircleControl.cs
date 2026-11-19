@@ -69,7 +69,11 @@ internal static class CultistCircleControl {
    if(preview.Value&&snapshot is {} current){float y=394;foreach(var item in current.GetProperty("items").EnumerateArray()){string tpl=item.GetProperty("tpl").GetString()!;InterfaceMenu.Label(new(4,y,w-8,34),LootDisplay.TemplateName(tpl)+" × "+item.GetProperty("count").GetRawText(),null,14,translate:false);y+=38;}}
   }finally{GUI.EndScrollView();}
  }
- internal static bool RewardReady()=>snapshot is {} s&&s.GetProperty("active").GetBoolean()&&s.GetProperty("production").GetProperty("availableForFinish").GetBoolean();
+ internal static CornerGameData.Cultist? ReadSnapshot(Profile profile){
+  if(snapshot is not {} current||owner!=profile.Id)return null;
+  bool active=current.GetProperty("active").GetBoolean();
+  return new(active,active&&current.GetProperty("production").GetProperty("availableForFinish").GetBoolean());
+ }
  internal static bool PrepareForReload(){draining=true;return request==null;}
  internal static void Shutdown(){draining=true;request=null;snapshot=null;captures.Clear();owner=requestedOwner="";}
 }

@@ -1,6 +1,6 @@
 # 动态左下角文字
 
-在“设置与热键 → JavaScript”独立页开启“动态 JavaScript”，输入脚本，设置刷新间隔，再点“保存并立即刷新”。脚本使用 `return` 返回显示内容；原有静态文字作为首次请求完成前的备用内容。静态文字设置保留在“主题与布局”；应用静态文字会停止动态脚本，点“恢复原始”可恢复游戏版本显示。脚本页显示运行状态和当前显示内容，小窗口可滚动。
+在“设置与热键 → JavaScript”页面编写脚本，设置刷新间隔，点击“保存并立即刷新”应用。脚本可以用 `return` 或 `cornerText = value` 输出，也可以在“显示表达式”里填写变量名、属性路径或表达式。原有静态文字作为首次请求完成前的备用内容。“测试运行一次”可以查看返回值、日志和报错。脚本编辑器和输出框都支持选中文字后右键复制。
 
 此处使用内嵌 Jint JavaScript 引擎，无需安装 Node.js 或 Python。JSON、字符串处理和 HTTP API 是这个功能的主要用途，JavaScript 可以直接完成。Lua 更适合已有 Lua 接口的游戏逻辑扩展；Python 更适合需要其数据处理库的外部工具。
 
@@ -34,10 +34,46 @@ return data.version;
 
 这些接口在后台工作线程中执行；`fetch` 返回 Promise，但网络传输保持串行。当前未提供 DOM、Node.js 的 `require`/npm、定时器、流式响应或完整浏览器 Web API。没有外部完成来源的未决 Promise 会直接报告错误，避免阻塞关闭或热更新。
 
-脚本页的刷新间隔由数值输入框和单位下拉框组成，支持“时、分、秒、毫秒”，可以输入小数。比如 `100` 毫秒、`0.1` 秒表示相同的间隔；`1` 分等于 `60` 秒。切换单位会换算当前数值，保持实际间隔不变；点击“保存并立即刷新”应用设置。有效间隔为 1 毫秒～1 小时。
+脚本页的刷新间隔支持“时、分、秒、毫秒”，可以输入小数。比如 `100` 毫秒、`0.1` 秒表示相同的间隔。切换单位会换算当前数值，保持实际间隔不变。有效间隔为 1 毫秒～1 小时。
 
 原有配置项 `Corner script interval` 继续以秒保存，支持小数；旧值 `30` 仍表示 30 秒。显示单位单独保存在 `Corner script display unit`，默认选择“秒”。
 
 脚本和网络请求在后台串行执行，不在绘制回调中请求网络。上一次执行结果处理后再计时，到达间隔后在游戏更新帧中启动下一次；使用双精度实时时钟，实际更新频率受游戏帧率和脚本/网络耗时影响。设置 1 毫秒不代表每秒执行 1000 次，也不会积压并发请求。失败时保留上次成功内容，错误直接显示在设置页。每次执行最多 64 个请求、总计最多 30 秒，每个请求超时 8 秒、请求正文和响应各最多 1 MiB。脚本最多 16384 字符，执行有限额，关闭或热更新时会取消任务。脚本不暴露 Unity、CLR、文件或进程接口。文字最多显示 160 字符，关闭富文本。
 
 脚本保存在当前本机配置中，不加入“配置方案”的保存或套用。Jint 4.4.1 与 Acornima 1.2.0 及其许可证嵌入核心热更新模块；许可证原文位于 [Jint](licenses/Jint.txt) 和 [Acornima](licenses/Acornima.txt)。
+
+## `game` 数据
+
+点击测试输出下方的 **查看 game 数据**，可在输出框查看当前完整的 JSON。每次脚本运行都读取当时的只读快照。`game.state` 为 `menu`、`hideout` 或 `raid`，`game.capturedAtUtc` 是快照的 UTC 时间。数据未加载或当前场景不适用时，对象或字段为 `null`。撤离点列表为空时返回 `[]`。
+
+| 路径 | 字段 |
+| --- | --- |
+| `game.raid` | `mapId`、`mapName`、`gameTime`（游戏内时刻）、`durationSeconds`、`elapsedSeconds`、`remainingSeconds`、`overtimeSeconds`、`countdownPaused` |
+| `game.raid.weather` | `rain`、`fog`、`clouds`、`temperature`、`windX`、`windZ`，来自游戏天气曲线 |
+| `game.raid.population` | 当前已加载的存活角色数 `alive`、`ai`、`humans`，真人数含自己 |
+| `game.raid.exits` | 当前角色的撤离点，按直线距离排列，每项包含 `id`、`name`、`status`、`distanceMeters`。游戏原生状态值由 `status` 提供 |
+| `game.raid.train` | `state`（`pending`、`approaching`、`boarding`、`departed`）、`arrivalInSeconds`、`departureInSeconds` |
+| `game.raid.airdrop` | `naturalEnabled`、`nextAttemptInSeconds`、`attempts`、`maxAttempts`、`pendingFlares`。倒计时是下一次投放尝试 |
+| `game.player` | `name`、`side`、`level`、`experience`，战局内另有 `alive`、`position`（`x/y/z`）、`headingDegrees`、`stance`、`aiming` |
+| `game.player.vitals` | `health`、`energy`、`hydration`、`stamina`、`handsStamina`，每项含 `current`、`max`。`bodyParts` 下有 `head`、`chest`、`stomach`、`leftArm`、`rightArm`、`leftLeg`、`rightLeg` |
+| `game.player.weapon` | 当前手持枪械的 `name`、`templateId`、`magazineRounds`、`magazineCapacity`、`chamberRounds`、`nextAmmo` |
+| `game.hideout` | `craftsReady`，以及已有同步状态时的 `cultist.active`、`cultist.ready` |
+| `game.performance` | 性能监测开启并完成采样后提供 `fps`、`frameMs`、`p99Ms`、`peakMs`、`slowFrames`、`sampleCount`、`sampleSeconds`、`assistantMs` |
+
+旧脚本的顶层字段继续可用。`game.raidRemainingSeconds` 保留原先的战局总时长行为。实时倒计时使用 `game.raid?.remainingSeconds`。
+
+例如在“显示表达式”中直接填入下方内容，脚本可以留空：
+
+```javascript
+game.player?.vitals?.health?.current ?? "等待进入战局"
+```
+
+也可以把撤离点与剩余时间拼成一行，在“显示表达式”里填 `status`：
+
+```javascript
+const raid = game.raid;
+const exit = raid?.exits[0];
+const status = raid
+  ? `${raid.mapName} · ${Math.ceil(raid.remainingSeconds ?? 0)}s${exit ? ` · ${exit.name} ${Math.round(exit.distanceMeters ?? 0)}m` : ""}`
+  : `制作可领 ${game.hideout.craftsReady}`;
+```
