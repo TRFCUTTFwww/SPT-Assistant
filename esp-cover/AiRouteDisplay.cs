@@ -1,6 +1,7 @@
 using BepInEx.Configuration;
 using EFT;
 using UnityEngine;
+using NVector=System.Numerics.Vector3;
 
 namespace LocalSpt5Esp;
 
@@ -11,7 +12,11 @@ internal static class AiRouteDisplay {
  static readonly FocusSelection focus=new();
  static readonly List<FocusSelection.Candidate> candidates=new();
  static ConfigEntry<bool> route=null!,destination=null!;
+ static readonly GroundRouteVisual groundRoute=new("Local.Spt5.AiNavigation");
+ static readonly List<NVector> remaining=new();
  static Player? selected;
+ static float nextRender;
+ static IntPtr renderedActor;
  static IntPtr worldPointer;
  static float nextSelection,nextWarning;
 
@@ -25,21 +30,32 @@ internal static class AiRouteDisplay {
   try{
    if(worldPointer!=world.Pointer){Clear();worldPointer=world.Pointer;}
    if(Time.unscaledTime>=nextSelection){nextSelection=Time.unscaledTime+.12f;Select(world,local,camera);}
-   if(selected==null||selected.HealthController?.IsAlive!=true)return;
+   if(selected==null||selected.HealthController?.IsAlive!=true){HideRoute();return;}
    var mover=selected.AIData?.BotOwner?.Mover;
-   if(mover==null)return;
+   if(mover==null){HideRoute();return;}
    var path=mover.HasPathAndNoComplete?mover.CurPath:null;
    var corners=path?.Corners;
    int index=path?.CurIndex??-1,count=corners?.Length??0;
    bool hasRoute=index>=0&&index<count;
-   if(route.Value&&hasRoute){
-    var previous=selected.Position+Vector3.up*.16f;
-    var previousScreen=OverlayProjection.ScreenPoint(camera,previous);
-    for(int corner=index;corner<count&&corner-index<128;corner++){
-     var point=corners![corner]+Vector3.up*.16f;
-     var screen=OverlayProjection.ScreenPoint(camera,point);
-     DrawSegment(camera,previous,point,previousScreen,screen);
-     previous=point;previousScreen=screen;
+   if(!route.Value||!hasRoute)HideRoute();
+   else if(renderedActor!=selected.Pointer||Time.unscaledTime>=nextRender){
+    nextRender=Time.unscaledTime+.12f;
+    renderedActor=selected.Pointer;
+    remaining.Clear();
+    var origin=selected.Position;
+    if(Finite(origin)){
+     remaining.Add(new(origin.x,origin.y,origin.z));
+     for(int i=index;i<count&&i-index<128;i++){
+      var point=corners![i];
+      if(!Finite(point))break;
+      remaining.Add(new(point.x,point.y,point.z));
+     }
+    }
+    if(remaining.Count<2)HideRoute();
+    else {
+     var start=new RouteGeometry.Projection(remaining[0],0,0,0);
+     var points=RouteGeometry.Slice(remaining,start,GroundNavigation.Horizon);
+     groundRoute.Render(points,GroundNavigation.LineWidth,GroundNavigation.ArrowSpacing,routeColor);
     }
    }
    if(destination.Value&&(path!=null||mover.IsMoving)){
@@ -48,6 +64,7 @@ internal static class AiRouteDisplay {
     else if(hasRoute)DrawDestination(camera,local.Position,corners![count-1],false);
    }
   }catch(Exception error){
+   HideRoute();
    if(Time.unscaledTime<nextWarning)return;
    nextWarning=Time.unscaledTime+20;Plugin.Self.Error(error);
   }
@@ -78,24 +95,7 @@ internal static class AiRouteDisplay {
   }
  }
 
- static void DrawSegment(Camera camera,Vector3 from,Vector3 to,Vector3 a,Vector3 b){
-  if(!Finite(a)||!Finite(b)||a.z<Near&&b.z<Near)return;
-  if(a.z<Near)a=OverlayProjection.ScreenPoint(camera,Vector3.Lerp(from,to,(Near-a.z)/(b.z-a.z)));
-  else if(b.z<Near)b=OverlayProjection.ScreenPoint(camera,Vector3.Lerp(to,from,(Near-b.z)/(a.z-b.z)));
-  if(!Finite(a)||!Finite(b))return;
-  var start=new Vector2(a.x,Screen.height-a.y);
-  var delta=new Vector2(b.x-a.x,a.y-b.y);
-  float first=0,last=1;
-  if(Clip(start.x,delta.x,Screen.width,ref first,ref last)&&Clip(start.y,delta.y,Screen.height,ref first,ref last))
-   RaidLoot.Line(start+delta*first,start+delta*last,routeColor,2f);
- }
-
- static bool Clip(float start,float delta,float limit,ref float first,ref float last){
-  if(delta==0)return start>=0&&start<=limit;
-  float lower=-start/delta,upper=(limit-start)/delta;
-  first=Math.Max(first,Math.Min(lower,upper));last=Math.Min(last,Math.Max(lower,upper));
-  return first<last;
- }
+ static void HideRoute(){groundRoute.Hide();renderedActor=IntPtr.Zero;}
 
  static void DrawDestination(Camera camera,Vector3 origin,Vector3 point,bool hasTarget){
   if(!Finite(point))return;
@@ -113,5 +113,5 @@ internal static class AiRouteDisplay {
  }
 
  static bool Finite(Vector3 point)=>float.IsFinite(point.x)&&float.IsFinite(point.y)&&float.IsFinite(point.z);
- internal static void Clear(){worldPointer=IntPtr.Zero;selected=null;nextSelection=0;focus.Clear();candidates.Clear();}
+ internal static void Clear(){groundRoute.DestroyVisual();renderedActor=IntPtr.Zero;worldPointer=IntPtr.Zero;selected=null;nextSelection=0;focus.Clear();candidates.Clear();}
 }

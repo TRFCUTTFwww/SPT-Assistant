@@ -38,6 +38,7 @@ internal static class CornerGameSnapshot {
   int craftsReady=Read(HideoutCraftControl.ReadyCount,0);
   var cultist=inRaid||profile==null?null:Read(()=>CultistCircleControl.ReadSnapshot(profile));
   return new(){
+   Client=new(Read(()=>SPTushonka.Common.Http.RequestHandler.Host),Read(()=>ClientEventVersion.Version)),
    State=inRaid?"raid":inHideout?"hideout":"menu",CapturedAtUtc=DateTimeOffset.UtcNow,InRaid=inRaid,
    Map=raid?.MapId??"",
    // This legacy field historically returned the raid duration. The nested field uses the countdown.

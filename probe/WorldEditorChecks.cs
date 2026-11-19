@@ -36,7 +36,7 @@ internal static class WorldEditorChecks {
   Check(Calls("WorldEditor","CloseDialog").Any(c=>c.DeclaringType.Name=="EditorSelectionRules"&&c.Name=="ClearAfterEditing")&&Calls("WorldEditor","CompleteOperation").Any(c=>c.Name=="ClearSelection"),"editor close and completed operations clear single and batch selections");
   var selection=Calls("WorldEditor","SelectBox");Check(selection.Any(c=>c.Name=="Editable")&&selection.Any(c=>c.Name=="InBox"),"marquee uses locally controlled live AI eligibility and screen/depth filtering");
   foreach(string method in new[]{"SelectAt","SelectionVisible"})Check(Type("WorldEditor").Methods.Single(m=>m.Name==method).Body.Instructions.Any(i=>i.Operand is FieldReference f&&f.Name=="throughWallSelection"),"point and marquee visibility obey the through-wall preference");
-  Check(Calls("WorldEditor","SelectBox").Count(m=>m.Name=="SelectionVisible")==5&&Calls("WorldEditor","SelectionVisible").Any(m=>m.Name=="RaycastNonAlloc"),"marquee visibility checks AI, items, corpses, airdrops and containers with bounded obstacle queries");
+  Check(Calls("WorldEditor","SelectBox").Count(m=>m.Name=="SelectionVisible")==7&&Calls("WorldEditor","SelectionVisible").Any(m=>m.Name=="RaycastNonAlloc"),"marquee visibility checks AI, items, corpses, airdrops, containers, doors and mines with bounded obstacle queries");
   foreach(string method in new[]{"Relation","GroupRelation","NativeGroupStatus","CommandAttack"})Check(Calls("AiActorControl",method).Any(m=>m.Name=="HiddenFromAi"),"ignored AI overrides native and explicit hostility paths: "+method);
   Check(Calls("AiActorControl","Tick").Any(m=>m.Name=="TickHidden")&&Calls("AiActorControl","TickHidden").Any(m=>m.Name=="Forget")&&Calls("WorldEditor","BeginMove").Any(m=>m.Name=="RefreshHidden"),"moving and persistent ignored AI clear existing enemy memory immediately and periodically");
   Check(Calls("WorldEditor","HideMoving").Any(m=>m.Name=="Holding")&&!Calls("AiActorControl","SetHiddenFromAi").Any(m=>m.Name=="ActorPair"||m.Name=="ApplyBirthState"),"temporary and persistent AI visibility do not rewrite relationship rules");
@@ -68,7 +68,7 @@ internal static class WorldEditorChecks {
  internal static void Run(){
   void Check(bool value,string reason){if(!value)throw new Exception(reason);}
   var defaults=EditorContextRules.Read(EditorContextRules.Default);
-  Check(defaults.Length==25&&defaults.Distinct().Count()==25,"all context actions have stable unique IDs");
+  Check(defaults.SequenceEqual(EditorContextRules.Options.Select(option=>option.Id))&&defaults.Length==defaults.Distinct().Count(),"all context actions have stable unique IDs");
   Check(EditorContextRules.Read("copy,unknown,copy, move ,").SequenceEqual(new[]{"copy","move"}),"context settings ignore unknown and duplicate IDs");
   Check(EditorContextRules.Toggle("copy,move","copy")=="move"&&EditorContextRules.Toggle("move","copy")=="move,copy","context toggles preserve order and permit empty menus");
   Check(EditorContextRules.Toggle("copy","copy")==""&&EditorContextRules.Read("").Length==0,"all optional context actions can be hidden");

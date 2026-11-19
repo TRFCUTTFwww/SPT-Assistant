@@ -8,9 +8,7 @@ using EFT.Interactive;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.Rendering;
 using NVector=System.Numerics.Vector3;
-using Object=UnityEngine.Object;
 namespace LocalSpt5Esp;
 internal static partial class GroundNavigation {
  enum Destination { None,Loot,Exit,Quest,Chat }
@@ -27,11 +25,10 @@ internal static partial class GroundNavigation {
  static NVector[] route=Array.Empty<NVector>();
  static NavMeshPath? nativePath;
  static Il2CppStructArray<float>? costs;
- static GameObject? visual;
- static LineRenderer? line;
- static MeshRenderer? arrowRenderer;
- static Mesh? arrowMesh;
- static Material? material;
+ static readonly GroundRouteVisual groundRoute=new("Local.Spt5.GroundNavigation");
+ internal static float Horizon=>horizon.Value;
+ internal static float ArrowSpacing=>spacing.Value;
+ internal static float LineWidth=>width.Value;
  static Vector2 scroll;
  internal static bool WantsExitData=>enabled!=null&&enabled.Value&&RaidClock.Active;
  internal static bool WantsQuestData=>kind==Destination.Quest&&RaidClock.Active;
@@ -46,11 +43,11 @@ internal static partial class GroundNavigation {
  internal static void ToLoot(string key,string name){if(!RaidClock.Active){message="请进入战局后选择目标。";return;}Clear();kind=Destination.Loot;targetKey=key;targetName=name;worldPointer=Singleton<GameWorld>.Instance.Pointer;enabled.Value=true;RaidLoot.SelectNavigationTarget(key);message="正在寻找可行走路线…";}
  static void ToExit(string key,string name){if(!RaidClock.Active){message="请进入战局后选择目标。";return;}Clear();kind=Destination.Exit;targetKey=key;targetName=name;worldPointer=Singleton<GameWorld>.Instance.Pointer;enabled.Value=true;message="正在寻找撤离路线…";}
  internal static void Clear(){kind=Destination.None;targetKey=targetName="";route=Array.Empty<NVector>();nextPlan=nextVisual=0;remaining=distanceFromPath=0;forcePlan=true;arrived=partial=false;problem="";message="导航已停止。";Hide();}
- static void Hide(){if(visual!=null)visual.SetActive(false);}
+ static void Hide(){groundRoute.Hide();}
  static bool Target(out Vector3 position,out string state){position=default;state="";if(kind==Destination.Chat){position=chatGoal;return true;}if(kind==Destination.Quest)return QuestLocations.TryNavigationTarget(targetKey,out position,out _);if(kind==Destination.Loot)return RaidLoot.TryNavigationTarget(targetKey,out position,out _);if(kind==Destination.Exit){if(ExfilDisplay.TryNavigationExit(targetKey,out var exit)&&exit!=null){position=exit.Position;state=exit.Available?"":exit.State;return true;}}return false;}
  internal static void Tick(GameWorld? world,Player? player){try{
-  if(!RaidClock.Active||world==null||player==null){if(worldPointer!=IntPtr.Zero||kind!=Destination.None){Clear();worldPointer=IntPtr.Zero;DestroyVisual();}return;}
-  if(worldPointer!=IntPtr.Zero&&worldPointer!=world.Pointer){Clear();worldPointer=IntPtr.Zero;DestroyVisual();return;}
+  if(!RaidClock.Active||world==null||player==null){if(worldPointer!=IntPtr.Zero||kind!=Destination.None){Clear();worldPointer=IntPtr.Zero;groundRoute.DestroyVisual();}return;}
+  if(worldPointer!=IntPtr.Zero&&worldPointer!=world.Pointer){Clear();worldPointer=IntPtr.Zero;groundRoute.DestroyVisual();return;}
   if(Hotkeys.Pressed(toggleKey.Value))enabled.Value=!enabled.Value;
   if(kind==Destination.None||!enabled.Value){Hide();return;}
   if(!Target(out var goal,out var state)){bool quest=kind==Destination.Quest;Clear();message=quest?"任务地点已完成、任务已结束或已离开当前地图，导航已停止。":"目标已被取走、撤离点已移除或场景已改变。";return;}
@@ -62,7 +59,7 @@ internal static partial class GroundNavigation {
   var progress=RouteGeometry.Project(route,N(player.Position));distanceFromPath=progress.Distance;remaining=Math.Max(0,RouteGeometry.Length(route)-progress.Along);
   if(remaining<1.2f){Hide();message=(partial?"已到可寻路区域末端":"已到目标附近的道路末端")+" · 目标距离 "+direct.ToString("F0")+" 米，请检查入口或目标高度。";return;}
   message=(partial?"部分路线":"路线已规划")+" · 路程 "+remaining.ToString("F0")+" 米"+(distanceFromPath>3?" · 偏离路线，正在重算":"")+(state.Length>0?" · "+state:"");
-  if(Time.unscaledTime>=nextVisual){nextVisual=Time.unscaledTime+.18f;var points=RouteGeometry.Slice(route,progress,horizon.Value);Render(points);CheckObstacle(player.Position,progress);}
+  if(Time.unscaledTime>=nextVisual){nextVisual=Time.unscaledTime+.18f;var points=RouteGeometry.Slice(route,progress,horizon.Value);CheckObstacle(player.Position,progress);if(!groundRoute.Render(points,width.Value,spacing.Value,partial?new Color(1,.76f,.2f,.9f):new Color(.22f,1,.74f,.9f)))problem="路面材质不可用，保留导航信息。";}
  }catch(Exception e){route=Array.Empty<NVector>();Hide();message="寻路暂不可用："+e.Message;Warn(e);}}
  static void Plan(Vector3 origin,Vector3 goal){
   forcePlan=false;lastPlannedAt=Time.unscaledTime;plannedOrigin=origin;plannedGoal=goal;route=Array.Empty<NVector>();partial=false;problem="";
@@ -81,12 +78,6 @@ internal static partial class GroundNavigation {
   if(route.Length>=2){message="只能找到部分路线，末端需自行寻找通道。";return;}message=!sourceFound?"当前位置没有可用道路网格，请走回地面后重试。":!targetFound?"目标附近没有可用道路网格，可尝试靠近后重算。":"当前寻路网格没有连接到目标，无法生成路线。";
  }
  static void CheckObstacle(Vector3 origin,RouteGeometry.Projection progress){problem=partial?"末端可能需要门、楼梯或特殊通道。":"";int next=Math.Min(route.Length-1,progress.Segment+1);var destination=U(route[next]);var delta=destination-origin;float length=delta.magnitude;if(length<.2f)return;if(Physics.Raycast(origin+Vector3.up*.85f,delta.normalized,out var hit,Math.Min(3,length),Physics.DefaultRaycastLayers,QueryTriggerInteraction.Ignore)){var door=hit.collider?.GetComponentInParent<Door>();if(door!=null)problem=door.DoorState==EDoorState.Locked?"前方是锁门，请先解锁或寻找其他入口。":"前方有门，请手动开门通过。";}}
- static bool Visual(){if(visual!=null&&material!=null)return true;DestroyVisual();var shader=new[]{"Hidden/Internal-Colored","Unlit/Color","Sprites/Default"}.Select(Shader.Find).FirstOrDefault(s=>s!=null&&s.isSupported);if(shader==null){problem="路面材质不可用，保留导航信息。";return false;}material=new Material(shader){hideFlags=HideFlags.HideAndDontSave,renderQueue=3100};material.color=new Color(.22f,1f,.74f,.88f);material.SetInt("_SrcBlend",(int)BlendMode.SrcAlpha);material.SetInt("_DstBlend",(int)BlendMode.OneMinusSrcAlpha);material.SetInt("_ZWrite",0);material.SetInt("_ZTest",(int)CompareFunction.LessEqual);material.SetInt("_Cull",(int)CullMode.Off);
-  visual=new GameObject("Local.Spt5.GroundNavigation"){hideFlags=HideFlags.HideAndDontSave};visual.transform.position=Vector3.zero;var lineObject=new GameObject("Route Line"){hideFlags=HideFlags.HideAndDontSave};lineObject.transform.SetParent(visual.transform,false);line=lineObject.AddComponent<LineRenderer>();line.useWorldSpace=true;line.sharedMaterial=material;line.numCornerVertices=3;line.shadowCastingMode=ShadowCastingMode.Off;line.receiveShadows=false;var arrowObject=new GameObject("Route Arrows"){hideFlags=HideFlags.HideAndDontSave};arrowObject.transform.SetParent(visual.transform,false);arrowRenderer=arrowObject.AddComponent<MeshRenderer>();arrowRenderer.sharedMaterial=material;arrowRenderer.shadowCastingMode=ShadowCastingMode.Off;arrowRenderer.receiveShadows=false;arrowMesh=new Mesh{hideFlags=HideFlags.HideAndDontSave};arrowMesh.MarkDynamic();arrowObject.AddComponent<MeshFilter>().sharedMesh=arrowMesh;return true;
- }
- static void Render(NVector[] points){if(points.Length<2||!Visual()){Hide();return;}visual!.SetActive(true);var positions=points.Select(p=>U(p)+Vector3.up*.12f).ToArray();line!.startWidth=line.endWidth=width.Value;line.positionCount=positions.Length;line.SetPositions(new Il2CppStructArray<Vector3>(positions));material!.color=partial?new Color(1,.76f,.2f,.9f):new Color(.22f,1,.74f,.9f);line.startColor=line.endColor=Color.white;
-  var vertices=new List<Vector3>();var triangles=new List<int>();foreach(var arrow in RouteGeometry.Arrows(points,spacing.Value)){var center=U(arrow.Point)+Vector3.up*.14f;var direction=U(arrow.Direction);var side=Vector3.Cross(Vector3.up,direction);var tip=center+direction*.48f;var middle=center-direction*.07f;var left=center-direction*.38f+side*.34f;var right=center-direction*.38f-side*.34f;int index=vertices.Count;vertices.AddRange(new[]{tip,left,middle,tip,middle,right});triangles.AddRange(new[]{index,index+1,index+2,index+3,index+4,index+5});}arrowMesh!.Clear();arrowMesh.vertices=new Il2CppStructArray<Vector3>(vertices.ToArray());arrowMesh.triangles=new Il2CppStructArray<int>(triangles.ToArray());arrowMesh.RecalculateBounds();
- }
  static string Instruction(Camera? camera,Player player){if(route.Length<2)return "";var p=RouteGeometry.Project(route,N(player.Position));int next=Math.Min(route.Length-1,p.Segment+1);var delta=U(route[next])-player.Position;if(Math.Abs(delta.y)>1&&new Vector2(delta.x,delta.z).magnitude<8)return delta.y>0?"沿箭头上楼／上坡":"沿箭头下楼／下坡";var forward=camera?.transform.forward??player.transform.forward;forward.y=0;delta.y=0;if(delta.sqrMagnitude<.1f)return "沿路面箭头前进";float angle=Vector3.SignedAngle(forward,delta,Vector3.up);return Math.Abs(angle)>130?"转身跟随路线":angle>35?"向右跟随路线":angle< -35?"向左跟随路线":"沿路面箭头前进";}
  internal static void DrawHud(Camera? camera,Player? player){if(!showHud.Value||!enabled.Value||kind==Destination.None||player==null||!RaidClock.Active)return;using var windowOpacity=InterfaceMenu.BeginWindow("navigation");var rect=InterfaceMenu.Place("navigation",new Rect(Math.Max(12,Screen.width/2-190),Math.Max(12,Screen.height-172),380,72));InterfaceMenu.Panel(rect);InterfaceMenu.Label(new Rect(rect.x+10,rect.y+5,rect.width-20,24),"导航 · "+targetName,InterfaceMenu.Accent,13);InterfaceMenu.Label(new Rect(rect.x+10,rect.y+28,rect.width-20,20),message,null,11);InterfaceMenu.Label(new Rect(rect.x+10,rect.y+49,rect.width-20,20),problem.Length>0?problem:Instruction(camera,player),partial?Color.yellow:InterfaceMenu.Text,11);}
  internal static void Draw(Rect rect){
@@ -100,7 +91,6 @@ internal static partial class GroundNavigation {
   if(InterfaceMenu.Button(new Rect(rect.xMax-160,rect.y+272,160,32),"选择任务地点"))InterfaceMenu.Navigate("传送与导航","任务定位");
   var exits=ExfilDisplay.NavigationRows.OrderBy(e=>e.Available?0:1).ThenBy(e=>e.Distance).ToList();var view=new Rect(rect.x,rect.y+316,rect.width,Math.Max(50,rect.height-395));scroll=GUI.BeginScrollView(view,scroll,new Rect(0,0,view.width-18,Math.Max(50,exits.Count*73)));for(int i=0;i<exits.Count;i++){var exit=exits[i];float y=i*73;InterfaceMenu.Paragraph(new Rect(0,y,view.width-160,65),exit.Name+" · "+exit.Distance.ToString("F0")+" 米\n"+exit.State,exit.Available?InterfaceMenu.Text:Color.gray,12);if(InterfaceMenu.Button(new Rect(view.width-145,y+10,117,33),targetKey==exit.Id&&kind==Destination.Exit?"当前目标":"导航到这里",targetKey==exit.Id&&kind==Destination.Exit))ToExit(exit.Id,exit.Name);}if(exits.Count==0)InterfaceMenu.Label(new Rect(0,0,view.width-24,40),RaidClock.Active?"撤离点正在加载；可先选择物品或任务地点导航。":"进入战局后读取撤离点。",null,12);GUI.EndScrollView();InterfaceMenu.Paragraph(new Rect(rect.x,rect.yMax-63,rect.width,60),"门、跳跃和特殊通道需自行判断。",null,12);
  }
- static void DestroyVisual(){try{if(visual!=null)Object.Destroy(visual);if(arrowMesh!=null)Object.Destroy(arrowMesh);if(material!=null)Object.Destroy(material);}finally{visual=null;line=null;arrowRenderer=null;arrowMesh=null;material=null;}}
- internal static void Shutdown(){Clear();worldPointer=IntPtr.Zero;DestroyVisual();nativePath?.ClearCorners();nativePath=null;costs=null;}
+ internal static void Shutdown(){Clear();worldPointer=IntPtr.Zero;groundRoute.DestroyVisual();nativePath?.ClearCorners();nativePath=null;costs=null;}
  static void Warn(Exception e){if(Time.unscaledTime<nextError)return;nextError=Time.unscaledTime+20;Plugin.Self.Error(e);}
 }

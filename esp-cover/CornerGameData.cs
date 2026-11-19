@@ -8,6 +8,8 @@ internal sealed record CornerGameData {
  static readonly JsonSerializerOptions compact=new(){PropertyNamingPolicy=JsonNamingPolicy.CamelCase};
  static readonly JsonSerializerOptions pretty=new(compact){WriteIndented=true,Encoder=JavaScriptEncoder.UnsafeRelaxedJsonEscaping};
 
+ internal sealed record ClientInfo(string? ServerUrl,string? Version);
+ public ClientInfo Client {get;init;}=new(null,null);
  public string State {get;init;}="menu";
  public DateTimeOffset? CapturedAtUtc {get;init;}
  public bool InRaid {get;init;}

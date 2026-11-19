@@ -100,5 +100,33 @@ try{
  var displayTest=core.GetType("LocalSpt5Esp.CornerScript",true)!.GetMethod("EvaluateDisplayTest",BindingFlags.Static|BindingFlags.NonPublic)!;
  var withExpression=displayTest.Invoke(null,["const status = 42; console.log(status);","status",CancellationToken.None,null,null])!;
  Check(Field<bool>(withExpression,"Ok")&&Field<string>(withExpression,"Value")=="42"&&Field<string[]>(withExpression,"Logs").SequenceEqual(new[]{"[LOG] 42"}),"test runs use the same display expression and keep logs");
+ var scriptConfig=Environment.GetEnvironmentVariable("SPT_CURRENT_CORNER_CONFIG");
+ if(scriptConfig!=null){
+  const string key="Corner version script = ";
+  string code=System.Text.RegularExpressions.Regex.Unescape(File.ReadLines(scriptConfig).First(line=>line.StartsWith(key))[key.Length..]);
+  foreach(bool raid in new[]{false,true}){
+   string json=System.Text.Json.JsonSerializer.Serialize(new {client=new {serverUrl="http://127.0.0.1:6969",version="1.3.0.48558"},player=raid?new {position=new {x=12,y=3,z=-4}}:null});
+   string output=RunWithGame(code,json);
+   Check(output.Contains("127.0.0.1:6969")&&output.Contains("1.3.0.48558")&&output.Contains(raid?"X 12 Y 3 Z -4":"等待进入战局"),"current saved developer display script renders "+(raid?"raid coordinates":"menu fallback"));
+  }
+ }
+ var scriptType=evaluate.DeclaringType!;
+ var directive=scriptType.GetMethod("UsesGameThread",BindingFlags.NonPublic|BindingFlags.Static)!;
+ bool Live(string code)=>(bool)directive.Invoke(null,[code])!;
+ Check(Live("  // @game-thread\r\nreturn player;")&&!Live("// @game-thread-extra")&&!Live("return '// @game-thread';"),"only the leading directive enables live objects");
+ var liveObjects=scriptType.GetNestedType("LiveObjects",BindingFlags.NonPublic)!;
+ var fixture=new LivePlayer();
+ var bindings=Activator.CreateInstance(liveObjects,[null,fixture,null]);
+ var runLive=scriptType.GetMethod("RunTest",BindingFlags.Static|BindingFlags.NonPublic)!;
+ object LiveTest(string code)=>runLive.Invoke(null,[code,"",CancellationToken.None,null,null,bindings])!;
+ var mutation=LiveTest("player.Score = 7; player.Add(2); return world === null && profile === null && player.Score === 9;");
+ Check(Field<bool>(mutation,"Ok")&&Field<string>(mutation,"Value")=="true"&&fixture.Score==9,"live JS reads, writes and invokes methods on the original host object");
+ Check(Run("return typeof player;")=="undefined","background script has no live player");
+ Check(!Field<bool>(LiveTest("return await fetch('http://example.test');"),"Ok"),"live scripts reject synchronous network work");
  Console.WriteLine($"Passed {checks} script and HTTP checks.");
 }finally{resolver.GetMethod("Shutdown",BindingFlags.Static|BindingFlags.NonPublic)!.Invoke(null,null);context.Unload();}
+
+public sealed class LivePlayer {
+ public int Score {get;set;}
+ public void Add(int value)=>Score+=value;
+}

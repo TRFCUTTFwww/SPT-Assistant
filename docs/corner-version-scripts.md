@@ -38,7 +38,7 @@ return data.version;
 
 原有配置项 `Corner script interval` 继续以秒保存，支持小数；旧值 `30` 仍表示 30 秒。显示单位单独保存在 `Corner script display unit`，默认选择“秒”。
 
-脚本和网络请求在后台串行执行，不在绘制回调中请求网络。上一次执行结果处理后再计时，到达间隔后在游戏更新帧中启动下一次；使用双精度实时时钟，实际更新频率受游戏帧率和脚本/网络耗时影响。设置 1 毫秒不代表每秒执行 1000 次，也不会积压并发请求。失败时保留上次成功内容，错误直接显示在设置页。每次执行最多 64 个请求、总计最多 30 秒，每个请求超时 8 秒、请求正文和响应各最多 1 MiB。脚本最多 16384 字符，执行有限额，关闭或热更新时会取消任务。脚本不暴露 Unity、CLR、文件或进程接口。文字最多显示 160 字符，关闭富文本。
+默认模式下，脚本和网络请求在后台串行执行，不在绘制回调中请求网络。上一次执行结果处理后再计时，到达间隔后在游戏更新帧中启动下一次；使用双精度实时时钟，实际更新频率受游戏帧率和脚本/网络耗时影响。设置 1 毫秒不代表每秒执行 1000 次，也不会积压并发请求。失败时保留上次成功内容，错误直接显示在设置页。每次执行最多 64 个请求、总计最多 30 秒，每个请求超时 8 秒、请求正文和响应各最多 1 MiB。脚本最多 16384 字符，执行有限额，关闭或热更新时会取消任务。后台脚本不暴露 Unity、CLR、文件或进程接口。文字最多显示 160 字符，关闭富文本。
 
 脚本保存在当前本机配置中，不加入“配置方案”的保存或套用。Jint 4.4.1 与 Acornima 1.2.0 及其许可证嵌入核心热更新模块；许可证原文位于 [Jint](licenses/Jint.txt) 和 [Acornima](licenses/Acornima.txt)。
 
@@ -60,6 +60,8 @@ return data.version;
 | `game.hideout` | `craftsReady`，以及已有同步状态时的 `cultist.active`、`cultist.ready` |
 | `game.performance` | 性能监测开启并完成采样后提供 `fps`、`frameMs`、`p99Ms`、`peakMs`、`slowFrames`、`sampleCount`、`sampleSeconds`、`assistantMs` |
 
+`client.serverUrl` 和 `client.version` 提供 SPT 服务端地址和 EFT 客户端产品版本，也可以从 `game.client` 读取。
+
 旧脚本的顶层字段继续可用。`game.raidRemainingSeconds` 保留原先的战局总时长行为。实时倒计时使用 `game.raid?.remainingSeconds`。
 
 例如在“显示表达式”中直接填入下方内容，脚本可以留空：
@@ -77,3 +79,16 @@ const status = raid
   ? `${raid.mapName} · ${Math.ceil(raid.remainingSeconds ?? 0)}s${exit ? ` · ${exit.name} ${Math.round(exit.distanceMeters ?? 0)}m` : ""}`
   : `制作可领 ${game.hideout.craftsReady}`;
 ```
+
+## 直接访问游戏对象
+
+在 JavaScript 编辑器选择“实时”，或在脚本首行写 `// @game-thread`。测试和动态刷新都会在 Unity 主线程执行该脚本。`world`、`player`、`profile` 分别指向当前 GameWorld、本地玩家和可用角色档案。对象随场景变化，缺少时为 `null`。
+
+```javascript
+// @game-thread
+return player?.Profile?.Nickname ?? "当前没有战局角色";
+```
+
+使用 C# 成员原名可以读取属性、给有公开 setter 的属性赋值，以及调用公开方法。对实时对象的写入会影响客户端，“测试运行一次”也会执行写入。动态显示会按刷新间隔重复运行。能否保存到角色档案取决于游戏和服务端的保存逻辑。`game` 仍提供冻结的快照。
+
+实时脚本的 JS 执行预算为 150 毫秒，调用游戏方法本身会占用主线程。需要 `fetch` 或 `httpGet` 的脚本使用默认后台模式。

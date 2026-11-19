@@ -13,7 +13,12 @@ internal static class EditorContextRules {
  };
  internal static string Default=>string.Join(",",Options.Select(o=>o.Id));
  static string Canonical(string id)=>id switch{"pause" or "resume"=>"pause-toggle","ab-hostile" or "ab-peace"=>"ab-toggle","player-peace" or "player-hostile"=>"player-toggle","invincible-on" or "invincible-off"=>"invincible-toggle",_=>id};
- internal static string[] Read(string value)=>value.Split(',',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries).Select(Canonical).Where(id=>Options.Any(o=>o.Id==id)).Distinct(StringComparer.Ordinal).ToArray();
+ static string[] Expand(string id)=>id switch {
+  "door-lock-toggle"=>["door-lock","door-unlock"],
+  "door-open-toggle"=>["door-open","door-close"],
+  _=>[Canonical(id)]
+ };
+ internal static string[] Read(string value)=>value.Split(',',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries).SelectMany(Expand).Where(id=>Options.Any(o=>o.Id==id)).Distinct(StringComparer.Ordinal).ToArray();
  // Uniform selections offer the reverse operation; mixed selections can offer both explicit operations.
  internal static bool[] NextActions(bool[] states,bool splitMixed){
   if(states.Length==0)return Array.Empty<bool>();

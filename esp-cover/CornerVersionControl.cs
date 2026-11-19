@@ -23,7 +23,7 @@ internal static partial class CornerVersionControl {
  const string ScriptControl="LocalCornerScriptEditor",OutputControl="LocalCornerScriptOutput";
  static readonly (string Label,string Source,string Expression)[] examples={
   ("时间",CornerScript.Example,""),("战局",CornerScript.GameExample,""),
-  ("变量",CornerScript.VariableExample,"status"),("联网",CornerScript.AsyncExample,"")
+  ("实时",CornerScript.LiveExample,""),("变量",CornerScript.VariableExample,"status"),("联网",CornerScript.AsyncExample,"")
  };
  static bool changed;static Vector2 scriptScroll,codeScroll,testOutputScroll;
  static string measuredCode="",measuredOutput="";static float measuredWidth=-1,measuredHeight,measuredOutputWidth=-1,measuredOutputHeight;
@@ -60,14 +60,39 @@ internal static partial class CornerVersionControl {
  }
  static void Restore(){if(label!=null&&written.Length>0)label.SetLabelText(original);foreach(var entry in formats.Values)if(entry.Label!=null)entry.Label.richText=entry.Rich;formats.Clear();written="";}
  static void CancelScript(){cancellation?.Cancel();cancellation?.Dispose();cancellation=null;if(work is {} pending)_=pending.ContinueWith(t=>{_=t.Exception;},TaskContinuationOptions.OnlyOnFaulted);work=null;}
- static void StartScript(){if(work!=null)return;cancellation=new();var token=cancellation.Token;string source=script.Value,expression=displayExpression.Value,gameJson=CornerGameSnapshot.CaptureJson();work=Task.Run(()=>CornerScript.EvaluateDisplay(source,expression,token,null,gameJson),token);scriptStatus="正在后台执行…";}
+ static CornerScript.LiveObjects LiveObjects(){
+  var world=Comfort.Common.Singleton<EFT.GameWorld>.Instance;
+  var player=world?.MainPlayer;
+  return new(world,player,player?.Profile??HideoutCraftControl.CurrentProfile);
+ }
+ static void StartScript(){
+  if(work!=null)return;
+  cancellation=new();
+  var token=cancellation.Token;
+  string source=script.Value,expression=displayExpression.Value,json=CornerGameSnapshot.CaptureJson();
+  if(CornerScript.UsesGameThread(source)){
+   try{work=Task.FromResult(CornerScript.ExecuteCore(source,expression,token,null,json,null,LiveObjects()));}
+   catch(Exception error){work=Task.FromException<string>(error);}
+  }else{
+   work=Task.Run(()=>CornerScript.EvaluateDisplay(source,expression,token,null,json),token);
+   scriptStatus="正在后台执行…";
+  }
+ }
  static void ScriptTick(){
   if(!enabled.Value||!dynamic.Value){if(work!=null)CancelScript();return;}
   if(work?.IsCompleted==true){var finished=work;work=null;cancellation?.Dispose();cancellation=null;nextScript=Time.realtimeSinceStartupAsDouble+IntervalSeconds;try{dynamicText=Clean(finished.GetAwaiter().GetResult());scriptStatus="已更新 · "+DateTime.Now.ToString("HH:mm:ss.fff");changed=true;}catch(Exception e){scriptStatus="执行失败，保留上次文字："+Clean(e.GetBaseException().Message);}}
   if(work==null&&Time.realtimeSinceStartupAsDouble>=nextScript)StartScript();
  }
  static void CancelTest(){testCancel?.Cancel();testCancel?.Dispose();testCancel=null;if(testWork is {} pending)_=pending.ContinueWith(t=>{_=t.Exception;},TaskContinuationOptions.OnlyOnFaulted);testWork=null;testClock=null;}
- static void StartTest(){CancelTest();testCancel=new();var token=testCancel.Token;string source=scriptDraft,expression=expressionDraft,gameJson=CornerGameSnapshot.CaptureJson();testClock=Stopwatch.StartNew();testOutput="";testOutputScroll=Vector2.zero;testStatus="正在测试运行…";testWork=Task.Run(()=>CornerScript.EvaluateDisplayTest(source,expression,token,null,gameJson),token);}
+ static void StartTest(){
+  CancelTest();testCancel=new();var token=testCancel.Token;
+  string source=scriptDraft,expression=expressionDraft,json=CornerGameSnapshot.CaptureJson();
+  testClock=Stopwatch.StartNew();testOutput="";testOutputScroll=Vector2.zero;testStatus="正在测试运行…";
+  if(CornerScript.UsesGameThread(source)){
+   try{testWork=Task.FromResult(CornerScript.RunTest(source,expression,token,null,json,LiveObjects()));}
+   catch(Exception error){testWork=Task.FromException<CornerScript.TestRunResult>(error);}
+  }else testWork=Task.Run(()=>CornerScript.EvaluateDisplayTest(source,expression,token,null,json),token);
+ }
  static void PollTest(){
   if(testWork is not {IsCompleted:true} finished)return;
   testWork=null;testCancel?.Dispose();testCancel=null;long ms=testClock?.ElapsedMilliseconds??0;testClock=null;

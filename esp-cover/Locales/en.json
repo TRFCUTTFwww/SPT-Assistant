@@ -4222,6 +4222,7 @@
   "示例": "Examples",
   "联网": "HTTP",
   "变量": "Variable",
+  "实时": "Live",
   "显示表达式": "Display expression",
   "例如 status 或 game.fps。使用 return 时留空。": "For example, status or game.fps. Leave blank when using return.",
   "动态显示已开启": "Dynamic display on",

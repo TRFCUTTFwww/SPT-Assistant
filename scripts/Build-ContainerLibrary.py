@@ -250,7 +250,20 @@ def build(level, template):
         tree = obj.read_typetree(nodes=node)
         for pointer in ptrs(tree):
             remap(owner, pointer)
-        stream_tree(tree)
+        stream = tree.get('m_StreamData', {})
+        if args.claymore and stream.get('size') and obj.type.name in ('Mesh', 'Texture2D'):
+            with (data / pathlib.Path(stream['path']).name).open('rb') as source:
+                source.seek(stream['offset'])
+                payload = source.read(stream['size'])
+            if len(payload) != stream['size']:
+                raise ValueError('Truncated claymore render data')
+            if obj.type.name == 'Mesh':
+                tree['m_VertexData']['m_DataSize'] = payload
+            else:
+                tree['image data'] = payload
+            stream.update(path='', offset=0, size=0)
+        else:
+            stream_tree(tree)
         typekey = st.class_id, st.script_id, st.old_type_hash
         if typekey not in typeids:
             newtype = copy.copy(st)
@@ -284,7 +297,8 @@ def build(level, template):
     tree = asset.read_typetree()
     tree.update(m_Name='assistant-editor-' + template, m_AssetBundleName='assistant-editor-' + template, m_Dependencies=[], m_PreloadTable=table, m_Container=[(template + '.prefab', dict(preloadIndex=0, preloadSize=len(table), asset=dict(m_FileID=0, m_PathID=identities[level, root_id])))], m_MainAsset=dict(preloadIndex=0, preloadSize=0, asset=dict(m_FileID=0, m_PathID=0)), m_SceneHashes=[])
     asset.save_typetree(tree)
-    manifest.name = 'CAB-' + hashlib.sha256((template+'container-library-v2').encode()).hexdigest()[:32]
+    revision = 'inline-v3' if args.claymore else 'container-library-v2'
+    manifest.name = 'CAB-' + hashlib.sha256((template+revision).encode()).hexdigest()[:32]
     bundle.files = {manifest.name: manifest}
     for stream, payload in streams.values():
         reader = EndianBinaryReader(payload)
@@ -305,7 +319,7 @@ levels = sorted((p for p in data.glob('level*') if p.name[5:].isdigit()), key=la
 remaining = {args.template} if args.template else set(templates) - {k for k,v in index.items() if v.get("version")==2}
 for level in levels:
     raw = level.read_bytes()
-    hits = ({'claymore'} if b'MineDirectional' in raw else set()) if args.claymore else set(t.decode() for t in re.findall(rb'[a-f0-9]{24}', raw)) & remaining
+    hits = ({'claymore'} if b'MineDirectional' in raw else set()) & remaining if args.claymore else set(t.decode() for t in re.findall(rb'[a-f0-9]{24}', raw)) & remaining
     for template in sorted(hits):
         try:
             index[template] = build(level.name, template)
