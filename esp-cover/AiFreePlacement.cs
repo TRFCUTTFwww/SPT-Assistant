@@ -15,12 +15,35 @@ internal static class AiFreePlacement {
  static bool Match(Player player,out Anchor value)=>anchors.TryGetValue(player.Pointer,out value!)&&value.Reference.World==Singleton<GameWorld>.Instance?.Pointer&&value.Reference.Profile==player.ProfileId;
  internal static bool Pinned(Player player)=>Match(player,out _);
  internal static bool PriorPaused(Player player)=>Match(player,out var value)?value.WasPaused:AiTestControl.IsPaused(player);
- internal static void Release(Player player){if(!Match(player,out var value))return;anchors.Remove(player.Pointer);try{value.Reference.Resolve();AiTestControl.SetPaused(new[]{player},value.WasPaused);}catch{}}
+ internal static void Detach(Player player){
+  if(!Match(player,out var anchor))return;
+  anchors.Remove(player.Pointer);
+  AiTestControl.SetPaused(new[]{player},anchor.WasPaused);
+ }
+ internal static void Release(Player player){
+  if(!Match(player,out var anchor))return;
+  anchor.Reference.Resolve();
+  var point=anchor.Point;
+  if(!NavMesh.SamplePosition(point,out var nav,.6f,NavMesh.AllAreas)){
+   int mask=LayerMask.GetMask("Terrain","HighPolyCollider","LowPolyCollider");
+   if(!Physics.Raycast(point+Vector3.up*.1f,Vector3.down,out var ground,200,mask,QueryTriggerInteraction.Ignore)||
+      !NavMesh.SamplePosition(ground.point,out nav,2f,NavMesh.AllAreas))
+    throw new ArgumentException("固定点下方没有可行走地面，请把 AI 移到道路上方再解除。");
+  }
+  var mover=player.AIData?.BotOwner?.Mover;
+  mover?.AllowTeleport();
+  if(mover?.Teleport(nav.position,true)!=true){
+   player.Teleport(point,true);
+   throw new ArgumentException("AI 导航未能同步到新落点，已保留空中固定。");
+  }
+  Detach(player);
+  mover.RecalcWay();
+ }
  internal static void Place(GameWorld current,Player actor,Vector3 point,bool? previousPause=null,bool anchorInAir=true){
   new LiveActorReference(current,actor).Resolve();if(actor.IsYourPlayer||actor.AIData?.BotOwner==null||actor.Profile?.Info?.Settings?.Role==WildSpawnType.shooterBTR)throw new ArgumentException("只允许编辑本机控制的普通 AI。");
   if(!TeleportRules.Finite(new(point.x,point.y,point.z)))throw new ArgumentException("目标坐标无效。");
   bool paused=previousPause??PriorPaused(actor);var bot=actor.AIData.BotOwner;var origin=actor.Position;bool originalPause=AiTestControl.IsPaused(actor);anchors.TryGetValue(actor.Pointer,out var originalAnchor);
-  // Do not route through BotMover.Teleport: it requires navigation at the goal.
+  // Preserve exact airborne coordinates and synchronize the native mover on walkable ground.
   try{
    bot.StopMove();bot.Mover?.AllowTeleport();actor.Teleport(point,true);
    bool ground=NavMesh.SamplePosition(point,out var nav,.4f,NavMesh.AllAreas)&&Vector3.Distance(nav.position,point)<=.35f;
@@ -28,7 +51,7 @@ internal static class AiFreePlacement {
    bool pin=anchorInAir&&!ground;
    if(pin)anchors[actor.Pointer]=new(new(current,actor),actor,point,paused);
    AiTestControl.SetPaused(new[]{actor},pin||paused);
-   if(ground)bot.Mover?.RecalcWay();
+   if(ground&&bot.Mover is {} mover){mover.AllowTeleport();if(!mover.Teleport(nav.position,true))throw new InvalidOperationException("AI 导航未能同步到放置点。");mover.RecalcWay();}
   }catch{if(originalAnchor!=null)anchors[actor.Pointer]=originalAnchor;else anchors.Remove(actor.Pointer);try{actor.Teleport(origin,true);AiTestControl.SetPaused(new[]{actor},originalPause);}catch{}throw;}
  }
  internal static void FilterMotion(Il2CppObjectBase controller,ref Vector3 motion){
@@ -37,5 +60,5 @@ internal static class AiFreePlacement {
  internal static void Tick(GameWorld? current){
   foreach(var value in anchors.Values.ToArray())try{if(current?.Pointer!=value.Reference.World||!RaidClock.Active){anchors.Remove(value.Reference.Pointer);continue;}var actor=value.Reference.Resolve();if(WorldEditor.Holding(actor))continue;if(!AiTestControl.IsPaused(actor))AiTestControl.SetPaused(new[]{actor},true);if((actor.Position-value.Point).sqrMagnitude>.0001f)actor.Teleport(value.Point,true);}catch{anchors.Remove(value.Reference.Pointer);}
  }
- internal static void Reset(){foreach(var value in anchors.Values.ToArray())Release(value.Player);anchors.Clear();}
+ internal static void Reset(){foreach(var value in anchors.Values.ToArray())try{Release(value.Player);}catch{Detach(value.Player);}anchors.Clear();}
 }

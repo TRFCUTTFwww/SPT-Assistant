@@ -42,7 +42,7 @@
 
 头顶标记按原 quick_hack_mappin 控件的 80×88 底框、64×64 技能图标比例重建，采用原版纵向填充。上传开场保留 1.5→1 缩放（0.4 秒）及 -100→0 原始坐标平移（0.25 秒，1080p 换算 -50→0），采用 Back/入缓动重建。完成时按原轨道下移、回位并延迟淡出，约 0.416 秒后显示持续状态；该时间不替代技能玩法上传时长。持续状态改为青色，剩余时间通过纵向填充体现。原型仍一次上传一个技能，不虚构原版多技能队列；queue_move_up 资源留作后续队列功能使用。
 
-Batch02 已证实所查 sfx_container.bnk 的 vfx_blackwall_hack_npc_upload 事件 action_count=0。本版停用此前借用的突触熔融声音，保留真实 w_expl_blackwall_npc_death_gameplay 死亡音效。该证据不等于断言整个原版引擎的所有状态均无额外声音。七份 GLB、电弧材质/粒子引用和轨道已验收，本版尚未将整套身体 VFX 转为 Unity；已知共享 blackbody_lit.mt 仍缺失。
+Batch02 已证实所查 sfx_container.bnk 的 vfx_blackwall_hack_npc_upload 事件 action_count=0。本模组在施放时使用 q306_sc_08_blackwall_burnout_a 的黑墙音效，目标死亡时单独播放 w_expl_blackwall_npc_death_gameplay。七份 GLB、电弧材质/粒子引用和轨道已验收，本版尚未将整套身体 VFX 转为 Unity；已知共享 blackbody_lit.mt 仍缺失。
 
 新增构建依赖为 Python 3、Pillow、fontTools 及协作 UI 补包，可通过 UiSupplementRoot、Python、PythonModulePath 指定本地位置。原始字体、图集、动画和补包只保留本机，不提交源码。构建、字形检查和热加载不替代游戏画面验收。
 

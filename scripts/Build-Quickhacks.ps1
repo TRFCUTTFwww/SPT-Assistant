@@ -53,6 +53,7 @@ $audioMap=[ordered]@{
 }
 foreach($pair in $audioMap.GetEnumerator()) { $files["$($pair.Key).wav"]=@($ResourceRoot,"$audioDir/$($pair.Value)") }
 $files['blackwall.png']=@($BlackwallRoot,'03_images/ep1/fx/blackwall/textures/blackwall_atlas.png')
+$files['BlackwallBreach.wav']=@($BlackwallRoot,'04_audio/WAV_by_event/q306_sc_08_blackwall_burnout_a {r}.wav')
 $files['death.wav']=@($BlackwallRoot,'04_audio/WAV_by_event/w_expl_blackwall_npc_death_gameplay {r}.wav')
 $manifests=@{}
 foreach($root in @($ResourceRoot,$BlackwallRoot,$UiSupplementRoot)) {

@@ -22,20 +22,20 @@ internal static partial class WorldEditor {
  static void RequireMineEditing(){Current();if(ChatFikaSession.Role!=0)throw new ArgumentException("阔剑场景编辑暂不支持 FIKA 同步。");}
  static MineCopy CaptureMine(MineDirectional mine)=>new(mine,mine.transform.rotation);
  static MineDirectional PlaceMine(MineCopy copy,Vector3 position){
-  RequireMineEditing();if(copy.Source==null)throw new ArgumentException("阔剑模型已失效，请重新复制。");
+  RequireMineEditing();if(MineLibrary.Model==null){MineLibrary.Request();throw new ArgumentException(MineLibrary.Status);}if(copy.Source==null)throw new ArgumentException("阔剑模型已失效，请重新复制。");
   // An inactive parent prevents Awake/trigger evaluation before placement.
   var staging=new GameObject("Assistant mine staging");staging.SetActive(false);GameObject? clone=null;
-  try{clone=UnityEngine.Object.Instantiate(copy.Source.gameObject,staging.transform);clone.name="Assistant placed claymore";clone.SetActive(false);
+  try{clone=UnityEngine.Object.Instantiate(copy.Source.gameObject,staging.transform);clone.name=MineLibrary.PlacedName;clone.SetActive(false);
    var mine=clone.GetComponent<MineDirectional>()??throw new ArgumentException("阔剑模型缺少原生触发器。");
    mine.enabled=false;mine._cleared=false;mine._exploded=false;
    foreach(var trigger in clone.GetComponentsInChildren<MineDirectionalColliders>(true))trigger._parent=mine;
-   clone.transform.SetPositionAndRotation(position,copy.Rotation);clone.transform.SetParent(null,true);clone.SetActive(true);mine.SetArmed(true);mine.enabled=true;
+   clone.transform.SetPositionAndRotation(position,copy.Rotation);clone.transform.SetParent(null,true);MineLibrary.BindVisual(mine);clone.SetActive(true);mine.SetArmed(true);mine.enabled=true;
    var list=Current().MineManager?.Mines;if(list!=null&&!list.Contains(mine))list.Add(mine);
    return mine;
   }catch{if(clone!=null)UnityEngine.Object.Destroy(clone);throw;}finally{UnityEngine.Object.Destroy(staging);}
  }
  static void CreateMine(){
-  RequireMineEditing();var source=MineLibrary.Model??Mines(Current()).FirstOrDefault()??Resources.FindObjectsOfTypeAll<MineDirectional>().FirstOrDefault(m=>m!=null&&m._mineData?.IsDummy==false);
+  RequireMineEditing();var source=MineLibrary.Model;
   if(source==null){MineLibrary.Request();FeatureToasts.Show(MineLibrary.Status);return;}
   var rotation=Quaternion.Euler(0,View.transform.eulerAngles.y,0);var mine=PlaceMine(new(source,rotation),point);var reference=new MineReference(Current(),mine);
   PushUndo("放置阔剑",()=>DeleteMine(reference));CompleteOperation();

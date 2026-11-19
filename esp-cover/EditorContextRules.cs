@@ -8,17 +8,12 @@ internal static class EditorContextRules {
   ("remove-weapons","删除所有武器"),("team-a","设为A方"),("team-b","设为B方"),("team-clear","清除队伍标记"),("pause-toggle","暂停／恢复活动"),
   ("ab-toggle","A ↔ B 敌对／停战"),("player-toggle","对玩家敌对／停战"),("player-default","恢复对玩家默认关系"),
   ("rotate","旋转容器"),("loot-server","重新生成物品（当前服务端配置）"),("loot-custom","重新生成物品（自定义配置）"),("container-open","开启／关闭容器"),
-  ("door-lock","门：上锁"),("door-unlock","门：解锁"),("door-open","门：打开"),("door-close","门：关闭"),
+  ("door-lock-toggle","门：上锁／解锁"),("door-open-toggle","门：打开／关闭"),
   ("invincible-toggle","切换无敌"),("clear-effects","清除异常状态")
  };
  internal static string Default=>string.Join(",",Options.Select(o=>o.Id));
- static string Canonical(string id)=>id switch{"pause" or "resume"=>"pause-toggle","ab-hostile" or "ab-peace"=>"ab-toggle","player-peace" or "player-hostile"=>"player-toggle","invincible-on" or "invincible-off"=>"invincible-toggle",_=>id};
- static string[] Expand(string id)=>id switch {
-  "door-lock-toggle"=>["door-lock","door-unlock"],
-  "door-open-toggle"=>["door-open","door-close"],
-  _=>[Canonical(id)]
- };
- internal static string[] Read(string value)=>value.Split(',',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries).SelectMany(Expand).Where(id=>Options.Any(o=>o.Id==id)).Distinct(StringComparer.Ordinal).ToArray();
+ static string Canonical(string id)=>id switch{"pause" or "resume"=>"pause-toggle","ab-hostile" or "ab-peace"=>"ab-toggle","player-peace" or "player-hostile"=>"player-toggle","invincible-on" or "invincible-off"=>"invincible-toggle","door-lock" or "door-unlock"=>"door-lock-toggle","door-open" or "door-close"=>"door-open-toggle",_=>id};
+ internal static string[] Read(string value)=>value.Split(',',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries).Select(Canonical).Where(id=>Options.Any(o=>o.Id==id)).Distinct(StringComparer.Ordinal).ToArray();
  // Uniform selections offer the reverse operation; mixed selections can offer both explicit operations.
  internal static bool[] NextActions(bool[] states,bool splitMixed){
   if(states.Length==0)return Array.Empty<bool>();

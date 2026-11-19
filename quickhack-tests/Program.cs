@@ -196,11 +196,12 @@ if(args.Length>1) {
             Check(font.GetProperty("glyphs").TryGetProperty(((int)c).ToString(),out _),"Original Chinese atlas covers quickhack names, all faction labels and repeated-upload status");
     }
     var sounds=Directory.GetFiles(args[1],"*.wav");
-    Check(sounds.Length==16,"UI, seven quickhacks and real Blackwall death audio; no borrowed upload sound");
+    Check(sounds.Length==17,"UI, eight quickhacks and Blackwall death audio");
     foreach(var kind in HackRules.All) {
         Check(File.Exists(Path.Combine(args[1],HackRules.Icon(kind)+".png")),"Original quickhack icon packaged: "+kind);
-        Check(File.Exists(Path.Combine(args[1],HackRules.Icon(kind)+".wav"))==(kind!=HackKind.BlackwallGateway),"Only confirmed quickhack sounds packaged: "+kind);
+        Check(File.Exists(Path.Combine(args[1],HackRules.Icon(kind)+".wav")) ,"Quickhack sound packaged: "+kind);
     }
+    Check(Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(Path.Combine(args[1],"BlackwallBreach.wav")))).Equals("EF1A6CEF913B9FABA4DAC792C26189DE5D270EA350D6047E55439B6E6BA4102B"),"Blackwall cast uses the verified Blackwall recording");
     foreach(var path in sounds) {
         var wave=WavePcm.Read(path);
         Check(wave.Samples.Length>0&&wave.Samples.Length%wave.Channels==0&&wave.Samples.All(float.IsFinite),"Packaged WAV decodes for Unity: "+Path.GetFileName(path));

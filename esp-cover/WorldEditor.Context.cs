@@ -38,7 +38,12 @@ internal static partial class WorldEditor {
    Pair("invincible-toggle",targets.Select(p=>AiActorControl.EditorState(p).Invincible).ToArray(),"开启无敌","关闭无敌",ContextInvincible);Add("clear-effects",true,ContextClearEffects);
   }
   if(kind==SelectionKind.Containers&&selected){Add("rename",true,BeginRename,ShortcutLabel(EditorShortcut.Rename));ContainerLootAvailability.Read(Current());Add("rotate",true,BeginContainerRotation);Add("loot-server",selectedContainers.All(r=>ContainerLootAvailability.Allows(Current(),ContainerScene.Template(r.Resolve()))),()=>RegenerateContainers(false));Add("loot-custom",true,OpenContainerLoot);Pair("container-open",selectedContainers.Select(r=>ContainerScene.Open(r.Resolve())).ToArray(),"开启容器","关闭容器",SetContainersOpen);}
-  if(kind==SelectionKind.Doors&&selected){contextTitle="门 · "+(selectedDoors.Count==1?DoorReference.State(selectedDoors[0].Resolve()):"批量编辑");Add("door-lock",true,()=>SetDoors(EDoorState.Locked));Add("door-unlock",true,()=>SetDoors(EDoorState.Shut,true));Add("door-open",true,()=>SetDoors(EDoorState.Open));Add("door-close",true,()=>SetDoors(EDoorState.Shut));}
+  if(kind==SelectionKind.Doors&&selected){contextTitle="门 · "+(selectedDoors.Count==1?DoorReference.State(selectedDoors[0].Resolve()):"批量编辑");
+   var states=selectedDoors.Select(reference=>reference.Resolve().DoorState).ToArray();
+   bool unlock=states.All(state=>state==EDoorState.Locked),close=states.All(state=>state==EDoorState.Open);
+   available["door-lock-toggle"]=[new(unlock?"门：解锁":"门：上锁",true,()=>SetDoors(unlock?EDoorState.Shut:EDoorState.Locked,unlock))];
+   available["door-open-toggle"]=[new(close?"门：关闭":"门：打开",true,()=>SetDoors(close?EDoorState.Shut:EDoorState.Open))];
+  }
   Add("delete",selected&&kind!=SelectionKind.Doors,Delete,ShortcutLabel(EditorShortcut.Delete));if(kind==SelectionKind.Corpses)Add("revive",selected,ReviveCorpses);else if(kind is not (SelectionKind.Airdrops or SelectionKind.Containers or SelectionKind.Doors or SelectionKind.Mines))Add("properties",selected,OpenProperties,ShortcutLabel(EditorShortcut.Properties));
   var actions=EditorContextRules.Read(contextOrder.Value).Where(available.ContainsKey).SelectMany(id=>available[id]).ToList();
   actions.Add(new(I18n.Text("撤销")+(CanUndo?" · "+I18n.Text(UndoLabel):""),CanUndo,Undo,ShortcutLabel(EditorShortcut.Undo)));

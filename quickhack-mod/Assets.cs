@@ -41,9 +41,6 @@ internal static class Assets {
         clips[key]=clip; return clip;
     }
     internal static void Play(string key) {
-        // Verified bank event vfx_blackwall_hack_npc_upload has zero actions.
-        // Do not keep playing the old Synapse Burnout placeholder on this key.
-        if(key=="BlackwallBreach") return;
         try {
             var clip=Clip(key); if(clip==null)return;
             if(root==null) { root=new GameObject("CP2077 Quickhack audio") { hideFlags=HideFlags.HideAndDontSave }; UnityEngine.Object.DontDestroyOnLoad(root); audio=root.AddComponent<AudioSource>(); audio.spatialBlend=0; audio.playOnAwake=false; }

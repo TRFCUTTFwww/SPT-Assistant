@@ -10,7 +10,7 @@ using LocalRaidShared;
 var sourceRoot=Path.GetFullPath(Environment.GetEnvironmentVariable("SPT_SOURCE_ROOT")??"_spt5_esp_fix");
 var gameRoot=Environment.GetEnvironmentVariable("SPT_GAME_ROOT");if(!string.IsNullOrWhiteSpace(gameRoot))Directory.SetCurrentDirectory(gameRoot);
 try{
-Assert(EditorContextRules.Read("create,door-lock-toggle,move,door-open-toggle,door-close").SequenceEqual(new[]{"create","door-lock","door-unlock","move","door-open","door-close"}),"legacy door toggles expand in order without duplicate actions");
+Assert(EditorContextRules.Read("create,door-lock,door-unlock,move,door-open-toggle,door-close").SequenceEqual(new[]{"create","door-lock-toggle","move","door-open-toggle"}),"saved door actions merge in order without duplicate actions");
 Assert(MenuSections.Group("71. AI 路线")=="镜头与画面"&&MenuSections.Pages("镜头与画面").Contains("AI 路线")&&MenuSections.OnPage("镜头与画面","AI 路线","71. AI 路线","Show route")&&MenuSections.OnPage("镜头与画面","AI 路线","71. AI 路线","Show destination")&&!MenuSections.OnPage("镜头与画面","人物显示","71. AI 路线","Show route"),"AI route and destination settings share a dedicated visual page");
 Console.WriteLine("PASS AI route and destination settings share a dedicated visual page");
 using(var integrated=AssemblyDefinition.ReadAssembly(Path.Combine(sourceRoot,"esp-cover/bin/Release/net10.0/Local.Spt5.ESP.Core.dll"))){
