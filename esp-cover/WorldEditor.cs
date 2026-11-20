@@ -35,6 +35,7 @@ internal static partial class WorldEditor {
   if(frame==Time.frameCount)return;frame=Time.frameCount;
   gate.Tick(frame,Input.GetMouseButton(0)||Input.GetMouseButton(1)||Input.GetMouseButton(2));ToggleShortcut();
   var current=Singleton<GameWorld>.Instance;
+  EditorDoorNavigation.Tick(current);
   if(!Active||current==null||world!=IntPtr.Zero&&world!=current.Pointer){if(world!=IntPtr.Zero||moving||dialog.Length>0||cursorOwned)Reset();return;}world=current.Pointer;
   if(InterfaceMenu.Open||RaidChat.Open||!Application.isFocused){Suspend();return;}
   try{

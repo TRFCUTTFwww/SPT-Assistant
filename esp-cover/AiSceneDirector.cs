@@ -35,10 +35,12 @@ internal static class AiSceneDirector {
   followDistance=FeatureConfig.Bind(section,"Scene follow distance","跟随保持距离（米）",3f,"",new AcceptableValueRange<float>(1,30));
   speed=FeatureConfig.Bind(section,"Scene move speed","跟随移动输入倍率",1f,"最终速度仍受人物和姿势影响。",new AcceptableValueRange<float>(.1f,5));
   plugin.Patches.Patch(typeof(BotDoorOpener).GetMethod("Interact"),prefix:new HarmonyMethod(typeof(AiSceneDirector),nameof(AllowDoor)));
+  plugin.Patches.Patch(typeof(BotDoorOpener).GetMethod("TraverseDoorLink"),prefix:new HarmonyMethod(typeof(AiSceneDirector),nameof(AllowTraverse)));
   plugin.Patches.Patch(typeof(BotMedecine).GetMethod("ManualUpdate"),prefix:new HarmonyMethod(typeof(AiSceneDirector),nameof(AllowHeal)));
   plugin.Patches.Patch(typeof(Player).GetMethod("Move",new[]{typeof(Vector2)}),prefix:new HarmonyMethod(typeof(AiSceneDirector),nameof(Movement)));
  }
- static bool AllowDoor(BotDoorOpener __instance)=>!Try(__instance._owner?.GetPlayer,out var entry)||!entry.Settings.NoDoors;
+ static bool AllowDoor(BotDoorOpener __instance,EFT.Interactive.Door __0)=>!EditorDoorNavigation.Blocks(__0)&&(!Try(__instance._owner?.GetPlayer,out var entry)||!entry.Settings.NoDoors);
+ static bool AllowTraverse(BotDoorOpener __instance)=>!EditorDoorNavigation.Blocks(__instance._currentDoorLink?.Door);
  static bool AllowHeal(BotMedecine __instance)=>!Try(__instance._owner?.GetPlayer,out var entry)||!entry.Settings.NoHealing;
  static void StopMedicine(Actor entry){var medicine=entry.Player.AIData?.BotOwner?.Medecine;if(medicine==null)return;foreach(var component in new BotAbstractMeds?[]{medicine.FirstAid,medicine.Stimulators,medicine.SurgicalKit})if(component!=null){if(!entry.MedicineTimes.ContainsKey(component))entry.MedicineTimes[component]=component._nextPosibleUseTime;component._nextPosibleUseTime=float.MaxValue;if(component.Using)component.CancelCurrent();}}
  internal static void FilterMotion(Il2CppObjectBase controller,ref Vector3 motion){foreach(var entry in actors.Values)if(entry.Settings.NoMovement&&entry.Player.CharacterController?.Pointer==controller.Pointer&&Try(entry.Player,out _)){motion.x=motion.z=0;return;}}

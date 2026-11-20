@@ -8,6 +8,8 @@ internal static class WorldEditorChecks {
   TypeDefinition Type(string name)=>core.MainModule.Types.Single(t=>t.Name==name);
   MethodReference[] Calls(string type,string method)=>Type(type).Methods.Single(m=>m.Name==method).Body.Instructions.Where(i=>i.Operand is MethodReference).Select(i=>(MethodReference)i.Operand).ToArray();
   void Check(bool ok,string reason){if(!ok)throw new Exception(reason);}
+  Check(Calls("AiSceneDirector","AllowDoor").Any(m=>m.Name=="Blocks")&&Calls("AiSceneDirector","AllowTraverse").Any(m=>m.Name=="Blocks"),"editor locks guard native AI interactions and existing door-link traversal");
+  Check(Calls("EditorDoorNavigation","Add").Any(m=>m.Name=="set_carving")&&Calls("EditorDoorNavigation","Tick").Any(m=>m.Name=="RecalcWay"),"editor locks carve the walkable mesh and refresh nearby AI paths");
   var icons=Type("MenuIcons").Methods.Where(m=>m.HasBody).SelectMany(m=>m.Body.Instructions).Where(i=>i.Operand is MethodReference).Select(i=>(MethodReference)i.Operand).ToArray();
   Check(Calls("RuntimeModule","Update").Any(m=>m.DeclaringType.Name=="LaserEyes"&&m.Name=="CaptureInput")&&Calls("LaserEyes","Tick").Any(m=>m.Name=="CaptureInput"),"laser input captures in Update and rechecks blockers in LateUpdate");
   foreach(string method in new[]{"GetMouseButton","GetMouseButtonDown","GetMouseButtonUp","GetKey","GetKeyDown","GetKeyUp"})Check(Calls("LaserEyes","KeyState").Any(m=>m.Name==method),"laser input uses explicit mouse and keyboard state: "+method);
@@ -31,9 +33,9 @@ internal static class WorldEditorChecks {
   var free=Calls("TeleportControl","FreeMove");Check(free.Any(c=>c.DeclaringType.Name=="AiFreePlacement"&&c.Name=="Place")&&!free.Any(c=>c.Name=="Landing"||c.Name=="Move"),"toy free placement cannot route into ground-only landing");
   var toy=Calls("ToyDeveloper","Tick");Check(toy.Any(c=>c.DeclaringType.Name=="TeleportControl"&&c.Name=="FreeMove"),"toy teleport uses exact-coordinate placement");
   var motion=Calls("MovementAssist","BeforeMove");Check(motion.Any(c=>c.DeclaringType.Name=="AiFreePlacement"&&c.Name=="FilterMotion")&&motion.Any(c=>c.DeclaringType.Name=="WorldEditor"&&c.Name=="FilterMotion"),"air anchors and active batch drags suppress native gravity/motion");
-  var release=Calls("AiFreePlacement","Release");
-  int sync=Array.FindIndex(release,m=>m.Name=="Teleport"&&m.DeclaringType.Name!="Player");
-  Check(sync>=0&&Array.FindIndex(release,m=>m.Name=="Detach")>sync&&release.Any(m=>m.Name=="RecalcWay"),"air release synchronizes native navigation before restoring the previous pause state");
+  var airRelease=Calls("AiFreePlacement","Release");
+  int sync=Array.FindIndex(airRelease,m=>m.Name=="Teleport"&&m.DeclaringType.Name!="Player");
+  Check(sync>=0&&Array.FindIndex(airRelease,m=>m.Name=="Detach")>sync&&airRelease.Any(m=>m.Name=="RecalcWay"),"air release synchronizes native navigation before restoring the previous pause state");
   Check(Calls("WorldEditor","PlaceMine").Any(m=>m.Name=="BindVisual")&&Calls("MineLibrary","RepairPlaced").Any(m=>m.Name=="BindVisual"),"new and existing editor claymores bind the verified visible mesh");
   var anchor=Calls("AiFreePlacement","Place");Check(anchor.Any(c=>c.DeclaringType.Name=="LiveActorReference"&&c.Name=="Resolve")&&anchor.Any(c=>c.DeclaringType.Name=="Player"&&c.Name=="Teleport")&&!anchor.Any(c=>c.Name=="Landing"||c.Name=="HasNavigation"),"free placement validates live identity and directly teleports without rejecting non-navigation points");
   var chatPlacement=Type("TeleportControl").Methods.Single(m=>m.Name=="ChatMove").Body.Instructions.Single(i=>i.Operand is MethodReference method&&method.DeclaringType.Name=="AiFreePlacement"&&method.Name=="Place");Check(chatPlacement.Previous.OpCode.Code==Mono.Cecil.Cil.Code.Ldc_I4_0,"chat teleport explicitly disables automatic air anchoring");

@@ -37,10 +37,18 @@ internal static partial class WorldEditor {
  static void ContextClearEffects(){foreach(var target in SelectedActors())CharacterBuffs.ClearBirthEffects(target);FeatureToasts.Show("已清除所选 AI 可移除的异常状态。");CompleteOperation();}
  static void SetDoors(EDoorState state,bool unlockOnly=false){
   Current();
-  var snapshot=selectedDoors.Select(reference=>{var door=reference.Resolve();return (reference,previous:door.DoorState);}).ToArray();
+  var snapshot=selectedDoors.Select(reference=>{var door=reference.Resolve();return (reference,previous:door.DoorState,blocked:EditorDoorNavigation.Blocks(door));}).ToArray();
   foreach(var entry in snapshot)DoorReference.RequireIdle(entry.reference.Resolve());
-  foreach(var entry in snapshot)if(!unlockOnly||entry.previous==EDoorState.Locked)DoorReference.Set(entry.reference.Resolve(),state==EDoorState.Shut&&!unlockOnly&&entry.previous==EDoorState.Locked?EDoorState.Locked:state);
-  PushUndo(unlockOnly?"门解锁":state==EDoorState.Locked?"门上锁":state==EDoorState.Open?"打开门":state==EDoorState.Shut?"关闭门":"修改门状态",()=>{foreach(var entry in snapshot)try{DoorReference.Set(entry.reference.Resolve(),entry.previous);}catch{}});
+  int applied=0;
+  void Restore(){foreach(var entry in snapshot.Take(applied).Reverse())DoorReference.Set(entry.reference.Resolve(),entry.previous,entry.blocked);}
+  try{
+   foreach(var entry in snapshot){
+    if((!unlockOnly||entry.previous==EDoorState.Locked)&&!(state==EDoorState.Shut&&!unlockOnly&&entry.previous==EDoorState.Locked))
+     DoorReference.Set(entry.reference.Resolve(),state);
+    applied++;
+   }
+  }catch{Restore();throw;}
+  PushUndo(unlockOnly?"门解锁":state==EDoorState.Locked?"门上锁":state==EDoorState.Open?"打开门":state==EDoorState.Shut?"关闭门":"修改门状态",Restore);
   FeatureToasts.Show(unlockOnly?"已解锁。":state==EDoorState.Locked?"已上锁。":state==EDoorState.Open?"已打开。":state==EDoorState.Shut?"已关闭。":"已修改门状态。");CompleteOperation();
  }
 }

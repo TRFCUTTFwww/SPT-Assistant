@@ -18,6 +18,14 @@ internal static partial class WorldEditor
   internal static Door[] Read(GameWorld current)=>System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Where(UnityEngine.Object.FindObjectsOfType<Door>(),d=>d!=null&&d.gameObject.activeInHierarchy));
   internal static string State(Door value)=>value.DoorState switch{EDoorState.Locked=>"上锁",EDoorState.Shut=>"关闭",EDoorState.Open=>"打开",_=>"切换中"};
   internal static void RequireIdle(Door value){if(value==null)throw new ArgumentException("门不可用。");if(value.DoorState is not (EDoorState.Open or EDoorState.Shut or EDoorState.Locked))throw new ArgumentException("门正在交互或被封锁，请等待后重试。");}
-  internal static void Set(Door value,EDoorState state){RequireIdle(value);if(value.DoorState==state)return;value.SetDoorState(state,true);}
+  internal static void Set(Door value,EDoorState state,bool editorLock=true){
+   RequireIdle(value);
+   var previous=value.DoorState;
+   if(previous!=state)value.SetDoorState(state,true);
+   if(state==EDoorState.Locked&&editorLock){
+    try{value.CurrentAngle=value.GetAngle(EDoorState.Shut);EditorDoorNavigation.Add(value);}
+    catch{if(previous!=state)value.SetDoorState(previous,true);throw;}
+   }else EditorDoorNavigation.Remove(value);
+  }
  }
 }
