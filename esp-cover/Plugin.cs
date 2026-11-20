@@ -152,7 +152,7 @@ internal class Plugin {
   yield return ()=>PasscodeHints.Initialize(this);
   yield return ()=>BulletTrajectories.Initialize(this);
   yield return ()=>ImpactAiSpawner.Initialize(this);
-  yield return ()=>Log.LogInfo($"SPT Assistant ready v{RuntimeModule.ReleaseVersion}. Health numbers + bars: {ShowHealth.Value}. AI ignore: {IgnoreAI.Value}. {PeopleKey.Value}: people; {LootKey.Value}: items; {GodKey.Value}: god mode; {IgnoreAIKey.Value}: AI ignore. RightShift: main menu; F12: settings.");
+  yield return ()=>Log.LogInfo($"SPT Assistant ready v{RuntimeModule.ReleaseVersion} (Dev {RuntimeModule.BuildNumber}). Health numbers + bars: {ShowHealth.Value}. AI ignore: {IgnoreAI.Value}. {PeopleKey.Value}: people; {LootKey.Value}: items; {GodKey.Value}: god mode; {IgnoreAIKey.Value}: AI ignore. RightShift: main menu; F12: settings.");
  }
  void Patch(string target,string prefix){
   try {var methods=typeof(ActiveHealthController).GetMethods().Where(x=>x.DeclaringType==typeof(ActiveHealthController)&&x.Name==target).ToArray();

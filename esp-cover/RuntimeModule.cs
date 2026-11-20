@@ -1,12 +1,17 @@
 using LocalSpt5Esp.HotReload;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 namespace LocalSpt5Esp;
 public sealed class RuntimeModule:IRuntimeModule {
  Plugin? plugin;
  Overlay? overlay;
  public int ApiVersion=>1;
  internal const string ReleaseVersion="2.3.5";
+ internal static readonly string BuildNumber=typeof(RuntimeModule).Assembly
+  .GetCustomAttributes<AssemblyMetadataAttribute>()
+  .First(attribute=>attribute.Key=="AssistantBuildNumber").Value!;
  public string Version=>ReleaseVersion;
  // Optional methods are discovered by the 1.5 host. API 1 still loads on older
  // hosts, allowing the core to be installed before the one-time host restart.
