@@ -6,6 +6,8 @@ using Comfort.Common;
 using EFT;
 using EFT.Hideout;
 using EFT.InventoryLogic;
+using EFT.UI;
+using EFT.UI.Screens;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Newtonsoft.Json.Linq;
 namespace LocalSpt5Esp;
@@ -18,29 +20,37 @@ internal static class CultistStashSync {
   void Inspect(string source,InventoryController? controller){if(controller?.Inventory?.HideoutAreaStashes?.TryGetValue(EAreaType.CircleOfCultists,out var stash)!=true||stash==null){rows.Add(new{source,ready=false});return;}rows.Add(new{source,ready=true,controller=controller.Pointer.ToInt64(),stash=stash.Pointer.ToInt64(),grids=stash.Grids.Select(g=>new{id=g.ID,items=g.Items.Select(i=>i.Id.ToString()).ToArray()}).ToArray()});}
   Inspect("hideout",hideout?._inventoryController);Inspect("ui",EFT.UI.ItemUiContext.Instance?._inventoryController);Inspect("player",Singleton<GameWorld>.Instance?.MainPlayer?.InventoryController);
   if(hideout?.AreaDatas!=null)foreach(var area in hideout.AreaDatas)if(area?.Template?.Type==EAreaType.CircleOfCultists)Inspect("display",area.StashController?._inventoryController);
-  return new{inHideout=CultistCircleControl.InHideout,diagnostic,rows};
+  var screens=EftScreenManager.Instance;
+  return new{inHideout=CultistCircleControl.InHideout,diagnostic,rows,
+   transfer=CultistCircleControl.TransferDiagnostics(),screen=screens?.CurrentScreenController?.ScreenType.ToString(),
+   registered=screens?.TryGetScreen(EEftScreenType.HideoutCircleOfCultists,out _)==true};
  }
  internal static void Initialize(){
   CultistCircleControl.SyncStash=Apply;
   CultistCircleControl.OpenStash=OpenRewards;
+  CultistCircleControl.IsStashOpen=()=>EftScreenManager.Instance?.CurrentScreenController?.ScreenType==EEftScreenType.HideoutCircleOfCultists;
  }
- static bool OpenRewards(JsonElement data){
+ static Il2CppSystem.Threading.Tasks.Task<bool>? OpenRewards(JsonElement data){
   var hideout=HideoutCraftControl.CurrentHideout;
   var controller=hideout?._inventoryController;
-  if(hideout?.AreaDatas==null||controller?.Inventory?.HideoutAreaStashes==null||
+  if(hideout?.AreaDatas==null||hideout._session is not {} session||controller?.Inventory?.HideoutAreaStashes==null||
      !controller.Inventory.HideoutAreaStashes.TryGetValue(EAreaType.CircleOfCultists,out var stash)||stash?.Grids==null||
      !data.TryGetProperty("stashId",out var stashProp)||stashProp.ValueKind!=JsonValueKind.String||
-     stashProp.GetString() is not {} stashId||stashId!=stash.Id.ToString())return false;
+     stashProp.GetString() is not {} stashId||stashId!=stash.Id.ToString())return null;
   var grid=stash.Grids.FirstOrDefault(g=>g?.ID==RewardGrid);
-  if(grid==null||!hideout.AreaDatas.Any(area=>area?.Template?.Type==EAreaType.CircleOfCultists))return false;
+  var area=hideout.AreaDatas.FirstOrDefault(area=>area?.Template?.Type==EAreaType.CircleOfCultists);
+  if(grid==null||area==null)return null;
   var rewardIds=new HashSet<string>(StringComparer.Ordinal);
   foreach(var entry in data.GetProperty("stashItems").EnumerateArray()){
    if(IsRewardRoot(entry,stashId)&&entry.TryGetProperty("_id",out var id)&&id.ValueKind==JsonValueKind.String&&id.GetString() is {} rewardId)
     rewardIds.Add(rewardId);
   }
-  if(!grid.Items.Any(item=>item!=null&&rewardIds.Contains(item.Id.ToString())))return false;
-  hideout.ShowAreaItemsTransferScreen(EAreaType.CircleOfCultists);
-  return true;
+  if(!grid.Items.Any(item=>item!=null&&rewardIds.Contains(item.Id.ToString())))return null;
+  var screens=EftScreenManager.Instance;
+  if(screens?.CurrentScreenController?.ScreenType is not (EEftScreenType.MainMenu or EEftScreenType.Hideout)||
+     !screens.TryGetScreen(EEftScreenType.HideoutCircleOfCultists,out _))return null;
+  var transfer=new HideoutCircleOfCultistsScreen.HideoutCircleOfCultistsScreenController(area,session,controller);
+  return transfer.ShowScreenAsync(EScreenState.Queued,false);
  }
  static bool IsRewardRoot(JsonElement entry,string stashId)=>
   entry.TryGetProperty("parentId",out var parent)&&parent.GetString()==stashId&&

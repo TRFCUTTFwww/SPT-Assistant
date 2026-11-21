@@ -20,7 +20,7 @@ static class Tests {
   foreach(var type in new[]{Craft,Circle})Set(type,"next",0f);Set(Circle,"visibleUntil",0f);
   Plugin.Self=new();FeatureConfig.Entries.Clear();HideoutCraftControl.Initialize(Plugin.Self);CultistCircleControl.Initialize(Plugin.Self);
   CharacterDataPanel.Calls.Clear();CharacterDataPanel.Handler=_=>new TaskCompletionSource<string>().Task;
-  InterfaceMenu.Click=_=>false;InterfaceMenu.Closes=0;CultistCircleControl.OpenStash=null;
+  InterfaceMenu.Click=_=>false;InterfaceMenu.Closes=0;CultistCircleControl.OpenStash=null;CultistCircleControl.IsStashOpen=null;
   GUI.enabled=true;Time.unscaledTime=0;EFT.UI.ItemUiContext.Instance=null;
   var app=new TarkovApplication();Singleton<TarkovApplication>.Instance=app;Singleton<AbstractApplication>.Instance=null;
   Singleton<AbstractGame>.Instance=hideout?new HideoutGame{InRaid=true}:null;return app;
@@ -131,25 +131,54 @@ static class Tests {
     var production=active?new{id="ritual",startTimestamp=1234,productionTime=100,inProgress=!ready,availableForFinish=ready}:null;
     var stashItems=rewards?new[]{new{_id="reward"}}:[];
     CharacterDataPanel.Handler=_=>Task.FromResult(JsonSerializer.Serialize(new{err=0,data=new{profileId="p",active,production,items=Array.Empty<object>(),stashId="stash",stashItems}}));
-    int opens=0;CultistCircleControl.OpenStash=data=>{opens++;return data.GetProperty("stashId").GetString()=="stash";};
+    int opens=0;
+    var native=new Il2CppSystem.Threading.Tasks.Task<bool>();
+    CultistCircleControl.OpenStash=data=>{opens++;return data.GetProperty("stashId").GetString()=="stash"?native:null;};
+    CultistCircleControl.IsStashOpen=()=>true;
     CultistCircleControl.Tick();At(3,CultistCircleControl.Tick);
     Check(opens==0,"Polling opened the transfer screen");
     InterfaceMenu.Click=text=>text=="打开仪式圈奖励转移";
     CultistCircleControl.Draw(new(0,0,600,600));
+    Check(opens==0&&InterfaceMenu.Closes==0,"GUI event opened the screen before Update");
+    At(3.1f,CultistCircleControl.Tick);
     int expected=allowed?1:0;
-    Check(opens==expected&&InterfaceMenu.Closes==expected,"Manual open did not match reward availability");
+    Check(opens==expected&&InterfaceMenu.Closes==0,"Manual open did not match reward availability");
     if(!allowed)continue;
+    CultistCircleControl.Draw(new(0,0,600,600));
+    At(3.2f,CultistCircleControl.Tick);
+    Check(opens==1&&InterfaceMenu.Closes==0,"A second click replaced the in-flight open");
+    native.IsCompleted=true;native.Result=true;
+    At(3.3f,CultistCircleControl.Tick);
+    Check(InterfaceMenu.Closes==1,"Successful native open did not close the menu");
     Option("Allow cultist rewards in hideout",false);
-    Call(Circle,"OpenRewards");
+    Call(Circle,"OpenRewards");At(3.4f,CultistCircleControl.Tick);
     Option("Allow cultist rewards in hideout",true);
-    Ready(app,"other");Call(Circle,"OpenRewards");
-    Ready(app);Singleton<AbstractGame>.Instance=new(){InRaid=true};Call(Circle,"OpenRewards");
+    Call(Circle,"OpenRewards");Ready(app,"other");At(3.5f,CultistCircleControl.Tick);
+    Ready(app);Call(Circle,"OpenRewards");Singleton<AbstractGame>.Instance=new(){InRaid=true};At(3.6f,CultistCircleControl.Tick);
     Singleton<AbstractGame>.Instance=new HideoutGame{InRaid=true};
-    CultistCircleControl.OpenStash=_=>false;
-    Call(Circle,"OpenRewards");
+    CultistCircleControl.OpenStash=_=>null;
+    Call(Circle,"OpenRewards");At(3.7f,CultistCircleControl.Tick);
     Check(opens==expected&&InterfaceMenu.Closes==expected,"A stale request or missing live reward closed the menu");
     Check(CharacterDataPanel.Calls.All(p=>(string)p["action"]! == "cultistStatus"),"Opening the screen submitted a ritual mutation");
    }
+  });
+  Run("cultist transfer failures keep the menu open and remain visible through polling",()=>{
+   var app=Reset(true);Ready(app);Live(app);
+   CharacterDataPanel.Handler=_=>Task.FromResult(JsonSerializer.Serialize(new{err=0,data=new{profileId="p",active=false,items=Array.Empty<object>(),stashId="stash",stashItems=new[]{new{_id="reward"}}}}));
+   CultistCircleControl.Tick();At(3,CultistCircleControl.Tick);
+   var native=new Il2CppSystem.Threading.Tasks.Task<bool>{IsCompleted=true};
+   CultistCircleControl.OpenStash=_=>native;
+   CultistCircleControl.IsStashOpen=()=>false;
+   foreach(var result in new[]{false,true}){
+    native.Result=result;
+    Call(Circle,"OpenRewards");CultistCircleControl.Tick();
+    Check(InterfaceMenu.Closes==0&&Get<string>(Circle,"transferStatus")!.StartsWith("游戏未打开"),"Rejected or unconfirmed transfer closed the menu");
+   }
+   At(6,CultistCircleControl.Tick);
+   Check(Get<string>(Circle,"transferStatus")!.StartsWith("游戏未打开"),"Automatic status refresh cleared the transfer failure");
+   native.IsFaulted=true;
+   Call(Circle,"OpenRewards");CultistCircleControl.Tick();
+   Check(InterfaceMenu.Closes==0&&Get<string>(Circle,"transferStatus")!.StartsWith("无法打开"),"Native transfer fault was not surfaced");
   });
  }
 }

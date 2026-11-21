@@ -32,6 +32,13 @@ namespace EFT {
  public class AreaInfo { public int Type;public int Level;public Il2CppSystem.Nullable<int> CompleteTime;public bool Constructing; }
 }
 namespace Il2CppSystem { public struct Nullable<T>(T value) where T:struct { public bool HasValue=>true;public T Value=>value; } }
+namespace Il2CppSystem.Threading.Tasks {
+ public sealed class Task<T> {
+  public bool IsCompleted,IsFaulted,IsCanceled;
+  public T Result=default!;
+  public Exception? Exception;
+ }
+}
 namespace EFT.UI {public class ItemUiContext {public static ItemUiContext? Instance;public EFT.QuestController? QuestController;} }
 namespace EFT.Hideout {
  public enum EAreaType { Generator=4, Workbench=10 }
@@ -67,7 +74,7 @@ namespace LocalSpt5Esp {
  internal static class CornerGameData { internal sealed record Cultist(bool Active,bool Ready); }
  internal class Plugin {public static Plugin Self=new();public PatchSet Patches=new();public Logger Log=new();public int Errors;public void Error(Exception error){Errors++;}}
  internal class PatchSet {public void Patch(object method,HarmonyLib.HarmonyMethod? postfix=null){} }
- internal class Logger {public void LogInfo(string text){} }
+ internal class Logger {public void LogInfo(string text){}public void LogWarning(string text){} }
  internal static class FeatureConfig {
   internal static readonly Dictionary<string,BepInEx.Configuration.ConfigEntry<bool>> Entries=new();
   internal static BepInEx.Configuration.ConfigEntry<bool> Bind(string section,string key,string title,bool value,string description="") {var result=new BepInEx.Configuration.ConfigEntry<bool>(value);Entries[key]=result;return result;}
