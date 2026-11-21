@@ -65,7 +65,7 @@ internal static class UpdateChecker {
  internal static void Draw(Rect rect){
   scroll=GUI.BeginScrollView(rect,scroll,new Rect(0,0,rect.width-22,920));
   try{float w=rect.width-30;InterfaceMenu.Label(new(0,0,w,32),"版本更新 · "+RuntimeModule.ReleaseVersion,InterfaceMenu.Accent,20);
-   InterfaceMenu.Label(new(0,32,w,20),(I18n.English?"Development build ":"开发构建 ")+RuntimeModule.BuildNumber,null,13,translate:false);
+   InterfaceMenu.Label(new(0,32,w,20),$"开发版本 {RuntimeModule.BuildNumber}",null,13);
    InterfaceMenu.Paragraph(new(0,56,w,62),status,newer?Color.green:null,14);
    bool enabled=GUI.enabled;GUI.enabled=enabled&&pending==null;if(InterfaceMenu.Button(new(0,120,(w-12)/2,36),"检查更新"))Check();GUI.enabled=enabled;
    if(InterfaceMenu.Button(new((w+12)/2,120,(w-12)/2,36),"打开 GitHub 发布页"))Application.OpenURL(UpdateCheckRules.Releases);

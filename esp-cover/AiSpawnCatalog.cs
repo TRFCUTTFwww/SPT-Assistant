@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 namespace LocalSpt5Esp;
 internal sealed record AiSpawnOption(string Group,string Name,string Role,string Side="Savage",bool Boss=false,string Unavailable=""){internal bool Enabled=>Unavailable.Length==0;}
 internal static class AiSpawnCatalog {
@@ -57,5 +58,13 @@ internal static class AiSpawnCatalog {
   new("不可独立生成","黑色军团季节别名","pmcBotBlackDivSeason",Unavailable:"当前服务端没有独立模板；请使用对应的正式角色。"),
   new("不可独立生成","和平 Zryachiy 活动别名","peacefullZryachiyEvent",Unavailable:"当前服务端没有独立模板；请使用对应的正式角色。"),
   new("不可独立生成","邪教祭司活动别名","sectactPriestEvent",Unavailable:"当前服务端没有独立模板；请使用对应的正式角色。")
+ };
+ static readonly System.Collections.Generic.Dictionary<string,AiSpawnOption> ByRole=Options.ToDictionary(option=>option.Role,StringComparer.OrdinalIgnoreCase);
+ internal static string RoleName(string role)=>role.ToLowerInvariant() switch{
+  "bossbully"=>"Reshala","bosskilla"=>"Killa","bosskojaniy"=>"Shturman","bossgluhar"=>"Glukhar",
+  "bosssanitar"=>"Sanitar","bosstagilla"=>"Tagilla","bossknight"=>"Knight","followerbigpipe"=>"Big Pipe",
+  "followerbirdeye"=>"Birdeye","bossboar"=>"Kaban","bosskolontay"=>"Kollontay","bosspartisan"=>"Partisan",
+  "bosszryachiy"=>"Zryachiy","bosskillaagro"=>"Killa（狂暴）","bosstagillaagro"=>"Tagilla（狂暴）",
+  _=>ByRole.TryGetValue(role,out var option)?option.Name:role
  };
 }

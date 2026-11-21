@@ -8,6 +8,10 @@ using Mono.Cecil;
 using LocalSpt5Esp;
 using LocalRaidShared;
 var sourceRoot=Path.GetFullPath(Environment.GetEnvironmentVariable("SPT_SOURCE_ROOT")??"_spt5_esp_fix");
+if(args.Contains("--localization-only")){
+ RecentLocalizationChecks.Run(sourceRoot);
+ return;
+}
 var gameRoot=Environment.GetEnvironmentVariable("SPT_GAME_ROOT");if(!string.IsNullOrWhiteSpace(gameRoot))Directory.SetCurrentDirectory(gameRoot);
 try{
 Assert(EditorContextRules.Read("create,door-lock,door-unlock,move,door-open-toggle,door-close").SequenceEqual(new[]{"create","door-lock-toggle","move","door-open-toggle"}),"saved door actions merge in order without duplicate actions");

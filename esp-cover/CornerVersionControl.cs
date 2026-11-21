@@ -101,15 +101,16 @@ internal static partial class CornerVersionControl {
    var res=finished.GetAwaiter().GetResult();
    string logs=res.Logs.Length>0?string.Join("\n",res.Logs):"";
    if(res.Ok){
-    testOutput=logs.Length>0?$"{logs}\n--- 返回值 ---\n{res.Value}":res.Value;
+    testOutput=logs.Length>0?$"{logs}\n{I18n.Text("--- 返回值 ---")}\n{res.Value}":res.Value;
     string preview=Clean(res.Value);
     testStatus=preview==res.Value?$"测试成功 · {ms} ms · {DateTime.Now:HH:mm:ss.fff}":$"测试成功 · {ms} ms · {DateTime.Now:HH:mm:ss.fff}（左下角将截取并过滤为 {preview.Length} 字）";
    }else{
-    testOutput=logs.Length>0?$"{logs}\n[错误] {res.Error}":"[错误] "+res.Error;
+    string errorLabel=I18n.Text("[错误]");
+    testOutput=logs.Length>0?$"{logs}\n{errorLabel} {res.Error}":errorLabel+" "+res.Error;
     testStatus=$"测试失败 · {ms} ms · {DateTime.Now:HH:mm:ss.fff}";
    }
   }catch(Exception e){
-   testOutput="[错误] "+e.GetBaseException().Message;
+   testOutput=I18n.Text("[错误]")+" "+e.GetBaseException().Message;
    testStatus=$"测试失败 · {ms} ms · {DateTime.Now:HH:mm:ss.fff}";
   }
  }

@@ -10,7 +10,7 @@ internal static class AiServerInfo {
  sealed record Snapshot(string Map,string Updated,AiSpawnInfoRows.Row[] Rows);
  static Task<Snapshot>? request;static Snapshot? snapshot;
  static IntPtr world;static string map="",notice="",search="",lastSearch="";static int group=1,lastGroup=-1,wave,lastWave=-1;
- static float retryAt,layoutWidth=-1,contentHeight;static Vector2 scroll;static bool dirty=true;
+ static float retryAt,layoutWidth=-1,contentHeight;static Vector2 scroll;static bool dirty=true,lastEnglish;
  static AiSpawnInfoRows.Row[] visible=Array.Empty<AiSpawnInfoRows.Row>();
  static float[] tops=Array.Empty<float>(),heights=Array.Empty<float>(),titles=Array.Empty<float>();static GUIStyle? measure;
  static void ObserveWorld(){
@@ -58,8 +58,13 @@ internal static class AiServerInfo {
   }
   if(lastGroup!=group||lastSearch!=search||lastWave!=wave){lastGroup=group;lastSearch=search;lastWave=wave;dirty=true;scroll=Vector2.zero;}
   float width=Math.Max(100,w-26);
-  if(dirty||layoutWidth!=width){
-   dirty=false;layoutWidth=width;visible=snapshot.Rows.Where(r=>(group==0||r.Group==AiSpawnInfoRows.Groups[group])&&(!browseWave||r.Path==waveRoot||r.Path.StartsWith(waveRoot+"["+wave+"].",StringComparison.Ordinal))&&AiSpawnInfoRows.Matches(r,search)).ToArray();
+  if(dirty||layoutWidth!=width||lastEnglish!=I18n.English){
+   dirty=false;layoutWidth=width;lastEnglish=I18n.English;
+   visible=snapshot.Rows
+    .Where(row=>(group==0||row.Group==AiSpawnInfoRows.Groups[group])&&(!browseWave||row.Path==waveRoot||row.Path.StartsWith(waveRoot+"["+wave+"].",StringComparison.Ordinal)))
+    .Select(row=>(Source:row,Display:lastEnglish?AiSpawnInfoRows.Localize(row,I18n.EnglishText):row))
+    .Where(row=>AiSpawnInfoRows.Matches(row.Source,search,row.Display))
+    .Select(row=>row.Display).ToArray();
    measure??=new GUIStyle(GUI.skin.label){wordWrap=true,fontSize=12,richText=false};tops=new float[visible.Length];heights=new float[visible.Length];titles=new float[visible.Length];contentHeight=0;
    for(int i=0;i<visible.Length;i++){var row=visible[i];tops[i]=contentHeight;titles[i]=Math.Max(26,measure.CalcHeight(new GUIContent(row.Name+"  ·  "+row.Value),width-20)+8);heights[i]=titles[i]+Math.Max(38,measure.CalcHeight(new GUIContent(row.Help),width-20)+8)+Math.Max(20,measure.CalcHeight(new GUIContent(row.Path),width-20))+18;contentHeight+=heights[i]+8;}
   }

@@ -14,6 +14,18 @@ internal static class RecentLocalizationChecks {
   string preview=catalog.Text("来源：开启 → 当前角色：取消\n还原后 PMC 物品总数：42。还原将替换所选类别，执行前自动备份当前存档。");
   if(!preview.StartsWith("Source: 开启 → Current character: 取消\nPMC items after restore: 42."))throw new Exception("Backup preview translated character names or lost counts");
   if(catalog.Text("BTR 站点 · 搜索")!="BTR stop · 搜索"||catalog.Text("已添加武器：开启")!="Added weapon: 开启")throw new Exception("Named arguments were translated");
+  const string build="20261120-155930.1303744Z";
+  var additions=new Dictionary<string,string>{
+   ["开发版 "+build]="Dev "+build,
+   ["开发版本 "+build]="Development build "+build,
+   ["统计：4 场 · 撤离 3（75%）· 累计击杀 10"]="Raids: 4 · Extractions: 3 (75%) · Kills: 10",
+   ["估值：入场 ₽2,000 · 带出 ₽3,500 · 新增 ₽1,500"]="Estimated value: Starting ₽2,000 · Extracted ₽3,500 · Gained ₽1,500",
+   ["门正在交互或被封锁，请等待后重试。"]="The door is in use or blocked. Wait and try again.",
+   ["测试成功 · 15 ms · 12:00:01.234"]="Test passed · 15 ms · 12:00:01.234",
+   ["已载入预设：开启"]="Preset loaded: 开启",
+   ["所有文件"]="All files"
+  };
+  foreach(var pair in additions)if(catalog.Text(pair.Key)!=pair.Value)throw new Exception("Incorrect translation: "+pair.Key);
   Console.WriteLine("PASS recent panel English, train/status formats, checked actions and verbatim backup/stop/item names");
  }
 }

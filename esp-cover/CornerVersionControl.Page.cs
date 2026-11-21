@@ -75,11 +75,11 @@ internal static partial class CornerVersionControl {
   InterfaceMenu.Label(new(x,y,width-actionWidth*2-gap*2,28),"脚本编辑器",InterfaceMenu.Accent,15);
   if(InterfaceMenu.Button(new(pane.xMax-pad-actionWidth*2-gap,y,actionWidth,28),"导入 JS")&&fileDialog==null){
    fileDialogMode="import";
-   fileDialog=WindowsDialogs.PickOpenFile("导入 JavaScript 脚本","JavaScript (*.js;*.txt)\0*.js;*.txt\0所有文件 (*.*)\0*.*\0");
+   fileDialog=WindowsDialogs.PickOpenFile(I18n.Text("导入 JavaScript 脚本"),"JavaScript (*.js;*.txt)\0*.js;*.txt\0"+I18n.Text("所有文件")+" (*.*)\0*.*\0");
   }
   if(InterfaceMenu.Button(new(pane.xMax-pad-actionWidth,y,actionWidth,28),"导出 JS")&&fileDialog==null){
    fileDialogMode="export";
-   fileDialog=WindowsDialogs.PickFolder("选择 JavaScript 导出目录");
+   fileDialog=WindowsDialogs.PickFolder(I18n.Text("选择 JavaScript 导出目录"));
   }
   y+=36;
   DrawScriptEditor(new(x,y,width,bodyHeight),pointerInPage);

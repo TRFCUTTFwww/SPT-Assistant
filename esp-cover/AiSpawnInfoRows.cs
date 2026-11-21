@@ -4,18 +4,40 @@ using System.Linq;
 using System.Text.Json;
 namespace LocalSpt5Esp;
 internal static class AiSpawnInfoRows {
- internal sealed record Row(string Group,string Name,string Value,string Help,string Path);
+ internal sealed record Row(string Group,string Name,string Value,string Help,string Path,string NativeSearch="");
+ internal static Row Localize(Row row,Func<string,string> text){
+  var name=string.Join(" · ",row.Name.Split(" · ").Select(text));
+  var value=string.Join(", ",row.Value.Split('、').Select(text));
+  return row with {Group=text(row.Group),Name=name,Value=value,Help=text(row.Help)};
+ }
  internal static readonly string[] Groups={"全部参数","人数与上限","生成时间","难度与阵营","普通波次","Boss / PMC 波次","助手刷新规则"};
  internal static string NormalizeMap(string? map)=>(map??"").Trim().ToLowerInvariant();
  internal static string MapName(string map)=>map switch{"bigmap"=>"海关","laboratory"=>"实验室","labyrinth"=>"迷宫","woods"=>"森林","shoreline"=>"海岸线","interchange"=>"立交桥","rezervbase"=>"储备站","lighthouse"=>"灯塔","tarkovstreets"=>"塔科夫街区","factory4_day"=>"工厂（日间）","factory4_night"=>"工厂（夜间）","sandbox" or "sandbox_start"=>"中心区","sandbox_high"=>"中心区（高等级）",_=>map};
  internal static JsonElement Get(JsonElement value,string key){if(value.ValueKind==JsonValueKind.Object)foreach(var p in value.EnumerateObject())if(p.Name.Equals(key,StringComparison.OrdinalIgnoreCase))return p.Value;return default;}
  static bool Missing(JsonElement v)=>v.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null;
- static string Text(JsonElement v)=>Missing(v)?"未提供（不等于 0）":v.ValueKind switch{JsonValueKind.True=>"开启",JsonValueKind.False=>"关闭",JsonValueKind.Array=>v.GetArrayLength()==0?"无条目":string.Join("、",v.EnumerateArray().Select(Text)),JsonValueKind.String=>v.GetString() is {Length:>0} s?Translate(s):"未指定",_=>v.ToString()};
+ static string Text(JsonElement v,string key="")=>Missing(v)?"未提供（不等于 0）":v.ValueKind switch{JsonValueKind.True=>"开启",JsonValueKind.False=>"关闭",JsonValueKind.Array=>v.GetArrayLength()==0?"无条目":string.Join("、",v.EnumerateArray().Select(item=>Text(item,key))),JsonValueKind.String=>v.GetString() is {Length:>0} s?DisplayValue(key,s):"未指定",_=>v.ToString()};
+ static bool IsRole(string key)=>key.ToLowerInvariant() is "bossname" or "wildspawntype" or "bossescorttype" or "usectype" or "beartype";
+ static string DisplayValue(string key,string value){
+  string translated=Translate(value);
+  return IsRole(key)&&translated==value?AiSpawnCatalog.RoleName(value):translated;
+ }
+ internal static string ParameterHelp(string help){
+  const string roleMarker="角色：";
+  int roleIndex=help.LastIndexOf(roleMarker,StringComparison.Ordinal);
+  if(roleIndex<0)return help;
+  int start=roleIndex+roleMarker.Length;
+  string role=help[start..];
+  return help[..start]+(role.Length==0?"未指定":DisplayValue("BossName",role));
+ }
  static string Translate(string v)=>v switch{"easy"=>"简单","normal"=>"普通","hard"=>"困难","impossible"=>"极难","AsOnline"=>"跟随原生配置","assault"=>"普通 Scav","marksman"=>"狙击 Scav","pmcUSEC"=>"USEC PMC","pmcBEAR"=>"BEAR PMC","pmcBot"=>"掠夺者","exUsec"=>"游荡者","Savage"=>"Scav","pve"=>"PVE","regular"=>"常规","pvp-season"=>"赛季",_=>v};
- internal static bool Matches(Row row,string search)=>string.IsNullOrWhiteSpace(search)||search.Split(' ',StringSplitOptions.RemoveEmptyEntries).All(term=>(row.Name+" "+row.Value+" "+row.Help+" "+row.Path).Contains(term,StringComparison.OrdinalIgnoreCase));
+ internal static bool Matches(Row row,string search)=>Matches(row,search,row);
+ internal static bool Matches(Row source,string search,Row display){
+  string fields=source.Name+" "+source.Value+" "+source.Help+" "+source.Path+" "+source.NativeSearch+" "+display.Name+" "+display.Value+" "+display.Help;
+  return search.Split(' ',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries).All(term=>fields.Contains(term,StringComparison.OrdinalIgnoreCase));
+ }
  internal static Row[] Build(JsonElement data){
   var result=new List<Row>();var map=Get(data,"mapAi");if(map.ValueKind!=JsonValueKind.Object)throw new ArgumentException("服务端未返回地图 AI 配置，请更新服务端后重试。");string location=NormalizeMap(Get(data,"map").ToString());
-  void Add(string group,JsonElement owner,string key,string name,string help,string prefix,string unit=""){var value=Get(owner,key);result.Add(new(group,name,Text(value)+(Missing(value)?"":unit),help,prefix+"."+key));}
+  void Add(string group,JsonElement owner,string key,string name,string help,string prefix,string unit=""){var value=Get(owner,key);result.Add(new(group,name,Text(value,key)+(Missing(value)?"":unit),help,prefix+"."+key,IsRole(key)?value.ToString():""));}
   void Map(string group,string key,string name,string help,string unit="")=>Add(group,map,key,name,help,"mapAi",unit);
   const string cap="人数与上限",time="生成时间",diff="难度与阵营",normal="普通波次",boss="Boss / PMC 波次",assistant="助手刷新规则";
   Map(cap,"BotMax","地图常规 AI 上限","常规模式使用的地图 AI 数量上限。PVE 还要看 BotMaxPvE；允许忽略上限的特殊波次可能突破此值。"," 人");
@@ -61,8 +83,17 @@ internal static class AiSpawnInfoRows {
   if(waves.ValueKind!=JsonValueKind.Array){rows.Add(new(group,"波次列表","未提供","服务端未提供此列表，不能推断为不生成。",path));return;}
   rows.Add(new(group,"候选波次数量",waves.GetArrayLength()+" 条",boss?"此列表也可能包含 PMC、掠夺者、游荡者和事件 AI；每条还需满足概率、模式和触发条件。":"候选刷新批次数，不是 AI 人数。空列表不代表没有 AI，还可通过非波次和特殊波次生成。",path));
   int index=0;foreach(var wave in waves.EnumerateArray()){
-   string prefix=path+"["+index+"]",label="第 "+(++index)+" 批 · "+Text(Get(wave,boss?"BossName":"WildSpawnType"));if(wave.ValueKind!=JsonValueKind.Object)continue;
-   foreach(var p in wave.EnumerateObject()){var (name,help)=WaveHelp(p.Name);if(p.Value.ValueKind==JsonValueKind.Object||p.Name=="Supports"&&p.Value.ValueKind==JsonValueKind.Array){Walk(p.Value,prefix+"."+p.Name,group,label+" · "+name,help,rows);continue;}string value=Text(p.Value);if(p.Name=="BossChance"&&!Missing(p.Value))value+=" %";rows.Add(new(group,label+" · "+name,value,help,prefix+"."+p.Name));}
+   string roleKey=boss?"BossName":"WildSpawnType";
+   var role=Get(wave,roleKey);
+   string prefix=path+"["+index+"]",label="第 "+(++index)+" 批 · "+Text(role,roleKey);
+   if(wave.ValueKind!=JsonValueKind.Object)continue;
+   foreach(var p in wave.EnumerateObject()){
+    var (name,help)=WaveHelp(p.Name);
+    if(p.Value.ValueKind==JsonValueKind.Object||p.Name=="Supports"&&p.Value.ValueKind==JsonValueKind.Array){Walk(p.Value,prefix+"."+p.Name,group,label+" · "+name,help,rows,nativeSearch:role.ToString());continue;}
+    string value=Text(p.Value,p.Name);
+    if(p.Name=="BossChance"&&!Missing(p.Value))value+=" %";
+    rows.Add(new(group,label+" · "+name,value,help,prefix+"."+p.Name,role+" "+(IsRole(p.Name)?p.Value.ToString():"")));
+   }
   }
  }
  static (string,string) WaveHelp(string key)=>key.ToLowerInvariant() switch{
@@ -75,7 +106,7 @@ internal static class AiSpawnInfoRows {
   "bossescortdifficult"=>("随从难度","随同生成的随从使用的难度档位。"),
   "bossescorttype"=>("随从类型","随同生成的角色类型，可能是保镖，也可能是 PMC 或游荡者。"),
   "bossescortamount"=>("随从人数候选","不包含主体。逗号分隔表示多个候选人数，不是把数字相加。"),
-  "spawnpoints" or "bosszone"=>("生成区域","候选区域代号；多个区域不意味着每个区域都生成一批。未指定时由原生生成器选择。"),
+  "spawnpoints" or "bosszone" or "openzones"=>("生成区域","候选区域代号；多个区域不意味着每个区域都生成一批。未指定时由原生生成器选择。"),
   "spawnmode"=>("适用模式","只有符合列出的游戏模式时才适用；不能把所有模式的条目都算进当前战局。"),
   "ignoremaxbots"=>("忽略人数上限","开启后可绕过普通 AI 上限，所以地图实际人数可能高于 BotMax。"),
   "forcespawn"=>("强制生成标记","交给原生生成器的强制生成选项，不等于无条件成功；仍需检查事件及模式。"),
@@ -91,9 +122,9 @@ internal static class AiSpawnInfoRows {
   "showontarkovmap" or "showontarkovmappve"=>("地图展示标记","控制条目的地图展示；不直接决定生成概率或人数。"),
   _=>(key,"服务端扩展波次参数。当前版本没有核实具体作用，保留原名和值供核对。")
  };
- static void Walk(JsonElement value,string path,string group,string name,string help,List<Row> rows){
-  if(value.ValueKind==JsonValueKind.Object){foreach(var p in value.EnumerateObject()){var detail=WaveHelp(p.Name);Walk(p.Value,path+"."+p.Name,group,name+" · "+detail.Item1,detail.Item2.StartsWith("服务端扩展")?help:detail.Item2,rows);}return;}
-  if(value.ValueKind==JsonValueKind.Array){int i=0;foreach(var item in value.EnumerateArray())Walk(item,path+"["+i+++"]",group,name,help,rows);if(i==0)rows.Add(new(group,name,"无条目",help,path));return;}
-  rows.Add(new(group,name,Text(value),help,path));
+ static void Walk(JsonElement value,string path,string group,string name,string help,List<Row> rows,string key="",string nativeSearch=""){
+  if(value.ValueKind==JsonValueKind.Object){foreach(var p in value.EnumerateObject()){var detail=WaveHelp(p.Name);Walk(p.Value,path+"."+p.Name,group,name+" · "+detail.Item1,detail.Item2.StartsWith("服务端扩展")?help:detail.Item2,rows,p.Name,nativeSearch);}return;}
+  if(value.ValueKind==JsonValueKind.Array){int i=0;foreach(var item in value.EnumerateArray())Walk(item,path+"["+i+++"]",group,name,help,rows,key,nativeSearch);if(i==0)rows.Add(new(group,name,"无条目",help,path,nativeSearch));return;}
+  rows.Add(new(group,name,Text(value,key),help,path,nativeSearch+(IsRole(key)?" "+value:"")));
  }
 }
