@@ -9,3 +9,4 @@
 - 当前运行环境、构建命令和验证说明见本仓库 `README.md`。游戏内视觉验证由用户自行执行，离线检查和热加载成功不等于视觉效果已验证。
 - 用户要求以后的新独立客户端 MOD 使用通用热更新加载器。新功能从 `universal-example` / `universal-sdk` 开始，按 `docs/universal-mod-host.md` 的生命周期契约开发，用 `scripts/Publish-HotModule.ps1` 发布。不要再为每个新 MOD 建一个专用宿主。
 - 已有辅助 MOD 和快速破解保留各自宿主；迁移现有插件需作为独立任务处理。通用宿主安装或更新本身需要关闭客户端。
+- **禁止修改主 README：** 除非用户当次对话明确要求修改主 README，否则后续任何 AI **不得修改**仓库根目录的 `README.md` 和 `README.zh-CN.md`（包括在顶部追加版本简报、插入更新段落或改写结构）。版本更新、功能说明与验证记录请写入 `CHANGELOG.md` 与 `docs/release-*.md`。

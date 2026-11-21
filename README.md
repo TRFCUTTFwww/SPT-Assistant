@@ -2,72 +2,116 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 
-An in-game control panel for **SPT**, built with C# and Unity. Manage your character, raid, equipment, quests and server settings from one interface.
+An extensible in-game control panel, world editor, and client/server toolkit for **SPT (Single Player Tarkov)**, built with C#, Unity IMGUI/Harmony, and .NET 10. Manage your character, raids, AI, items, quests, story, and server rules from one unified interface.
 
-**Version 2.3.1** · **Current target: SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
+**Version:** `2.3.1` · **Target:** `SPT 5.0 BE / EFT 1.3.0.1.48558` (Windows x64, Unity IL2CPP / .NET 10)
 
-> **UNSTABLE — EXPERIMENTAL.** This project has not undergone broad testing. Bugs, crashes, multiplayer desynchronization and unexpected profile changes are possible. Back up your profiles and configuration before installing or updating. A successful build or hot reload does not establish that every feature works in a raid.
+> **UNSTABLE — EXPERIMENTAL**
 >
-> Development follows the latest SPT version. **Backward compatibility is not guaranteed.** The exact supported SPT/EFT build is stated for each release; this release targets the versions above. Fika support is experimental and has not been broadly tested across hosts, clients or mod combinations.
+> This project has not undergone broad testing. Bugs, crashes, multiplayer desynchronization, and unexpected profile changes are possible. **Back up your profiles and configuration before installing or updating.** A passing offline build or hot reload does not establish that every feature works in a live raid.
+>
+> Development follows the latest SPT build; **backward compatibility is not guaranteed**. Fika support is experimental and has not been broadly tested across hosts, clients, or mod combinations.
 
-## Installation: double-click Setup
+---
 
-1. Under **Assets** on the [release downloads](https://github.com/TRFCUTTFwww/SPT-Assistant/releases), download **`SPT-Assistant-2.3.1-Setup.exe`**. The `Source code` downloads are for developers.
-2. Double-click the EXE and select **`EscapeFromTarkov.exe` in your SPT game folder**. Setup also tries to find installed games automatically.
-3. Close the game and SPT server, then click **Install now**. Start SPT as usual and press **Right Shift** in game.
+## Quick Installation (Recommended)
 
-Keep the default mode for single-player or hosting friends; choose client only when joining a friend's server. The EXE contains the complete offline payload. It checks the target version and package hashes, backs up replaced files, and retains existing settings and administration keys. No commands, SDK installation or manual file copying are required.
+1. Open [Releases](https://github.com/TRFCUTTFwww/SPT-Assistant/releases) and under **Assets**, download **`SPT-Assistant-2.3.1-Setup.exe`** (do **not** download `Source code` unless you are building from source).
+2. Double-click the installer and select **`EscapeFromTarkov.exe`** inside your SPT game folder.
+3. Close both the EFT client and the SPT server, then click **Install now**.
+4. Start the SPT server and game as usual, then press **Right Shift** in game to open the panel.
 
-The installer is unsigned and does not bypass Windows protection. Verify that you downloaded the official release asset before handling an unknown-publisher prompt. If Windows denies write access, use Setup's Retry as admin button.
+- **Single-player / Fika Host:** Keep the default full installation mode.
+- **Fika Client (joining a friend):** Select **Client only**.
+- The Setup EXE is self-contained and offline: it checks target version compatibility and file hashes, backs up replaced files under `mod-backups/`, and preserves existing configs and admin keys without requiring `.NET SDK` or manual file copying.
+- The installer is unsigned. Only proceed past Windows SmartScreen/unknown-publisher prompts if you downloaded it directly from official Releases; use **Retry as admin** inside Setup if the target folder denies write access.
 
-See [installation and troubleshooting](docs/INSTALL.md) for technical details and the retained command-line ZIP option.
+For manual ZIP/PowerShell installation, troubleshooting, and clean removal, see [Installation & Troubleshooting](docs/INSTALL.md).
 
-## 2.3.1 update
+---
 
-New misc switches: **Diplomatic immunity** keeps AI Scavs, bosses and followers neutral toward a player Scav without changing Fence reputation; **In high demand** instantly completes new flea listings with buyer **Assistant** and native Ragman payment. Flea fee waiver now handles cached client fees and the final server charge.
+## Architecture & Hot Reload
 
-Train schedules, pre-raid duration, BTR stop markers, energy/hydration editing, an independent keycard-hacking toggle, and [SQLite profile backups with cross-character restoration](docs/profile-backup.md). Zero-fare cash checks, boundary-sniper protection and special-AI weapon glitch handling were revised. See [release notes](docs/release-2.3.1.md).
+SPT Assistant is split into lightweight permanent hosts and hot-reloadable feature modules:
 
-## Features
+| Component | Role | Hot Reload |
+| --- | --- | --- |
+| `esp-host` (`Local.Spt5.ESP.dll`) | BepInEx IL2CPP client host and lifecycle loader | Host (restart to update) |
+| `esp-cover` (`Local.Spt5.ESP.Core.module`) | Main UI, ESP, combat, world editor, chat, built-in fun features | Yes (`Ctrl+F1` or menu) |
+| `gear-mail` (`LocalGearMail.dll`) | SPT server mod: item mail, SQLite backups, TLS 1.3 chat relay | Server restart |
+| `gear-admin-module` (`LocalGearAdmin.module`) | Reloadable server admin logic (profile data, story, backups) | Yes (from menu/script) |
+| `raid-controls-server` (`LocalRaidControls.dll`) | Server rules: insurance, repair, container nesting, BTR, raid rules | Server restart |
+| `quickhack-mod` (`Quickhacks.Core.module`) | Companion CP2077 Quickhacks module (managed via the Fun Features bridge) | Yes |
+| `universal-host` / `universal-sdk` | General hot-reload loader (`Ctrl+F9`) for new standalone client mods | Host / Module (`Ctrl+F9`) |
 
-Blackwall Pulse is built into 2.3 under Fun Features. The release package includes its animation, textures and audio; installation backs up and disables the retired standalone plugin. See [Blackwall details](docs/blackwall-pulse.md).
+---
 
+## Feature Overview
 
-The [chat and slash-command system](docs/CHAT.md) adds a configurable T chat overlay, command history, Tab completion and locally entered commands in single-player and supported FIKA scenarios. Text chat between users of the same upgraded server uses mutually verified TLS 1.3 channels with session-level forward secrecy. Read the fingerprint-verification steps and limitations before use. The old multiplayer branch is unchanged; remote game commands are disabled in main.
+Press **Right Shift** to open the panel (`F12` for legacy config menu, `中文 · English` at the top-right to switch language at any time). Controls are organized into three lanes:
 
-The opt-in [world editor](docs/world-editor.md) adds a crosshair context menu for creating, moving, copying and editing locally controlled AI and loose loot. It is unstable and still needs in-raid verification.
+### Common Assists
+- **Home (`主页面`)**: PMC profile summary, currencies, combat statistics, quest progress, and quick shortcuts.
+- **Visuals (`视觉`)**: Player/AI/loot/container/vehicle/airdrop/BTR-stop ESP, optic-scope adaptive boxes (`ScopeBoxes`), muzzle aim line, battle/hit/kill info, mine/tripwire highlights, third-person camera, performance monitor (`FPS` / `P99`), and layout/opacity customization.
+- **Navigation (`导航`)**: Extraction markers & force/ignore controls, map transit tools, quest objective locations, ground navigation, and teleportation.
+- **Shooting (`射击`)**: Aim assist, micro-aim, target exclusions, recoil/weapon comfort, hit sounds, kill effects, and grenade trajectories.
+- **Character (`人物`)**: God mode (`F8`), AI ignore (`F9`), body-part health/energy/hydration editing, door breaching & independent keycard hacking, noclip, buffs, and death retention.
+- **Raid (`战局`)**: Map/event modes, raid clock & day/night freeze, pre-raid duration override, in-raid stash access, proximity force-loot, AI difficulty, and spawn/event controls.
+- **Vehicles (`载具`)**: BTR controls (free ride, free/instant delivery, 10×100 transfer container, dispatch to nearest stop), Armored Train arrival/departure controls, and airdrop management.
+- **Items (`物品`)**: Item search & mail delivery, player weapon presets, full gear kits, and repair/durability rules (max-durability trader repair, armor care, container nesting, infinite keys/keycards/injectors, instant container search).
+- **Fun Features (`趣味功能`)**: Built-in **Blackwall Pulse** (`F11` / `Alt+F11` preview), **Laser Eyes**, **Pixel Swords** & **ProjectE** (Transmutation Table, EMC, tools, totems, Minecraft HUD), plus **CP2077 Quickhacks** bridge.
+- **Story (`剧情`)**: Main story chapter progress, trader quest replay, mutually exclusive branch switching, endings, and skipping eligible quest wait timers.
+- **Data (`数据`)**: Skill & achievement editors, wallet/TC transfers, PMC/Scav equipment management, and [SQLite profile backups & cross-character restoration](docs/profile-backup.md).
+- **Server (`服务端`)**: 30+ server configuration switches (insurance, repair, hideout, traders, raid) plus PMC/Scav karma and flea market reputation.
+- **Miscellaneous (`杂项`)**: Independent switches including Scav **Diplomatic immunity**, **In high demand** (instant flea sales), **Oversupply**, Trader/Flea clearance sale, flea fee waiver, boundary sniper immunity, and fun-item policy.
 
-| Area | What you can do |
-| --- | --- |
-| **Home dashboard** | View the current PMC profile, currencies, combat statistics and quest progress, with shortcuts to frequently used tools. |
-| **Visuals & HUD** | Configure player, loot and vehicle ESP, world markers, floating information panels and a performance monitor. |
-| **Navigation** | Locate quest objectives and extraction points, check distances and use navigation tools. |
-| **Weapons & combat** | Edit weapons, adjust aiming tools and inspect ammunition, ballistics and armor protection. |
-| **Character** | Manage health and movement tools, including noclip and optional laser-eye controls. |
-| **Raid tools** | Control raid time and the day/night clock, pause timers, manage AI spawning and interact with raid loot. |
-| **Items & equipment** | Search for items, send items by mail, manage equipment and configure repair, durability, keys and keycards. |
-| **Quests & story** | Inspect quest progress, replay quests, manage story branches and skip eligible waiting periods. |
-| **Profile data** | Manage skills, achievements, wallets and PMC/Scav character settings. |
-| **Server settings** | Adjust insurance, repair, hideout, trading and raid options, plus karma and flea-market reputation. |
-| **Interface** | Switch instantly between Chinese and English; customize hotkeys, panel layouts, opacity and themes. |
-| **Hot reload** | Reload supported client and server modules from the panel while retaining the host. |
+### Developer Tools
+- **AI Development (`AI 开发`)**: Live AI list, weapon swapping, spawning, behavior/route editing, equipment/buff editing, teleportation, scene templates, corpse cleanup, and global AI controls.
+- **Weapon Editor (`枪械编辑`)**: Live inspection and tuning of held/slotted weapons and attachments.
+- **Model & Camera (`模型与镜头`)**: Free camera, character model options, and pose/action locks.
+- **Toy Gun Development (`玩具枪开发`)**: Configurable toy gun spawning, hit actions (teleport/kill/etc.), fire rate/ammo, and bullet impact markers.
+- **Developer Tools (`开发工具`)**:
+  - Opt-in [World Editor](docs/world-editor.md) (`F6`): crosshair & `Alt` marquee selection for creating, moving, copying, cloning, and editing locally controlled AI, loose loot, corpses, and landed airdrops.
+  - [Chat & Slash Commands](docs/CHAT.md) (`T` / `/`): configurable overlay with contextual Tab completion, Minecraft-style local commands (also scoped for Fika hosts/members), and mutually verified **TLS 1.3** text chat with session-level forward secrecy.
 
-[Releases](https://github.com/TRFCUTTFwww/SPT-Assistant/releases) · [Changelog](https://github.com/TRFCUTTFwww/SPT-Assistant/blob/main/CHANGELOG.md)
+### Settings
+- **Settings & Hotkeys (`设置与热键`)**: Searchable [hotkey editor](docs/hotkeys.md) (single keys, combos, mouse buttons), config profiles, theme & layout editor, and GitHub Release update checker (HTTP/HTTPS/SOCKS5 proxy support).
 
-## 2.3: BTR, integrated Minecraft features and updates
+---
 
-Vehicles → BTR controls adds separate free ride, free delivery, instant delivery and expanded 10×100 (1,000-cell) transfer-container switches. Call BTR selects the nearest reachable native stop. Instant delivery mails items as soon as the raid result submits them; expanded dimensions apply to newly created containers. Settings → Version updates checks GitHub Releases and supports HTTP, HTTPS, SOCKS5 or system proxies, without automatic installation.
+## Building from Source & Documentation
 
-Pixel swords, ProjectE, the transmutation table, totems and Minecraft HUD now run inside Assistant on both client and server. The HUD master switch, hearts, hunger, hydration, experience and hotbar each have controls. Only the old independent Minecraft loaders are retired; other modules and Assistant core reload remain available. The 3-X weapon and its module are removed. Close both client and server for full installation; the installer backs up retired code and profiles while retaining MC configuration, wallets, knowledge, terminal data and pending-operation journals.
+Building requires the **.NET 10 SDK** and locally installed SPT 5.0 BE / EFT 48558 interop assemblies (not included in this repository). See [Installation & Troubleshooting](docs/INSTALL.md) and [Universal Mod Host](docs/universal-mod-host.md) for build and packaging instructions.
 
-### Upstream Minecraft repositories and assets
+```powershell
+# Run from the SPT game root with the repository placed at _spt5_esp_fix
+dotnet build _spt5_esp_fix/esp-cover/Esp.csproj -c Release
+dotnet build _spt5_esp_fix/gear-mail/GearMail.csproj -c Release
+dotnet build _spt5_esp_fix/raid-controls-server/RaidControls.csproj -c Release
+dotnet run --project _spt5_esp_fix/probe/Probe.csproj -c Release
+```
 
+### Documentation Index
+- [Releases](https://github.com/TRFCUTTFwww/SPT-Assistant/releases) · [Changelog](CHANGELOG.md)
+- [2.3.1 Release Notes](docs/release-2.3.1.md) · [2.3 Release Notes](docs/release-2.3.md)
+- [Installation & Troubleshooting](docs/INSTALL.md) · [Hotkeys](docs/hotkeys.md)
+- [Chat & Slash Commands](docs/CHAT.md) · [Command Options](docs/COMMAND-OPTIONS.md)
+- [World Editor](docs/world-editor.md) · [SQLite Profile Backups](docs/profile-backup.md)
+- [Blackwall Pulse](docs/blackwall-pulse.md) · [Universal Hot-Reload Host](docs/universal-mod-host.md)
+
+---
+
+## Third-Party Attributions & License
+
+Licensed under the [MIT License](LICENSE).
+
+### Integrated Minecraft Mod Assets
 | Project | Repository | Contribution |
 | --- | --- | --- |
-| AllTheModium | [AllTheModium](https://github.com/AllTheMods/AllTheModium) | Pixel swords / 像素剑 |
-| ProjectE | [ProjectE](https://github.com/sinkillerj/ProjectE) | Transmutation, tools, artifacts / 转换桌、工具与饰品 |
-| Modern Industrialization | [Modern Industrialization](https://github.com/AztechMC/Modern-Industrialization) | Quantum sword / 量子剑 |
-| Applied Energistics 2 | [Applied Energistics 2](https://github.com/AppliedEnergistics/Applied-Energistics-2) | Wireless terminal artwork / 无线终端素材 |
-| Thirst Mod | [Thirst Mod](https://github.com/ghen-git/Thirst-Mod) | Hydration HUD artwork / 口渴 HUD 素材 |
+| AllTheModium | [AllTheModium](https://github.com/AllTheMods/AllTheModium) | Pixel swords |
+| ProjectE | [ProjectE](https://github.com/sinkillerj/ProjectE) | Transmutation table, tools & artifacts |
+| Modern Industrialization | [Modern Industrialization](https://github.com/AztechMC/Modern-Industrialization) | Quantum sword |
+| Applied Energistics 2 | [Applied Energistics 2](https://github.com/AppliedEnergistics/Applied-Energistics-2) | Wireless terminal artwork |
+| Thirst Mod | [Thirst Mod](https://github.com/ghen-git/Thirst-Mod) | Hydration HUD artwork |
 
-Vanilla Minecraft UI and totem assets belong to Mojang/Microsoft. Fixed revisions, hashes and third-party notices are retained in the Minecraft asset provenance and license files. See [2.3 notes](docs/release-2.3.md).
+Vanilla Minecraft UI and totem artwork belong to Mojang/Microsoft and are not claimed under the open-source projects above. Fixed revisions, hashes, and third-party notices are preserved in the repository's provenance and license files.

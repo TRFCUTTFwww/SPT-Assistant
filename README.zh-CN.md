@@ -1,73 +1,117 @@
-黑墙脉冲已内置于 2.3 的“趣味功能”，安装包包含所需动作、贴图与音频，安装时会备份并停用旧独立插件。详见[黑墙说明](docs/blackwall-pulse.md)。
 # SPT Assistant
-
-新独立客户端 MOD 的开发入口：[通用热更新加载器](docs/universal-mod-host.md)。提供稳定接口、示例工程、按模块发布与失败回退；适用于本机 EFT 48558 / SPT 5.0。
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 
-为 **SPT 单机塔科夫**开发的游戏内控制面板，使用 C# 与 Unity 构建。角色、战局、装备、任务与服务端设置，都可以在同一界面中管理。
+为 **SPT 单机塔科夫**打造的游戏内控制面板、场景编辑器与客户端/服务端扩展工具集，基于 C#、Unity IMGUI/Harmony 与 .NET 10 构建。在一个统一界面中管理角色、战局、AI、物品、任务、剧情与服务端规则。
 
-**版本 2.3.1** · **当前适配：SPT 5.0 BE / EFT 1.3.0.1.48558** · Unity IL2CPP / .NET 10
+**当前版本：** `2.3.1` · **目标环境：** `SPT 5.0 BE / EFT 1.3.0.1.48558`（Windows x64，Unity IL2CPP / .NET 10）
 
-> **不稳定，属于实验版本。** 本项目没有经过广泛测试，可能出现功能失效、崩溃、多人不同步或存档被意外修改。安装及更新前请备份存档和配置。编译通过、热加载成功，不代表每项功能都已在实战中验证。
+> **不稳定 — 实验版本**
 >
-> 后续开发以 SPT 最新版为适配目标，**不保证向后兼容**。每次发布都会注明具体适配的 SPT/EFT 版本；本次仅以以上版本为目标。Fika 联机支持同样处于实验阶段，尚未覆盖不同房主、成员和模组组合的广泛测试。
+> 本项目尚未经过广泛测试，可能出现功能失效、崩溃、联机不同步或存档被意外修改。**安装或更新前请务必备份存档与配置文件。** 离线编译通过或热加载成功，不代表所有功能均已在实战局中完成验证。
+>
+> 开发始终以最新 SPT 版本为目标，**不保证向后兼容**。Fika 联机支持同样处于实验阶段，尚未覆盖不同房主、成员和模组组合的广泛测试。
 
-## 安装：双击即可
+---
 
-1. 在 [发布下载页](https://github.com/TRFCUTTFwww/SPT-Assistant/releases) 的 **Assets / 资源** 中，下载 **`SPT-Assistant-2.3.1-Setup.exe`**。不要下载 `Source code`，那是开发者用的源码。
-2. 双击安装 EXE，选择你平时使用的 **SPT 游戏目录中的 `EscapeFromTarkov.exe`**。安装器也会尝试自动找到游戏位置。
-3. 关闭游戏和 SPT 服务端，点击 **开始安装**。完成后照常打开 SPT，进入游戏按 **右 Shift** 打开辅助菜单。
+## 快速安装（推荐）
 
-单人游戏和联机房主保留默认选项；加入朋友的联机则选择“仅安装客户端”。安装程序自带全部模组文件，可离线安装；自动检查版本、校验文件并备份覆盖内容，保留已有设置和密钥。不需要输入命令、安装 SDK 或手动复制文件。
+1. 前往 [Releases 发布页](https://github.com/TRFCUTTFwww/SPT-Assistant/releases)，在 **Assets / 资源** 中下载 **`SPT-Assistant-2.3.1-Setup.exe`**（不要下载 `Source code`，那是开发者源码）。
+2. 双击安装程序，选择你平时使用的 **SPT 游戏目录中的 `EscapeFromTarkov.exe`**。
+3. 关闭游戏客户端与 SPT 服务端，点击 **开始安装**。
+4. 照常启动 SPT 服务端与游戏，进入游戏后按 **右 Shift** 打开辅助面板。
 
-仅当你确认下载的是本项目正式发布附件时，才处理 Windows 对未知发布者的提示。安装器没有数字签名，不会绕过系统保护。若提示目录无写入权限，可使用安装界面的“管理员重试”。
+- **单人游戏 / Fika 房主：** 保持默认完整安装模式。
+- **Fika 联机成员（加入朋友服务端）：** 选择 **仅安装客户端**。
+- Setup EXE 为离线自包含安装包：自动校验目标版本与文件哈希，将覆盖文件备份至 `mod-backups/`，并保留现有配置与管理密钥，无需安装 `.NET SDK` 或手动复制文件。
+- 安装程序未做数字签名。仅在确认下载自本项目官方 Releases 时处理 Windows 未知发布者提示；若目录拒绝写入，可点击安装界面中的 **管理员重试**。
 
-需要技术细节或保留命令行安装方式时，请看[安装与故障排查](docs/INSTALL.md)。完整安装包仍保留 ZIP 形式，供手动部署使用。
+如需手动 ZIP / PowerShell 部署、故障排查与卸载说明，请见 [安装与故障排查](docs/INSTALL.md)。
 
-## 2.3.1 更新
+---
 
-新增杂项开关：**外交豁免权**让 Scav、BOSS 和随从对玩家 Scav 保持中立，不修改 Fence 好感；**供不应求**让新挂单立即售出，买家显示 **Assistant**，通过原生 Ragman 邮件结算。免手续费同时修复客户端缓存费用与服务端最终扣款。
+## 架构与热更新支持
 
-新增装甲列车时刻控制、行动前战局时长、BTR 站点标记、能量与水分编辑、独立门卡破解开关，以及 [SQLite 存档备份与跨角色还原](docs/profile-backup.md)。修正零车费仍需现金的原生校验，强化边界狙击保护与特殊 AI 的武器故障拦截。详见 [2.3.1 发布说明](docs/release-2.3.1.md)。
+SPT Assistant 采用“常驻轻量宿主 + 可热更新功能模块”结构：
 
-## 功能
-
-新增[聊天与斜杠命令](docs/CHAT.md)：可配置的 T 键聊天框、命令历史、Tab 补全与单人/FIKA 本地输入命令（[支持范围](docs/CHAT.md#fika-命令范围--fika-command-scope)）。同一升级服务端的模组用户可在双方核验指纹后使用 TLS 1.3 加密聊天，提供会话级前向保密。请先阅读核验步骤和限制。旧多人分支未更新，main 不接受远程游戏操作命令。
-
-新增默认关闭的[场景编辑模式](docs/world-editor.md)：通过准星右键菜单创建、移动、复制与修改本机控制的 AI 和散落物品。目前不稳定，仍需战局实测。
-
-| 分类 | 功能介绍 |
-| --- | --- |
-| **主页面** | 查看当前 PMC 存档、资金、战绩与任务进度，通过快捷入口打开常用工具。 |
-| **视觉与 HUD** | 人物、物品与载具 ESP、场景标记、信息悬浮窗和性能监测，可按需配置。 |
-| **导航** | 定位任务目标与撤离点，查看距离并使用导航工具。 |
-| **枪械与战斗** | 枪械编辑、瞄准辅助，以及弹药、弹道与装甲防护分析。 |
-| **人物** | 生命与移动辅助，包括穿墙移动和可独立设置的双眼激光。 |
-| **战局** | 管理战局时间与昼夜时钟、暂停计时、生成 AI，并操作战局物资。 |
-| **物品与装备** | 物品搜索与邮件发放、装备管理，以及修理、耐久、钥匙和门禁卡设置。 |
-| **任务与剧情** | 查看任务进度、重做任务、管理剧情分支，并跳过符合条件的等待时间。 |
-| **角色数据** | 管理技能、成就、钱包，以及 PMC 和 Scav 角色设置。 |
-| **服务端** | 调整保险、修理、藏身处、交易和战局配置，管理业力与跳蚤市场信誉。 |
-| **界面定制** | 中英文即时切换，自定义快捷键、面板布局、不透明度与主题。 |
-| **热更新** | 从面板重载受支持的客户端与服务端模块，保留宿主。 |
-
-[版本发布](https://github.com/TRFCUTTFwww/SPT-Assistant/releases) · [更新记录](https://github.com/TRFCUTTFwww/SPT-Assistant/blob/main/CHANGELOG.md)
-
-## 2.3：BTR、MC 整合与更新检测
-
-载具 → BTR 控制：免费乘车、免费物品转移、秒转移和 10×100（1000 格）扩展转移仓均为独立开关；叫车指派至玩家最近的可达原生站点。秒转移在战局结算上传配送物品后立即发信；扩容用于新建的转移仓。设置 → 版本更新可检查 GitHub 正式 Releases，支持 HTTP、HTTPS、SOCKS5 或系统代理；不自动下载安装。
-
-MC 像素剑、ProjectE、转换桌、图腾和相关 HUD 已整合进辅助 MOD 的客户端与服务端。MC 总显示、爱心、饱食度、口渴、经验和物品快捷栏可以分别开关。只停用旧的 MC 独立加载包，其他独立模块和辅助本体热重载保留。3-X 武器及其独立模块已移除。完整安装须关闭客户端和服务端；安装器备份旧代码与存档，保留 MC 配置、钱包、知识、终端数据和未完成操作日志。
-
-### MC 原模组仓库与素材来源
-
-| Project | Repository | Contribution |
+| 组件 | 职责 | 热更新支持 |
 | --- | --- | --- |
-| AllTheModium | [AllTheModium](https://github.com/AllTheMods/AllTheModium) | Pixel swords / 像素剑 |
-| ProjectE | [ProjectE](https://github.com/sinkillerj/ProjectE) | Transmutation, tools, artifacts / 转换桌、工具与饰品 |
-| Modern Industrialization | [Modern Industrialization](https://github.com/AztechMC/Modern-Industrialization) | Quantum sword / 量子剑 |
-| Applied Energistics 2 | [Applied Energistics 2](https://github.com/AppliedEnergistics/Applied-Energistics-2) | Wireless terminal artwork / 无线终端素材 |
-| Thirst Mod | [Thirst Mod](https://github.com/ghen-git/Thirst-Mod) | Hydration HUD artwork / 口渴 HUD 素材 |
+| `esp-host` (`Local.Spt5.ESP.dll`) | BepInEx IL2CPP 客户端宿主与生命周期加载器 | 宿主（更新需重启客户端） |
+| `esp-cover` (`Local.Spt5.ESP.Core.module`) | 主界面、ESP、战斗、场景编辑、聊天、内置趣味功能 | 支持（`Ctrl+F1` 或面板触发） |
+| `gear-mail` (`LocalGearMail.dll`) | 服务端模组：物品邮件、SQLite 备份、TLS 1.3 聊天中继 | 需重启服务端 |
+| `gear-admin-module` (`LocalGearAdmin.module`) | 可热替换服务端管理模块（角色数据、剧情、备份） | 支持（面板或脚本触发） |
+| `raid-controls-server` (`LocalRaidControls.dll`) | 服务端规则：保险、修理、容器嵌套、BTR、战局规则 | 需重启服务端 |
+| `quickhack-mod` (`Quickhacks.Core.module`) | 独立赛博朋克快速破解模块（由趣味功能桥接管理） | 支持 |
+| `universal-host` / `universal-sdk` | 通用客户端热更新加载器（`Ctrl+F9`），面向新独立客户端 MOD | 宿主 / 模块（`Ctrl+F9`） |
 
-Minecraft 原版 UI、图腾素材归 Mojang/Microsoft 所有；本项目不将其声明为上述开源模组素材。固定版本、文件哈希及第三方许可随 MC Assets 的 provenance 和许可文件保留。见 [2.3 说明](docs/release-2.3.md)。
+---
+
+## 功能总览
+
+游戏内按 **右 Shift** 打开主面板（`F12` 为原配置菜单，主菜单右上角 `中文 · English` 可随时切换语言）。功能分为三个工作区：
+
+### 常用辅助
+- **主页面**：展示当前 PMC 存档概览、资金、战绩、任务进度与常用功能快捷入口。
+- **视觉**：人物/AI/物资/容器/载具/空投/BTR 站点 ESP、瞄准镜内自适应方框、枪口瞄准线、战斗/受击/全战局击杀信息、地雷与绊雷高亮、第三人称镜头、性能监测（`FPS` / `P99`），以及悬浮窗布局与不透明度设置。
+- **导航**：撤离点定位与强行撤离控制、地图过图工具、任务目标定位、路面导航与角色传送。
+- **射击**：射击辅助、微自瞄、瞄准排除、后坐力与枪械手感优化、命中音效、击杀特效与投掷物轨迹。
+- **人物**：无敌（`F8`）、AI 忽略（`F9`）、各部位血量/能量/水分编辑、破门强开与独立门卡破解、穿墙飞行、Buff 管理与死亡保留。
+- **战局**：地图与活动模式、昼夜时钟控制与暂停、行动前战局时长设置、战局内访问仓库、范围强制拾取、AI 难度与刷新/活动控制。
+- **载具**：BTR 控制（免费乘车、免费/秒转移、10×100 扩展转移仓、派遣至最近站点）、装甲列车到发时刻控制，以及空投管理。
+- **物品**：物品搜索与邮件发放、玩家枪械预设、整套装备方案，以及修理与耐久规则（商人修理保留最大耐久、护甲保护、容器嵌套、无限钥匙/门卡/注射器、容器秒搜索）。
+- **趣味功能**：内置 **黑墙脉冲**（`F11` 施放 / `Alt+F11` 预览）、**镭射眼**、**像素剑** 与 **ProjectE**（转换桌、EMC、工具、图腾、MC HUD），以及 **CP2077 快速破解** 桥接设置。
+- **剧情**：主线章节进度、商人任务重做、互斥剧情分支切换、结局切换，以及跳过符合条件的任务等待时间。
+- **数据**：技能与成就编辑、钱包/TC 转账、PMC/Scav 装备管理，以及 [SQLite 存档备份与跨角色还原](docs/profile-backup.md)。
+- **服务端**：30 余项服务端配置（保险、修理、藏身处、交易、战局）及 PMC/Scav 业力、跳蚤市场信誉编辑。
+- **杂项**：独立规则开关，包括 Scav **外交豁免权**、**供不应求**（新挂单立即售出）、**供大于求**、商人/市场清仓甩卖、免手续费、边界狙击免疫与趣味物品开关。
+
+### 开发工具
+- **AI 开发**：本局 AI 列表、换武器、生成 AI、行为与路线编辑、装备与 Buff 编辑、传送、AI 模板、尸体清理及全局 AI 控制。
+- **枪械编辑**：实时查看与调整当前手持或装备槽中的枪械与配件参数。
+- **模型与镜头**：自由镜头、人物模型调节与动作锁定。
+- **玩具枪开发**：玩具枪生成与模板、命中动作（传送/击杀等）、弹药与射速及普通枪弹着点标记。
+- **开发工具**：
+  - 默认关闭的[场景编辑模式](docs/world-editor.md)（`F6`）：准星右键菜单与 `Alt` 拖框多选，支持创建、移动、复制、克隆及编辑本机控制的 AI、散落物品、尸体与已落地空投箱。
+  - [聊天与斜杠命令](docs/CHAT.md)（`T` / `/`）：可配置聊天窗与按参数位置的 Tab 补全、MC 风格本地命令（含 Fika 权限范围控制），以及双方核验指纹的 **TLS 1.3** 会话级前向保密文字聊天。
+
+### 设置
+- **设置与热键**：可搜索的[全部热键设置](docs/hotkeys.md)（单键、组合键、鼠标按键）、配置方案、主题与布局编辑，以及 GitHub Releases 版本检测（支持 HTTP/HTTPS/SOCKS5 代理）。
+
+---
+
+## 源码构建与文档索引
+
+源码构建需要 **.NET 10 SDK** 与本机合法安装的 SPT 5.0 BE / EFT 48558 互操作程序集（仓库不包含游戏依赖）。详细构建、打包与独立模块开发流程见[安装与故障排查](docs/INSTALL.md)与[通用热更新加载器](docs/universal-mod-host.md)。
+
+```powershell
+# 将本仓库放在游戏根目录下的 _spt5_esp_fix，并在游戏根目录运行：
+dotnet build _spt5_esp_fix/esp-cover/Esp.csproj -c Release
+dotnet build _spt5_esp_fix/gear-mail/GearMail.csproj -c Release
+dotnet build _spt5_esp_fix/raid-controls-server/RaidControls.csproj -c Release
+dotnet run --project _spt5_esp_fix/probe/Probe.csproj -c Release
+```
+
+### 文档导航
+- [Releases 下载页](https://github.com/TRFCUTTFwww/SPT-Assistant/releases) · [更新记录 (Changelog)](CHANGELOG.md)
+- [2.3.1 发布说明](docs/release-2.3.1.md) · [2.3 发布说明](docs/release-2.3.md)
+- [安装与故障排查](docs/INSTALL.md) · [热键说明](docs/hotkeys.md)
+- [聊天与斜杠命令](docs/CHAT.md) · [详细命令参数](docs/COMMAND-OPTIONS.md)
+- [场景编辑模式](docs/world-editor.md) · [SQLite 存档备份](docs/profile-backup.md)
+- [黑墙脉冲说明](docs/blackwall-pulse.md) · [通用热更新加载器](docs/universal-mod-host.md)
+
+---
+
+## 第三方素材声明与开源协议
+
+本项目基于 [MIT License](LICENSE) 开源。
+
+### 整合的 Minecraft 模组素材
+| 项目 | 仓库 | 贡献内容 |
+| --- | --- | --- |
+| AllTheModium | [AllTheModium](https://github.com/AllTheMods/AllTheModium) | 像素剑 |
+| ProjectE | [ProjectE](https://github.com/sinkillerj/ProjectE) | 转换桌、工具与饰品 |
+| Modern Industrialization | [Modern Industrialization](https://github.com/AztechMC/Modern-Industrialization) | 量子剑 |
+| Applied Energistics 2 | [Applied Energistics 2](https://github.com/AppliedEnergistics/Applied-Energistics-2) | 无线终端素材 |
+| Thirst Mod | [Thirst Mod](https://github.com/ghen-git/Thirst-Mod) | 口渴 HUD 素材 |
+
+Minecraft 原版 UI 与图腾素材版权归 Mojang/Microsoft 所有，不视为上述开源模组资产。固定版本、文件哈希及第三方许可保留在仓库的 provenance 与 license 文件中。
