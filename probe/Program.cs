@@ -68,6 +68,13 @@ Assert(!ExfilRequirementRules.Local(false,true,true,true,"self","self",true,fals
 Assert(!ExfilRequirementRules.Local(true,true,true,false,"self","self",true,false)&&!ExfilRequirementRules.Local(true,true,true,true,"peer","self",true,false)&&!ExfilRequirementRules.Local(true,true,true,true,"","",true,false),"remote players, other profiles and empty identities retain their requirements");
 Assert(!ExfilRequirementRules.Local(true,true,true,true,"self","self",false,false)&&!ExfilRequirementRules.Local(true,true,true,true,"self","self",true,true),"faction/assignment mismatch and banned players cannot use the condition override");
 Console.WriteLine("PASS local extraction requirement bypass, backpack-blocked/countdown states, closed/special exit lifecycle, identity and ban boundaries");
+using(var exfilCore=AssemblyDefinition.ReadAssembly(Path.Combine(sourceRoot,"esp-cover/bin/Release/net10.0/Local.Spt5.ESP.Core.dll"))){
+ var display=exfilCore.MainModule.Types.Single(t=>t.Name=="ExfilDisplay");
+ var refresh=display.Methods.Single(m=>m.Name=="RefreshEnteredRequirements");
+ var calls=refresh.Body.Instructions.Select(i=>i.Operand).OfType<MethodReference>().Select(m=>m.Name).ToList();
+ int entered=calls.IndexOf("get_Entered"),queue=calls.IndexOf("QueueLocalCar"),proceed=calls.IndexOf("Proceed");
+ Assert(entered>=0&&queue>entered&&proceed>queue&&calls.Count(m=>m=="get__playersMetAllRequirements")==2,"extraction refresh checks entry, queues vehicle before Proceed, and validates native registration");
+}
 
 // Human Fika peers must remain distinct from both host and replicated AI.
 Assert(FikaTeamRules.Teammate(false,false,false,false,true,"",""),"observed human peer is a teammate without relying on faction or group");

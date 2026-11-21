@@ -78,17 +78,13 @@ internal static partial class ExfilDisplay {
   }catch(Exception e){hooksReady=false;p.Log.LogError("Exfiltration permission hooks unavailable: "+e);}
   try{
    InitializeRequirementHooks(p);
-   conditionsReady=true;p.Log.LogInfo("Exit requirement hooks ready: local unmet queries, trigger/proceed scopes and native UI");
+   conditionsReady=true;p.Log.LogInfo("Exit requirement hooks ready: local unmet queries and native trigger/proceed");
   }catch(Exception e){conditionsReady=false;p.Log.LogError("Exit requirement hooks unavailable: "+e);}
  }
  internal static void Keys(){if(Hotkeys.Pressed(ForceKey.Value)){Force.Value=!Force.Value;nextScan=0;}if(Hotkeys.Pressed(IgnoreKey.Value)){IgnoreRequirements.Value=!IgnoreRequirements.Value;nextScan=0;}}
- internal static void Reset(){RestoreConditions();resumedRequirements.Clear();rows.Clear();leverMarkers.Clear();linkedSwitches.Clear();originals.Clear();seenPresent.Clear();permissionOverrides.Clear();nextScan=nextSwitchScan=0;worldPointer=IntPtr.Zero;notice="";lastForce=lastIgnore=false;layoutDirty=true;pageIndex=0;}
+ internal static void Reset(){RestoreConditions();rows.Clear();leverMarkers.Clear();linkedSwitches.Clear();originals.Clear();seenPresent.Clear();permissionOverrides.Clear();nextScan=nextSwitchScan=0;worldPointer=IntPtr.Zero;notice="";lastForce=lastIgnore=false;layoutDirty=true;pageIndex=0;}
  static bool ConditionsActive=>conditionsReady&&IgnoreRequirements.Value;
 
- static void HasMetOverride(ExfiltrationPoint __instance,string __0,ref bool __result){
-  if(!ConditionsActive||__result)return;
-  try{if(LocalBypass(__instance,__0))__result=true;}catch{}
- }
  static bool CanBypass(ExfiltrationPoint point)=>ExfilRequirementRules.CanBypass(point.Status.ToString(),point.TryCast<EFT.Interactive.SecretExfiltrations.SecretExfiltrationPoint>()!=null,Lever(point),Train(point));
  static void MatchOverride(ExfiltrationPoint __instance,Player __0,ref bool __result){
   if(hooksReady&&Force.Value&&__0!=null&&__0.IsYourPlayer&&permissionOverrides.Contains(__instance.Pointer))__result=true;
@@ -213,7 +209,7 @@ internal static partial class ExfilDisplay {
   if(Time.unscaledTime<nextScan&&lastForce==Force.Value&&lastIgnore==IgnoreRequirements.Value)return;nextScan=Time.unscaledTime+1f;
   try{
    if((lastForce!=Force.Value)&&originals.Count>0)Restore();lastForce=Force.Value;
-   if(lastIgnore!=IgnoreRequirements.Value){resumedRequirements.Clear();if(!IgnoreRequirements.Value)RestoreConditions();}lastIgnore=IgnoreRequirements.Value;
+   if(lastIgnore&&!IgnoreRequirements.Value)RestoreConditions();lastIgnore=IgnoreRequirements.Value;
    rows.Clear();leverMarkers.Clear();layoutDirty=true;if(!Enabled.Value&&!Force.Value&&!IgnoreRequirements.Value&&!GroundNavigation.WantsExitData&&!TeleportControl.WantsExitData)return;
    var controller=ExfiltrationController.Instance;if(controller==null){notice="撤离点正在加载";return;}
    var assigned=new HashSet<IntPtr>();var eligible=controller.EligiblePoints(player.Profile);
@@ -238,17 +234,13 @@ internal static partial class ExfilDisplay {
      bool car=Money(point),lever=Lever(point),train=Train(point),secret=point.TryCast<EFT.Interactive.SecretExfiltrations.SecretExfiltrationPoint>()!=null;string kind=secret?"暗号":train?"列车":ExfilPolicy.Kind(name+" "+key,car,lever);
      bool inPanel=secret||train||ShowSpecial.Value||isAssigned||kind=="普通";
      bool bypass=LocalBypass(point,player.ProfileId);
-     ResumeEnteredRequirements(point,player,bypass);
+     RefreshEnteredRequirements(point,player,bypass,car);
      bool met=true;var unmet=new List<string>();var requirements=point.Requirements;
      if(!bypass&&requirements!=null)foreach(var req in requirements){
       if(req==null||req.Met(player,point))continue;met=false;
       string tip=req.GetLocalizedTip(player.ProfileId);if(!string.IsNullOrWhiteSpace(tip))unmet.Add(tip.Replace('\n',' '));
      }
      bool queued=point.QueuedPlayers!=null&&point.QueuedPlayers.Contains(player.RaidId);
-     if(ConditionsActive&&car&&isAssigned&&!banned&&!queued&&point.Status==EExfiltrationStatus.RegularMode){
-      var carPosition=point.ExtendedCollider!=null?point.ExtendedCollider.bounds.center:point.transform.position;
-      if(Vector3.Distance(player.Position,carPosition)<=5f&&point.QueuedPlayers!=null){point.QueuedPlayers.Add(player.RaidId);queuedCars[point.Pointer]=(point,player.RaidId);queued=true;}
-     }
      var state=ExfilPolicy.Evaluate(point.Status.ToString(),isAssigned,met,banned,car,queued);
      string text=ExfilPolicy.Evaluate(point.Status.ToString(),true,met,banned,car,queued).Text;
      if(point.Status!=EExfiltrationStatus.NotPresent&&point.Status!=EExfiltrationStatus.Hidden)seenPresent.Add(point.Pointer);

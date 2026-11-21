@@ -48,11 +48,23 @@ namespace EFT.Hideout {
  public class ItemsProducerBase:Native {
   public string AreaType="CircleOfCultists";public bool HasCompletedItems=>CompleteItemsCount>0;public int CompleteItemsCount=>CompleteItemsStorage!.Counts.Values.Sum();
   public Dictionary<string,object> Schemes=new();public Dictionary<string,ProducingItemController> ProducingItems=new();public Storage? CompleteItemsStorage=new();
-  public int Updates;public ProductionData? LastUpdate;public bool TryUpdateProduction(string id,ProductionData data){Updates++;LastUpdate=data;CompleteItemsStorage!.Counts[id]=1;return true;}
+  public int Updates;public ProductionData? LastUpdate;
+  public bool TryUpdateProduction(string id,ProductionData data){
+   Updates++;LastUpdate=data;
+   if(ProducingItems.TryGetValue(id,out var item)&&item._producingProcess is {} process){
+    process.BaseProductionTime=data.ProductionTime;
+    item.Progress=data.Progress/data.ProductionTime;
+    process.TimeLeft=data.ProductionTime-data.Progress;
+    process.IsInProgress=process.TimeLeft>0;
+    item.AvailableForFinish=data.AvailableForFinish;
+   }
+   return true;
+  }
  }
- public class CultistsProducer:ItemsProducerBase { }
+ public class CultistsProducer:ItemsProducerBase {static int nextPointer=10;public IntPtr Pointer=new(++nextPointer);}
 }
 namespace LocalSpt5Esp {
+ internal static class CornerGameData { internal sealed record Cultist(bool Active,bool Ready); }
  internal class Plugin {public static Plugin Self=new();public PatchSet Patches=new();public Logger Log=new();public int Errors;public void Error(Exception error){Errors++;}}
  internal class PatchSet {public void Patch(object method,HarmonyLib.HarmonyMethod? postfix=null){} }
  internal class Logger {public void LogInfo(string text){} }

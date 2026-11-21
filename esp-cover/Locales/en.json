@@ -4110,7 +4110,7 @@
   "仪式进行中，可以预览本次奖励。": "The ritual is in progress. You can preview its rewards.",
   "当前没有进行中的仪式。": "There is no active ritual.",
   "仪式圈请求失败，请刷新重试。": "The Cultist Circle request failed. Refresh to try again.",
-  "服务端仪式已完成；重新打开藏身处可刷新领取状态。": "The ritual is complete on the server. Reopen the Hideout to refresh its collection status.",
+  "服务端仪式已完成；正在同步藏身处领取状态。": "The ritual is complete on the server. Updating reward availability in the Hideout.",
   "请回到主菜单后查看仪式圈。": "Return to the main menu to view the Cultist Circle.",
   "正在读取或同步仪式状态…": "Reading or synchronizing the ritual status…",
   "刷新状态后可预览本次奖励。": "Refresh the status to preview this ritual’s rewards.",

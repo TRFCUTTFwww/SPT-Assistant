@@ -82,11 +82,26 @@ static class Tests {
    Check(area.CompleteTime.Value==100&&areaData.StatusUpdates==1,"Area upgrade sync did not update CompleteTime and DecideStatus");
   });
   Run("natural completion in hideout syncs native reward availability with preview and instant completion off",()=>{
-   var app=Reset(true);Ready(app);var producer=Live(app);Option("Preview cultist rewards",false);CharacterDataPanel.Handler=_=>Task.FromResult(Ritual(true));
+   var app=Reset(true);var profile=Ready(app);var producer=Live(app);Option("Preview cultist rewards",false);CharacterDataPanel.Handler=_=>Task.FromResult(Ritual(true));
+   var saved=new ProductionData{StartTimestamp=1234,ProductionTime=120,Progress=20,InProgress=true};profile.Hideout!.Production["ritual"]=saved;
    CultistCircleControl.Tick();At(3,CultistCircleControl.Tick);
-   Check(producer.Updates==1&&producer.LastUpdate is {Progress:0,InProgress:false,AvailableForFinish:true},"Natural completion did not reach native producer");
-   At(6,CultistCircleControl.Tick);Check(producer.Updates==1,"Repeated status duplicated completed reward storage");
+   Check(producer.Updates==1&&producer.ProducingItems["ritual"] is {Progress:1,AvailableForFinish:true,_producingProcess.IsInProgress:false},"Native timer remained active after server completion");
+   Check(saved is {ProductionTime:100,Progress:0,InProgress:false,AvailableForFinish:true},"Local profile lost the native server completion format");
+   At(6,CultistCircleControl.Tick);Check(producer.Updates==1,"Repeated status reapplied the completed ritual");
    Check(CharacterDataPanel.Calls.All(p=>(string)p["action"]! == "cultistStatus"),"Natural completion silently finished or claimed a ritual");
+  });
+  Run("entering the hideout replaces a captured producer and retries with a fresh capture",()=>{
+   var app=Reset();Ready(app);var previous=Live(app);Option("Instant cultist circle",true);
+   CharacterDataPanel.Handler=_=>Task.FromResult(Ritual(true));CultistCircleControl.Tick();
+   Singleton<AbstractGame>.Instance=new HideoutGame{InRaid=true};var current=Live(app);
+   At(3,CultistCircleControl.Tick);Check(previous.Updates==0&&current.Updates==0,"Stale response updated a producer after the transition");
+   At(6,CultistCircleControl.Tick);Check(previous.Updates==0&&current.Updates==1,"Fresh status did not update the visible producer");
+  });
+  Run("a new ritual with the same recipe rejects an old completion",()=>{
+   var app=Reset(true);var profile=Ready(app);var producer=Live(app);
+   CharacterDataPanel.Handler=_=>Task.FromResult(Ritual(true));CultistCircleControl.Tick();
+   profile.Hideout!.Production["ritual"]=new(){StartTimestamp=2345,ProductionTime=100,InProgress=true};
+   At(3,CultistCircleControl.Tick);Check(producer.Updates==0,"Completion was applied to a later sacrifice using the same recipe");
   });
   Run("running ritual stays running in hideout unless instant completion is enabled",()=>{
    var app=Reset(true);Ready(app);var producer=Live(app);Option("Preview cultist rewards",false);CharacterDataPanel.Handler=_=>Task.FromResult(Ritual(false));
