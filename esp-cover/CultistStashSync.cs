@@ -10,6 +10,7 @@ using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Newtonsoft.Json.Linq;
 namespace LocalSpt5Esp;
 internal static class CultistStashSync {
+ const string RewardGrid="CircleOfCultistsGrid1";
  static readonly HashSet<string> refreshed=new();
  static string diagnostic="尚未同步";
  internal static object Diagnostics(){
@@ -19,7 +20,31 @@ internal static class CultistStashSync {
   if(hideout?.AreaDatas!=null)foreach(var area in hideout.AreaDatas)if(area?.Template?.Type==EAreaType.CircleOfCultists)Inspect("display",area.StashController?._inventoryController);
   return new{inHideout=CultistCircleControl.InHideout,diagnostic,rows};
  }
- internal static void Initialize()=>CultistCircleControl.SyncStash=Apply;
+ internal static void Initialize(){
+  CultistCircleControl.SyncStash=Apply;
+  CultistCircleControl.OpenStash=OpenRewards;
+ }
+ static bool OpenRewards(JsonElement data){
+  var hideout=HideoutCraftControl.CurrentHideout;
+  var controller=hideout?._inventoryController;
+  if(hideout?.AreaDatas==null||controller?.Inventory?.HideoutAreaStashes==null||
+     !controller.Inventory.HideoutAreaStashes.TryGetValue(EAreaType.CircleOfCultists,out var stash)||stash?.Grids==null||
+     !data.TryGetProperty("stashId",out var stashProp)||stashProp.ValueKind!=JsonValueKind.String||
+     stashProp.GetString() is not {} stashId||stashId!=stash.Id.ToString())return false;
+  var grid=stash.Grids.FirstOrDefault(g=>g?.ID==RewardGrid);
+  if(grid==null||!hideout.AreaDatas.Any(area=>area?.Template?.Type==EAreaType.CircleOfCultists))return false;
+  var rewardIds=new HashSet<string>(StringComparer.Ordinal);
+  foreach(var entry in data.GetProperty("stashItems").EnumerateArray()){
+   if(IsRewardRoot(entry,stashId)&&entry.TryGetProperty("_id",out var id)&&id.ValueKind==JsonValueKind.String&&id.GetString() is {} rewardId)
+    rewardIds.Add(rewardId);
+  }
+  if(!grid.Items.Any(item=>item!=null&&rewardIds.Contains(item.Id.ToString())))return false;
+  hideout.ShowAreaItemsTransferScreen(EAreaType.CircleOfCultists);
+  return true;
+ }
+ static bool IsRewardRoot(JsonElement entry,string stashId)=>
+  entry.TryGetProperty("parentId",out var parent)&&parent.GetString()==stashId&&
+  entry.TryGetProperty("slotId",out var slot)&&slot.GetString()==RewardGrid;
  internal static void Apply(JsonElement data){
   if(!CultistCircleControl.InHideout||ItemSpawner.InRaid())return;
   var hideout=HideoutCraftControl.CurrentHideout;
@@ -42,14 +67,14 @@ internal static class CultistStashSync {
   if(stashId.Length==0||!data.TryGetProperty("stashItems",out var itemsProp)||itemsProp.ValueKind!=JsonValueKind.Array||itemsProp.GetArrayLength()==0)return;
   if(controller?.Inventory?.HideoutAreaStashes==null)return;
   if(!controller.Inventory.HideoutAreaStashes.TryGetValue(EAreaType.CircleOfCultists,out var stash)||stash==null||stash.Id.ToString()!=stashId||stash.Grids==null||stash.Grids.Length==0)return;
-  var grid=stash.Grids.FirstOrDefault(g=>g?.ID=="CircleOfCultistsGrid1");
+  var grid=stash.Grids.FirstOrDefault(g=>g?.ID==RewardGrid);
   if(grid==null)return;
   var factory=Singleton<ItemFactory>.Instance;if(factory==null)return;
   var existing=new HashSet<string>(StringComparer.Ordinal);
   foreach(var item in stash.GetAllItems())if(item!=null)existing.Add(item.Id.ToString());
   var all=new List<JsonElement>();
   foreach(var entry in itemsProp.EnumerateArray())all.Add(entry);
-  var roots=all.Where(e=>e.TryGetProperty("_id",out var idProp)&&!existing.Contains(idProp.GetString()??"")&&e.TryGetProperty("parentId",out var pProp)&&pProp.GetString()==stashId&&e.TryGetProperty("slotId",out var sProp)&&sProp.GetString()=="CircleOfCultistsGrid1").ToArray();
+  var roots=all.Where(e=>e.TryGetProperty("_id",out var idProp)&&!existing.Contains(idProp.GetString()??"")&&IsRewardRoot(e,stashId)).ToArray();
   diagnostic=$"待同步奖励 {roots.Length}，本地物品 {existing.Count}";
   if(roots.Length==0)return;
   int added=0;

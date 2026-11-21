@@ -20,7 +20,8 @@ static class Tests {
   foreach(var type in new[]{Craft,Circle})Set(type,"next",0f);Set(Circle,"visibleUntil",0f);
   Plugin.Self=new();FeatureConfig.Entries.Clear();HideoutCraftControl.Initialize(Plugin.Self);CultistCircleControl.Initialize(Plugin.Self);
   CharacterDataPanel.Calls.Clear();CharacterDataPanel.Handler=_=>new TaskCompletionSource<string>().Task;
-  InterfaceMenu.Click=_=>false;GUI.enabled=true;Time.unscaledTime=0;EFT.UI.ItemUiContext.Instance=null;
+  InterfaceMenu.Click=_=>false;InterfaceMenu.Closes=0;CultistCircleControl.OpenStash=null;
+  GUI.enabled=true;Time.unscaledTime=0;EFT.UI.ItemUiContext.Instance=null;
   var app=new TarkovApplication();Singleton<TarkovApplication>.Instance=app;Singleton<AbstractApplication>.Instance=null;
   Singleton<AbstractGame>.Instance=hideout?new HideoutGame{InRaid=true}:null;return app;
  }
@@ -123,6 +124,32 @@ static class Tests {
    At(6,CultistCircleControl.Tick);
    Check(stashSyncs==2,"Inactive ritual in hideout with orphaned stash items did not invoke SyncStash");
    CultistCircleControl.SyncStash=null;
+  });
+  Run("cultist reward transfer opens only on a manual click for the current hideout profile",()=>{
+   foreach(var (active,ready,rewards,allowed) in new[]{(true,true,true,true),(false,false,true,true),(true,false,true,false),(false,false,false,false)}){
+    var app=Reset(true);Ready(app);Live(app);
+    var production=active?new{id="ritual",startTimestamp=1234,productionTime=100,inProgress=!ready,availableForFinish=ready}:null;
+    var stashItems=rewards?new[]{new{_id="reward"}}:[];
+    CharacterDataPanel.Handler=_=>Task.FromResult(JsonSerializer.Serialize(new{err=0,data=new{profileId="p",active,production,items=Array.Empty<object>(),stashId="stash",stashItems}}));
+    int opens=0;CultistCircleControl.OpenStash=data=>{opens++;return data.GetProperty("stashId").GetString()=="stash";};
+    CultistCircleControl.Tick();At(3,CultistCircleControl.Tick);
+    Check(opens==0,"Polling opened the transfer screen");
+    InterfaceMenu.Click=text=>text=="打开仪式圈奖励转移";
+    CultistCircleControl.Draw(new(0,0,600,600));
+    int expected=allowed?1:0;
+    Check(opens==expected&&InterfaceMenu.Closes==expected,"Manual open did not match reward availability");
+    if(!allowed)continue;
+    Option("Allow cultist rewards in hideout",false);
+    Call(Circle,"OpenRewards");
+    Option("Allow cultist rewards in hideout",true);
+    Ready(app,"other");Call(Circle,"OpenRewards");
+    Ready(app);Singleton<AbstractGame>.Instance=new(){InRaid=true};Call(Circle,"OpenRewards");
+    Singleton<AbstractGame>.Instance=new HideoutGame{InRaid=true};
+    CultistCircleControl.OpenStash=_=>false;
+    Call(Circle,"OpenRewards");
+    Check(opens==expected&&InterfaceMenu.Closes==expected,"A stale request or missing live reward closed the menu");
+    Check(CharacterDataPanel.Calls.All(p=>(string)p["action"]! == "cultistStatus"),"Opening the screen submitted a ritual mutation");
+   }
   });
  }
 }

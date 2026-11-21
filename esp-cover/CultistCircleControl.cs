@@ -14,6 +14,7 @@ internal static class CultistCircleControl {
  static readonly Dictionary<string,Capture> captures=new();
  static Task<string>? request;static JsonElement? snapshot;static string owner="",requestedOwner="",status="";static bool draining;static float next,visibleUntil;static Vector2 scroll;
  internal static Action<JsonElement>? SyncStash;
+ internal static Func<JsonElement,bool>? OpenStash;
  internal static bool InHideout=>Singleton<AbstractGame>.Instance?.TryCast<HideoutGame>()!=null||Singleton<GameWorld>.Instance?.TryCast<HideoutGameWorld>()!=null;
  static IEnumerable<CultistsProducer> CurrentProducers(){
   if(HideoutCraftControl.CurrentController?._areaProducers is not {} areas)yield break;
@@ -57,6 +58,18 @@ internal static class CultistCircleControl {
   }
  }catch(Exception error){request=null;snapshot=null;captures.Clear();next=Time.unscaledTime+10;status="仪式圈请求失败，请刷新重试。";Plugin.Self.Error(error);}}
  static bool Ready(JsonElement row)=>row.GetProperty("availableForFinish").GetBoolean()&&!row.GetProperty("inProgress").GetBoolean();
+ static bool CanOpenStash(JsonElement data)=>
+  (!data.GetProperty("active").GetBoolean()||Ready(data.GetProperty("production")))&&
+  data.TryGetProperty("stashItems",out var items)&&items.ValueKind==JsonValueKind.Array&&items.GetArrayLength()>0;
+ static void OpenRewards(){
+  try{
+   if(draining||!collectInHideout.Value||!InHideout||ItemSpawner.InRaid()||snapshot is not {} data||
+      HideoutCraftControl.CurrentProfile?.Id!=owner||!CanOpenStash(data)||OpenStash?.Invoke(data)!=true){
+    status="仪式圈奖励尚未同步到当前物品栏。";return;
+   }
+   InterfaceMenu.Close();
+  }catch(Exception error){status="无法打开仪式圈物品转移界面。";Plugin.Self.Error(error);}
+ }
  static bool Apply(JsonElement data,Profile profile){
   var row=data.GetProperty("production");string id=row.GetProperty("id").GetString()!;
   long start=row.GetProperty("startTimestamp").GetInt64();int duration=row.GetProperty("productionTime").GetInt32();
@@ -82,7 +95,10 @@ internal static class CultistCircleControl {
   return false;
  }
  internal static void Draw(Rect rect){
-  visibleUntil=Time.unscaledTime+1;float w=rect.width-24;scroll=GUI.BeginScrollView(rect,scroll,new Rect(0,0,w,Math.Max(rect.height-1,392+(snapshot?.GetProperty("items").GetArrayLength()??0)*38)));
+  visibleUntil=Time.unscaledTime+1;float w=rect.width-24;
+  bool showRewards=!draining&&collectInHideout.Value&&InHideout&&!ItemSpawner.InRaid()&&snapshot is {} rewards&&CanOpenStash(rewards);
+  float itemsTop=showRewards?438:394;
+  scroll=GUI.BeginScrollView(rect,scroll,new Rect(0,0,w,Math.Max(rect.height-1,itemsTop+(snapshot?.GetProperty("items").GetArrayLength()??0)*38)));
   try{InterfaceMenu.Label(new(4,0,w,32),"仪式圈",InterfaceMenu.Accent,20);InterfaceMenu.Paragraph(new(4,40,w-8,56),"献祭开始后查看本次已生成的奖励；不会重新抽取或提前领取。",null,13);
    if(InterfaceMenu.Button(new(4,104,w-8,36),I18n.Text("提前预览仪式圈奖励")+" · "+I18n.Text(preview.Value?"开启":"关闭"),preview.Value))preview.Value=!preview.Value;
    if(InterfaceMenu.Button(new(4,150,w-8,36),I18n.Text("仪式圈自动秒完成")+" · "+I18n.Text(instant.Value?"开启":"关闭"),instant.Value))instant.Value=!instant.Value;
@@ -90,7 +106,8 @@ internal static class CultistCircleControl {
    if(InterfaceMenu.Button(new(4,244,w-8,36),I18n.Text("身处藏身处时可获得仪式圈物品")+" · "+I18n.Text(collectInHideout.Value?"开启":"关闭"),collectInHideout.Value))collectInHideout.Value=!collectInHideout.Value;
    bool enabled=GUI.enabled;GUI.enabled=enabled&&request==null&&!ItemSpawner.InRaid()&&Time.unscaledTime>=next;try{if(InterfaceMenu.Button(new(4,296,(w-20)/2,36),"刷新仪式状态"))Begin(false);GUI.enabled=GUI.enabled&&snapshot is {} s&&s.GetProperty("active").GetBoolean()&&!Ready(s.GetProperty("production"));if(InterfaceMenu.Button(new(12+(w-20)/2,296,(w-20)/2,36),"立即完成本次仪式"))Begin(true);}finally{GUI.enabled=enabled;}
    InterfaceMenu.Paragraph(new(4,342,w-8,44),ItemSpawner.InRaid()?"请回到主菜单或藏身处后查看仪式圈。":request!=null?"正在读取或同步仪式状态…":status.Length>0?status:"刷新状态后可预览本次奖励。",null,13);
-   if(preview.Value&&snapshot is {} current){float y=394;foreach(var item in current.GetProperty("items").EnumerateArray()){string tpl=item.GetProperty("tpl").GetString()!;InterfaceMenu.Label(new(4,y,w-8,34),LootDisplay.TemplateName(tpl)+" × "+item.GetProperty("count").GetRawText(),null,14,translate:false);y+=38;}}
+   if(showRewards&&InterfaceMenu.Button(new(4,394,w-8,36),"打开仪式圈奖励转移"))OpenRewards();
+   if(preview.Value&&snapshot is {} current){float y=itemsTop;foreach(var item in current.GetProperty("items").EnumerateArray()){string tpl=item.GetProperty("tpl").GetString()!;InterfaceMenu.Label(new(4,y,w-8,34),LootDisplay.TemplateName(tpl)+" × "+item.GetProperty("count").GetRawText(),null,14,translate:false);y+=38;}}
   }finally{GUI.EndScrollView();}
  }
  internal static CornerGameData.Cultist? ReadSnapshot(Profile profile){

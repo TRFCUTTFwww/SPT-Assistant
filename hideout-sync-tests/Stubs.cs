@@ -80,6 +80,8 @@ namespace LocalSpt5Esp {
  }
  internal static class InterfaceMenu {
   internal static object Accent=new();internal static Func<string,bool> Click=_=>false;
+  internal static int Closes;
+  internal static void Close()=>Closes++;
   internal static bool Button(UnityEngine.Rect rect,string text,bool selected=false)=>UnityEngine.GUI.enabled&&Click(text);
   internal static void Label(UnityEngine.Rect rect,string text,object? color=null,int size=12,bool translate=true){}
   internal static void Paragraph(UnityEngine.Rect rect,string text,object? color=null,int size=12){}
