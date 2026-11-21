@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.3.5 — 2026-11-21
+
+Summary of changes since `v2.3.1` (covering `2.3.2` – `2.3.5` through `f6eed87`; see [2.3.5 release notes](docs/release-2.3.5.md) for full details):
+
+- **Independent seasonal character (`2.3.3`–`2.3.5`)**: Separate blank local seasonal profile with HTTP request-boundary account routing, automatic pre-creation backup, `LocalGearMail/seasons` linking, and PVE Seasons menu entry.
+- **SQLite raid history & rolling timeout protection**: New `Raid history` (`历史战局`) sidebar backed by `LocalGearMail/history/raids.sqlite` recording entry gear (collapsible attachments), recorded transit routes, outcomes, items, and kills; rolling timeout buffer with uncapped overtime clock and 1s native `O` timer sync.
+- **Cultist Circle & hideout sync**: Reward preview, instant finish, auto-complete, direct sync into hideout `CircleOfCultistsGrid1`, and opening the native reward transfer screen from hideout.
+- **Per-map AI/raid parameters & AI routes**: Persistent per-map AI/raid parameter editing and presets (`LocalRaidControls/parameters.json`) with full CN/EN localization across all 13 maps, read-only server AI spawn info, natural spawn pause, and AI ground route/destination overlays.
+- **JavaScript corner scripts (`Settings & hotkeys → JavaScript`)**: Embedded Jint 4.4.1 / Acornima 1.2.0 runtime with `fetch`, live `game` snapshot, display expressions, test output box, `ms`–`hour` intervals, and `@game-thread` live object access, alongside static corner text.
+- **World editor expansions**: Map container catalog and `F7` continuous floating placement, custom loot pools/rerolls, `F2` container rename, door state/lock controls respected by bot navigation, claymore tools/native mesh extraction, red target hover highlights, undo stack, JSON blueprints, and Windows file pickers.
+- **Hot-reload safety, crash monitor & fixes**: Host `1.6.2` paused reload recovery, full-screen `:(` error recovery overlay, external `Assistant.CrashMonitor.exe`, opt-in `Debug` error simulation tab, `ALL`–`OFF` logging & redacted diagnostics ZIP export, full-body bullet ricochet, pre-raid map clock (`HH:MM:SS`), armored train interpolation/lookup caching, Scav diplomacy safety fix, immediate FIR icon refresh, fun-item quarantine, Blackwall cast audio fix, and embedded `AssistantBuildNumber`.
+
+## 2.3.1 — 2026-11-16
+
+- Misc switches: Scav **Diplomatic immunity**, **In high demand** instant flea sales, **Trader/Flea clearance sale**, **Free flea fees** hotfix, and **You can't see me** border sniper blocking.
+- **Data → Profile backups**: SQLite snapshots, category/full cross-character restoration, preview validation, and automatic pre-restore backups.
+- Armored train `HH:MM:SS` schedules, BTR nearest-stop dispatch & stop markers, pre-raid duration, body-part/energy/hydration editing, independent keycard-hacking toggle, FIR item context actions, `/misc`, `/fir`, `/train` commands, and GitHub update proxy credentials.
+
 ## 2.3 — 2026-11-16
 
 - BTR: independent free rides and free item delivery, immediate post-raid mail, call to nearest reachable stop, optional 10×100 transfer container.

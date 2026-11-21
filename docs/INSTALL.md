@@ -1,10 +1,10 @@
 # 安装与故障排查 / Installation
 
-适用 Windows 11 / SPT 5.0 BE / EFT 1.3.0.1.48558。辅助版本为 2.3.1；安装程序版本为 2.3.1.0。实验版的战局效果仍需按发布说明验证。
+适用 Windows 11 / SPT 5.0 BE / EFT 1.3.0.1.48558。辅助版本为 2.3.5；安装程序版本为 2.3.5.0。实验版的战局效果仍需按发布说明验证。
 
 ## 最简单的安装方法
 
-1. 打开 [Releases](https://github.com/TRFCUTTFwww/SPT-Assistant/releases)，在 **Assets（资源）** 中下载 `SPT-Assistant-2.3.1-Setup.exe`。
+1. 打开 [Releases](https://github.com/TRFCUTTFwww/SPT-Assistant/releases)，在 **Assets（资源）** 中下载 `SPT-Assistant-2.3.5-Setup.exe`。
 2. 双击 EXE，不需要先解压，也不需要安装 .NET SDK。安装器使用 Windows 自带的 .NET Framework 和 PowerShell，全部模组资源都在 EXE 内。
 3. 选择 **SPT 目录里的 EscapeFromTarkov.exe**。可以拖入游戏文件夹或 EXE；误选 `SPT_Runtime` 等子目录时会尝试定位上一级的游戏。
 4. 单人 / 房主用默认模式；连接朋友的服务器时选择“仅安装客户端”。Fika 仍需另行安装。
@@ -26,17 +26,17 @@
 | 文件被占用 / 无法写入 | 关闭游戏、服务端和正在打开相关文件的程序后重试，必要时查看日志。 |
 | 安装失败 | 安装器会尝试恢复已经替换的文件。保留备份和日志；若提示部分恢复未完成，不要删除备份。 |
 
-安装日志位于 `%LOCALAPPDATA%/SPTAssistant/Logs`，可在界面点击“查看日志”。备份位于游戏目录的 `mod-backups/assistant-2.3.1-*`，成功或失败后都不自动删除。设置、已有管理密钥、MC 钱包和角色数据不随安装包分发；完整安装在替换前备份角色存档。旧 MC 与 3-X 加载包的迁移规则见 [2.3 说明](release-2.3.md)。
+安装日志位于 `%LOCALAPPDATA%/SPTAssistant/Logs`，可在界面点击“查看日志”。备份位于游戏目录的 `mod-backups/assistant-2.3.5-*`，成功或失败后都不自动删除。设置、已有管理密钥、MC 钱包和角色数据不随安装包分发；完整安装在替换前备份角色存档。旧 MC 与 3-X 加载包的迁移规则见 [2.3 说明](release-2.3.md)。
 
 ## English quick start
 
-Download **SPT-Assistant-2.3.1-Setup.exe** from release **Assets**, double-click it, select the SPT game's **EscapeFromTarkov.exe**, close the game/server and click **Install now**. Use the default mode for single-player/hosting, or client only when joining a friend. In game, press **Right Shift**. Setup is offline and uses Windows components; the .NET SDK is not needed.
+Download **SPT-Assistant-2.3.5-Setup.exe** from release **Assets**, double-click it, select the SPT game's **EscapeFromTarkov.exe**, close the game/server and click **Install now**. Use the default mode for single-player/hosting, or client only when joining a friend. In game, press **Right Shift**. Setup is offline and uses Windows components; the .NET SDK is not needed.
 
 Wrong version: use SPT 5.0 BE / EFT 48558. Missing dependencies: complete SPT installation and launch the matching game once. Access denied: use Retry as admin or select a writable game folder. Damaged package: download the EXE again. Existing files are backed up and rollback is attempted on failure; retain backups and the installation log if recovery needs attention.
 
 ## 命令行与源码构建（可选）
 
-旧 ZIP 安装方式继续保留。解压 `SPT-Assistant-2.3.1-experimental.zip` 后，可执行：
+旧 ZIP 安装方式继续保留。解压 `SPT-Assistant-2.3.5-experimental.zip` 后，可执行：
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Install.ps1 -GameRoot "D:\SPT" -Language ch

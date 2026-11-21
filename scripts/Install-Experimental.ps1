@@ -114,7 +114,7 @@ foreach($process in Get-Process -Name $processNames -ErrorAction SilentlyContinu
  try{$processPath=$process.Path}catch{}
  if(-not $processPath -or $processPath.StartsWith($prefix,[StringComparison]::OrdinalIgnoreCase)){Stop-Install 'GAME_RUNNING' 'Close the target game and SPT server, then retry.'}
 }
-$backup=Target ('mod-backups/assistant-2.3.1-'+[DateTime]::Now.ToString('yyyyMMdd-HHmmssfff'))
+$backup=Target ('mod-backups/assistant-2.3.5-'+[DateTime]::Now.ToString('yyyyMMdd-HHmmssfff'))
 $completed=[Collections.Generic.List[object]]::new()
 $legacyBackup=$null
 $retired=[Collections.Generic.List[object]]::new()

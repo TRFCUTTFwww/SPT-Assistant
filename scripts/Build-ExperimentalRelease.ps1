@@ -34,8 +34,8 @@ if(-not([Diagnostics.FileVersionInfo]::GetVersionInfo($core).FileVersion.StartsW
 foreach($entry in $components.GetEnumerator()){Copy-Item -LiteralPath (Join-Path $repo $entry.Key) -Destination (Join-Path $payload $entry.Value)}
 Copy-Item -LiteralPath (Join-Path $repo 'scripts/Install-Experimental.ps1') -Destination (Join-Path $stage 'Install.ps1')
 foreach($name in @('README.md','README.zh-CN.md','LICENSE')){Copy-Item -LiteralPath (Join-Path $repo $name) -Destination $stage}
-[IO.Directory]::CreateDirectory((Join-Path $stage 'docs'))|Out-Null
-foreach($name in @('INSTALL.md','profile-backup.md','release-2.3.5.md','validation-2.3.5.json','release-2.3.4.md','validation-2.3.4.json','release-2.3.3.md','validation-2.3.3.json','release-2.3.2.md','release-2.3.1.md','validation-2.3.1.json','release-2.3.md','validation-2.3.json','installer-validation-2.3.json','hotkeys.md','world-editor.md','blackwall-pulse.md','blackwall-assets.json','minecraft-assets.json')){Copy-Item -LiteralPath (Join-Path $repo ('docs/'+$name)) -Destination (Join-Path $stage 'docs')}
+[IO.Directory]::CreateDirectory((Join-Path $stage 'docs/licenses'))|Out-Null
+foreach($name in @('INSTALL.md','profile-backup.md','release-2.3.5.md','validation-2.3.5.json','release-2.3.4.md','validation-2.3.4.json','release-2.3.3.md','validation-2.3.3.json','release-2.3.2.md','release-2.3.1.md','validation-2.3.1.json','release-2.3.md','validation-2.3.json','installer-validation-2.3.json','hotkeys.md','world-editor.md','blackwall-pulse.md','blackwall-assets.json','minecraft-assets.json','CHAT.md','COMMAND-OPTIONS.md','corner-version-scripts.md','raid-parameters.md','raid-history-20261118.md','universal-mod-host.md','licenses/Jint.txt','licenses/Acornima.txt')){Copy-Item -LiteralPath (Join-Path $repo ('docs/'+$name)) -Destination (Join-Path $stage ('docs/'+$name))}
 # Package only the explicitly inventoried Blackwall runtime resources.
 if(!$BlackwallAssetRoot){
  $BlackwallAssetRoot=Join-Path $GameRoot 'BepInEx/plugins/LocalSpt5ESP/Blackwall/Assets'

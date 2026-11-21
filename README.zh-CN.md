@@ -4,7 +4,7 @@
 
 为 **SPT 单机塔科夫**打造的游戏内控制面板、场景编辑器与客户端/服务端扩展工具集，基于 C#、Unity IMGUI/Harmony 与 .NET 10 构建。在一个统一界面中管理角色、战局、AI、物品、任务、剧情与服务端规则。
 
-**当前源码版本：** `2.3.5`（开发中） · **最新打包发布：** `v2.3.1` · **目标环境：** `SPT 5.0 BE / EFT 1.3.0.1.48558`（Windows x64，Unity IL2CPP / .NET 10）
+**当前版本：** `2.3.5` · **目标环境：** `SPT 5.0 BE / EFT 1.3.0.1.48558`（Windows x64，Unity IL2CPP / .NET 10）
 
 > **不稳定 — 实验版本**
 >
@@ -16,7 +16,7 @@
 
 ## 快速安装（推荐）
 
-1. 前往 [Releases 发布页](https://github.com/TRFCUTTFwww/SPT-Assistant/releases)，在 **Assets / 资源** 中下载 **`SPT-Assistant-2.3.1-Setup.exe`**（不要下载 `Source code`，那是开发者源码）。
+1. 前往 [Releases 发布页](https://github.com/TRFCUTTFwww/SPT-Assistant/releases)，在 **Assets / 资源** 中下载 **`SPT-Assistant-2.3.5-Setup.exe`**（不要下载 `Source code`，那是开发者源码）。
 2. 双击安装程序，选择你平时使用的 **SPT 游戏目录中的 `EscapeFromTarkov.exe`**。
 3. 关闭游戏客户端与 SPT 服务端，点击 **开始安装**。
 4. 照常启动 SPT 服务端与游戏，进入游戏后按 **右 Shift** 打开辅助面板。

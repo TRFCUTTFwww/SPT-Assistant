@@ -4,7 +4,7 @@
 
 An extensible in-game control panel, world editor, and client/server toolkit for **SPT (Single Player Tarkov)**, built with C#, Unity IMGUI/Harmony, and .NET 10. Manage your character, raids, AI, items, quests, story, and server rules from one unified interface.
 
-**Source version:** `2.3.5` (active development) · **Latest packaged release:** `v2.3.1` · **Target:** `SPT 5.0 BE / EFT 1.3.0.1.48558` (Windows x64, Unity IL2CPP / .NET 10)
+**Version:** `2.3.5` · **Target:** `SPT 5.0 BE / EFT 1.3.0.1.48558` (Windows x64, Unity IL2CPP / .NET 10)
 
 > **UNSTABLE — EXPERIMENTAL**
 >
@@ -16,7 +16,7 @@ An extensible in-game control panel, world editor, and client/server toolkit for
 
 ## Quick Installation (Recommended)
 
-1. Open [Releases](https://github.com/TRFCUTTFwww/SPT-Assistant/releases) and under **Assets**, download **`SPT-Assistant-2.3.1-Setup.exe`** (do **not** download `Source code` unless you are building from source).
+1. Open [Releases](https://github.com/TRFCUTTFwww/SPT-Assistant/releases) and under **Assets**, download **`SPT-Assistant-2.3.5-Setup.exe`** (do **not** download `Source code` unless you are building from source).
 2. Double-click the installer and select **`EscapeFromTarkov.exe`** inside your SPT game folder.
 3. Close both the EFT client and the SPT server, then click **Install now**.
 4. Start the SPT server and game as usual, then press **Right Shift** in game to open the panel.
