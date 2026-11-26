@@ -1,0 +1,123 @@
+using System;
+using BepInEx.Configuration;
+using Comfort.Common;
+using EFT;
+using EFT.Ballistics;
+using UnityEngine;
+using UnityEngine.Rendering;
+namespace LocalSpt5Esp;
+
+internal static class LaserEyes {
+ static ConfigEntry<bool> enabled=null!,continuous=null!,throughWalls=null!;
+ static ConfigEntry<KeyCode> holdKey=null!;
+ static ConfigEntry<float> range=null!;
+ static GameObject? root;static Material? material;
+ static readonly LineRenderer?[] beams=new LineRenderer?[4];
+ static readonly Vector3[] ends=new Vector3[2];
+ static readonly bool[] visible=new bool[2];
+ static readonly LaserEyeInput input=new();
+ static bool requested;static KeyCode sampledKey;static string stopped="not requested";static int starts,stops;
+ static IntPtr world;static float nextTrace,nextError;static Vector3 lastDirection,lastPosition;static bool firing,lastThroughWalls;
+ internal static void Initialize(){
+  const string section="61. 镭射眼";
+  enabled=FeatureConfig.Bind(section,"Laser eyes","镭射眼（命中秒杀）",false,"双眼发射红色激光，命中 AI 立即击杀。");
+  continuous=FeatureConfig.Bind(section,"Laser eyes continuous","镭射眼持续发射",false,"无需按住热键，持续发射激光。");
+  throughWalls=FeatureConfig.Bind(section,"Laser eyes through walls","激光穿墙",false,"激光忽略墙体与地形遮挡穿透命中 AI。");
+  holdKey=FeatureConfig.Bind(section,"Laser eyes fire key","镭射眼按住键",KeyCode.F10,"按住发射激光，松开停止。");
+  range=FeatureConfig.Bind(section,"Laser eyes reach","镭射眼最大距离（米）",300f,"",new AcceptableValueRange<float>(1,1000));
+ }
+ static bool KeyState(KeyCode key,int state){
+  if(key==KeyCode.None)return false;
+  int mouse=(int)key-(int)KeyCode.Mouse0;
+  if(mouse is >=0 and <=6)return state switch{1=>Input.GetMouseButtonDown(mouse),2=>Input.GetMouseButtonUp(mouse),_=>Input.GetMouseButton(mouse)};
+  return state switch{1=>Input.GetKeyDown(key),2=>Input.GetKeyUp(key),_=>Input.GetKey(key)};
+ }
+ internal static void CaptureInput(){
+  var player=Singleton<GameWorld>.Instance?.MainPlayer;var key=holdKey.Value;
+  if(sampledKey!=key){input.Reset();sampledKey=key;}
+  bool reserved=key==KeyCode.F10&&(Input.GetKey(KeyCode.LeftControl)||Input.GetKey(KeyCode.RightControl));
+  bool allowed=LaserEyeRules.CanFire(enabled.Value,true,RaidClock.Active,player?.IsYourPlayer==true&&player.HealthController?.IsAlive==true,InterfaceMenu.InputBlocked||WorldEditor.Active,DirectorStage.FreeActive,Cursor.visible,Application.isFocused);
+  requested=input.Sample(Time.unscaledTime,KeyState(key,0),KeyState(key,1),KeyState(key,2),allowed&&!reserved);
+ }
+ internal static object Diagnostics()=>new{enabled=enabled.Value,continuous=continuous.Value,key=holdKey.Value.ToString(),requested,firing,stopped,starts,stops,held=KeyState(holdKey.Value,0),down=KeyState(holdKey.Value,1),up=KeyState(holdKey.Value,2),menuBlocked=InterfaceMenu.InputBlocked,editor=WorldEditor.Active,freeCamera=DirectorStage.FreeActive,cursor=Cursor.visible,focused=Application.isFocused,utc=DateTime.UtcNow};
+ internal static void Tick(){
+  try{
+   var current=Singleton<GameWorld>.Instance;var player=current?.MainPlayer;
+   CaptureInput();
+   if(!LaserEyeRules.CanFire(enabled.Value,continuous.Value||requested,RaidClock.Active,player?.IsYourPlayer==true&&player.HealthController?.IsAlive==true,InterfaceMenu.InputBlocked||WorldEditor.Active,DirectorStage.FreeActive,Cursor.visible,Application.isFocused)){Hide(!enabled.Value?"disabled":!RaidClock.Active?"not in raid":player?.HealthController?.IsAlive!=true?"not alive":InterfaceMenu.InputBlocked?"menu input":WorldEditor.Active?"editor":DirectorStage.FreeActive?"free camera":!Application.isFocused?"unfocused":Cursor.visible?"cursor":"released");return;}
+   if(current==null||player==null){Hide();return;}
+   var camera=OverlayProjection.MainCamera;if(camera==null){Hide();return;}
+   if(world!=current.Pointer){Hide();world=current.Pointer;}
+   float limit=range.Value;if(!float.IsFinite(limit)||limit<=0){Hide();return;}limit=Math.Min(limit,1000);
+   var forward=camera.transform.forward;var first=player.PointOfView==EPointOfView.FirstPerson;
+   var rotation=Quaternion.Euler(0,player.Rotation.x,0);
+   var right=first?camera.transform.right:rotation*Vector3.right;
+   var head=player.PlayerBones?.Head?.Original;
+   var center=first?camera.transform.position:(head!=null?head.position:player.CameraPosition?.position??player.Position+Vector3.up*1.6f)+Vector3.up*.035f+rotation*Vector3.forward*.075f;
+   if(first)center-=camera.transform.up*.025f;
+   bool trace=!firing||lastThroughWalls!=throughWalls.Value||Time.unscaledTime>=nextTrace||Vector3.Angle(forward,lastDirection)>.15f||Vector3.Distance(center,lastPosition)>.01f;
+   if(trace){
+    nextTrace=Time.unscaledTime+.05f;lastDirection=forward;lastPosition=center;lastThroughWalls=throughWalls.Value;
+    var aimRay=camera.ViewportPointToRay(new Vector3(.5f,.5f));
+    var sight=CrosshairProbe.Read(current,player,aimRay,limit,throughWalls.Value);
+    if(sight.State==CrosshairState.Overflow){Hide();return;}
+    var aim=sight.State==CrosshairState.Empty?aimRay.GetPoint(limit):sight.Point;
+    // Resolve both contacts before damage changes the alive roster or corpse colliders.
+    var left=Trace(current,player,center-right*.032f,aim,forward,limit,0);
+    var rightHit=Trace(current,player,center+right*.032f,aim,forward,limit,1);
+    if(left.Actor!=null)Kill(player,left);
+    if(rightHit.Actor!=null&&rightHit.Actor.Pointer!=left.Actor?.Pointer)Kill(player,rightHit);
+   }
+   if(!Resources()){Hide();return;}
+   // Native beams always respect scene depth. Wall mode uses a separate layer
+   // with character-only depth instead of drawing over every actor with Always.
+   bool masked=throughWalls.Value&&LaserBeamOcclusion.Enable(current,beams,visible);
+   if(!masked)LaserBeamOcclusion.Disable();
+   if(!firing)starts++;firing=true;stopped="";
+   for(int eye=0;eye<2;eye++){
+    var origin=center+right*(eye==0?-.032f:.032f);var delta=ends[eye]-origin;
+    // Start visible first-person geometry just beyond the near plane, along the actual eye ray.
+    var start=first&&delta.magnitude>camera.nearClipPlane+.03f?origin+delta.normalized*(camera.nearClipPlane+.03f):origin;
+    // Keep the ordinary scene renderer alive even when the supplemental wall
+    // layer is unavailable, empty or overwritten by a post-processing effect.
+    for(int layer=0;layer<2;layer++){var beam=beams[eye*2+layer]!;beam.enabled=visible[eye];if(!visible[eye])continue;beam.SetPosition(0,start);beam.SetPosition(1,ends[eye]);}
+   }
+  }catch(Exception error){Hide("exception: "+error.Message);if(Time.unscaledTime>=nextError){nextError=Time.unscaledTime+15;Plugin.Self.Log.LogWarning("Laser eyes: "+error);}}
+ }
+ static CrosshairContact Trace(GameWorld current,Player player,Vector3 origin,Vector3 aim,Vector3 forward,float limit,int eye){
+  if(!LaserEyeRules.Beam(N(origin),N(aim),N(forward),limit,out var direction,out float length)){visible[eye]=false;return default;}
+  var ray=new Ray(origin,U(direction));var hit=CrosshairProbe.Read(current,player,ray,length,throughWalls.Value);
+  visible[eye]=hit.State!=CrosshairState.Overflow;
+  ends[eye]=hit.State==CrosshairState.Empty?ray.GetPoint(length):hit.Point;
+  return hit;
+ }
+ static void Kill(Player player,CrosshairContact hit){
+  var target=hit.Actor;
+  if(hit.State!=CrosshairState.Target||target==null||target.IsYourPlayer||target.Pointer==player.Pointer||!(target.IsAI||target.AIData?.BotOwner!=null)||target.ActiveHealthController is not {} health||!health.IsAlive||Plugin.DamageBlocked(health))return;
+  float total=health.GetBodyPartHealth(EBodyPart.Common,false).Current;
+  if(!float.IsFinite(total)||total<=0)return;
+  float lethal=Math.Max(10000,Math.Min(total,1000000)*10);
+  var info=new DamageInfo{DamageType=EDamageType.Bullet,Damage=lethal,Player=new PlayerBridge(player).Cast<IObserverToPlayerBridge>(),MasterOrigin=player.Position,HitPoint=hit.Point,Direction=(hit.Point-player.Position).normalized,SourceId="local-laser-eyes"};
+  target.LastAggressor=player;
+  health.ApplyDamage(EBodyPart.Head,lethal,info);
+  // Native death creates the normal corpse. Do not delete actors or manually invoke death callbacks.
+  if(health.IsAlive&&!Plugin.DamageBlocked(health))health.Kill(EDamageType.Bullet);
+ }
+ static System.Numerics.Vector3 N(Vector3 v)=>new(v.x,v.y,v.z);
+ static Vector3 U(System.Numerics.Vector3 v)=>new(v.X,v.Y,v.Z);
+ static bool Resources(){
+  if(root!=null&&beams[3]!=null)return true;
+  var shader=Shader.Find("Hidden/Internal-Colored");if(shader==null||!shader.isSupported)return false;
+  material=new Material(shader){hideFlags=HideFlags.HideAndDontSave};material.SetInt("_SrcBlend",(int)BlendMode.SrcAlpha);material.SetInt("_DstBlend",(int)BlendMode.OneMinusSrcAlpha);material.SetInt("_Cull",(int)CullMode.Off);material.SetInt("_ZWrite",0);material.SetInt("_ZTest",(int)CompareFunction.LessEqual);
+  root=new GameObject("SPT Assistant laser eyes"){hideFlags=HideFlags.HideAndDontSave};
+  for(int i=0;i<beams.Length;i++){
+   var node=new GameObject(i%2==0?"Red beam":"Hot core"){hideFlags=HideFlags.HideAndDontSave};node.transform.SetParent(root.transform,false);
+   var beam=node.AddComponent<LineRenderer>();beams[i]=beam;beam.enabled=false;beam.sharedMaterial=material;beam.useWorldSpace=true;beam.positionCount=2;
+   beam.startWidth=beam.endWidth=i%2==0?.035f:.009f;beam.startColor=beam.endColor=i%2==0?new Color(1,.01f,.015f,.7f):new Color(1,.65f,.55f,1);
+   beam.shadowCastingMode=ShadowCastingMode.Off;beam.receiveShadows=false;beam.lightProbeUsage=LightProbeUsage.Off;beam.reflectionProbeUsage=ReflectionProbeUsage.Off;beam.motionVectorGenerationMode=MotionVectorGenerationMode.ForceNoMotion;
+  }
+  return true;
+ }
+ static void Hide(string reason="render or trace unavailable"){LaserBeamOcclusion.Disable();if(firing)stops++;stopped=reason;firing=false;nextTrace=0;for(int i=0;i<beams.Length;i++)if(beams[i]!=null)beams[i]!.enabled=false;visible[0]=visible[1]=false;}
+ internal static void Reset(){input.Reset();requested=false;Hide();LaserBeamOcclusion.Reset();world=IntPtr.Zero;if(root!=null)UnityEngine.Object.Destroy(root);if(material!=null)UnityEngine.Object.Destroy(material);root=null;material=null;Array.Clear(beams);}
+}

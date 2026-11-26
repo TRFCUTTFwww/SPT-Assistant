@@ -1,0 +1,24 @@
+using IconRenderGuard;
+using Mono.Cecil;
+int count=0;
+void Check(bool condition,string name){if(!condition)throw new Exception(name);count++;Console.WriteLine("PASS "+name);}
+Check(IconRenderRules.Size(0,0,379,127)==(379,127),"zero-size requests recover the actual multi-cell item dimensions");
+Check(IconRenderRules.Size(64,0,379,127)==(64,127),"a valid axis is preserved while the other is repaired");
+Check(IconRenderRules.Size(-1,-4,64,64)==(64,64),"negative axes cannot reach the native render texture");
+Check(IconRenderRules.Size(0,0,0,-1)==(64,64),"malformed fallback metadata still gives a full nonzero cell");
+Check(Enumerable.Range(1,12).All(x=>Enumerable.Range(1,12).All(y=>IconRenderRules.Size(63*x+1,63*y+1,64,64)==(63*x+1,63*y+1))),"all valid native item sizes retain their original aspect ratio");
+Check(IconRenderRules.Hide(true,false,false,true),"a stale sibling is hidden even while the parent camera is inactive");
+Check(!IconRenderRules.Hide(true,false,true,true),"the captured model and attachments remain visible");
+Check(!IconRenderRules.Hide(true,false,false,false),"renderers outside the icon camera mask are untouched");
+Check(!IconRenderRules.Hide(false,false,false,true)&&!IconRenderRules.Hide(true,true,false,true),"disabled and previously hidden renderers retain their state");
+var root=Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,"../../../.."));
+using var guard=AssemblyDefinition.ReadAssembly(Path.Combine(root,"icon-render-guard/bin/Release/net10.0/Local.IconRenderGuard.HotModule.dll"));
+var type=guard.MainModule.Types.Single(t=>t.Name=="IconRenderModule");
+bool Calls(TypeDefinition t,string method,string callee)=>t.Methods.Single(m=>m.Name==method).Body.Instructions.Any(i=>i.Operand is MethodReference mr&&mr.Name==callee);
+Check(Calls(type,"ValidateSize","CalculateCellSize")&&Calls(type,"ValidateSize","GetCellPixelSize"),"public guard computes fallback dimensions from the actual item");
+Check(Calls(type,"BeforeCapture","ValidateSize")&&Calls(type,"IsolatePreview","IsChildOf")&&Calls(type,"IsolatePreview","set_forceRenderingOff"),"capture validates dimensions and isolates by model ownership after native scene setup");
+Check(Calls(type,"AfterCapture","set_forceRenderingOff")&&Calls(type,"AfterCapture","set_active")&&Calls(type,"AfterCapture","set_targetTexture"),"capture finalizer restores renderer, render-target and camera state");
+Check(!Calls(type,"IsolatePreview","SetActive")&&!Calls(type,"IsolatePreview","set_layer"),"normal capture isolation preserves model activation and layers");
+Check(Calls(type,"IsolatePreview","GetComponentsInChildren")&&!Calls(type,"IsolatePreview","get_activeInHierarchy"),"isolation includes inactive camera descendants that become visible during capture");
+Check(!type.Methods.Where(m=>m.HasBody).SelectMany(m=>m.Body.Instructions).Any(i=>i.Operand is MethodReference mr&&mr.Name=="FindObjectsByType"),"capturing an icon does not enumerate all scene renderers");
+Console.WriteLine($"PASS {count} icon size, visibility and compiled integration checks");

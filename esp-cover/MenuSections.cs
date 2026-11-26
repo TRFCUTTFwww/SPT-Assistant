@@ -1,0 +1,72 @@
+using System;
+namespace LocalSpt5Esp;
+internal static class MenuSections {
+ internal const string FleaMarket="跳蚤市场";
+ internal static readonly string[] Names={"主页面","镜头与画面","传送与导航","战斗与枪械","人物与移动","战局与物资","历史战局","载具与空投","物品与装备","趣味功能","剧情","数据","服务端",FleaMarket,"杂项","AI 工作台","枪械编辑","模型与镜头","玩具枪工具","内存编辑","开发工具","设置与热键"};
+ internal static string Lane(string category)=>category is "AI 工作台" or "枪械编辑" or "模型与镜头" or "玩具枪工具" or "内存编辑" or "开发工具"?"开发工具":category=="设置与热键"?"设置":"常用辅助";
+ internal static string DisplayName(string category)=>category switch{"战斗与枪械"=>"射击","人物与移动"=>"人物","镜头与画面"=>"视觉","传送与导航"=>"导航","战局与物资"=>"战局","载具与空投"=>"载具","物品与装备"=>"物品","AI 工作台"=>"AI 开发","玩具枪工具"=>"玩具枪开发","设置与热键"=>"设置与热键",_=>category};
+ internal static int Number(string section){int dot=section.IndexOf('.');return dot>=0&&int.TryParse(section.AsSpan(0,dot),out int value)?value:0;}
+ internal static string Group(string section)=>Number(section) switch{69=>"数据",8 or 9 or 10 or 28 or 39 or 40 or 53 or 54=>"战斗与枪械",45=>"枪械编辑",2 or 4 or 17 or 19 or 20 or 29=>"人物与移动",43=>"模型与镜头",61 or 65=>"趣味功能",34 or 49=>"AI 工作台",50 or 46=>"玩具枪工具",63 or 64=>"开发工具",1 or 6 or 7 or 11 or 12 or 16 or 21 or 22 or 23 or 35 or 48 or 52 or 58 or 62 or 71 or 73 or 74 or 75=>"镜头与画面",55 or 57 or 59=>"战局与物资",56=>"物品与装备",13 or 26 or 27 or 30 or 31 or 37 or 42=>"战局与物资",18 or 38=>"载具与空投",14 or 15 or 33 or 41 or 60=>"传送与导航",_=>"设置与热键"};
+ internal static bool ThirdPersonKey(string key)=>key.Contains("Third person",StringComparison.OrdinalIgnoreCase)||key.StartsWith("Camera ",StringComparison.OrdinalIgnoreCase)||key=="First person when aiming";
+ internal static string Group(string section,string key)=>Number(section)==18&&key.StartsWith("Stop marker",StringComparison.Ordinal)?"镜头与画面":Number(section)==3&&key=="AI ignore toggle"?"人物与移动":Number(section)==43&&ThirdPersonKey(key)?"镜头与画面":Number(section)==43&&key.StartsWith("Selected AI",StringComparison.OrdinalIgnoreCase)?"AI 工作台":Number(section)==43&&key.Contains("Crouch",StringComparison.OrdinalIgnoreCase)?"人物与移动":Group(section);
+ internal static string[] Pages(string category)=>category switch{
+  "主页面"=>new[]{"存档概览"},"历史战局"=>new[]{"战局列表"},"杂项"=>new[]{"特殊待遇"},
+  "战斗与枪械"=>new[]{"射击辅助","微自瞄","瞄准排除","命中音效","击杀特效","投掷物轨迹"},
+  "人物与移动"=>new[]{"生存防护","交互能力","部位血量","移动与穿墙","Buff 状态","死亡保留"},
+  "枪械编辑"=>new[]{"枪械参数","游戏枪械预设"},
+  "模型与镜头"=>new[]{"自由镜头","人物模型","动作锁定"},"趣味功能"=>new[]{"趣味功能"},
+  "服务端"=>new[]{"配置参数","业力与信誉","JSON 编辑"},
+  FleaMarket=>new[]{FleaMarket},
+  "剧情"=>new[]{"主线进度","商人任务","剧情走向","结局","等待时间"},
+  "数据"=>new[]{"技能","成就","钱包","角色管理","存档备份","仪式圈","JSON 编辑"},
+  "内存编辑"=>new[]{"内存扫描","地址表","访问监控","反汇编","代码补丁","内存浏览"},
+  "开发工具"=>new[]{"编辑模式","右键菜单","坐标读取","角色管理","命令控制台","聊天与命令"},
+  "AI 工作台"=>new[]{"AI 列表","换武器","生成 AI","动作与路线","装备与 Buff","位置传送","AI 模板","地图场景","尸体清理","全局控制","本局 AI 信息"},
+  "玩具枪工具"=>new[]{"生成与模板","命中操作","子弹与射速","出生参数","普通枪弹着点"},
+  "镜头与画面"=>new[]{"人物显示","夜视","瞄准镜贴纸","物品显示","AI 路线","BTR 站点","战斗信息","地雷高亮","第三人称","性能监测","界面布局"},
+  "战局与物资"=>new[]{"时间与环境","本局物资","范围拾取","AI 难度","刷新规则","活动控制","任务物资","战局信息","战局显示","地图模式"},
+  "载具与空投"=>new[]{"BTR 控制","装甲列车","空投控制"},
+  "传送与导航"=>new[]{"撤离定位","撤离控制","地图过图","任务定位","路面导航","角色传送"},
+  "物品与装备"=>new[]{"添加物品","玩家枪械预设","整套装备","修理与耐久"},
+  _=>new[]{"全部热键","配置方案","主题与布局","JavaScript","版本更新","日志与诊断","事件通知","其他设置"}
+ };
+ internal static string Subtitle(string category)=>category switch{"内存编辑"=>"数值/特征码扫描、指针地址表、硬件断点监控、反汇编改码与内存浏览","历史战局"=>"入场装备、撤离物品与击杀记录","趣味功能"=>"模块与设置","杂项"=>"趣味规则与特殊待遇，每项独立开关","主页面"=>"当前存档、角色资产、战绩与常用入口","服务端"=>"服务端配置、PMC 与 Scav 业力、跳蚤市场信誉及装备入口","AI 工作台"=>"选一次角色，连续完成生成、动作、装备与场景编辑","玩具枪工具"=>"生成类型、模板、命中操作和射击设置都在这里","战斗与枪械"=>"瞄准、伤害与命中反馈","人物与移动"=>"生存、移动、穿墙与状态","镜头与画面"=>"人物标记、第三人称、HUD 与战斗显示","战局与物资"=>"本局时间、物资、任务与下局刷新规则","载具与空投"=>"BTR 路线与空投投放","传送与导航"=>"撤离点定位、撤离控制、地图过图与路面导航","物品与装备"=>"物品添加、枪械与整套装备方案","枪械编辑"=>"当前武器与配件参数编辑","模型与镜头"=>"自由镜头、人物模型与动作锁定","剧情"=>"主线进度、任务重做与剧情走向","数据"=>"技能、成就、商城钱包与角色管理","开发工具"=>"角色管理与命令控制台",_=>"快捷键、配置方案与界面设置"};
+ internal static bool OnPage(string category,string page,string section,string key){int n=Number(section);return (category,page) switch{
+  ("开发工具","编辑模式")=>n==63,
+  ("开发工具","聊天与命令")=>n==64,
+  ("战斗与枪械","投掷物轨迹")=>n==54,
+  ("战局与物资","范围拾取")=>n==55,
+  ("战局与物资","本局物资")=>n==59,
+  ("战局与物资","地图模式")=>n==57,
+  ("物品与装备","修理与耐久")=>n==56,
+  ("战斗与枪械","击杀特效")=>n==53,
+  ("战斗与枪械","射击辅助")=>n is 8 or 9 or 10 or 28 or 39 or 40,
+  ("人物与移动","生存防护")=>n is 2 or 4 or 19 or 29||n==3&&key=="AI ignore toggle",
+  ("人物与移动","交互能力")=>n==17,
+  ("人物与移动","移动与穿墙")=>n==20||n==43&&key.Contains("Crouch",StringComparison.OrdinalIgnoreCase),
+  ("趣味功能","镭射眼")=>n==61,("趣味功能","黑墙脉冲")=>n==65,
+  ("模型与镜头","人物模型")=>n==43&&!ThirdPersonKey(key)&&!key.Contains("Crouch",StringComparison.OrdinalIgnoreCase)&&!key.Contains("pose",StringComparison.OrdinalIgnoreCase)&&!key.StartsWith("Selected AI",StringComparison.OrdinalIgnoreCase),
+  ("镜头与画面","第三人称")=>n==43&&ThirdPersonKey(key),
+  ("镜头与画面","人物显示")=>n is 7 or 12||n==1&&key is not ("Items" or "Containers" or "Loot range" or "Maximum loot labels"),
+  ("镜头与画面","物品显示")=>n==6||n==1&&key is "Items" or "Containers" or "Loot range" or "Maximum loot labels",
+  ("镜头与画面","AI 路线")=>n==71,
+  ("镜头与画面","夜视")=>n is 16 or 75,
+  ("镜头与画面","瞄准镜贴纸")=>n is 73 or 74,
+  ("镜头与画面","BTR 站点")=>n==18&&key.StartsWith("Stop marker",StringComparison.Ordinal)||n==14&&key=="Markers in view only",
+  ("镜头与画面","战斗信息")=>n is 11 or 21 or 22 or 23 or 35 or 52,
+  ("镜头与画面","性能监测")=>n==58,
+  ("镜头与画面","地雷高亮")=>n==62,
+  ("战局与物资","战局显示")=>n is 13 or 30 or 42,
+  ("传送与导航","撤离定位")=>n==14&&!key.Contains("Force",StringComparison.OrdinalIgnoreCase)&&!key.Contains("Ignore",StringComparison.OrdinalIgnoreCase),
+  ("传送与导航","撤离控制")=>n==14&&(key.Contains("Force",StringComparison.OrdinalIgnoreCase)||key.Contains("Ignore",StringComparison.OrdinalIgnoreCase)),
+  ("传送与导航","任务定位")=>n==60,
+  ("传送与导航","地图过图")=>n is 15 or 41,
+  ("数据","仪式圈")=>n==69,
+  ("设置与热键","日志与诊断")=>n==67,
+  ("设置与热键","事件通知")=>n==72,
+  ("设置与热键","版本更新")=>n==66,
+  ("设置与热键","其他设置")=>n==3&&key!="AI ignore toggle"||n==47||n==0,
+  _=>false
+ };}
+ internal static string Heading(string category){int dot=category.IndexOf(". ",StringComparison.Ordinal);return dot<0?category:category[(dot+2)..];}
+}

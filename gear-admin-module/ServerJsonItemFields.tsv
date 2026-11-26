@@ -1,0 +1,248 @@
+inTangent	曲线关键帧的入切线，控制进入该点时的变化斜率。	Incoming curve tangent, controlling the slope approaching this keyframe.
+outTangent	曲线关键帧的出切线，控制离开该点时的变化斜率。	Outgoing curve tangent, controlling the slope leaving this keyframe.
+_proto	该记录引用的原型或基础模板。	Prototype or base template referenced by this record.
+path	游戏资源的加载路径。	Loading path for the game asset.
+rcid	游戏资源引用标识。	Game asset reference identifier.
+filters	槽位或容器的物品兼容筛选规则。	Item compatibility filters for this slot or container.
+Filter	允许放入的物品或物品分类 ID。	Item or category IDs allowed in this slot or container.
+ExcludedFilter	明确禁止放入的物品或分类 ID。	Item or category IDs explicitly excluded from this slot or container.
+AnimationVariantsNumber	物品动作可用的动画变体数量。	Number of animation variants available for this item.
+BackgroundColor	库存物品图标的背景颜色标识。	Background color identifier for the inventory item icon.
+CanRequireOnRagfair	是否允许作为跳蚤市场兑换需求。	Whether this item can be requested in a flea market barter.
+CanSellOnRagfair	是否允许在跳蚤市场出售。	Whether this item can be sold on the flea market.
+ConflictingItems	不能同时安装或装备的物品 ID。	Item IDs that cannot be installed or equipped together.
+Description	物品描述文本或对应的本地化键。	Item description text or its localization key.
+DiscardLimit	战局中可丢弃的物品数量限制。	Limit on the number of these items that can be discarded during a raid.
+DiscardingBlock	物品丢弃限制开关。	Item discard restriction switch.
+ExamineExperience	首次检视物品获得的经验。	Experience gained from examining this item for the first time.
+ExamineTime	检视物品所需时间（秒）。	Time required to examine this item, in seconds.
+ExaminedByDefault	物品是否默认已检视。	Whether the item is examined by default.
+ExtraSizeDown	安装后向下额外占用的库存格数。	Extra inventory cells extending downward when installed.
+ExtraSizeForceAdd	是否强制计入配件增加的库存尺寸。	Whether to force inclusion of additional inventory size from attachments.
+ExtraSizeLeft	安装后向左额外占用的库存格数。	Extra inventory cells extending left when installed.
+ExtraSizeRight	安装后向右额外占用的库存格数。	Extra inventory cells extending right when installed.
+ExtraSizeUp	安装后向上额外占用的库存格数。	Extra inventory cells extending upward when installed.
+HideEntrails	是否在物品展示中隐藏内部结构。	Whether internal item contents or components are hidden in the item display.
+InsuranceDisabled	是否禁用该物品的保险。	Whether insurance is disabled for this item.
+IsAlwaysAvailableForInsurance	该物品是否始终可投保。	Whether this item is always available for insurance.
+IsLockedafterEquip	装备后是否锁定该物品。	Whether the item becomes locked after equipping.
+IsNotDeletableFromQuestStashAfterQuestComplete	任务完成后是否仍禁止从任务仓库删除。	Whether deletion from the quest stash remains prohibited after quest completion.
+IsSecretExitRequirement	该物品是否属于秘密撤离需求。	Whether this item is a secret extraction requirement.
+IsSpecialSlotOnly	是否只能放入特殊装备栏。	Whether the item is restricted to special equipment slots.
+IsUnbuyable	是否禁止购买该物品。	Whether buying this item is prohibited.
+IsUndiscardable	是否禁止丢弃该物品。	Whether discarding this item is prohibited.
+IsUngivable	是否禁止交出该物品。	Whether handing over this item is prohibited.
+IsUnremovable	是否禁止移除该物品。	Whether removing this item is prohibited.
+IsUnsaleable	是否禁止出售该物品。	Whether selling this item is prohibited.
+ItemSound	物品操作使用的音效类型。	Sound type used for item interactions.
+LeftHandItem	物品是否使用左手持有或操作。	Whether the item is held or operated with the left hand.
+LootExperience	拾取该物品的经验值。	Experience granted for looting this item.
+MergesWithChildren	物品与已安装子物品的库存尺寸合并规则。	Inventory size merging behavior for the item and its installed children.
+Name	名称文本或对应的本地化键。	Name text or its localization key.
+NotShownInSlot	是否隐藏物品在装备槽中的显示。	Whether the item is hidden in its equipment slot display.
+Prefab	物品模型预制体的资源引用。	Asset reference for the item model prefab.
+QuestItem	是否标记为任务专用物品。	Whether this is a dedicated quest item.
+QuestStashMaxCount	任务仓库中允许保存该物品的最大数量。	Maximum quantity of this item allowed in the quest stash.
+RagFairCommissionModifier	该物品的跳蚤市场手续费修正系数。	Flea market commission modifier for this item.
+RagfairLevelToTrade	在跳蚤市场交易该物品所需等级。	Level required to trade this item on the flea market.
+RarityPvE	该物品在 PvE 数据中的稀有度分类。	Rarity classification for this item in PvE data.
+RepairCost	该物品的基础修理费用参数。	Base repair cost parameter for this item.
+RepairSpeed	该物品的修理速度参数。	Repair speed parameter for this item.
+ShortName	物品简称文本或对应的本地化键。	Short item name text or its localization key.
+Unlootable	是否禁止搜刮或拾取该物品。	Whether looting or picking up this item is prohibited.
+UnlootableFromSide	限制哪些阵营不能搜刮该物品。	Factions that are prohibited from looting this item.
+UnlootableFromSlot	禁止从指定槽位搜刮该物品。	Slots from which looting this item is prohibited.
+UsePrefab	物品使用动作所用的预制体资源。	Prefab asset used for the item's use action.
+_required	该配件槽是否必须安装物品。	Whether this attachment slot requires an installed item.
+_mergeSlotWithChildren	槽位尺寸是否与子物品尺寸合并。	Whether this slot's size merges with its child items.
+_isPlateSlot	该槽位是否为护甲插板槽。	Whether this is an armor plate slot.
+_isPatronSlot	该槽位是否为弹药槽。	Whether this is an ammunition slot.
+Grids	容器内部库存格子布局。	Inventory grid layouts inside this container.
+Slots	物品可安装的配件或子物品槽位。	Slots for attachments or child items on this item.
+CanPutIntoDuringTheRaid	战局中是否允许把物品放入该容器。	Whether items can be placed in this container during a raid.
+CantRemoveFromSlotsDuringRaid	战局中禁止取出物品的槽位。	Slots from which items cannot be removed during a raid.
+ForbidMissingVitalParts	是否禁止放入缺少必要部件的物品。	Whether items missing vital parts are prohibited.
+ForbidNonEmptyContainers	是否禁止放入非空容器。	Whether non-empty containers are prohibited.
+x	坐标或向量的 X 分量。	X component of a coordinate or vector.
+y	坐标或向量的 Y 分量。	Y component of a coordinate or vector.
+z	坐标或向量的 Z 分量。	Z component of a coordinate or vector.
+MetascoreGroup	物品所属的游戏评分分组。	Game scoring group assigned to the item.
+Shift	曲线或变换的偏移量。	Offset applied to the curve or transformation.
+Target	曲线或变换所作用的目标。	Target affected by this curve or transformation.
+Process	应用曲线或变换的处理方式。	Processing mode for applying this curve or transformation.
+ComponentType	被控制的组件类型。	Type of component being controlled.
+CurveTimeMultiply	曲线时间轴的倍率。	Multiplier applied to the curve time axis.
+CurveValueMultiply	曲线数值轴的倍率。	Multiplier applied to the curve value axis.
+TransformationCurve	用于计算变换效果的曲线。	Curve used to compute the transformation effect.
+Keys	曲线关键帧列表。	List of curve keyframes.
+SightingRange	瞄具的标定或瞄准距离参数。	Calibration or sighting distance parameter for the sight.
+Velocity	配件对弹速的修正参数。	Attachment modifier affecting projectile velocity.
+Accuracy	配件对武器精度的修正参数。	Attachment modifier affecting weapon accuracy.
+BlocksCollapsible	是否阻止武器伸缩机构操作。	Whether the weapon's collapsible mechanism is blocked.
+BlocksFolding	是否阻止武器折叠。	Whether folding the weapon is blocked.
+CategoryAnimationModId	配件动画使用的分类标识。	Category identifier used for attachment animations.
+DoubleActionAccuracyPenaltyMult	双动射击精度惩罚的倍率。	Multiplier for the accuracy penalty during double-action firing.
+EffectiveDistance	武器或配件的有效距离参数。	Effective distance parameter for the weapon or attachment.
+HasShoulderContact	该部件是否提供抵肩接触。	Whether this part provides shoulder contact.
+IsAnimated	该物品是否具有独立动画。	Whether this item has its own animation.
+Loudness	物品或配件对武器响度的修正。	Item or attachment modifier affecting weapon loudness.
+RaidModdable	战局中是否允许拆装该配件。	Whether this attachment can be installed or removed during a raid.
+Recoil	配件对武器后坐力的修正。	Attachment modifier affecting weapon recoil.
+ToolModdable	该物品的工具拆装规则。	Tool-assisted modification setting for this item.
+UniqueAnimationModID	配件独立动画使用的标识。	Identifier used for a unique attachment animation.
+armorColliders	护甲覆盖的身体碰撞区域。	Body collider regions covered by this armor.
+armorPlateColliders	护甲插板覆盖的碰撞区域。	Collider regions covered by armor plates.
+HeatFactor	物品或配件的产热系数。	Heat generation factor for the item or attachment.
+cellsH	容器格子的横向格数。	Horizontal cell count of the inventory grid.
+cellsV	容器格子的纵向格数。	Vertical cell count of the inventory grid.
+minCount	允许的最小数量。	Minimum allowed count.
+maxCount	允许的最大数量。	Maximum allowed count.
+maxWeight	允许的最大重量。	Maximum allowed weight.
+isSortingTable	该库存格是否为整理区。	Whether this inventory grid is a sorting table.
+CoolFactor	物品或配件的散热系数。	Cooling factor for the item or attachment.
+DurabilityBurnModificator	使用或开火造成的耐久消耗倍率。	Multiplier for durability loss caused by use or firing.
+locked	该项是否处于锁定状态。	Whether this entry is locked.
+mousePenalty	装备引起的鼠标转向速度惩罚。	Mouse turning speed penalty caused by this equipment.
+speedPenaltyPercent	装备引起的移动速度百分比惩罚。	Movement speed penalty from this equipment, as a percentage.
+weaponErgonomicPenalty	装备引起的武器人体工学惩罚。	Weapon ergonomics penalty caused by this equipment.
+Plate	护甲插板相关参数。	Armor plate settings.
+bluntDamageReduceFromSoftArmor	软甲对钝伤的减伤参数。	Blunt damage reduction provided by soft armor.
+ArmorMaterial	护甲材质，参与耐久损耗与修理计算。	Armor material, used in durability loss and repair calculations.
+ArmorType	护甲类型分类。	Armor type classification.
+BluntThroughput	未击穿护甲时传递的钝伤比例参数。	Blunt damage transmission parameter when armor is not penetrated.
+BlocksEarpiece	是否阻止佩戴耳机。	Whether equipping an earpiece is blocked.
+BlocksEyewear	是否阻止佩戴眼镜。	Whether equipping eyewear is blocked.
+BlocksFaceCover	是否阻止佩戴面罩。	Whether equipping a face cover is blocked.
+BlocksHeadwear	是否阻止佩戴头部装备。	Whether equipping headwear is blocked.
+HasHinge	该物品是否具有铰链或翻起机构。	Whether the item has a hinge or flip-up mechanism.
+BlindnessProtection	对致盲效果的防护参数。	Protection parameter against blinding effects.
+DeafStrength	装备造成的听觉衰减强度。	Hearing attenuation strength caused by this equipment.
+FaceShieldComponent	面罩组件的功能数据。	Functional data for the face shield component.
+FaceShieldMask	面罩在画面中的遮罩参数。	Visual mask settings for the face shield.
+Indestructibility	物品抗破坏相关参数。	Item resistance to destruction.
+MaterialType	物品使用的材质类型。	Material type used by the item.
+RicochetParams	护甲或表面的跳弹参数。	Ricochet settings for the armor or surface.
+MaxDistance	所属效果或设备的最大作用距离。	Maximum operating or effect distance of the containing feature.
+Volume	所属声音或设备的音量参数。	Volume parameter for the containing sound or device.
+BlocksArmorVest	是否阻止同时装备防弹衣。	Whether equipping an armored vest at the same time is blocked.
+SearchSound	搜索该容器或物品时使用的音效。	Sound used when searching this container or item.
+CurveAimingValueMultiply	瞄准时对曲线数值的倍率。	Curve value multiplier while aiming.
+effects_damage	使用该物品时产生的伤害或伤势效果。	Damage or injury effects caused by using this item.
+effects_health	使用该物品时产生的生命与状态效果。	Health and status effects caused by using this item.
+Foldable	该物品是否允许折叠。	Whether this item can be folded.
+MaxResource	该消耗品的最大资源量。	Maximum resource capacity of this consumable.
+Retractable	该物品是否具有伸缩机构。	Whether this item has a retractable mechanism.
+SizeReduceRight	折叠或收起后向右减少的库存格数。	Inventory cells removed from the right when folded or retracted.
+StackMaxRandom	随机生成堆叠数量的上限。	Upper bound for randomly generated stack sizes.
+StackMinRandom	随机生成堆叠数量的下限。	Lower bound for randomly generated stack sizes.
+_max_count	该弹药槽或堆叠槽的最大容量。	Maximum capacity of this ammunition or stack slot.
+AimSensitivity	瞄准状态的鼠标灵敏度参数。	Mouse sensitivity parameter while aiming.
+Lower75Prefab	低细节物品模型的预制体引用。	Prefab reference for a lower-detail item model.
+ammoCaliber	适配的弹药口径标识。	Compatible ammunition caliber identifier.
+Resource	物品资源量或资源消耗参数。	Item resource quantity or resource consumption settings.
+CenterOfImpact	武器弹着散布参数。	Weapon impact dispersion parameter.
+DeviationCurve	弹着或运动偏移随输入变化的曲线。	Curve controlling impact or motion deviation as input changes.
+DeviationMax	允许的最大偏移量。	Maximum allowed deviation.
+muzzleModType	枪口配件的类型标识。	Muzzle attachment type identifier.
+IsShoulderContact	是否属于抵肩接触部件。	Whether this is a shoulder contact part.
+TagColor	物品标签颜色。	Item tag color.
+TagName	物品标签文本。	Item tag text.
+ModesCount	设备可切换的工作模式数量。	Number of selectable device operating modes.
+MaximumNumberOfUsage	物品可使用的最大次数。	Maximum number of uses for this item.
+upd	该物品实例的动态状态，如数量、耐久和装弹状态。	Dynamic state of this item instance, such as quantity, durability and loaded ammunition.
+AdjustableOpticSensitivity	可变倍率光学瞄具的灵敏度参数。	Sensitivity parameter for a variable-magnification optic.
+AdjustableOpticSensitivityMax	可变倍率光学瞄具的最大灵敏度参数。	Maximum sensitivity parameter for a variable-magnification optic.
+CalibrationDistances	瞄具可切换的归零距离列表。	Selectable zeroing distances for the sight.
+CustomAimPlane	瞄具使用的自定义瞄准平面参数。	Custom aiming plane settings for the sight.
+IsAdjustableOptic	该光学瞄具是否支持调节倍率。	Whether this optic supports adjustable magnification.
+MinMaxFov	光学瞄具视野角的最小与最大范围。	Minimum and maximum field-of-view range of the optic.
+ScopesCount	瞄具中可用的观察通道数量。	Number of available viewing channels in the sight.
+ZoomSensitivity	各倍率对应的鼠标灵敏度参数。	Mouse sensitivity settings for each magnification.
+Zooms	瞄具各模式支持的倍率列表。	Supported magnifications for each sight mode.
+sightModType	瞄具配件的类型标识。	Sight attachment type identifier.
+Contusion	爆炸造成的震荡效果参数。	Concussion effect settings caused by the explosion.
+Blindness	爆炸造成的致盲效果参数。	Blinding effect settings caused by the explosion.
+FragmentType	爆炸碎片使用的弹药或模板类型。	Ammunition or template type used for explosion fragments.
+FragmentsCount	爆炸生成的碎片数量。	Number of fragments generated by the explosion.
+MaxExplosionDistance	爆炸伤害的最大作用距离。	Maximum distance affected by explosion damage.
+MinExplosionDistance	爆炸内圈的距离参数。	Distance parameter for the inner explosion radius.
+Cartridges	弹匣或弹药容器的弹药槽定义。	Ammunition slot definitions of the magazine or ammunition container.
+BeltMagazineRefreshCount	弹链弹匣的刷新数量参数。	Refresh count parameter for a belt-fed magazine.
+CheckTimeModifier	检查弹匣等操作的耗时修正。	Time modifier for checking the magazine or related actions.
+IsMagazineForStationaryWeapon	是否为固定武器使用的弹匣。	Whether this magazine is intended for a stationary weapon.
+LoadUnloadModifier	装填和卸下弹药的速度修正。	Speed modifier for loading and unloading ammunition.
+MagazineWithBelt	该弹匣是否为弹链供弹结构。	Whether the magazine uses belt feeding.
+MalfunctionChance	弹匣或物品对故障概率的影响。	Magazine or item contribution to malfunction probability.
+ReloadMagType	弹匣使用的换弹方式。	Reloading mechanism used by the magazine.
+VisibleAmmoRangesString	检查弹匣时显示的弹药余量范围配置。	Ammunition count ranges displayed when checking the magazine.
+magAnimationIndex	弹匣动作使用的动画索引。	Animation index used for magazine actions.
+StackSlots	物品内部可堆叠的槽位定义。	Stackable slot definitions inside this item.
+key	当前数据项的键或曲线关键帧位置。	Key for this data entry or position of the curve keyframe.
+relativeProbability	随机选择时使用的相对权重。	Relative weight used during random selection.
+data	该数据项保存的具体内容。	Content stored by this data entry.
+MaxRepairDegradation	修理导致的最大耐久上限损失。	Maximum loss of maximum durability caused by repair.
+MinRepairDegradation	修理导致的最小耐久上限损失。	Minimum loss of maximum durability caused by repair.
+AmmoLifeTimeSec	弹丸存在的最长时间（秒）。	Maximum projectile lifetime in seconds.
+AmmoTooltipClass	弹药提示使用的类别标识。	Category identifier used for ammunition tooltips.
+ArmorDamage	弹药对护甲耐久造成的伤害参数。	Ammunition damage parameter affecting armor durability.
+BallisticCoeficient	弹丸弹道系数，参与飞行阻力计算。	Projectile ballistic coefficient used in flight drag calculations.
+BulletDiameterMilimeters	弹丸直径（毫米）。	Projectile diameter in millimeters.
+BulletMassGram	弹丸质量（克）。	Projectile mass in grams.
+Deterioration	弹药对武器损耗的影响。	Ammunition contribution to weapon wear.
+ExplosionStrength	爆炸强度参数。	Explosion strength parameter.
+ExplosionType	爆炸效果类型。	Explosion effect type.
+FlareTypes	信号弹类型配置。	Flare type settings.
+FragmentationChance	弹丸产生破片的概率。	Probability that the projectile fragments.
+FuzeArmTimeSec	引信解保所需时间（秒）。	Time required to arm the fuze, in seconds.
+HasGrenaderComponent	是否启用榴弹组件。	Whether the grenade component is enabled.
+HeavyBleedingDelta	该弹药对重出血概率的修正。	Ammunition modifier affecting heavy bleeding probability.
+IsLightAndSoundShot	是否使用声光弹射击效果。	Whether the shot uses a light-and-sound effect.
+LightAndSoundShotAngle	声光弹效果的作用角度。	Angle affected by the light-and-sound shot effect.
+LightAndSoundShotSelfContusionStrength	声光弹对使用者造成的震荡强度。	Concussion strength applied to the user by a light-and-sound shot.
+LightAndSoundShotSelfContusionTime	声光弹对使用者造成的震荡时长。	Concussion duration applied to the user by a light-and-sound shot.
+LightBleedingDelta	该弹药对轻出血概率的修正。	Ammunition modifier affecting light bleeding probability.
+MalfFeedChance	弹药引起的供弹故障概率参数。	Ammunition feed malfunction probability parameter.
+MalfMisfireChance	弹药引起的哑火故障概率参数。	Ammunition misfire malfunction probability parameter.
+MaxFragmentsCount	弹丸或爆炸生成碎片数量的上限。	Maximum number of fragments produced by the projectile or explosion.
+MinFragmentsCount	弹丸或爆炸生成碎片数量的下限。	Minimum number of fragments produced by the projectile or explosion.
+MisfireChance	哑火概率参数。	Misfire probability parameter.
+PenetrationChanceObstacle	穿过场景障碍物的概率参数。	Probability parameter for penetrating scene obstacles.
+PenetrationDamageMod	穿透后的伤害修正系数。	Damage modifier applied after penetration.
+PenetrationPowerDiviation	弹药穿透能力的随机偏差。	Random deviation of ammunition penetration power.
+ProjectileCount	一次发射生成的弹丸数量。	Number of projectiles generated per shot.
+RemoveShellAfterFire	开火后是否移除弹壳。	Whether the cartridge case is removed after firing.
+RicochetChance	弹丸跳弹概率。	Projectile ricochet probability.
+ShowBullet	是否显示弹丸模型。	Whether the projectile model is shown.
+ShowHitEffectOnExplode	爆炸时是否显示命中特效。	Whether hit effects are shown when the projectile explodes.
+SpeedRetardation	弹丸飞行减速参数。	Projectile speed retardation parameter during flight.
+StaminaBurnPerDamage	伤害对应的体力消耗参数。	Stamina depletion parameter per damage dealt.
+Tracer	是否为曳光弹。	Whether this is tracer ammunition.
+TracerColor	曳光轨迹颜色。	Tracer trail color.
+TracerDistance	开始显示曳光轨迹的距离参数。	Distance parameter controlling when the tracer trail is shown.
+airDropTemplateId	该信号弹所引用的空投模板 ID。	Airdrop template ID referenced by this flare.
+ammoAccr	弹药对武器精度的修正。	Ammunition modifier affecting weapon accuracy.
+ammoDist	弹药距离相关修正参数。	Ammunition distance modifier parameter.
+ammoHear	弹药声音传播相关参数。	Ammunition sound propagation parameter.
+ammoRec	弹药对武器后坐力的修正。	Ammunition modifier affecting weapon recoil.
+ammoSfx	弹药使用的射击效果参数。	Shot effect parameter used by the ammunition.
+ammoShiftChance	弹药偏移概率参数。	Ammunition deviation probability parameter.
+buckshotBullets	霰弹每发的弹丸数量。	Number of pellets in a buckshot shell.
+casingEjectPower	弹壳抛出力度。	Cartridge case ejection force.
+casingMass	弹壳质量。	Cartridge case mass.
+casingName	弹壳模型或类型名称。	Cartridge case model or type name.
+casingSounds	弹壳落地使用的音效。	Sounds used when the cartridge case lands.
+ShotgunDispersion	霰弹散布参数。	Shotgun pellet dispersion parameter.
+IsSilencer	该配件是否为消音器。	Whether this attachment is a suppressor.
+Chambers	武器膛室槽位与兼容弹药定义。	Weapon chamber slots and compatible ammunition definitions.
+AdjustCollimatorsToTrajectory	是否根据弹道调整反射式瞄具。	Whether collimator sights are adjusted to the projectile trajectory.
+AimPlane	武器瞄准平面参数。	Weapon aiming plane settings.
+AllowFeed	是否允许发生供弹故障。	Whether feed malfunctions are allowed.
+AllowJam	是否允许发生卡壳故障。	Whether jams are allowed.
+AllowMisfire	是否允许发生哑火故障。	Whether misfires are allowed.
+AllowOverheat	是否允许武器过热。	Whether weapon overheating is allowed.
+AllowSlide	是否允许发生枪机故障。	Whether bolt or slide malfunctions are allowed.
+AudioSettings	武器音效参数集合。	Weapon audio settings.
+IndoorConfig	室内射击的音效配置。	Audio configuration for indoor shots.
+OutdoorConfig	室外射击的音效配置。	Audio configuration for outdoor shots.
+IndoorSilencedConfig	室内消音射击的音效配置。	Audio configuration for suppressed indoor shots.
+OutdoorSilencedConfig	室外消音射击的音效配置。	Audio configuration for suppressed outdoor shots.

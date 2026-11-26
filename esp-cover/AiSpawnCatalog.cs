@@ -1,0 +1,70 @@
+using System;
+using System.Linq;
+namespace LocalSpt5Esp;
+internal sealed record AiSpawnOption(string Group,string Name,string Role,string Side="Savage",bool Boss=false,string Unavailable=""){internal bool Enabled=>Unavailable.Length==0;}
+internal static class AiSpawnCatalog {
+ internal static readonly string[] Groups={"普通 AI","BOSS","邪教徒","黑色军团","僵尸","BOSS 保镖","活动与特殊角色","不可独立生成"};
+ internal static readonly AiSpawnOption[] Options={
+  new("普通 AI","Scav","assault"),new("普通 AI","USEC","pmcUSEC","Usec"),new("普通 AI","BEAR","pmcBEAR","Bear"),new("普通 AI","Raider 掠夺者","pmcBot"),new("普通 AI","Rogue 游荡者","exUsec"),
+  new("僵尸","感染 Scav","infectedAssault"),new("僵尸","感染 PMC","infectedPmc"),new("僵尸","感染平民","infectedCivil"),
+  new("BOSS","Reshala · 海关","bossBully",Boss:true),new("BOSS","Killa · 商场","bossKilla",Boss:true),new("BOSS","Shturman · 森林","bossKojaniy",Boss:true),new("BOSS","Glukhar · 储备站","bossGluhar",Boss:true),new("BOSS","Sanitar · 海岸线","bossSanitar",Boss:true),new("BOSS","Tagilla · 工厂","bossTagilla",Boss:true),new("BOSS","Knight · 三人组队长","bossKnight",Boss:true),new("BOSS","Big Pipe · 三人组","followerBigPipe"),new("BOSS","Birdeye · 三人组","followerBirdEye"),new("BOSS","Kaban · 卡班","bossBoar",Boss:true),new("BOSS","Kollontay · 警棍","bossKolontay",Boss:true),new("BOSS","Partisan · 老游击","bossPartisan",Boss:true),new("BOSS","Zryachiy · 灯塔","bossZryachiy",Boss:true),
+  new("BOSS","Killa · 迷宫（狂暴）","bossKillaAgro",Boss:true),new("BOSS","Tagilla · 迷宫（狂暴）","bossTagillaAgro",Boss:true),
+  new("BOSS","感染大锤 · 镰刀","infectedTagilla",Boss:true),
+  new("BOSS","复仇兹拉奇 · 活动","ravangeZryachiyEvent",Boss:true),
+  new("邪教徒","邪教徒战士","sectantWarrior"),new("邪教徒","邪教徒祭司","sectantPriest",Boss:true),new("邪教徒","Oni · 特殊邪教徒","sectantOni",Boss:true),new("邪教徒","Predvestnik · 特殊邪教徒","sectantPredvestnik",Boss:true),new("邪教徒","Prizrak · 特殊邪教徒","sectantPrizrak",Boss:true),
+  new("黑色军团","黑色军团干员","blackDivision"),new("黑色军团","军团突击成员 · 随机变体（bossWedge）","bossWedge",Boss:true),new("黑色军团","Wedge 本人 · 实验室（固定 Wedge）","bossWedgeLab",Boss:true),new("黑色军团","实验室随从","followerWedgeLab"),new("黑色军团","军团成员 · Laser／Viper 等","bossBullyBlackDiv",Boss:true),new("黑色军团","军团随从 · Pike／Obsidian 等","followerBullyBlackDiv"),new("黑色军团","军团掠夺者 · Revenant／Raiden 等","pmcBotBlackDiv"),
+  new("普通 AI","Scav 狙击手","marksman"),
+  new("普通 AI","诅咒 Scav","cursedAssault"),
+  new("普通 AI","自由游荡者","exUsecFree"),
+  new("BOSS 保镖","Reshala 保镖","followerBully"),
+  new("BOSS 保镖","Shturman 保镖","followerKojaniy"),
+  new("BOSS 保镖","Glukhar 突击保镖","followerGluharAssault"),
+  new("BOSS 保镖","Glukhar 警卫","followerGluharSecurity"),
+  new("BOSS 保镖","Glukhar 侦察保镖","followerGluharScout"),
+  new("BOSS 保镖","Sanitar 保镖","followerSanitar"),
+  new("BOSS 保镖","Tagilla 随从","followerTagilla"),
+  new("BOSS 保镖","Zryachiy 保镖","followerZryachiy"),
+  new("BOSS 保镖","Kaban 普通保镖","followerBoar"),
+  new("BOSS 保镖","Kaban 狙击手","bossBoarSniper"),
+  new("BOSS 保镖","Kaban 近卫一","followerBoarClose1"),
+  new("BOSS 保镖","Kaban 近卫二","followerBoarClose2"),
+  new("BOSS 保镖","Kollontay 突击保镖","followerKolontayAssault"),
+  new("BOSS 保镖","Kollontay 警卫","followerKolontaySecurity"),
+  new("BOSS 保镖","迷宫 Tagilla 助手","tagillaHelperAgro"),
+  new("活动与特殊角色","竞技场活动战士","arenaFighterEvent"),
+  new("活动与特殊角色","狂暴 Scav 活动角色","crazyAssaultEvent"),
+  new("活动与特殊角色","圣诞老人","gifter"),
+  new("活动与特殊角色","冬季精灵","spiritWinter"),
+  new("活动与特殊角色","春季精灵","spiritSpring"),
+  new("活动与特殊角色","Peacemaker 任务角色","peacemaker"),
+  new("活动与特殊角色","Skier 任务角色","skier"),
+  new("活动与特殊角色","俄军士兵","vsRF"),
+  new("活动与特殊角色","俄军狙击手","vsRFSniper"),
+  new("活动与特殊角色","教程 Scav","assaultTutorial"),
+  new("活动与特殊角色","哨兵","sentry"),
+  new("活动与特殊角色","平民","civilian"),
+  new("僵尸","尖叫感染者","infectedScreamer"),
+  new("BOSS","Scourge · 实验室活动","bossScourgeEventLab",Boss:true),
+  new("BOSS 保镖","Scourge 活动随从","followerScourgeEventLab"),
+  new("不可独立生成","感染研究员","infectedLaborant",Unavailable:"该角色已有模板，但当前客户端原生初始化异常，暂不单独生成。"),
+  new("不可独立生成","BTR 射手","shooterBTR",Unavailable:"该角色必须由 BTR 载具系统创建。"),
+  new("不可独立生成","测试 BOSS","bossTest",Unavailable:"当前服务端没有独立模板；请使用对应的正式角色。"),
+  new("不可独立生成","测试随从","followerTest",Unavailable:"当前服务端没有独立模板；请使用对应的正式角色。"),
+  new("不可独立生成","测试角色","test",Unavailable:"当前服务端没有独立模板；请使用对应的正式角色。"),
+  new("不可独立生成","Scav 编组别名","assaultGroup",Unavailable:"当前服务端没有独立模板；请使用对应的正式角色。"),
+  new("不可独立生成","Glukhar 旧狙击别名","followerGluharSnipe",Unavailable:"当前服务端没有独立模板；请使用对应的正式角色。"),
+  new("不可独立生成","竞技场旧角色","arenaFighter",Unavailable:"当前服务端没有独立模板；请使用对应的正式角色。"),
+  new("不可独立生成","俄军战斗别名","vsRFFight",Unavailable:"当前服务端没有独立模板；请使用对应的正式角色。"),
+  new("不可独立生成","黑色军团季节别名","pmcBotBlackDivSeason",Unavailable:"当前服务端没有独立模板；请使用对应的正式角色。"),
+  new("不可独立生成","和平 Zryachiy 活动别名","peacefullZryachiyEvent",Unavailable:"当前服务端没有独立模板；请使用对应的正式角色。"),
+  new("不可独立生成","邪教祭司活动别名","sectactPriestEvent",Unavailable:"当前服务端没有独立模板；请使用对应的正式角色。")
+ };
+ static readonly System.Collections.Generic.Dictionary<string,AiSpawnOption> ByRole=Options.ToDictionary(option=>option.Role,StringComparer.OrdinalIgnoreCase);
+ internal static string RoleName(string role)=>role.ToLowerInvariant() switch{
+  "bossbully"=>"Reshala","bosskilla"=>"Killa","bosskojaniy"=>"Shturman","bossgluhar"=>"Glukhar",
+  "bosssanitar"=>"Sanitar","bosstagilla"=>"Tagilla","bossknight"=>"Knight","followerbigpipe"=>"Big Pipe",
+  "followerbirdeye"=>"Birdeye","bossboar"=>"Kaban","bosskolontay"=>"Kollontay","bosspartisan"=>"Partisan",
+  "bosszryachiy"=>"Zryachiy","bosskillaagro"=>"Killa（狂暴）","bosstagillaagro"=>"Tagilla（狂暴）",
+  _=>ByRole.TryGetValue(role,out var option)?option.Name:role
+ };
+}

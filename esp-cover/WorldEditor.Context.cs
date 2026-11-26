@@ -1,0 +1,78 @@
+using System;
+using System.Linq;
+using EFT.Interactive;
+using UnityEngine;
+namespace LocalSpt5Esp;
+internal static partial class WorldEditor {
+ sealed record ContextAction(string Name,bool Enabled,Action Execute,string Shortcut="");
+ static ContextAction[] contextActions=Array.Empty<ContextAction>();
+ static int contextChoice,contextFrame,contextTop;static Vector2 contextAnchor,contextPointer;static bool categoryMenu;static string contextTitle="场景编辑";
+ static int ContextVisibleRows=>Math.Min(contextActions.Length,Math.Max(1,(Screen.height-74)/28));
+ static float ContextKeyWidth=>Math.Min(180,Math.Max(66,contextActions.Select(action=>action.Shortcut.Length*7f).DefaultIfEmpty(66).Max()));
+ static Rect ContextBounds{get{var b=EditorMenuRules.Popup(contextAnchor.x,contextAnchor.y,Math.Max(252,ContextKeyWidth+176),58+ContextVisibleRows*28,Screen.width,Screen.height);return new(b.X,b.Y,b.Width,b.Height);}}
+ static Vector2 MousePosition=>new(Input.mousePosition.x,Screen.height-Input.mousePosition.y);
+ static void OpenContext(){
+  PruneSelection();contextAnchor=altCursor?MousePosition+new Vector2(14,10):new(Screen.width/2f+14,Screen.height/2f+10);
+  if(SelectionKinds>1){categoryMenu=true;contextTitle="选择对象类别";SetContext(CategoryActions(OpenEditContext));return;}
+  OpenEditContext(FirstSelectionKind);
+ }
+ static int SelectionKinds=>(selectedActors.Count>0?1:0)+(selectedItems.Count>0?1:0)+(selectedCorpses.Count>0?1:0)+(selectedAirdrops.Count>0?1:0)+(selectedContainers.Count>0?1:0)+(selectedDoors.Count>0?1:0)+(selectedMines.Count>0?1:0);
+ static SelectionKind FirstSelectionKind=>selectedActors.Count>0?SelectionKind.Ai:selectedItems.Count>0?SelectionKind.Items:selectedCorpses.Count>0?SelectionKind.Corpses:selectedAirdrops.Count>0?SelectionKind.Airdrops:selectedContainers.Count>0?SelectionKind.Containers:selectedDoors.Count>0?SelectionKind.Doors:selectedMines.Count>0?SelectionKind.Mines:SelectionKind.Items;
+ static ContextAction[] CategoryActions(Action<SelectionKind> apply){var result=new System.Collections.Generic.List<ContextAction>();if(selectedActors.Count>0)result.Add(new("AI ×"+selectedActors.Count,true,()=>apply(SelectionKind.Ai)));if(selectedItems.Count>0)result.Add(new(I18n.Text("物品")+" ×"+selectedItems.Count,true,()=>apply(SelectionKind.Items)));if(selectedCorpses.Count>0)result.Add(new(I18n.Text("尸体")+" ×"+selectedCorpses.Count,true,()=>apply(SelectionKind.Corpses)));if(selectedAirdrops.Count>0)result.Add(new(I18n.Text("空投箱")+" ×"+selectedAirdrops.Count,true,()=>apply(SelectionKind.Airdrops)));if(selectedContainers.Count>0)result.Add(new(I18n.Text("容器")+" ×"+selectedContainers.Count,true,()=>apply(SelectionKind.Containers)));if(selectedDoors.Count>0)result.Add(new(I18n.Text("门")+" ×"+selectedDoors.Count,true,()=>apply(SelectionKind.Doors)));if(selectedMines.Count>0)result.Add(new("阔剑 ×"+selectedMines.Count,true,()=>apply(SelectionKind.Mines)));return result.ToArray();}
+ static void SetContext(ContextAction[] actions){contextActions=actions;contextChoice=EditorMenuRules.Next(Array.ConvertAll(actions,a=>a.Enabled),-1,1);contextTop=0;contextFrame=Time.frameCount;contextPointer=MousePosition;Modal("context");}
+ static void OpenEditContext(SelectionKind kind){
+  selectionKind=kind;TargetAt(0);categoryMenu=false;contextTitle="场景编辑";bool selected=SelectionCount>0;
+  var available=new System.Collections.Generic.Dictionary<string,ContextAction[]>();
+  void Add(string id,bool enabled,Action execute,string shortcut="")=>available[id]=new[]{new ContextAction(EditorContextRules.Options.First(o=>o.Id==id).Name,enabled,execute,shortcut)};
+  void Pair(string id,bool[] states,string on,string off,Action<bool> execute)=>available[id]=states.Length==0?new[]{new ContextAction(on,false,()=>{})}:EditorContextRules.NextActions(states,splitMixedContext.Value).Select(value=>new ContextAction(value?on:off,true,()=>execute(value))).ToArray();
+  Add("create",true,BeginCreate,ShortcutLabel(EditorShortcut.Create));Add("move",selected&&kind!=SelectionKind.Doors,BeginMove,ShortcutLabel(EditorShortcut.Move));Add("copy",selected&&kind!=SelectionKind.Doors,Copy,ShortcutLabel(EditorShortcut.Copy));Add("paste",clipboard.Length>0,Paste,ShortcutLabel(EditorShortcut.Paste));Add("duplicate",selected&&kind!=SelectionKind.Doors,()=>ApplyShortcut(EditorShortcut.Duplicate,selectionKind),ShortcutLabel(EditorShortcut.Duplicate));
+  if(kind==SelectionKind.Ai&&selected){
+   Add("rename",true,BeginRename,ShortcutLabel(EditorShortcut.Rename));Add("kill",true,Kill,ShortcutLabel(EditorShortcut.Kill));
+   if(SelectedActors().Any(AiFreePlacement.Pinned))Add("release-air",true,ReleaseAir,ShortcutLabel(EditorShortcut.ReleaseAir));
+   Add("remove-weapons",!AiEquipmentRemoval.Busy&&!AiSceneEquipment.Busy,ContextRemoveWeapons);
+   Add("team-a",true,()=>ContextTeam(1));Add("team-b",true,()=>ContextTeam(2));Add("team-clear",true,()=>ContextTeam(0));
+   var targets=SelectedActors();
+   Pair("pause-toggle",targets.Select(ContextPaused).ToArray(),"暂停活动","恢复活动",ContextPause);
+   Pair("ab-toggle",AiActorControl.EditorSideStates(),"A ↔ B 双方敌对","A ↔ B 双方停战",ContextSides);
+   Pair("player-toggle",targets.Select(AiActorControl.EditorPlayerCeasefire).ToArray(),"对玩家停战","对玩家敌对",value=>ContextPlayerRelation(value?1:2));Add("player-default",true,()=>ContextPlayerRelation(0));
+   Pair("invincible-toggle",targets.Select(p=>AiActorControl.EditorState(p).Invincible).ToArray(),"开启无敌","关闭无敌",ContextInvincible);Add("clear-effects",true,ContextClearEffects);
+  }
+  if(kind==SelectionKind.Containers&&selected){Add("rename",true,BeginRename,ShortcutLabel(EditorShortcut.Rename));ContainerLootAvailability.Read(Current());Add("rotate",true,BeginContainerRotation);Add("loot-server",selectedContainers.All(r=>ContainerLootAvailability.Allows(Current(),ContainerScene.Template(r.Resolve()))),()=>RegenerateContainers(false));Add("loot-custom",true,OpenContainerLoot);Pair("container-open",selectedContainers.Select(r=>ContainerScene.Open(r.Resolve())).ToArray(),"开启容器","关闭容器",SetContainersOpen);}
+  if(kind==SelectionKind.Doors&&selected){contextTitle="门 · "+(selectedDoors.Count==1?DoorReference.State(selectedDoors[0].Resolve()):"批量编辑");
+   var states=selectedDoors.Select(reference=>reference.Resolve().DoorState).ToArray();
+   bool unlock=states.All(state=>state==EDoorState.Locked),close=states.All(state=>state==EDoorState.Open);
+   available["door-lock-toggle"]=[new(unlock?"门：解锁":"门：上锁",true,()=>SetDoors(unlock?EDoorState.Shut:EDoorState.Locked,unlock))];
+   available["door-open-toggle"]=[new(close?"门：关闭":"门：打开",true,()=>SetDoors(close?EDoorState.Shut:EDoorState.Open))];
+  }
+  Add("delete",selected&&kind!=SelectionKind.Doors,Delete,ShortcutLabel(EditorShortcut.Delete));if(kind==SelectionKind.Corpses)Add("revive",selected,ReviveCorpses);else if(kind is not (SelectionKind.Airdrops or SelectionKind.Containers or SelectionKind.Doors or SelectionKind.Mines))Add("properties",selected,OpenProperties,ShortcutLabel(EditorShortcut.Properties));
+  var actions=EditorContextRules.Read(contextOrder.Value).Where(available.ContainsKey).SelectMany(id=>available[id]).ToList();
+  actions.Add(new(I18n.Text("撤销")+(CanUndo?" · "+I18n.Text(UndoLabel):""),CanUndo,Undo,ShortcutLabel(EditorShortcut.Undo)));
+  if(kind==SelectionKind.Mines&&selected){actions.Insert(0,new("阔剑：向左旋转 15°",true,()=>RotateMines(-15)));actions.Insert(1,new("阔剑：向右旋转 15°",true,()=>RotateMines(15)));}
+  actions.Add(new("放置阔剑",true,CreateMine));
+  actions.Add(new("场景蓝图（导入 / 导出 / 恢复）",true,()=>Modal("blueprints")));
+  actions.Add(new("自定义右键菜单",true,OpenContextSettings));
+  if(SelectionKinds>1)actions.Add(new("返回类别选择",true,OpenContext));SetContext(actions.ToArray());
+ }
+ static void ContextInput(){
+  if(Time.frameCount<=contextFrame)return;
+  if(!categoryMenu&&selectionKind==SelectionKind.Containers&&selectedContainers.Count>0){var current=Current();ContainerLootAvailability.Read(current);string name=EditorContextRules.Options.First(o=>o.Id=="loot-server").Name;for(int i=0;i<contextActions.Length;i++)if(contextActions[i].Name==name)contextActions[i]=contextActions[i] with{Enabled=selectedContainers.All(r=>ContainerLootAvailability.Allows(current,ContainerScene.Template(r.Resolve())))};}
+  var bounds=ContextBounds;var pointer=MousePosition;bool left=Input.GetMouseButtonDown(0),right=Input.GetMouseButtonDown(1);
+  if((left||right)&&!bounds.Contains(pointer)){CancelContext();return;}
+  if(right){if(!categoryMenu&&SelectionKinds>1)OpenContext();else CancelContext();return;}
+  var available=Array.ConvertAll(contextActions,a=>a.Enabled);float wheel=Input.mouseScrollDelta.y;
+  if(wheel!=0){contextChoice=EditorMenuRules.Next(available,contextChoice,wheel>0?-1:1);contextPointer=MousePosition;}
+  else if(Input.GetKeyDown(KeyCode.DownArrow))contextChoice=EditorMenuRules.Next(available,contextChoice,1);
+  else if(Input.GetKeyDown(KeyCode.UpArrow))contextChoice=EditorMenuRules.Next(available,contextChoice,-1);
+  else if((pointer-contextPointer).sqrMagnitude>1){contextPointer=pointer;contextChoice=EditorMenuRules.PointerRow(new(bounds.x,bounds.y,bounds.width,bounds.height),pointer.x,pointer.y,ContextVisibleRows,contextTop,available);}
+  if(contextChoice>=0){if(contextChoice<contextTop)contextTop=contextChoice;else if(contextChoice>=contextTop+ContextVisibleRows)contextTop=contextChoice-ContextVisibleRows+1;}
+  if(left){int row=EditorMenuRules.PointerRow(new(bounds.x,bounds.y,bounds.width,bounds.height),pointer.x,pointer.y,ContextVisibleRows,contextTop,available);if(row>=0)Run(contextActions[row].Execute);return;}
+  if(Input.GetKeyDown(KeyCode.Return)&&contextChoice>=0&&contextChoice<contextActions.Length&&contextActions[contextChoice].Enabled)Run(contextActions[contextChoice].Execute);
+ }
+ static void DrawContext(){
+  var rect=ContextBounds;InterfaceMenu.Surface(rect,InterfaceMenu.Background,3);InterfaceMenu.Surface(new Rect(rect.x,rect.y,rect.width,25),Color.Lerp(InterfaceMenu.Background,InterfaceMenu.Text,.07f),3);
+  InterfaceMenu.Label(new Rect(rect.x+10,rect.y,rect.width-20,25),categoryMenu?I18n.Text(contextTitle):I18n.Text(contextTitle)+(SelectionCount>0?" · "+SelectionName+" ×"+SelectionCount:""),InterfaceMenu.Accent,12);
+  float keyWidth=ContextKeyWidth;
+  for(int i=contextTop;i<Math.Min(contextActions.Length,contextTop+ContextVisibleRows);i++){var action=contextActions[i];var row=new Rect(rect.x+4,rect.y+28+(i-contextTop)*28,rect.width-8,26);if(i==contextChoice)InterfaceMenu.Surface(row,Color.Lerp(InterfaceMenu.Background,InterfaceMenu.Accent,.27f),2);var color=action.Enabled?InterfaceMenu.Text:Color.Lerp(InterfaceMenu.Background,InterfaceMenu.Text,.3f);InterfaceMenu.Label(new Rect(row.x+10,row.y,Math.Max(1,row.width-(action.Shortcut.Length>0?keyWidth+38:30)),row.height),action.Name,color,13);if(action.Shortcut.Length>0)InterfaceMenu.Label(new Rect(row.xMax-keyWidth-22,row.y,keyWidth,row.height),action.Shortcut,color,11);if(i==contextChoice)InterfaceMenu.Label(new Rect(row.xMax-20,row.y,18,row.height),"›",InterfaceMenu.Accent,15);}
+  InterfaceMenu.Label(new Rect(rect.x+10,rect.yMax-25,rect.width-20,22),"滚轮选择 · 左键进入",Color.Lerp(InterfaceMenu.Background,InterfaceMenu.Text,.65f),11);
+ }
+}

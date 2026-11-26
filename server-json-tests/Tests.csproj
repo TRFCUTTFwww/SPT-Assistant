@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><OutputType>Exe</OutputType><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Compile Include="../shared/JsonEditPath.cs" Link="JsonEditPath.cs" />
+    <Compile Include="../gear-admin-module/ServerJsonStore.cs" Link="ServerJsonStore.cs" />
+    <Compile Include="../gear-admin-module/ServerJsonCatalog.cs" Link="ServerJsonCatalog.cs" />
+    <Compile Include="../gear-admin-module/ServerJsonModelDocs.cs" Link="ServerJsonModelDocs.cs" />
+    <Compile Include="../gear-admin-module/ServerSettingsRules.cs" Link="ServerSettingsRules.cs" />
+    <EmbeddedResource Include="../gear-admin-module/ServerJsonCurated.en.json" LogicalName="LocalGearMail.ServerJsonCurated.en.json" />
+    <EmbeddedResource Include="../gear-admin-module/ServerJsonItemFields.tsv" LogicalName="LocalGearMail.ServerJsonItemFields.tsv" />
+  </ItemGroup>
+</Project>

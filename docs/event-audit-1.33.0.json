@@ -1,0 +1,26 @@
+{
+  "client": "1.2.0.0.47888",
+  "configWritten": false,
+  "audits": [
+    {
+      "profile": "Halloween without sub-events",
+      "errors": []
+    },
+    {
+      "profile": "Summoning only",
+      "errors": []
+    },
+    {
+      "profile": "Zombies only",
+      "errors": []
+    },
+    {
+      "profile": "Night cult only",
+      "errors": []
+    },
+    {
+      "profile": "All Halloween sub-events",
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "version": "2.3.5",
+  "date": "2026-11-17",
+  "target": "SPT 5.0 BE / EFT 48558",
+  "hostVersion": "1.6.2",
+  "checks": {
+    "clientBuild": "passed; two existing nullable warnings",
+    "clientProbe": "passed; complete probe with 32 seasonal submission combinations and compiled native mode preservation checks",
+    "serverBuild": "passed; no new warnings",
+    "serverIntegration": "passed; full detached suite including independent account, blank start, original/other account immutability, duplicate create native hook, native mode response, routing, persistence, recovery, raid and identity guards",
+    "releaseScripts": "PowerShell syntax passed"
+  },
+  "deployment": {
+    "core": {
+      "apiVersion": 1,
+      "hostVersion": "1.6.2",
+      "coreVersion": "2.3.5",
+      "generation": 4,
+      "sha256": "269C4CCDF504EF0203D05D5E2D87698F4AABD9880FBDE0819C7D2B825B4F62E0",
+      "ready": true,
+      "error": null,
+      "rollback": false,
+      "suspended": false,
+      "cleanupUnsafe": false,
+      "updatedUtc": "2026-11-17T06:34:26.9479901Z",
+      "steps": 408,
+      "peakStepMs": 1142.2338
+    },
+    "admin": {
+      "ready": true,
+      "generation": 3,
+      "sha256": "F9728BFF6B080E19C9EFB6165D9258C8719F0CB95AEDFA3E1C24CF516F88BA41",
+      "error": "",
+      "updatedUtc": "2026-11-17T06:31:03.7929908Z"
+    },
+    "backup": "D:/SPT_Mod_Staging_20261027/assistant-2.3.5-local-20261117"
+  },
+  "liveReadOnlySelectionResponse": {
+    "pve": "available",
+    "season": "empty",
+    "seasonHasProfile": false,
+    "regular": "locked"
+  },
+  "realProfileCount": 2,
+  "realProfileCreatedOrSelectedByAgent": false,
+  "liveProfileObservation": "No additional profile files. Normal server background saves changed time/health/hideout/battle-pass reset bookkeeping; no agent profile creation or selection was submitted.",
+  "inGameVisualVerified": false,
+  "nativeFirstCreationFlowVerified": false,
+  "limitations": [
+    "The user must reopen character selection to refresh the cached slot data.",
+    "Separate local seasonal character with PVE raids; official online season services and automatic wipe schedule are not implemented.",
+    "Native first-time character creation and raid entry remain for user verification."
+  ]
+}

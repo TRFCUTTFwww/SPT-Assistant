@@ -1,0 +1,43 @@
+{
+  "date": "2026-11-25",
+  "version": "2.4",
+  "published": false,
+  "core": {
+    "generation": 29,
+    "ready": true,
+    "sha256": "1E73C897377E41C6B2B8EFC91E3DA0122841859912FA8C744C099370CE9FE78E",
+    "rollback": false,
+    "error": null
+  },
+  "tests": {
+    "funModules": 48,
+    "universalHost": 41,
+    "blackwall": 38,
+    "quickhacks": 93806,
+    "installer": 60,
+    "probePassGroups": 164,
+    "serverTests": "passed"
+  },
+  "live": {
+    "moduleIds": [
+      "quickhacks",
+      "atm-swords",
+      "blackwall",
+      "projecte"
+    ],
+    "moduleGeneration": 2,
+    "loadedSettings": 4,
+    "disabledSettings": 0,
+    "restartedSettings": 4,
+    "unrelatedModulesPreserved": true,
+    "blackwallConfigMigrated": true,
+    "serverAdminGeneration": 2,
+    "developerTraderSettingReadable": true,
+    "serverRestartRequiredForTrader": true,
+    "gameUiVerified": false
+  },
+  "artifacts": {
+    "directory": "D:/SPT_Mod_Staging_20261027/assistant-2.4-modules-review",
+    "coreMatchesRunning": true
+  }
+}

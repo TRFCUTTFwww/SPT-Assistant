@@ -1,0 +1,24 @@
+{
+    "version":  "1.32.7",
+    "utc":  "2026-11-03T15:45:03.8989238+00:00",
+    "buildErrors":  0,
+    "buildWarnings":  0,
+    "regressionGroups":  64,
+    "packageVerified":  true,
+    "installed":  true,
+    "runtimeVersion":  "1.32.7",
+    "generation":  8,
+    "payloadSha256":  "61216DC81319011C3D6D62D999AF1DAC566EFE44227CCDC74C7AAC3B1EE7B3E0",
+    "installedSha256":  "61216DC81319011C3D6D62D999AF1DAC566EFE44227CCDC74C7AAC3B1EE7B3E0",
+    "loadedSha256":  "61216DC81319011C3D6D62D999AF1DAC566EFE44227CCDC74C7AAC3B1EE7B3E0",
+    "ready":  true,
+    "loadIssues":  [
+
+                   ],
+    "inRaidTested":  false,
+    "nativeMovementInterception":  false,
+    "nativeSharedBodyDetours":  false,
+    "originalNativeRequests":  true,
+    "isolatedPursuitSettings":  true,
+    "notes":  "Runtime load, no-warning patch setup and offline contracts verified. Live navigation, crowd avoidance and pickup require a new raid."
+}

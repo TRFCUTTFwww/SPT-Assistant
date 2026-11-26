@@ -1,0 +1,29 @@
+{
+  "version": "2.0.6",
+  "date": "2026-11-11",
+  "releaseChannel": "experimental-source-update",
+  "target": {
+    "spt": "5.0 BE",
+    "eft": "1.3.0.1.48558",
+    "platform": "Windows x64",
+    "runtime": "Unity IL2CPP / .NET 10",
+    "backwardCompatibilityGuaranteed": false
+  },
+  "builds": {
+    "client": "passed; two existing nullable warnings on full build",
+    "mailAndAdministration": "passed"
+  },
+  "offlinePassGroups": {
+    "clientProbe": 121,
+    "mailAndAdministration": 24
+  },
+  "installation": "Full installation regression not rerun for 2.0.6",
+  "clientHotReload": "Same feature code successfully loaded under 2.0.5 before the version bump; no new 2.0.6 in-game acceptance",
+  "broadTestingCompleted": false,
+  "requiresInGameConfirmation": [
+    "Laser visibility and character occlusion in main and optic cameras",
+    "Repeated injector use, animations, effects and side effects",
+    "Trader screen refresh and repeated purchases",
+    "Fika synchronization"
+  ]
+}

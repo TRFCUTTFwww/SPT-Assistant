@@ -1,0 +1,16 @@
+# Build outputs and local runtime data
+**/bin/
+**/obj/
+**/*.dll
+**/*.pdb
+**/*.module
+**/*.log
+**/*.user
+**/*.suo
+**/.env*
+**/*credentials*
+/dist/
+/artifacts/
+/release-*/
+/version-control-artifacts/
+/history/

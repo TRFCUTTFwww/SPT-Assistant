@@ -1,0 +1,41 @@
+{
+  "version": "2.3.4",
+  "date": "2026-11-17",
+  "target": "SPT 5.0 BE / EFT 48558",
+  "hostVersion": "1.6.2",
+  "checks": {
+    "clientBuild": "passed; two existing nullable warnings remain",
+    "clientProbe": "passed, including 32 seasonal selection guard combinations, stale profile rejection, compiled native ShowSlot/Submit/SubmitAsync hooks and no profile/mode mutation calls"
+  },
+  "deployment": {
+    "coreGeneration": 2,
+    "ready": true,
+    "suspended": false,
+    "error": null,
+    "sha256": "A06CA8E4E59B652806A288686255F45F207A434EFA9693916A6E3EB5BD79AA6A"
+  },
+  "liveReadOnlySelectionState": {
+    "open": true,
+    "eligible": true,
+    "slotHasProfile": true,
+    "slotSelectable": true,
+    "slotLocked": false,
+    "buttonInteractable": true,
+    "actionAvailable": true,
+    "actionText": "选择 PVE 赛季",
+    "profileMatches": true,
+    "submissionPerformedByAgent": false
+  },
+  "inGameVisualVerified": false,
+  "limitations": [
+    "The seasonal slot shares the existing PVE character; it does not create an independent seasonal profile.",
+    "Actual button selection and in-game visuals are checked by the user.",
+    "Native online season features remain limited by the local SPT server."
+  ],
+  "liveCornerVersionState": {
+    "labelFound": true,
+    "enabled": false,
+    "defaultOriginalDisplayRetained": true,
+    "customTextNotChosenByAgent": true
+  }
+}

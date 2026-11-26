@@ -1,0 +1,22 @@
+{
+  "version": "2.3",
+  "date": "2026-11-16",
+  "target": "SPT 5.0 BE / EFT 1.3.0.1.48558",
+  "builds": "Client core builds with two pre-existing nullable warnings; integrated server/mail/admin and raid controls build without new warnings.",
+  "offlineChecks": {
+    "release23": "25 checks, including actual native BTR queue/removal with mail intercepted; transit and existing-package isolation; zero-fee native signatures; version/proxy validation; integrated client/server boundaries",
+    "projecte": "68 rules/protocol checks passed",
+    "swords": "46 guard, appearance and native inventory-icon checks passed",
+    "raidControls": "12 native Harmony/generation/inventory/repair check groups passed",
+    "probe": "136 client source/binary regression groups passed, including integrated Minecraft sidebar routes"
+  },
+  "isolatedServer": "86 MC/character-data endpoint checks passed on disposable port-6968 fixture; integrated runtime reports ready, independent MC hot reload is off, no separate logic module is required, and all three 3-X templates are absent from the live catalog.",
+  "minecraftAssets": 135,
+  "minecraftIndependentHotReload": false,
+  "otherUniversalModulesRetained": true,
+  "packageVerification": "Full and ClientOnly VerifyOnly modes passed; all 135 installed Minecraft resources match the manifest hashes.",
+  "installation": "Full package installed with game client closed; original server stopped after profile backups, then restarted in the original user's session. Port 6969 and raid-control 2.3.0 ready status verified. Old MC server folders and the atm-swords/projecte/scp3x universal modules are outside loader discovery; other universal modules remain.",
+  "githubLiveCheck": "The public GitHub API returned HTTP 403 in this environment. Update UI handles request limits and supports configurable proxies/manual retry; successful remote release retrieval has not been claimed.",
+  "inRaidVerified": false,
+  "broadTestingCompleted": false
+}

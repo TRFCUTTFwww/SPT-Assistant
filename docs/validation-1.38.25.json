@@ -1,0 +1,31 @@
+{
+    "version":  "1.38.25",
+    "updatedUtc":  "2026-11-07T07:37:56.5730755Z",
+    "builds":  {
+                   "client47888":  {
+                                       "errors":  0,
+                                       "existingWarnings":  2
+                                   },
+                   "client48558":  {
+                                       "errors":  0,
+                                       "existingWarnings":  2
+                                   }
+               },
+    "tests":  {
+                  "gameVisualsVerified":  false,
+                  "localeCatalogs":  "passed",
+                  "probeGroups":  92,
+                  "hudScopesVerified":  15
+              },
+    "deployment":  {
+                       "hostVersion":  "1.5.0",
+                       "backup":  "D:/SPT-5.0.0-48558/mod-backups/assistant-before-1.38.25-20261107-153653",
+                       "ready":  true,
+                       "peakStepMs":  1170.9131,
+                       "generation":  2,
+                       "steps":  279,
+                       "error":  null,
+                       "coreSha256":  "B46AB928012802B1C1BAD9D281D548DF70E23902C6BF15F933703D7C3488E085"
+                   },
+    "acceptance":  "Content measurement/wrapping, scroll behavior, all individual opacity values and config persistence still require in-game user acceptance. No visual verification performed."
+}

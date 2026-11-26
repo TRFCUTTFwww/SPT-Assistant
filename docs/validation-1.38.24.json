@@ -1,0 +1,33 @@
+{
+    "version":  "1.38.24",
+    "updatedUtc":  "2026-11-07T07:06:14.1730151Z",
+    "builds":  {
+                   "client47888":  {
+                                       "errors":  0,
+                                       "existingWarnings":  2
+                                   },
+                   "client48558":  {
+                                       "errors":  0,
+                                       "existingWarnings":  2
+                                   }
+               },
+    "tests":  {
+                  "probeGroups":  92,
+                  "newChecks":  [
+                                    "Mixed ammunition, weapon and invulnerability identity isolate aggregation",
+                                    "Native impact SourceId determines ammunition",
+                                    "Template stats remain separate from cumulative health loss and event damage",
+                                    "Protection lookup uses native read-only APIs without item creation, disk reads or damage mutation",
+                                    "English coverage ranges and character/item name preservation"
+                                ]
+              },
+    "deployment":  {
+                       "hostMatchesStaged150":  true,
+                       "loadedByGame":  false,
+                       "gameRunningAtInstall":  false,
+                       "hostSha256":  "AD0942BD2F32AC2329BE380DBA1CBD5A53756FA6D777A3D0BBBFF47C1AC71637",
+                       "coreSha256":  "6CF3EF1DBB1DC55BC39326AB6093C95D45C48DC620E32F5026E236F06A1E6037",
+                       "backup":  "D:/SPT-5.0.0-48558/mod-backups/assistant-before-1.38.24-20261107-150517"
+                   },
+    "acceptance":  "In-game panel layout, gear changes, penetration estimates and real incoming hits require user verification. Coverage ranges are native estimates, not exact per-angle outcomes."
+}

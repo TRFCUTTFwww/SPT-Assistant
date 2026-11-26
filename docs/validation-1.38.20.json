@@ -1,0 +1,37 @@
+{
+    "version":  "1.38.20",
+    "utc":  "2026-11-07T05:07:15.5416342Z",
+    "clientBuilds":  {
+                         "48558":  {
+                                       "errors":  0,
+                                       "existingWarnings":  2
+                                   },
+                         "47888":  {
+                                       "errors":  0,
+                                       "existingWarnings":  2
+                                   }
+                     },
+    "tests":  {
+                  "nativeTemplatesAndConfigUnchanged":  true,
+                  "nativeSideDelayCases":  28,
+                  "unknownQuestsRetained":  true,
+                  "mainStoryScopeRetained":  true,
+                  "gearMailGroups":  15,
+                  "unmetPrerequisitesRetained":  true,
+                  "sourceProfileBytesUnchanged":  true,
+                  "hiddenSideDelayCases":  7,
+                  "nonTimerProfileFieldsRetained":  true,
+                  "probe":  "passed including English catalogs and compiled client integration",
+                  "repeatIdempotency":  true
+              },
+    "deployment":  {
+                       "serverReady":  true,
+                       "clientSha256":  "7943C3ECEF2120AAD8B69301C70AEAAD5BF2D261AFE59B2758ED939D497C073F",
+                       "clientGeneration":  6,
+                       "serverGeneration":  2,
+                       "clientReady":  true,
+                       "backup":  "D:/SPT-5.0.0-48558/mod-backups/assistant-before-1.38.20-20261107-130626",
+                       "serverSha256":  "0FDDF90018ED35F2C8B3F2A9921BF4715B00BC6C37CF7EED51FA59E9B98B1B71"
+                   },
+    "gameAcceptance":  "Button display and quest availability after login require user verification; no wait skip submitted against a live profile"
+}

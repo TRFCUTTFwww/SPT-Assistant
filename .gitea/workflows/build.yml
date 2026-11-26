@@ -1,0 +1,105 @@
+name: SPT 48558 build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SPT_REFERENCES: /opt/spt-references
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  DOTNET_NOLOGO: '1'
+
+jobs:
+  server:
+    name: Server modules
+    runs-on: spt-dotnet-10
+    timeout-minutes: 20
+    steps:
+      - uses: https://github.com/actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Read commit version
+        id: version
+        shell: bash
+        run: |
+          sha=$(git rev-parse HEAD)
+          epoch=$(git show -s --format=%ct HEAD)
+          timestamp=$(date -u -d "@$epoch" +%Y%m%dT%H%M%SZ)
+          printf 'suffix=%s-%s\n' "$sha" "$timestamp" >> "$GITHUB_OUTPUT"
+      - name: Build server modules
+        shell: bash
+        env:
+          ARTIFACT_SUFFIX: ${{ steps.version.outputs.suffix }}
+        run: |
+          if [[ ! -r "$SPT_REFERENCES/SPT_Runtime/SPTarkov.Server.Core.dll" ]]; then
+            echo 'Missing SPT 48558 server references in /opt/spt-references/SPT_Runtime.' >&2
+            exit 1
+          fi
+          dotnet build gear-admin-module/AdminModule.csproj -c Release -m:1 -p:UseSharedCompilation=false -p:GameRoot="$SPT_REFERENCES"
+          dotnet build raid-controls-server/RaidControls.csproj -c Release -m:1 -p:UseSharedCompilation=false -p:GameRoot="$SPT_REFERENCES"
+          install -D -t artifacts/server -m 0644 \
+            gear-mail/bin/Release/net10.0/LocalGearMail.dll \
+            raid-controls-server/bin/Release/net10.0/LocalRaidControls.dll
+          install -D -m 0644 gear-admin-module/bin/Release/net10.0/LocalGearAdmin.dll \
+            "artifacts/modules/LocalGearAdmin-${ARTIFACT_SUFFIX}.module"
+      - name: Upload LocalGearAdmin.module
+        uses: https://github.com/actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          path: artifacts/modules/LocalGearAdmin-${{ steps.version.outputs.suffix }}.module
+          archive: false
+          if-no-files-found: error
+          retention-days: 7
+      - uses: https://github.com/actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: spt-48558-server-${{ steps.version.outputs.suffix }}
+          path: artifacts/server/
+          if-no-files-found: error
+          retention-days: 7
+
+  client:
+    name: Client modules
+    runs-on: spt-dotnet-10
+    timeout-minutes: 20
+    steps:
+      - uses: https://github.com/actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Read commit version
+        id: version
+        shell: bash
+        run: |
+          sha=$(git rev-parse HEAD)
+          epoch=$(git show -s --format=%ct HEAD)
+          timestamp=$(date -u -d "@$epoch" +%Y%m%dT%H%M%SZ)
+          printf 'suffix=%s-%s\n' "$sha" "$timestamp" >> "$GITHUB_OUTPUT"
+      - name: Build client modules
+        shell: bash
+        env:
+          ARTIFACT_SUFFIX: ${{ steps.version.outputs.suffix }}
+        run: |
+          if [[ ! -r "$SPT_REFERENCES/BepInEx/interop/Assembly-CSharp.dll" ]]; then
+            echo 'Missing SPT 48558 client references in /opt/spt-references/BepInEx/interop.' >&2
+            exit 1
+          fi
+          dotnet build esp-cover/Esp.csproj -c Release -m:1 -p:UseSharedCompilation=false -p:GameRoot="$SPT_REFERENCES" -p:EftBuild=48558
+          install -D -t artifacts/client -m 0644 \
+            esp-host/bin/Release/net10.0/Local.Spt5.ESP.dll
+          install -D -m 0644 esp-cover/bin/Release/net10.0/Local.Spt5.ESP.Core.dll \
+            "artifacts/modules/Local.Spt5.ESP.Core-${ARTIFACT_SUFFIX}.module"
+      - name: Upload Local.Spt5.ESP.Core.module
+        uses: https://github.com/actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          path: artifacts/modules/Local.Spt5.ESP.Core-${{ steps.version.outputs.suffix }}.module
+          archive: false
+          if-no-files-found: error
+          retention-days: 7
+      - uses: https://github.com/actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: spt-48558-client-${{ steps.version.outputs.suffix }}
+          path: artifacts/client/
+          if-no-files-found: error
+          retention-days: 7

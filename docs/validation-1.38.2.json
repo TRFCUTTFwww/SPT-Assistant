@@ -1,0 +1,59 @@
+{
+    "version":  "1.38.2",
+    "utc":  "2026-11-06T04:45:09.3335660Z",
+    "gameBuild":  48558,
+    "clientBuild":  {
+                        "errors":  0,
+                        "warnings":  2
+                    },
+    "legacy47888Build":  {
+                             "inGameVerified":  false,
+                             "separateModule":  true,
+                             "errors":  0,
+                             "warnings":  2
+                         },
+    "offlinePassGroups":  {
+                              "raidControls":  12,
+                              "gearMail":  2,
+                              "probe":  79
+                          },
+    "liveReload":  {
+                       "apiVersion":  1,
+                       "hostVersion":  "1.4.11",
+                       "coreVersion":  "1.38.2",
+                       "generation":  3,
+                       "sha256":  "32F92D17E53120A43B0A8A88255EAADC88F0F05FE5987C879A021684B5ED51AE",
+                       "ready":  true,
+                       "error":  null,
+                       "updatedUtc":  "2026-11-06T04:44:17.576309Z"
+                   },
+    "coreSha256":  "32F92D17E53120A43B0A8A88255EAADC88F0F05FE5987C879A021684B5ED51AE",
+    "fallbackMatches":  true,
+    "graphics":  {
+                     "anisotropicFiltering":  "Enable",
+                     "antiAliasing":  "TAA_High",
+                     "savedViaNativeSettings":  true,
+                     "superSampling":  "Off",
+                     "noise":  false,
+                     "fsr2":  "Off",
+                     "dlss":  "Off",
+                     "chromaticAberrations":  false,
+                     "fsr3":  "Off",
+                     "requestConsumed":  true
+                 },
+    "checks":  [
+                   "All world-space HUD projection calls use normalized viewport coordinates mapped to screen output; 1080p/1440p/ultrawide, half/balanced/quality/native/supersampled sizes and inset/offscreen cases",
+                   "Native scene camera selected instead of render-camera tags; refreshed when drawing",
+                   "Real head bone for people box; exact container collider ownership and moving-drawer refresh",
+                   "Door field accessor detours removed; nearby flags restored on range exit, disable, raid exit and unload",
+                   "Existing native scene/optic tint lifecycle, weapon/AI ownership, pickup transactions, repair, mail and raid-control checks passed"
+               ],
+    "inRaidVisualVerified":  false,
+    "doorInteractionVerified":  false,
+    "bodyTintVisualVerified":  false,
+    "notes":  [
+                  "User performs in-game visual/interaction checks",
+                  "Native resolution can cost more GPU time than FSR3 Balanced",
+                  "Existing Quest/data and native ballistic prewarm warnings remain outside the verified fixes; no claim every feature is battle-tested"
+              ]
+}

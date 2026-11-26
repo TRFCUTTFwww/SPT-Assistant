@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><AssemblyName>LocalGearAdmin</AssemblyName></PropertyGroup>
+ <ItemGroup><InternalsVisibleTo Include="Tests"/><FrameworkReference Include="Microsoft.AspNetCore.App"/><Compile Include="../shared/MiscSettings.cs" Link="MiscSettings.cs"/>
+  <Compile Include="../shared/JsonEditPath.cs" Link="JsonEditPath.cs"/>
+  <EmbeddedResource Include="ServerJsonCurated.en.json" LogicalName="LocalGearMail.ServerJsonCurated.en.json"/>
+  <EmbeddedResource Include="ServerJsonItemFields.tsv" LogicalName="LocalGearMail.ServerJsonItemFields.tsv"/>
+  <Reference Include="$(GameRoot)/SPT_Runtime/0Harmony.dll"><Private>false</Private></Reference>
+  <Compile Include="../shared/ProfileFieldCatalog.cs" Link="ProfileFieldCatalog.cs"/>
+  <Compile Include="../shared/DogtagEdit.cs" Link="DogtagEdit.cs"/>
+  <Compile Include="../shared/InventoryItemJsonRules.cs" Link="InventoryItemJsonRules.cs"/>
+  <Compile Include="../shared/RaidStashJson.cs" Link="RaidStashJson.cs"/><Compile Include="../gear-mail/HideoutCraftRules.cs" Link="HideoutCraftRules.cs"/><Compile Include="../gear-mail/HideoutCraftService.cs" Link="HideoutCraftService.cs"/><Compile Include="../gear-mail/RaidStashService.cs" Link="RaidStashService.cs"/>
+  <Compile Include="../gear-mail/RaidStashRules.cs" Link="RaidStashRules.cs"/>
+  <Compile Include="../gear-mail/CharacterDataAdmin.cs" Link="CharacterDataAdmin.cs"/>
+  <Compile Include="../gear-mail/CharacterDataRules.cs" Link="CharacterDataRules.cs"/>
+  <Compile Include="../gear-mail/StoryAdmin.cs" Link="StoryAdmin.cs"/>
+  <Compile Include="../gear-mail/StoryRules.cs" Link="StoryRules.cs"/>
+  <ProjectReference Include="../gear-mail/GearMail.csproj"/>
+  <Reference Include="$(GameRoot)/SPT_Runtime/SPTarkov.Server.Core.dll"><Private>false</Private></Reference>
+  <Reference Include="$(GameRoot)/SPT_Runtime/SPTarkov.Common.dll"><Private>false</Private></Reference>
+  <Reference Include="$(GameRoot)/SPT_Runtime/SPTarkov.DI.dll"><Private>false</Private></Reference>
+ </ItemGroup>
+<ItemGroup><Compile Include="../shared/GearAttributeValueRules.cs" Link="GearAttributeValueRules.cs"/></ItemGroup></Project>

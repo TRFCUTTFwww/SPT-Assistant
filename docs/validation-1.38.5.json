@@ -1,0 +1,33 @@
+{
+    "version":  "1.38.5",
+    "utc":  "2026-11-06T06:41:09.6181670Z",
+    "gameBuild":  48558,
+    "reportedRegression":  "1.38.4 optical boxes drift when user moves view",
+    "fix":  "World-space box mesh, native render-time matrices, native exact-camera onPreRender refresh, BeforeImageEffects stage; no SetViewProjectionMatrices",
+    "probePassGroups":  83,
+    "clientBuild":  {
+                        "errors":  0,
+                        "existingWarnings":  2
+                    },
+    "legacy47888Build":  {
+                             "existingWarnings":  2,
+                             "separateModule":  true,
+                             "errors":  0
+                         },
+    "runtime":  {
+                    "apiVersion":  1,
+                    "hostVersion":  "1.4.11",
+                    "coreVersion":  "1.38.5",
+                    "generation":  6,
+                    "sha256":  "720CDE5C4F98D181D474DC86721F5689B843425D36B98789483620DAF23943E0",
+                    "ready":  true,
+                    "error":  null,
+                    "updatedUtc":  "2026-11-06T06:40:23.9808091Z"
+                },
+    "coreSha256":  "720CDE5C4F98D181D474DC86721F5689B843425D36B98789483620DAF23943E0",
+    "fallbackMatches":  true,
+    "backup":  "D:/SPT-5.0.0-48558/repair-backups/1.38.5-20261106-143932",
+    "nativeRenderCallbackObserved":  false,
+    "inRaidCameraMotionAlignmentVerified":  false,
+    "inRaidZoomAlignmentVerified":  false
+}

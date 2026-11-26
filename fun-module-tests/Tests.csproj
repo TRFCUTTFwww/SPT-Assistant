@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><TargetFramework>net10.0</TargetFramework><OutputType>Exe</OutputType><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+ <ItemGroup><Compile Include="../gear-mail/FunItemPolicy.cs" Link="FunItemPolicy.cs"/><Compile Include="../shared/MiscSettings.cs" Link="MiscSettings.cs"/><ProjectReference Include="../universal-sdk/Contracts.csproj"/><PackageReference Include="Mono.Cecil" Version="0.11.6"/><Compile Include="../shared/FunModulePackage.cs" Link="FunModulePackage.cs"/><Compile Include="../shared/PackagedModuleAssets.cs" Link="PackagedModuleAssets.cs"/><EmbeddedResource Include="asset.txt" LogicalName="HotModuleAssets/nested/测试.txt"/></ItemGroup>
+</Project>

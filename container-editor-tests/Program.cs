@@ -1,0 +1,34 @@
+using LocalSpt.WorldEditing;
+using LocalSpt5Esp;
+using Mono.Cecil;
+using System.Text.Json;
+void Check(bool value,string message){if(!value)throw new Exception(message);}
+void Reject(Action action){try{action();}catch(ArgumentException){return;}throw new Exception("Invalid operation accepted");}
+new ContainerLootOptions().Validate();new ContainerLootOptions{Mode="custom",Rolls=0}.Validate();
+Reject(()=>new ContainerLootOptions{Mode="custom"}.Validate());
+foreach(double value in new[]{0,-1,double.NaN,double.PositiveInfinity})Reject(()=>new ContainerLootOptions{Mode="custom",Items=[new(){Template="544fb45d4bdc2dee738b4568",Weight=value}]}.Validate());
+Reject(()=>new ContainerLootOptions{Rolls=101}.Validate());Reject(()=>new ContainerLootOptions{Items=null!}.Validate());Reject(()=>new ContainerLootOptions{Items=[null!]}.Validate());
+Reject(()=>new ContainerLootOptions{Items=[new(){Template="bad"}]}.Validate());
+Check(ContainerBuildRules.Yaw(-15)==345&&ContainerBuildRules.Yaw(735)==15,"rotation wrap");
+Check(ContainerBuildRules.Snap(.375f,.25f)==.5f&&ContainerBuildRules.Snap(-.375f,.25f)==-.5f,"symmetric grid midpoint");
+Reject(()=>ContainerBuildRules.Yaw(float.NaN));Reject(()=>ContainerBuildRules.Snap(float.PositiveInfinity,.25f));
+string oldRoot="aaaaaaaaaaaaaaaaaaaaaaaa",oldItem="bbbbbbbbbbbbbbbbbbbbbbbb";
+var input=JsonSerializer.Serialize(new object[]{new{_id=oldRoot,_tpl="cccccccccccccccccccccccc"},new{_id=oldItem,_tpl="544fb45d4bdc2dee738b4568",parentId=oldRoot,slotId="main",location=new{x=1,y=2,r=0},upd=new{StackObjectsCount=3,SpawnedInSession=true}}});
+int id=0;var copied=EditorItemRules.Remap(input,oldRoot,()=> (++id).ToString("x24"),out string remapped);
+Check(remapped!=oldRoot&&copied.Count==2&&copied[1]!["parentId"]!.GetValue<string>()==remapped&&copied[1]!["upd"]!["StackObjectsCount"]!.GetValue<int>()==3,"copy remaps container and children while retaining inventory");
+foreach(bool paused in new[]{false,true})foreach(bool exclusive in new[]{false,true})foreach(bool manual in new[]{false,true})Check(AiCleanupRules.BlockSpawn(paused,exclusive,manual)==((paused||exclusive)&&!manual),"pause/manual precedence");
+Console.WriteLine("PASS configuration rejection, symmetric snapping, rotation, independent inventory copies and manual-spawn precedence");
+var source=Environment.GetEnvironmentVariable("SPT_SOURCE_ROOT")??Directory.GetCurrentDirectory();
+var game=Environment.GetEnvironmentVariable("SPT_GAME_ROOT")??"D:/SPT-5.0.0-48558";
+using var core=AssemblyDefinition.ReadAssembly(Path.Combine(source,"esp-cover/bin/Release/net10.0/Local.Spt5.ESP.Core.dll"));
+using var native=AssemblyDefinition.ReadAssembly(Path.Combine(game,"BepInEx/interop/Assembly-CSharp.dll"));
+MethodReference[] Calls(string type,string method)=>core.MainModule.Types.Single(t=>t.Name==type).Methods.Single(m=>m.Name==method).Body.Instructions.Select(i=>i.Operand).OfType<MethodReference>().ToArray();
+Check(Calls("RuntimeModule","Update").Any(m=>m.Name=="TickContainers")&&Calls("RuntimeModule","PrepareForReload").Any(m=>m.Name=="PrepareContainersForReload"),"container queue participates in update and reload drain");
+Check(Calls("ContainerScene","Create").Any(m=>m.Name=="RegisterWorldInteractionObject")&&Calls("ContainerScene","Create").Any(m=>m.Name=="Init"),"placed containers use native registration and item owners");
+Check(Calls("ContainerScene","Remove").Any(m=>m.Name=="RequireIdle")&&Calls("ContainerScene","RequireIdle").Any(m=>m.Name=="get_IsInventoryOpened"),"real inventory interaction prevents removal, stale player reference does not");
+Check(Calls("WorldEditor","ResolveContainerJob").Any(m=>m.Name=="get_IsAlive")&&Calls("WorldEditor","ResolveContainerJob").Any(m=>m.Name=="get_Pointer"),"queued writes revalidate world/player lifetime");
+Check(!Calls("RaidSpawnControl","Tick").Any(m=>m.Name=="get_SpawnPaused")&&Calls("RaidSpawnControl","Block").Any(m=>m.Name=="get_SpawnPaused"),"pause only gates activation and never feeds removal reconciliation");
+Check(Calls("WorldEditor","StopContainerBuild").Any(m=>m.Name=="Destroy")&&Calls("WorldEditor","ClearContainerPreview").Any(m=>m.Name=="Release"),"ghost and thumbnail resources are released");
+foreach(var name in new[]{"EFT.Interactive.LootableContainer","EFT.Interactive.WorldInteractiveObject","EFT.GameWorld"})Check(native.MainModule.Types.Any(t=>t.FullName==name),"native type missing: "+name);
+foreach(var signature in new[]{("EFT.Interactive.LootableContainer","Init",1),("EFT.Interactive.WorldInteractiveObject","Open",0),("EFT.Interactive.WorldInteractiveObject","ForceCloseLocalDoor",1),("EFT.GameWorld","RegisterWorldInteractionObject",1)})Check(native.MainModule.Types.Single(t=>t.FullName==signature.Item1).Methods.Any(m=>m.Name==signature.Item2&&m.Parameters.Count==signature.Item3),"native API mismatch: "+signature);
+Console.WriteLine("PASS native 48558 registration contracts, queue lifecycle, live identity guards and spawn-pause/removal separation");

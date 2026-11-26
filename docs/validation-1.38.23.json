@@ -1,0 +1,46 @@
+{
+    "version":  "1.38.23",
+    "hostVersion":  "1.5.0",
+    "utc":  "2026-11-07T06:24:46.3895106Z",
+    "builds":  {
+                   "adminModule":  "passed, no warnings",
+                   "host":  "both targets passed, no warnings",
+                   "client48558":  {
+                                       "errors":  0,
+                                       "existingWarnings":  2
+                                   },
+                   "client47888":  {
+                                       "errors":  0,
+                                       "existingWarnings":  2
+                                   }
+               },
+    "tests":  {
+                  "hostBoundary":  "Production reloader/sequence/pause source exercised against native boundary stubs and a separate fixture assembly",
+                  "craft":  "Already-full progress repaired with AvailableForFinish, idempotency, ordinary recipe whitelist and stale profile/raid/restarted instance isolation",
+                  "liveProfileWritesByOfflineTests":  false,
+                  "gearMailGroups":  16,
+                  "probeGroups":  90,
+                  "installer":  "isolated replacement/hash/backup success and corrupt-package rejection",
+                  "hostLifecycleGroups":  5
+              },
+    "deployment":  {
+                       "serverSha256":  "112B272D4D5C21B47C07C912B85CFE5761BB34537B49C402CD0B491EAB039777",
+                       "reason":  "Host upgrade requires a client restart. Hidden installer waits for a normal game exit; it does not stop/restart the game.",
+                       "serverBackup":  "D:/SPT-5.0.0-48558/mod-backups/assistant-before-1.38.23-20261107-142219",
+                       "clientLoaded":  false,
+                       "clientCoreSha256":  "C7E6741B78B5667BD103DEAAC4B23A2D3FDD3735EA603D1DB0AE0EFE4797CA15",
+                       "clientHostSha256":  "AD0942BD2F32AC2329BE380DBA1CBD5A53756FA6D777A3D0BBBFF47C1AC71637",
+                       "serverGeneration":  4,
+                       "serverReady":  true,
+                       "clientInstallationState":  "waiting-for-game-exit",
+                       "clientStage":  "D:/SPT-5.0.0-48558/mod-updates/assistant-1.38.23"
+                   },
+    "liveCraftStatus":  {
+                            "endpoint":  "craftStatus, read-only",
+                            "availableForFinish":  true,
+                            "progress":  4500,
+                            "productionTime":  4500,
+                            "ordinaryReadyCount":  1
+                        },
+    "acceptance":  "Actual modal font/visibility, pause behavior, native per-step peak time, Windows responsiveness and item claiming require user verification after restart. Offline boundary tests do not establish zero stutter or full simulation pause."
+}

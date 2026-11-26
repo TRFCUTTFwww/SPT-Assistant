@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../esp-cover/MemoryEditorAccess.cs" Link="MemoryEditorAccess.cs" />
+    <Compile Include="../esp-cover/MemoryDisassembly.cs" Link="MemoryDisassembly.cs" />
+    <Compile Include="../esp-cover/MemoryWatchpoint.cs" Link="MemoryWatchpoint.cs" />
+    <Compile Include="../esp-cover/MemoryCodePatcher.cs" Link="MemoryCodePatcher.cs" />
+    <Compile Include="../esp-cover/MemoryTextAssembler.cs" Link="MemoryTextAssembler.cs" />
+    <Compile Include="../esp-cover/MemoryValuePresets.cs" Link="MemoryValuePresets.cs" />
+    <Compile Include="../esp-cover/MemoryPatchPresets.cs" Link="MemoryPatchPresets.cs" />
+    <Compile Include="../esp-cover/MemoryPointerScanner.cs" Link="MemoryPointerScanner.cs" />
+    <Compile Include="../esp-cover/PresetStorage.cs" Link="PresetStorage.cs" />
+    <Reference Include="Iced" HintPath="$(GameRoot)/BepInEx/core/Iced.dll" />
+  </ItemGroup>
+</Project>

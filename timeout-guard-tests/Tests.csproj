@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><OutputType>Exe</OutputType><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../esp-cover/RaidTimeoutProtection.cs" Link="RaidTimeoutProtection.cs"/>
+    <Compile Include="../esp-cover/RaidEnd.Settlement.cs" Link="RaidEnd.Settlement.cs"/>
+    <Compile Include="../esp-cover/RaidDeadlineState.cs" Link="RaidDeadlineState.cs"/>
+  </ItemGroup>
+</Project>

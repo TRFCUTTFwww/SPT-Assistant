@@ -1,0 +1,32 @@
+{
+    "version":  "1.37.3",
+    "utc":  "2026-11-05T16:12:25.4714941Z",
+    "build":  {
+                  "errors":  0,
+                  "warnings":  2
+              },
+    "offlinePassGroups":  69,
+    "change":  "Bind character tint command buffers from every host LateUpdate; select an active main camera without an aiming requirement; reconcile main/optic buffers on scope mode changes",
+    "regressionChecks":  [
+                             "Host LateUpdate schedules tint camera synchronization",
+                             "Normal camera selection has no aiming prerequisite",
+                             "Tint setup has no managed pre-cull dependency",
+                             "Optic camera ownership and command buffer cleanup"
+                         ],
+    "liveReload":  {
+                       "apiVersion":  1,
+                       "hostVersion":  "1.4.11",
+                       "coreVersion":  "1.37.3",
+                       "generation":  10,
+                       "sha256":  "E75DFFD81B1A3AAC12285FDE97EF5C9B648CB02B04D1C3EBF6F1DC9DB72EC49F",
+                       "ready":  true,
+                       "error":  null,
+                       "updatedUtc":  "2026-11-05T16:11:49.1300477Z"
+                   },
+    "coreSha256":  "E75DFFD81B1A3AAC12285FDE97EF5C9B648CB02B04D1C3EBF6F1DC9DB72EC49F",
+    "fallbackSha256":  "E75DFFD81B1A3AAC12285FDE97EF5C9B648CB02B04D1C3EBF6F1DC9DB72EC49F",
+    "inRaidVisualVerified":  false,
+    "settingsUnchanged":  true,
+    "persistedTintEnabled":  false,
+    "persistedScopeOnly":  true
+}

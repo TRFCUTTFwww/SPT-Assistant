@@ -1,0 +1,36 @@
+{
+    "version":  "1.37.4",
+    "utc":  "2026-11-05T16:25:11.4083864Z",
+    "build":  {
+                  "errors":  0,
+                  "warnings":  2
+              },
+    "offlinePassGroups":  69,
+    "change":  "Use native scene SkinnedMeshRenderers sharing source mesh and bones for general tinting. Keep optical-only command buffers for scope mode.",
+    "regressionChecks":  [
+                             "Normal tint rendering has no camera/aiming/command-buffer prerequisite",
+                             "Native layers copy mesh, bone binding and per-submesh material assignment",
+                             "Dynamic occlusion disabled for tint layers",
+                             "Generated renderers excluded from source scans",
+                             "Generated layers destroyed on disable/reset/mode change",
+                             "Optic commands detached on cleanup"
+                         ],
+    "liveReload":  {
+                       "apiVersion":  1,
+                       "hostVersion":  "1.4.11",
+                       "coreVersion":  "1.37.4",
+                       "generation":  11,
+                       "sha256":  "B932B631063A83BE5C7A8A3BB5957653937D5E4DD092949B7DF6D6DF34D3D77E",
+                       "ready":  true,
+                       "error":  null,
+                       "updatedUtc":  "2026-11-05T16:23:50.8297334Z"
+                   },
+    "coreSha256":  "B932B631063A83BE5C7A8A3BB5957653937D5E4DD092949B7DF6D6DF34D3D77E",
+    "fallbackSha256":  "B932B631063A83BE5C7A8A3BB5957653937D5E4DD092949B7DF6D6DF34D3D77E",
+    "runtimeDiagnostic":  "[Info   : SPT5 中文辅助] Character tint rendering: enabled=True, scopeOnly=False, path=native scene layers, optic=none, meshes=33, layers=33, buffers=0",
+    "settingsUnchanged":  true,
+    "generalTintInRaidUserVerified":  true,
+    "userFeedback":  "现在能看到了",
+    "scopeModeSwitchInRaidVerified":  false,
+    "visibleOccludedDepthInRaidVerified":  false
+}

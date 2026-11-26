@@ -1,0 +1,43 @@
+{
+    "version":  "1.38.6",
+    "utc":  "2026-11-06T06:58:00.3326446Z",
+    "gameBuild":  48558,
+    "feature":  "Rolling frame performance HUD with existing menu settings and layout slot",
+    "windowSeconds":  5,
+    "sampleCapacity":  4096,
+    "defaultRefreshSeconds":  0.5,
+    "metrics":  [
+                    "FPS = samples / elapsed time",
+                    "mean frame ms",
+                    "nearest rank P99 ms",
+                    "peak ms",
+                    "frames \u003e 50ms",
+                    "instrumented Update/LateUpdate, IMGUI and optic pre-render callback CPU"
+                ],
+    "scope":  "Mod CPU excludes game/GPU and uninstrumented native hooks",
+    "probePassGroups":  85,
+    "clientBuild":  {
+                        "errors":  0,
+                        "existingWarnings":  2
+                    },
+    "legacy47888Build":  {
+                             "existingWarnings":  2,
+                             "separateModule":  true,
+                             "errors":  0
+                         },
+    "runtime":  {
+                    "apiVersion":  1,
+                    "hostVersion":  "1.4.11",
+                    "coreVersion":  "1.38.6",
+                    "generation":  7,
+                    "sha256":  "C9A7B01A1F97B9EBE52FA207E9798DE52BDB39BA79A4DBE8932C3E42A55C5F02",
+                    "ready":  true,
+                    "error":  null,
+                    "updatedUtc":  "2026-11-06T06:56:57.5204665Z"
+                },
+    "coreSha256":  "C9A7B01A1F97B9EBE52FA207E9798DE52BDB39BA79A4DBE8932C3E42A55C5F02",
+    "fallbackMatches":  true,
+    "backup":  "D:/SPT-5.0.0-48558/repair-backups/1.38.6-20261106-145606",
+    "defaultConfigVerified":  true,
+    "inGameVisualVerified":  false
+}

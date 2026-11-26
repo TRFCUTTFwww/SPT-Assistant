@@ -1,0 +1,21 @@
+# 错误保护与测试边界
+
+空引用、数组越界和模块加载失败都可能在真实游戏或 Mod 运行中出现。例如对象已销毁却继续访问、列表刷新后使用旧索引、热更模块依赖或初始化失败。它们属于值得测试的错误处理场景；目前没有证据表明用户的游戏已实际发生这些故障。
+
+栈溢出和非法内存访问同样可能发生，但真实线程栈耗尽或原生指针错误通常会直接终止进程。
+
+调试页将空引用/越界的受控托管异常、热更新失败演练、原生致命错误的报告界面演练分开解释。栈溢出与内存错误按钮只提交报告，不执行危险操作。真实错误与模拟均保留明确标识；模拟不触发背包救援或战局结算。
+
+保护界面使用深色面板、琥珀色错误标识和可配置的强调色。标题与暂停状态置于顶部，问题摘要和物品保护状态分别放入卡片；底部固定主要操作，窄窗口将主要按钮纵向排列，长内容独立滚动。技术堆栈默认折叠，可切换查看和复制；回退可用时突出回退操作，否则突出导出日志。备份或结算进行期间禁用重启和退出，备份成功与服务端结算完成分开显示，未确认时不会宣称物品已安全结算。
+
+
+实际 IMGUI 绘制代码同时编译进 `safety-ui-tests`，在独立 GDI 画布上生成预览，不操作游戏。检查覆盖中英双语与八种窗口尺寸的组合、按钮边界、长堆栈滚动、操作分发、保存期间禁用退出及 GUI 状态还原。
+
+```powershell
+dotnet build esp-cover/Esp.csproj -c Release -p:NuGetAudit=false
+dotnet run --project safety-ui-tests/Tests.csproj -c Release -- safety-previews
+dotnet build host-tests/Fixture/Fixture.csproj -c Release
+dotnet run --project host-tests/HostTests.csproj -c Release -- host-tests/Fixture/bin/Release/net10.0/Fixture.dll
+```
+
+宿主 `SafetyUiRevision` 更新为 4。已运行的旧宿主通过模块内兼容桥使用相同绘制代码，无需为本次界面更新重启游戏；常驻宿主文件的更新应在关闭客户端后进行。未自动触发真实或模拟错误，不验证真实原生致命错误的恢复能力。

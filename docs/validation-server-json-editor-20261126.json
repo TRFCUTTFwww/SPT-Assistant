@@ -1,0 +1,17 @@
+{
+    "date":  "2026-11-26",
+    "version":  "2.4",
+    "serverJsonChecks":  535,
+    "liveHttpChecks":  11,
+    "liveHttpFilesIncludingFixture":  460,
+    "noAutomaticRefresh":  true,
+    "preservesExternalFields":  true,
+    "fieldAnnotationNodes":  958780,
+    "undocumentedNodes":  33931,
+    "largestFileOpenMs":  360,
+    "largestFileSearchMs":  2770,
+    "gameVisualCheck":  "pending user",
+    "coreSha256":  "26663F41949B88E3A8EB7316FD3609891E743ACC11EB882C30D0661106FAB014",
+    "adminSha256":  "4BB85CB452A6CE859C4BA853C466FD87868132DFE241DB63B2515C0B956E65F2",
+    "adminGeneration":  4
+}

@@ -1,0 +1,38 @@
+{
+  "date": "2026-11-26",
+  "version": "2.4",
+  "mainOptionalChecks": 24,
+  "minecraftModuleChecks": 39,
+  "installerChecks": 60,
+  "profileBackupChecks": 42,
+  "minecraft": {
+    "rulesChecks": 68,
+    "totemChecks": 51,
+    "audioChecks": 12,
+    "surgeryTerminalChecks": 524,
+    "iconLoader": "pass",
+    "clientBuilds": "pass",
+    "serverBuild": "pass",
+    "installerVerifyOnly": "pass"
+  },
+  "mainServerBuild": {
+    "warnings": 0,
+    "errors": 0
+  },
+  "mainClientBuild": {
+    "warnings": 3,
+    "errors": 0
+  },
+  "gearMailSuite": "pass",
+  "githubMarkdownBackup": {
+    "count": 138,
+    "hash": "git blob SHA-1 verified per file",
+    "oldHead": "5c4967432c1614343f85d24d0435b9342f082940"
+  },
+  "runtime": {
+    "backgroundAndMapOrderHotReloadGeneration": 25,
+    "finalCore": "prepared while client closed",
+    "serverRestarted": false,
+    "inGameVisualVerification": false
+  }
+}
