@@ -634,16 +634,25 @@ internal static class FleaPrices
     [HarmonyPriority(Priority.High)]
     private static void ConvertOffersCurrency(ref GetOffersResult? __result)
     {
-        if (!book.Current.Rules.RoubleOnly || __result?.Offers is not { Count: > 0 } offers)
+        if (__result?.Offers is not { Count: > 0 } offers)
             return;
-        __result = __result with { Offers = offers.Select(ConvertToRoubleOffer).ToList() };
+        bool roubleOnly = book.Current.Rules.RoubleOnly;
+        if (!roubleOnly && !offers.Any(o => CustomFleaOffers.PausedRemaining(o).HasValue))
+            return;
+        __result = __result with
+        {
+            Offers = offers.Select(o => CustomFleaOffers.ProjectForClient(roubleOnly ? ConvertToRoubleOffer(o) : o)).ToList()
+        };
     }
 
     [HarmonyPriority(Priority.High)]
     private static void ConvertSingleOfferCurrency(ref RagfairOffer? __result)
     {
-        if (book.Current.Rules.RoubleOnly && __result != null)
+        if (__result == null)
+            return;
+        if (book.Current.Rules.RoubleOnly)
             __result = ConvertToRoubleOffer(__result);
+        __result = CustomFleaOffers.ProjectForClient(__result);
     }
 
     internal const string ListingBlocked = "该物品禁止上架。";

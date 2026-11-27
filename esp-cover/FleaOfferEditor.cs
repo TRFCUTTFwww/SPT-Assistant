@@ -40,13 +40,20 @@ internal static class FleaOfferEditor {
   reading=CharacterDataPanel.Call("/local/gear/data","characterData",new Dictionary<string,object?>{["action"]="fleaPriceStatus",["template"]=template}).WaitAsync(TimeSpan.FromSeconds(20));
   notice="正在读取报价保存状态…";
  }
- internal static long NativeExpiry(EFT.UI.Ragfair.Offer offer)=>new DateTimeOffset(DateTime.FromBinary(offer.EndTime.ToBinary()).ToUniversalTime()).ToUnixTimeSeconds();
+ internal static long NativeExpiry(EFT.UI.Ragfair.Offer offer){
+  double left=(offer.EndTime-EFT.DateTimeExtensions.UtcNow).TotalSeconds;
+  long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+  if(!double.IsFinite(left))return now;
+  return left>=LocalFleaShared.FleaOfferLifetime.PermanentEndTime-now-86400?LocalFleaShared.FleaOfferLifetime.PermanentEndTime:now+(long)Math.Round(left);
+ }
  static int Integer(string text,string caption)=>int.TryParse(text,NumberStyles.Integer,CultureInfo.InvariantCulture,out var n)?n:throw new ArgumentException(caption+": 请输入有效整数。");
  static double Decimal(string text,string caption)=>double.TryParse(text,NumberStyles.Float,CultureInfo.InvariantCulture,out var n)&&double.IsFinite(n)?n:throw new ArgumentException(caption+": 请输入有限数值。");
  static void Save(){try{
   if(template.Length==0)throw new ArgumentException("请先选择出售物品。");
+  int remainingMinutes=Integer(minutes,"剩余分钟");
+  if(paused&&remainingMinutes<0)throw new ArgumentException("暂停剩余时间不能使用负数（负数表示永久）；请填写非负分钟数或关闭暂停。");
   var payload=new Dictionary<string,object?>{["action"]=id.Length==0?"fleaOfferAdd":"fleaOfferEdit",["id"]=id,["template"]=template,["fleaOffer"]=new{
-   playerName=name,unitPrice=Integer(price,"单价"),stock=Integer(stock,"存量"),remainingMinutes=Integer(minutes,"剩余分钟"),rating=Decimal(rating,"市场信誉"),
+   playerName=name,unitPrice=Integer(price,"单价"),stock=Integer(stock,"存量"),remainingMinutes,rating=Decimal(rating,"市场信誉"),
    durability=string.IsNullOrWhiteSpace(durability)?(double?)null:Decimal(durability,"当前耐久"),maxDurability=string.IsNullOrWhiteSpace(maximum)?(double?)null:Decimal(maximum,"最大耐久"),persistent,paused,
    preserveExpiry=id.Length>0&&!inactive&&minutes==originalMinutes}};
   saving=CharacterDataPanel.Call("/local/gear/data","characterData",payload);notice="正在保存报价…";
@@ -95,7 +102,10 @@ internal static class FleaOfferEditor {
     rating=Field(0,258,inner,"市场信誉",rating);
     durability=Field(0,322,cell,"当前耐久（可留空）",durability);maximum=Field(cell+12,322,cell,"最大耐久（可留空）",maximum);
     if(InterfaceMenu.Button(new(0,390,inner,30),persistent?"保存到 SQLite · 开启":"保存到 SQLite · 关闭",persistent))persistent=!persistent;
-    if(InterfaceMenu.Button(new(0,430,inner,30),paused?"暂停剩余时间 · 开启":"暂停剩余时间 · 关闭",paused))paused=!paused;
+    if(InterfaceMenu.Button(new(0,430,inner,30),paused?"暂停剩余时间 · 开启":"暂停剩余时间 · 关闭",paused)){
+     paused=!paused;
+     if(paused&&int.TryParse(minutes,NumberStyles.Integer,CultureInfo.InvariantCulture,out var cur)&&cur<0)minutes="1440";
+    }
    }finally{GUI.EndScrollView();}
    InterfaceMenu.Paragraph(new(left,bounds.yMax-112,w,64),notice.Length>0?notice:inactive?"保存后重新上架；存量和有效期按本次设置。":"未修改剩余分钟时保留原到期时间。暂停时保留剩余时长，关闭暂停后继续倒计时。SQLite 重启恢复；负数永久。耐久同时留空保留原值。",null,12);
    if(InterfaceMenu.Button(new(left,bounds.yMax-44,(w-12)/2,30),"取消"))Close();

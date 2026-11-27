@@ -1,4 +1,5 @@
 using System.Text.Json;
+using EFT;
 using EFT.UI;
 using EFT.UI.Ragfair;
 using HarmonyLib;
@@ -13,6 +14,7 @@ internal static class NativeFleaOfferEdit {
  internal static void ToggleWithdraw()=>withdrawEnabled.Value=!withdrawEnabled.Value;
  sealed class Buttons(OfferView view){internal readonly OfferView View=view;internal DefaultUIButton? Edit,Withdraw;}
  static readonly Dictionary<IntPtr,Buttons> buttons=new();
+ static readonly Dictionary<IntPtr,OfferView> views=new();
  static readonly List<(InteractionButtonsContainer Container,SimpleContextMenuButton Button)> menuButtons=[];
  static Task<string>? withdrawing,timingRead;static string withdrawalTemplate="",timingError="";
  static float nextTimingRead;static long timingRevision;
@@ -22,6 +24,7 @@ internal static class NativeFleaOfferEdit {
   withdrawEnabled=Bind("Show withdraw offer button","显示下架按钮","开启后在原生报价操作区与右键菜单显示下架；下架后保存到 SQLite，可重新上架。");
   changed=(_,_)=>{ClearMenus();RefreshAll();};enabled.SettingChanged+=changed;withdrawEnabled.SettingChanged+=changed;
   plugin.Patches.Patch(AccessTools.Method(typeof(OfferView),"Tick"),postfix:new HarmonyMethod(typeof(NativeFleaOfferEdit),nameof(Timing)));
+  plugin.Patches.Patch(AccessTools.Method(typeof(OfferView),"Update"),postfix:new HarmonyMethod(typeof(NativeFleaOfferEdit),nameof(UpdateTiming)));
   foreach(string method in new[]{nameof(OfferView.ShowAction),nameof(OfferView.SetExpandedStatus)})
    plugin.Patches.Patch(AccessTools.Method(typeof(OfferView),method),postfix:new HarmonyMethod(typeof(NativeFleaOfferEdit),nameof(Selected)));
   foreach(string method in new[]{"_Awake_b__101_0","_Awake_b__101_1"})
@@ -44,7 +47,7 @@ internal static class NativeFleaOfferEdit {
    if(root.TryGetProperty("err",out var error)&&error.GetInt32()!=0)throw new ArgumentException("剩余时间读取失败");
    if(timingRevision==FleaMarketPanel.OfferRevision)FleaMarketPanel.OffersChanged(CharacterDataPanel.Data(root),"");else nextTimingRead=0;
    timingError="";
-  }catch{timingError="剩余时间读取失败";}finally{timingRead=null;}}
+  }catch{timingError="剩余时间读取失败";}finally{timingRead=null;RefreshTimingAll();}}
   if(withdrawing?.IsCompleted!=true)return;
   try{
    using var doc=JsonDocument.Parse(withdrawing.GetAwaiter().GetResult());var root=doc.RootElement;
@@ -73,26 +76,54 @@ internal static class NativeFleaOfferEdit {
  }
  static void RefreshAll(){foreach(var pair in buttons.Values)try{Refresh(pair);}catch{}}
  static void Selected(OfferView __instance){try{
-  if(!buttons.TryGetValue(__instance.Pointer,out var pair)){
+  if(__instance!=null&&__instance.Pointer!=IntPtr.Zero)views[__instance.Pointer]=__instance;
+  if(__instance!=null)Timing(__instance);
+  if(!buttons.TryGetValue(__instance!.Pointer,out var pair)){
    if(!Enabled&&!WithdrawEnabled)return;buttons[__instance.Pointer]=pair=new(__instance);
   }
   Refresh(pair);
  }catch(Exception e){Plugin.Self?.Log.LogWarning("Flea offer actions: "+e.Message);}}
+ static void SetLabel(OfferView view,string text){
+  if(view._expirationLabel==null)return;
+  string formatted="\u00A0"+text+"\u00A0";
+  if(view._expirationLabel.text!=formatted)view._expirationLabel.SetMonospaceText(formatted,true);
+ }
+ static void EnsureTimingHydrated(){
+  if(timingRead!=null||Time.unscaledTime<nextTimingRead)return;
+  timingRevision=FleaMarketPanel.OfferRevision;nextTimingRead=Time.unscaledTime+12;
+  timingRead=CharacterDataPanel.Call("/local/gear/data","characterData",new Dictionary<string,object?>{["action"]="fleaPriceStatus"}).WaitAsync(TimeSpan.FromSeconds(20));
+ }
+ static void UpdateTiming(OfferView __instance){try{
+  if(__instance==null||__instance.Offer==null||__instance._expirationLabel==null)return;
+  var offer=FleaMarketPanel.FindOffer(__instance.Offer.Id);
+  if(offer!=null&&(offer.Lifetime.Paused||offer.Lifetime.IsPermanent))Timing(__instance);
+ }catch{}}
  static void Timing(OfferView __instance){try{
-  if(__instance.Offer==null||__instance._expirationLabel==null)return;
+  if(__instance==null||__instance.Offer==null||__instance._expirationLabel==null)return;
+  if(__instance.Pointer!=IntPtr.Zero)views[__instance.Pointer]=__instance;
   var offer=FleaMarketPanel.FindOffer(__instance.Offer.Id);
   if(offer!=null){
    var lifetime=offer.Lifetime;long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-   __instance._expirationLabel.text=lifetime.Paused?I18n.Text("已暂停")+" "+lifetime.Clock(now):lifetime.IsPermanent?I18n.Text("永久"):lifetime.Clock(now);
-  }else if(FleaOfferEditor.NativeExpiry(__instance.Offer)>=LocalFleaShared.FleaOfferLifetime.PermanentEndTime){
-   // A newly opened native market has not fetched Assistant quote metadata yet.
-   if(timingRead==null&&Time.unscaledTime>=nextTimingRead){
-    timingRevision=FleaMarketPanel.OfferRevision;nextTimingRead=Time.unscaledTime+12;
-    timingRead=CharacterDataPanel.Call("/local/gear/data","characterData",new Dictionary<string,object?>{["action"]="fleaPriceStatus"}).WaitAsync(TimeSpan.FromSeconds(20));
-   }
-   __instance._expirationLabel.text=I18n.Text(timingError.Length>0?timingError:timingRead!=null?"正在读取剩余时间…":"报价已更新，请刷新");
+   SetLabel(__instance,lifetime.Paused?I18n.Text("已暂停")+" "+lifetime.Clock(now):lifetime.IsPermanent?I18n.Text("永久"):lifetime.Clock(now));
+   return;
+  }
+  if(!FleaMarketPanel.HasOffersLoaded&&Editable(__instance))EnsureTimingHydrated();
+  if(FleaOfferEditor.NativeExpiry(__instance.Offer)>=LocalFleaShared.FleaOfferLifetime.PermanentEndTime){
+   EnsureTimingHydrated();
+   SetLabel(__instance,I18n.Text(timingError.Length>0?timingError:timingRead!=null?"正在读取剩余时间…":"永久"));
   }
  }catch{}}
+ internal static void RefreshTimingAll(){
+  if(views.Count==0)return;
+  IntPtr[]? dead=null;
+  foreach(var (ptr,view) in views){
+   try{
+    if(view==null||view.Pointer==IntPtr.Zero||view.gameObject==null){(dead??=new IntPtr[views.Count])[0]=ptr;continue;}
+    if(view.gameObject.activeInHierarchy)Timing(view);
+   }catch{}
+  }
+  if(dead!=null)foreach(var ptr in views.Keys.Where(k=>{try{return views[k]==null||views[k].Pointer==IntPtr.Zero;}catch{return true;}}).ToArray())views.Remove(ptr);
+ }
  static void Context(OfferView __instance){try{
   var menu=__instance._itemUiContext?.ContextMenu;
   if(menu==null||!menu.gameObject.activeInHierarchy||!Editable(__instance)||(!Enabled&&!WithdrawEnabled))return;
@@ -115,6 +146,6 @@ internal static class NativeFleaOfferEdit {
  }
  internal static void Reset(){
   if(changed!=null){enabled.SettingChanged-=changed;withdrawEnabled.SettingChanged-=changed;}changed=null;ClearMenus();
-  foreach(var pair in buttons.Values){if(pair.Edit!=null)UnityEngine.Object.Destroy(pair.Edit.gameObject);if(pair.Withdraw!=null)UnityEngine.Object.Destroy(pair.Withdraw.gameObject);}buttons.Clear();withdrawing=timingRead=null;nextTimingRead=0;timingError="";
+  foreach(var pair in buttons.Values){if(pair.Edit!=null)UnityEngine.Object.Destroy(pair.Edit.gameObject);if(pair.Withdraw!=null)UnityEngine.Object.Destroy(pair.Withdraw.gameObject);}buttons.Clear();views.Clear();withdrawing=timingRead=null;nextTimingRead=0;timingError="";
  }
 }

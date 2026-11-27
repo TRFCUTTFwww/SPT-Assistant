@@ -263,6 +263,7 @@ internal static partial class FleaMarketPanel
             autoPercentSynced = true;
         }
         if (fill) draft = prices.Price?.ToString("0", CultureInfo.InvariantCulture) ?? "";
+        NativeFleaOfferEdit.RefreshTimingAll();
     }
 
     private static void FinishStatus()

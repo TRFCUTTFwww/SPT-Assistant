@@ -25,11 +25,12 @@ internal static partial class FleaMarketPanel {
  static int offerState;
  static Vector2 offerScroll;
  internal static long OfferRevision=>stateRevision;
+ internal static bool HasOffersLoaded=>prices!=null;
  internal static CustomOffer? FindOffer(string nativeId)=>(prices?.CustomOffers??[]).FirstOrDefault(o=>o.Id==nativeId||o.OfferId==nativeId);
  internal static void OffersChanged(System.Text.Json.JsonElement data,string templateId){
   stateRevision++;
   var next=data.Deserialize<Prices>()??throw new ArgumentException("报价响应无效。");
-  if(prices!=null&&selected?.Id!=templateId)prices=prices with{CustomOffers=next.CustomOffers};else ApplyPrices(next,false,false);
+  if(prices!=null&&selected?.Id!=templateId){prices=prices with{CustomOffers=next.CustomOffers};NativeFleaOfferEdit.RefreshTimingAll();}else ApplyPrices(next,false,false);
   nextPoll=Time.unscaledTime+12;
  }
  private static void DrawCustomOffers(Rect area,bool enabled,bool busy){

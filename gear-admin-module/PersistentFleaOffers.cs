@@ -15,7 +15,8 @@ internal sealed class PersistentFleaOffers(FleaOfferStore store,RagfairOfferServ
    string savedId=id??Guid.NewGuid().ToString("N");
    offer.ExtensionData??=[];offer.ExtensionData[SavedMarker]=savedId;
    if(restoring!=null)Lifetime(offer,draft,restoring.EndTime,restoring.PausedRemainingSeconds);
-   if(expiry!=null)Lifetime(offer,draft,expiry.Value,pausedSeconds);
+   else if(expiry!=null)Lifetime(offer,draft,expiry.Value,pausedSeconds);
+   else if(previous?.State=="withdrawn"&&previous.PausedRemainingSeconds is {} withdrawnPaused&&draft.Paused&&draft.RemainingMinutes==previous.Draft.RemainingMinutes)CustomFleaOffers.Pause(offer,withdrawnPaused);
    var next=new SavedFleaOffer(savedId,template,draft,offer.Id.ToString(),offer.Quantity,offer.EndTime!.Value,"active",FleaOfferStore.ItemJson.Serialize(offer.Items),CustomFleaOffers.PausedRemaining(offer));
    store.Put(next);
    try{
@@ -129,10 +130,11 @@ internal sealed class PersistentFleaOffers(FleaOfferStore store,RagfairOfferServ
    var list=new List<object>();long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
    foreach(var row in rows){
     var live=MongoId.IsValidMongoId(row.OfferId)?service.GetOfferByOfferId(new(row.OfferId)):null;
-    bool active=row.State=="active"&&row.Stock>0&&row.EndTime>now&&live!=null;
-    string status=active?"active":row.State=="active"?(row.Stock<=0?"sold":row.EndTime<=now?"expired":"pending"):row.State;
+    bool paused=row.PausedRemainingSeconds.HasValue;
+    bool active=row.State=="active"&&row.Stock>0&&(paused||row.EndTime>now)&&live!=null;
+    string status=active?"active":row.State=="active"?(row.Stock<=0?"sold":!paused&&row.EndTime<=now?"expired":"pending"):row.State;
     list.Add(new{id=row.Id,offerId=row.OfferId,template=row.Template,playerName=row.Draft.PlayerName,unitPrice=row.Draft.UnitPrice,stock=active&&MiscService.Options.UnlimitedMarketStock?int.MaxValue:row.Stock,
-     endTime=row.EndTime,rating=row.Draft.Rating,durability=row.Draft.Durability,maxDurability=row.Draft.MaxDurability,persistent=true,active,status,permanent=row.Draft.RemainingMinutes<0,pausedRemainingSeconds=row.PausedRemainingSeconds});
+     endTime=paused?now+row.PausedRemainingSeconds!.Value:row.EndTime,rating=row.Draft.Rating,durability=row.Draft.Durability,maxDurability=row.Draft.MaxDurability,persistent=true,active,status,permanent=!paused&&row.Draft.RemainingMinutes<0,pausedRemainingSeconds=row.PausedRemainingSeconds});
    }
    foreach(var offer in service.GetOffers().Where(CustomFleaOffers.IsCustom).Where(o=>!savedIds.Contains(o.Id.ToString())&&o.EndTime>now))list.Add(CustomFleaOffers.Describe(offer));
    return list.ToArray();

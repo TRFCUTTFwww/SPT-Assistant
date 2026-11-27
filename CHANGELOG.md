@@ -2,8 +2,8 @@
 
 ## 2.4 — Paused flea countdown display (2026-11-27)
 
-- Keep the original frozen duration when editing a paused quote; reserve -1 for permanent quotes. Resolve native quote metadata before treating a long expiry as permanent.
-- Hydrate paused timing on the native market without first opening the MOD offer page. Share the frozen-time display between native rows, custom rows and the editor; reject stale background responses.
+- Project paused offer expiry as `now + pausedRemainingSeconds` in native ragfair responses and quote descriptions so paused quotes never expose `PermanentEndTime` (`9999-12-31`) as permanent lifetime while remaining protected from server expiration.
+- Compute native offer expiry directly from `offer.EndTime - DateTimeExtensions.UtcNow` (fixing local timezone offset distortion in `UTC+8`), refresh visible `OfferView` rows immediately when quote metadata arrives, lock paused native countdown labels every frame, and prevent negative permanent minutes from silently overriding paused quotes.
 
 [Paused countdown fix / 暂停报价剩余时间](docs/release-flea-paused-time-20261127.md)
 

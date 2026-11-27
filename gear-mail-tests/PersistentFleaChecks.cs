@@ -70,6 +70,7 @@ internal static class PersistentFleaChecks {
   Check(pausedNow.PausedRemainingSeconds==1020&&CustomFleaOffers.PausedRemaining(pausedLive)==1020&&!CustomFleaOffers.Permanent(pausedLive),"paused countdown survives a real process restart separately from permanent lifetime");
   using(var pausedList=JsonDocument.Parse(JsonSerializer.Serialize(manager.List()))){
    var description=pausedList.RootElement.EnumerateArray().Single(o=>o.GetProperty("id").GetString()==pausedNow.Id);
+   Check(description.GetProperty("endTime").GetInt64()<CustomFleaOffers.PermanentEndTime&&!description.GetProperty("permanent").GetBoolean(),"persistent paused offer description exposes projected expiry rather than PermanentEndTime");
    var lifetime=new LocalFleaShared.FleaOfferLifetime(description.GetProperty("endTime").GetInt64(),description.GetProperty("permanent").GetBoolean(),description.GetProperty("pausedRemainingSeconds").GetInt64());
    long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
    Check(lifetime.EditorMinutes(now)=="17"&&lifetime.Clock(now)=="00:17:00"&&lifetime.Clock(now+3600)=="00:17:00","authoritative paused metadata shows the original duration in editor and native timer after restart");

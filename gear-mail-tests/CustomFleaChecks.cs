@@ -20,7 +20,7 @@ internal static class CustomFleaChecks {
   var draft=Validate(new{playerName="  Test Seller  ",unitPrice=12345,stock=37,remainingMinutes=73,rating=456.75,durability=31.5,maxDurability=82});
   void Check(bool valid,string message){if(!valid)throw new Exception(message);Console.WriteLine("PASS "+message);}
   void Reject(object data){try{Validate(data);}catch(ArgumentException){return;}throw new Exception("Invalid quote accepted: "+JsonSerializer.Serialize(data));}
-  Reject(draft with{PlayerName=""});Reject(draft with{PlayerName="a\nb"});Reject(draft with{Durability=null});
+  Reject(draft with{PlayerName=""});Reject(draft with{PlayerName="a\nb"});Reject(draft with{Durability=null});Reject(draft with{RemainingMinutes=-1,Paused=true});
   var bound=json.Deserialize<CharacterDataRequest>(JsonSerializer.Serialize(new{action="fleaOfferAdd",template=template.Id.ToString(),fleaOffer=draft}))!;
   Check(CustomFleaOffers.Validate(bound.FleaOffer,template)==draft,"native request serializer binds custom quote fields; malformed data are rejected");
   Check(Validate(draft with{UnitPrice=int.MinValue,Stock=int.MaxValue,RemainingMinutes=int.MaxValue,Rating=-1000001,Durability=200,MaxDurability=-5}).Rating==-1000001,"developer values are accepted beyond former quote caps");
@@ -39,8 +39,12 @@ internal static class CustomFleaChecks {
   paused=json.Deserialize<RagfairOffer>(json.Serialize(paused))!;
   Check(CustomFleaOffers.PausedRemaining(paused)==73*60&&!CustomFleaOffers.Permanent(paused)&&paused.EndTime==CustomFleaOffers.PermanentEndTime,"paused temporary quotes retain frozen seconds through native serialization without becoming permanent");
   CustomFleaOffers.Pause(paused,73*60-29);
+  var projected=CustomFleaOffers.ProjectForClient(paused);
+  Check(projected.EndTime<CustomFleaOffers.PermanentEndTime&&projected.EndTime-DateTimeOffset.UtcNow.ToUnixTimeSeconds() is >=73*60-31 and <=73*60-28,"client ragfair projection exposes real frozen remaining time instead of PermanentEndTime");
   using(var details=JsonDocument.Parse(JsonSerializer.Serialize(CustomFleaOffers.Describe(paused)))){
-   var data=details.RootElement;var lifetime=new LocalFleaShared.FleaOfferLifetime(data.GetProperty("endTime").GetInt64(),data.GetProperty("permanent").GetBoolean(),data.GetProperty("pausedRemainingSeconds").GetInt64());
+   var data=details.RootElement;
+   Check(data.GetProperty("endTime").GetInt64()<CustomFleaOffers.PermanentEndTime&&!data.GetProperty("permanent").GetBoolean(),"described paused offer never reports PermanentEndTime or permanent=true");
+   var lifetime=new LocalFleaShared.FleaOfferLifetime(data.GetProperty("endTime").GetInt64(),data.GetProperty("permanent").GetBoolean(),data.GetProperty("pausedRemainingSeconds").GetInt64());
    Check(lifetime.EditorMinutes(100)=="73"&&lifetime.Clock(100)=="01:12:31"&&lifetime.Clock(100000)=="01:12:31","temporary paused offers expose their exact frozen seconds without requiring SQLite or counting elapsed time");
   }
   CustomFleaOffers.Apply(paused,draft);Check(CustomFleaOffers.PausedRemaining(paused)==null&&paused.EndTime-paused.StartTime==73*60,"resuming ordinary quote creation removes the pause marker");

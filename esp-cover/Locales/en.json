@@ -5533,5 +5533,6 @@
   "正在读取剩余时间…": "Reading remaining time…",
   "剩余时间读取失败": "Could not read remaining time",
   "报价已更新，请刷新": "Offer updated; refresh the list",
-  "无法读取报价剩余时间，请刷新后重试。": "Could not read the offer lifetime. Refresh the list and try again."
+  "无法读取报价剩余时间，请刷新后重试。": "Could not read the offer lifetime. Refresh the list and try again.",
+  "暂停剩余时间不能使用负数（负数表示永久）；请填写非负分钟数或关闭暂停。": "Paused remaining time cannot be negative (negative means permanent); enter non-negative minutes or turn off Pause."
 }
