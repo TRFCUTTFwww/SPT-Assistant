@@ -25,7 +25,6 @@ internal static partial class FleaMarketPanel {
  static int offerState;
  static Vector2 offerScroll;
  internal static long OfferRevision=>stateRevision;
- internal static bool HasOffersLoaded=>prices!=null;
  internal static CustomOffer? FindOffer(string nativeId)=>(prices?.CustomOffers??[]).FirstOrDefault(o=>o.Id==nativeId||o.OfferId==nativeId);
  internal static void OffersChanged(System.Text.Json.JsonElement data,string templateId){
   stateRevision++;

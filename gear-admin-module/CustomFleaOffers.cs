@@ -24,7 +24,8 @@ internal static partial class CustomFleaOffers {
  internal static long? PausedRemaining(RagfairOffer? offer)=>offer?.ExtensionData?.TryGetValue(PausedMarker,out var raw)==true?raw switch{long n=>n,int n=>n,JsonElement e when e.TryGetInt64(out var n)=>n,_=>null}:null;
  internal static void Pause(RagfairOffer offer,long seconds){offer.ExtensionData??=[];offer.ExtensionData[PausedMarker]=Math.Max(0,seconds);offer.EndTime=PermanentEndTime;}
  internal static bool Permanent(RagfairOffer offer)=>offer.EndTime==PermanentEndTime&&PausedRemaining(offer)==null;
- internal static RagfairOffer ProjectForClient(RagfairOffer offer)=>PausedRemaining(offer) is {} frozen?offer with{EndTime=DateTimeOffset.UtcNow.ToUnixTimeSeconds()+frozen}:offer;
+ internal static RagfairOffer ProjectForClient(RagfairOffer offer)=>PausedRemaining(offer) is {} frozen?offer with{EndTime=DateTimeOffset.UtcNow.ToUnixTimeSeconds()+frozen,
+  ExtensionData=offer.ExtensionData==null?[]:new(offer.ExtensionData)}:offer;
  internal sealed record Draft(string PlayerName="",int UnitPrice=1,int Stock=1,int RemainingMinutes=1440,double Rating=1,double? Durability=null,double? MaxDurability=null,bool Persistent=true,bool Paused=false);
  static readonly JsonSerializerOptions Options=new(){PropertyNameCaseInsensitive=true};
  static T Dependency<T>(RagfairOfferGenerator generator)=>(T)typeof(RagfairOfferGenerator).GetFields(BindingFlags.Instance|BindingFlags.NonPublic).Single(f=>f.FieldType==typeof(T)).GetValue(generator)!;
@@ -95,12 +96,17 @@ internal static partial class CustomFleaOffers {
   offer.ExtensionData??=[];offer.ExtensionData[Marker]=true;
  }
 
- internal static object Describe(RagfairOffer original){
+ internal static object Status(string id,RagfairOfferService service){
+  if(persistence?.Find(id) is {} saved)return saved;
+  var offer=service.GetOffers().FirstOrDefault(o=>o.Id.ToString()==id&&o.CreatedBy==OfferCreator.FakePlayer&&o.EndTime>DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+  return offer!=null?Describe(offer):throw new ArgumentException("报价已售罄、到期或移除，请刷新后重试。");
+ }
+ internal static object Describe(RagfairOffer original,string? savedId=null){
   var o=MiscService.Options.UnlimitedMarketStock?MarketSupply.Copy(original):original;
   var root=o.Items!.First(i=>i.Id==o.Root);
   long? paused=PausedRemaining(o);long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-  return (object)new{id=o.Id.ToString(),template=root.Template.ToString(),playerName=o.User.Nickname,unitPrice=o.RequirementsCost,stock=o.Quantity,
-   endTime=paused is {} seconds?now+seconds:o.EndTime,rating=o.User.Rating,durability=root.Upd?.Repairable?.Durability,maxDurability=root.Upd?.Repairable?.MaxDurability,persistent=false,active=true,status="active",permanent=paused==null&&Permanent(o),pausedRemainingSeconds=paused};
+  return (object)new{id=savedId??o.Id.ToString(),offerId=o.Id.ToString(),template=root.Template.ToString(),playerName=o.User.Nickname,unitPrice=o.RequirementsCost,stock=o.Quantity,
+   endTime=paused is {} seconds?now+seconds:o.EndTime,rating=o.User.Rating,durability=root.Upd?.Repairable?.Durability,maxDurability=root.Upd?.Repairable?.MaxDurability,persistent=savedId!=null,active=true,status="active",permanent=paused==null&&Permanent(o),pausedRemainingSeconds=paused};
  }
- internal static object[] List(RagfairOfferService? service)=>persistence?.List()??service?.GetOffers().Where(IsCustom).Where(o=>o.EndTime>DateTimeOffset.UtcNow.ToUnixTimeSeconds()).Select(Describe).ToArray()??[];
+ internal static object[] List(RagfairOfferService? service)=>persistence?.List()??service?.GetOffers().Where(IsCustom).Where(o=>o.EndTime>DateTimeOffset.UtcNow.ToUnixTimeSeconds()).Select(o=>Describe(o)).ToArray()??[];
 }

@@ -14,6 +14,10 @@
 - 用户要求以后的新独立客户端 MOD 使用通用热更新加载器。新功能从 `universal-example` / `universal-sdk` 开始，按 `docs/universal-mod-host.md` 的生命周期契约开发，用 `scripts/Publish-HotModule.ps1` 发布。不要再为每个新 MOD 建一个专用宿主。
 - **禁止修改主 README：** 除非用户当次对话明确要求修改主 README，否则后续任何 AI **不得修改**仓库根目录的 `README.md` 和 `README.zh-CN.md`（包括在顶部追加版本简报、插入更新段落或改写结构）。版本更新、功能说明与验证记录请写入 `CHANGELOG.md` 与 `docs/release-*.md`。
 
+# 反编译与逆向工具库
+
+需要查看 EFT 48558 客户端原生逻辑（`GameAssembly.dll` + `global-metadata.dat`）或 SPT 5.0 BE 服务端 CIL（`SPTarkov.Server.Core.dll`）时，请直接使用并维护独立工具仓库 `local-spt5-re-toolkit`（本机路径：`../_spt5_re_toolkit`，入口脚本：`../_spt5_re_toolkit/re.ps1`，详细说明见 `../_spt5_re_toolkit/README.md` 与 `docs/`），避免每次在临时目录重复搭建 `Cpp2IL` / `Mono.Cecil` / `Iced` 工程。
+
 # GitHub 发布
 
 GitHub 使用当前主仓库的独立源码快照。Release 仅发布本体安装器、手动安装 ZIP、核心热更新模块及这三个文件的 SHA-256 校验清单。发布前同步包内 README 与文档，不保留旧 Markdown 副本或追加其他模块附件。

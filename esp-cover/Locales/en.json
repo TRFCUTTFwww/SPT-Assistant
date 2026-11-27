@@ -5498,6 +5498,8 @@
   "下架": "Withdraw",
   "重新上架": "Recreate",
   "正在读取报价保存状态…": "Reading offer persistence state…",
+  "正在读取报价状态…": "Reading current offer state…",
+  "报价已保存。": "Offer saved.",
   "保存并重新上架": "Save and recreate",
   "保存修改": "Save changes",
   "添加报价": "Add offer",

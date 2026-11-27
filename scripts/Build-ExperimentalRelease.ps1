@@ -31,9 +31,9 @@ $core=Join-Path $repo 'esp-cover/bin/Release/net10.0/Local.Spt5.ESP.Core.dll'
 if(-not([Diagnostics.FileVersionInfo]::GetVersionInfo($core).FileVersion.StartsWith($version+'.'))){throw 'Core version differs from VERSION'}
 foreach($entry in $components.GetEnumerator()){Copy-Item -LiteralPath (Join-Path $repo $entry.Key) -Destination (Join-Path $payload $entry.Value)}
 Copy-Item -LiteralPath (Join-Path $repo 'scripts/Install-Experimental.ps1') -Destination (Join-Path $stage 'Install.ps1')
-foreach($name in @('README.md','README.zh-CN.md','LICENSE')){Copy-Item -LiteralPath (Join-Path $repo $name) -Destination $stage}
+foreach($name in @('README.md','README.zh-CN.md','CHANGELOG.md','LICENSE')){Copy-Item -LiteralPath (Join-Path $repo $name) -Destination $stage}
 [IO.Directory]::CreateDirectory((Join-Path $stage 'docs/licenses'))|Out-Null
-foreach($name in @('INSTALL.md','profile-backup.md','release-2.4.md','release-2.4.zh-CN.md','hotkeys.md','world-editor.md','CHAT.md','COMMAND-OPTIONS.md','corner-version-scripts.md','raid-parameters.md','raid-history-20261118.md','universal-mod-host.md','licenses/Jint.txt','licenses/Acornima.txt')){Copy-Item -LiteralPath (Join-Path $repo ('docs/'+$name)) -Destination (Join-Path $stage ('docs/'+$name))}
+foreach($name in @('INSTALL.md','profile-backup.md','release-2.4.md','release-2.4.zh-CN.md','release-since-github-20261125.en.md','release-since-github-20261125.zh-CN.md','release-flea-immediate-refresh-20261127.md','release-flea-pause-metadata-20261127.md','release-flea-editor-state-20261127.md','release-flea-paused-time-20261127.md','release-night-vision-page-20261126.md','release-flea-layout-20261126.md','release-fun-uninstall-20261126.md','release-flea-withdraw-new-repository-20261126.md','release-flea-edit-20261126.md','hotkeys.md','world-editor.md','CHAT.md','COMMAND-OPTIONS.md','corner-version-scripts.md','raid-parameters.md','raid-history-20261118.md','universal-mod-host.md','licenses/Jint.txt','licenses/Acornima.txt')){Copy-Item -LiteralPath (Join-Path $repo ('docs/'+$name)) -Destination (Join-Path $stage ('docs/'+$name))}
 $checks=[ordered]@{}
 Get-ChildItem -LiteralPath $stage -File -Recurse | Sort-Object FullName | ForEach-Object {
  $relative=$_.FullName.Substring($stage.Length+1).Replace('\','/')

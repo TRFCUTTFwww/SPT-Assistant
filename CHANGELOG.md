@@ -1,5 +1,31 @@
 # Changelog
 
+## 2.4 — Updated GitHub release package (2026-11-27)
+
+- Include the current changelog, flea pause fixes and linked release notes in both the offline installer and manual ZIP. Update the English and Chinese 2.4 notes for current offer state, unlimited-stock pause/resume and immediate list refresh.
+
+## 2.4 — Refresh native offers immediately after editing (2026-11-27)
+
+- Force the open native flea list to reload immediately after an offer is saved. Pausing or resuming replaces the native offer ID; the visible list now loads that replacement and applies the already updated state without waiting for the periodic metadata poll or a manual refresh.
+
+[Immediate offer refresh / 报价状态立即刷新](docs/release-flea-immediate-refresh-20261127.md)
+
+## 2.4 — Preserve paused offers with unlimited stock (2026-11-27)
+
+- Preserve `RagfairOffer.ExtensionData` when projecting unlimited stock, paused expiry or Rouble-only requirements. SPT's record copy constructor drops that base dictionary; losing its pause marker made the editor report permanent lifetime and kept a permanent expiry when resuming temporary quotes.
+- Remove the offer editor's bottom explanation paragraph and shorten its save confirmation.
+- Reproduce the failure with unlimited stock, verify metadata survives each projection, and cover saved and temporary pause/resume flows. Repeat both flows through the running server: 1020 frozen seconds resume as 1019 remaining seconds with `paused=false` and `permanent=false`.
+
+[Unlimited-stock pause fix / 无限库存报价暂停修复](docs/release-flea-pause-metadata-20261127.md)
+
+## 2.4 — Read current flea offer state when editing (2026-11-27)
+
+- Read the selected offer from the server whenever either editor entry opens, resolve saved and native IDs, and fill all fields from the current result. Show paused state explicitly and reject failed or missing reads before saving.
+- Refresh native offer metadata while the market is visible, including when a previous metadata cache already exists. Read active saved offers from the live pool so pause markers, stock and other editable values reflect the current offer.
+- Verify temporary/native offer lookup, stale-ID rejection, pause/resume state, current stock, inactive records and SQLite restoration across two processes.
+
+[Offer editor state fix / 修改窗口报价状态修复](docs/release-flea-editor-state-20261127.md)
+
 ## 2.4 — Paused flea countdown display (2026-11-27)
 
 - Project paused offer expiry as `now + pausedRemainingSeconds` in native ragfair responses and quote descriptions so paused quotes never expose `PermanentEndTime` (`9999-12-31`) as permanent lifetime while remaining protected from server expiration.

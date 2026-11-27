@@ -39,7 +39,15 @@ internal static class CustomFleaChecks {
   paused=json.Deserialize<RagfairOffer>(json.Serialize(paused))!;
   Check(CustomFleaOffers.PausedRemaining(paused)==73*60&&!CustomFleaOffers.Permanent(paused)&&paused.EndTime==CustomFleaOffers.PermanentEndTime,"paused temporary quotes retain frozen seconds through native serialization without becoming permanent");
   CustomFleaOffers.Pause(paused,73*60-29);
+  var unlimitedPaused=MarketSupply.Copy(paused);
+  Check(CustomFleaOffers.IsCustom(unlimitedPaused)&&CustomFleaOffers.PausedRemaining(unlimitedPaused)==73*60-29,"unlimited stock projection preserves custom and paused markers");
   var projected=CustomFleaOffers.ProjectForClient(paused);
+  Check(CustomFleaOffers.IsCustom(projected)&&CustomFleaOffers.PausedRemaining(projected)==73*60-29,"native expiry projection retains pause metadata for subsequent display and lookup");
+  var foreignPaused=paused with{Requirements=[new(){TemplateId=new MongoId("5696686a4bdc2da3298b456a"),Count=10}],ExtensionData=new(paused.ExtensionData!)};
+  var roublePaused=FleaPrices.ConvertToRoubleOffer(foreignPaused);
+  Check(CustomFleaOffers.IsCustom(roublePaused)&&CustomFleaOffers.PausedRemaining(roublePaused)==73*60-29,"rouble-only conversion retains pause metadata");
+  unlimitedPaused.ExtensionData!.Remove(CustomFleaOffers.PausedMarker);
+  Check(CustomFleaOffers.PausedRemaining(paused)==73*60-29,"editing projected metadata leaves the original offer unchanged");
   Check(projected.EndTime<CustomFleaOffers.PermanentEndTime&&projected.EndTime-DateTimeOffset.UtcNow.ToUnixTimeSeconds() is >=73*60-31 and <=73*60-28,"client ragfair projection exposes real frozen remaining time instead of PermanentEndTime");
   using(var details=JsonDocument.Parse(JsonSerializer.Serialize(CustomFleaOffers.Describe(paused)))){
    var data=details.RootElement;
@@ -56,6 +64,14 @@ internal static class CustomFleaChecks {
   var holder=new RagfairOfferHolder(DispatchProxy.Create<ISptLogger<RagfairOfferHolder>,FleaQuietLog>(),null!,null!,null!);
   var service=(RagfairOfferService)RuntimeHelpers.GetUninitializedObject(typeof(RagfairOfferService));
   typeof(RagfairOfferService).GetFields(BindingFlags.Instance|BindingFlags.NonPublic).Single(f=>f.FieldType==typeof(RagfairOfferHolder)).SetValue(service,holder);
+  var statusPaused=json.Deserialize<RagfairOffer>(json.Serialize(offer))! with{Id=new MongoId(),CreatedBy=OfferCreator.FakePlayer};
+  statusPaused.ExtensionData!.Remove(CustomFleaOffers.Marker);CustomFleaOffers.Pause(statusPaused,73);
+  service.AddOffer(statusPaused);
+  var status=JsonSerializer.SerializeToElement(CustomFleaOffers.Status(statusPaused.Id.ToString(),service));
+  Check(status.GetProperty("id").GetString()==statusPaused.Id.ToString()&&status.GetProperty("pausedRemainingSeconds").GetInt64()==73&&!status.GetProperty("permanent").GetBoolean()&&!status.GetProperty("persistent").GetBoolean(),"single-offer state reads the selected native quote and its pause marker even outside the custom-offer list");
+  service.RemoveOfferById(statusPaused.Id);
+  try{CustomFleaOffers.Status(statusPaused.Id.ToString(),service);throw new Exception("Removed quote state accepted");}catch(ArgumentException){}
+  Check(true,"single-offer state rejects a removed quote instead of falling back to cached edit values");
   service.AddOffer(offer);
   var h=new Harmony("assistant.custom-flea-tests");var previous=MiscService.Options;var setting=typeof(MiscService).GetProperty(nameof(MiscService.Options))!;
   try{

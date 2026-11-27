@@ -101,13 +101,13 @@ internal static class NativeFleaOfferEdit {
  static void Timing(OfferView __instance){try{
   if(__instance==null||__instance.Offer==null||__instance._expirationLabel==null)return;
   if(__instance.Pointer!=IntPtr.Zero)views[__instance.Pointer]=__instance;
+  if(Editable(__instance))EnsureTimingHydrated();
   var offer=FleaMarketPanel.FindOffer(__instance.Offer.Id);
   if(offer!=null){
    var lifetime=offer.Lifetime;long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
    SetLabel(__instance,lifetime.Paused?I18n.Text("已暂停")+" "+lifetime.Clock(now):lifetime.IsPermanent?I18n.Text("永久"):lifetime.Clock(now));
    return;
   }
-  if(!FleaMarketPanel.HasOffersLoaded&&Editable(__instance))EnsureTimingHydrated();
   if(FleaOfferEditor.NativeExpiry(__instance.Offer)>=LocalFleaShared.FleaOfferLifetime.PermanentEndTime){
    EnsureTimingHydrated();
    SetLabel(__instance,I18n.Text(timingError.Length>0?timingError:timingRead!=null?"正在读取剩余时间…":"永久"));
@@ -123,6 +123,14 @@ internal static class NativeFleaOfferEdit {
    }catch{}
   }
   if(dead!=null)foreach(var ptr in views.Keys.Where(k=>{try{return views[k]==null||views[k].Pointer==IntPtr.Zero;}catch{return true;}}).ToArray())views.Remove(ptr);
+ }
+ internal static void RefreshOpenOffers(){
+  foreach(var screen in UnityEngine.Object.FindObjectsOfType<RagfairScreen>())try{
+   var list=screen?._selectedTab;
+   if(screen==null||!screen.gameObject.activeInHierarchy||list==null||!list.gameObject.activeInHierarchy||list._ragfair==null)continue;
+   list._ragfair.ForceNextUpdate=true;
+   list.UpdateOffersForced();
+  }catch(Exception e){Plugin.Self?.Log.LogWarning("Flea offer refresh: "+e.Message);}
  }
  static void Context(OfferView __instance){try{
   var menu=__instance._itemUiContext?.ContextMenu;

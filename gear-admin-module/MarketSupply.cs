@@ -20,7 +20,9 @@ internal static class MarketSupply {
   if(!Eligible(source))return source;
   var items=source.Items?.Select(i=>i.Id==source.Root?i with{Upd=(i.Upd??new Upd()) with{
    StackObjectsCount=int.MaxValue,OriginalStackObjectsCount=int.MaxValue,UnlimitedCount=true,BuyRestrictionMax=null,BuyRestrictionCurrent=null}}:i).ToList();
-  return source with{Items=items,Quantity=int.MaxValue,UnlimitedCount=true,BuyRestrictionMax=null,BuyRestrictionCurrent=null};
+  // SPT's RagfairOffer copy constructor omits the base ExtensionData dictionary.
+  return source with{Items=items,Quantity=int.MaxValue,UnlimitedCount=true,BuyRestrictionMax=null,BuyRestrictionCurrent=null,
+   ExtensionData=source.ExtensionData==null?[]:new(source.ExtensionData)};
  }
  static void Offers(ref GetOffersResult __result){
   if(MiscService.Options.UnlimitedMarketStock&&__result?.Offers!=null)__result=__result with{Offers=__result.Offers.Select(Copy).ToList()};

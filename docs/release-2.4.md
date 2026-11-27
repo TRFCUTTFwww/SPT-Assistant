@@ -12,6 +12,7 @@ Target: SPT 5.0 BE / EFT 1.3.0.1.48558, Windows x64. Changes since GitHub v2.3.5
 
 ## Added and improved
 
+- Fixed paused flea offers displaying permanent lifetime, including when unlimited stock is enabled. The editor reads the current offer state; resuming restores the remaining countdown, and saving immediately refreshes the open offer list. Removed the editor's explanation footer.
 - Reworked the single-page installer for bilingual labels, modes, progress, errors and recovery actions, with a scrollable layout for smaller windows. Setup title, executable metadata and application manifest use the release version.
 - Added scope sticker import/editing, per-optic layouts, Up/Down cycling, automatic contrast and confirmed-hit flashes.
 - Added optional native extended optical zoom through Alt+wheel, including fixed optics and sensitivity scaling. The native reticle/magnification key retains the optic's original endpoints.

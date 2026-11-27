@@ -136,8 +136,17 @@ internal static class FleaPrices
 
         string? configMessage = null;
         string? exportedJson = null;
+        object? offerStatus = null;
         switch (request.Action)
         {
+            case "fleaOfferStatus":
+            {
+                var server = ragfairServer ?? throw new ArgumentException("跳蚤后台尚未就绪，请稍候重试。");
+                var service = (RagfairOfferService)serverOfferService.GetValue(server)!;
+                CustomFleaOffers.Attach(service,(RagfairOfferGenerator)serverOfferGenerator.GetValue(server)!);
+                offerStatus = CustomFleaOffers.Status(request.Id,service);
+                break;
+            }
             case "fleaOfferEdit":
             case "fleaOfferAdd":
             {
@@ -282,6 +291,7 @@ internal static class FleaPrices
             presets,
             hasLegacy,
             configMessage,
+            offer = offerStatus,
             customOffers = CustomFleaOffers.List(ragfairServer == null ? null : (RagfairOfferService)serverOfferService.GetValue(ragfairServer)!),
             exportedJson,
             stashRoubles,
@@ -628,7 +638,8 @@ internal static class FleaPrices
         double rubCost = offer.RequirementsCost is > 0 ? Math.Max(1, Math.Round(offer.RequirementsCost.Value)) : 1;
         double summary = offer.SummaryCost is > 0 ? Math.Max(1, Math.Round(offer.SummaryCost.Value)) : rubCost;
         OfferRequirement[] converted = [new() { TemplateId = RubId, Count = rubCost, OnlyFunctional = false }];
-        return offer with { Requirements = converted, RequirementsCost = rubCost, SummaryCost = summary };
+        return offer with { Requirements = converted, RequirementsCost = rubCost, SummaryCost = summary,
+            ExtensionData = offer.ExtensionData == null ? [] : new(offer.ExtensionData) };
     }
 
     [HarmonyPriority(Priority.High)]

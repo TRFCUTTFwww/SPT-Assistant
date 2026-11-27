@@ -68,6 +68,14 @@ internal static class PersistentFleaChecks {
   Check(store.Find(Saved("sold").Id)!.State=="sold"&&store.Find(Saved("expired").Id)!.State=="expired"&&store.Find(Saved("withdrawn").Id)!.State=="withdrawn"&&store.Find("missing")!.State=="unavailable","sold, expired, withdrawn and missing-template records remain saved without becoming active");
   var pausedNow=store.Find(Saved("paused").Id)!;var pausedLive=service.GetOfferByOfferId(new(pausedNow.OfferId))!;
   Check(pausedNow.PausedRemainingSeconds==1020&&CustomFleaOffers.PausedRemaining(pausedLive)==1020&&!CustomFleaOffers.Permanent(pausedLive),"paused countdown survives a real process restart separately from permanent lifetime");
+  foreach(string lookup in new[]{pausedNow.Id,pausedNow.OfferId}){
+   var status=JsonSerializer.SerializeToElement(manager.Find(lookup));
+   Check(status.GetProperty("id").GetString()==pausedNow.Id&&status.GetProperty("offerId").GetString()==pausedNow.OfferId&&status.GetProperty("pausedRemainingSeconds").GetInt64()==1020&&status.GetProperty("persistent").GetBoolean()&&!status.GetProperty("permanent").GetBoolean(),"editor state resolves the same paused saved quote by stable or native id: "+lookup);
+  }
+  service.ReduceOfferQuantity(live.Id,1);
+  Check(JsonSerializer.SerializeToElement(manager.Find(finiteNow.Id)).GetProperty("stock").GetInt32()==29,"editor state uses current native stock even before a stored snapshot is updated");manager.Capture(finiteNow.OfferId);
+  var withdrawnState=JsonSerializer.SerializeToElement(manager.Find(Saved("withdrawn").Id));
+  Check(!withdrawnState.GetProperty("active").GetBoolean()&&withdrawnState.GetProperty("status").GetString()=="withdrawn","editor state preserves an inactive saved offer for explicit republishing");
   using(var pausedList=JsonDocument.Parse(JsonSerializer.Serialize(manager.List()))){
    var description=pausedList.RootElement.EnumerateArray().Single(o=>o.GetProperty("id").GetString()==pausedNow.Id);
    Check(description.GetProperty("endTime").GetInt64()<CustomFleaOffers.PermanentEndTime&&!description.GetProperty("permanent").GetBoolean(),"persistent paused offer description exposes projected expiry rather than PermanentEndTime");
@@ -78,10 +86,25 @@ internal static class PersistentFleaChecks {
   }
   manager.Edit(pausedNow.Id,pausedNow.Template,pausedNow.Draft with{Paused=false},true);
   var resumed=store.Find(pausedNow.Id)!;long resumedSeconds=resumed.EndTime-DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+  Check(JsonSerializer.SerializeToElement(manager.Find(resumed.Id)).GetProperty("pausedRemainingSeconds").ValueKind==JsonValueKind.Null&&manager.Find(pausedNow.OfferId)==null,"reopening after resume reads the new native quote and drops its old pause state");
   Check(resumed.PausedRemainingSeconds==null&&resumedSeconds is >=1018 and <=1020,"resuming starts from frozen seconds instead of counting server downtime");
   var resumedDisplay=new LocalFleaShared.FleaOfferLifetime(resumed.EndTime,false);
   Check(!resumedDisplay.Paused&&resumedDisplay.RemainingSeconds(DateTimeOffset.UtcNow.ToUnixTimeSeconds()+60)<resumedSeconds,"resumed quote display counts down from the frozen duration");
   Check(new LocalFleaShared.FleaOfferLifetime(CustomFleaOffers.PermanentEndTime,true).EditorMinutes(DateTimeOffset.UtcNow.ToUnixTimeSeconds())=="-1","only a permanent quote without frozen seconds displays -1");
+  var pauseOptions=MiscService.Options;var pauseOptionsProperty=typeof(MiscService).GetProperty(nameof(MiscService.Options))!;
+  try{
+   pauseOptionsProperty.SetValue(null,new LocalMiscShared.MiscSettings{UnlimitedMarketStock=true});
+   foreach(bool keepSaved in new[]{true,false}){
+    var flowDraft=finiteOld.Draft with{PlayerName="Unlimited pause flow "+keepSaved,Stock=3,RemainingMinutes=17,Paused=true};
+    var flow=manager.Publish(finiteOld.Template,flowDraft);
+    var before=JsonSerializer.SerializeToElement(manager.Find(flow.Id));
+    Check(before.GetProperty("pausedRemainingSeconds").GetInt64()==1020&&!before.GetProperty("permanent").GetBoolean(),"editor reads paused duration with unlimited stock enabled");
+    manager.Edit(flow.OfferId,flow.Template,flowDraft with{Paused=false,Persistent=keepSaved},true);
+    var after=service.GetOffers().Single(o=>o.User.Nickname==flowDraft.PlayerName);
+    Check(CustomFleaOffers.PausedRemaining(after)==null&&!CustomFleaOffers.Permanent(after)&&after.EndTime-DateTimeOffset.UtcNow.ToUnixTimeSeconds() is >=1018 and <=1020,"resuming with unlimited stock starts a finite countdown; persistent="+keepSaved);
+    manager.Delete(keepSaved?flow.Id:after.Id.ToString());
+   }
+  }finally{pauseOptionsProperty.SetValue(null,pauseOptions);}
   manager.Edit(resumed.Id,resumed.Template,resumed.Draft with{Paused=true},true);var pausedAgain=store.Find(resumed.Id)!;
   Check(pausedAgain.PausedRemainingSeconds is >=1018 and <=1020,"pausing an active countdown captures its exact remaining seconds");
   manager.Edit(resumed.Id,resumed.Template,resumed.Draft with{Paused=true,RemainingMinutes=9},false);
