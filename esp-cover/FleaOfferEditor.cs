@@ -22,8 +22,8 @@ internal static class FleaOfferEditor {
   if(Open||Saving)return;
   id=offer?.Id??"";template=offer?.Template??"";name=offer?.PlayerName??"Player";
   price=Number(offer?.UnitPrice??10000);stock=Number(offer?.Stock??1);rating=Number(offer?.Rating??1);
-  minutes=offer==null?"1440":offer.Permanent?"-1":Math.Max(0,(long)Math.Ceiling((offer.EndTime-DateTimeOffset.UtcNow.ToUnixTimeSeconds())/60d)).ToString(CultureInfo.InvariantCulture);
-  paused=offer?.PausedRemainingSeconds!=null;if(offer?.PausedRemainingSeconds is {} frozen)minutes=((long)Math.Ceiling(frozen/60d)).ToString(CultureInfo.InvariantCulture);
+  minutes=offer?.Lifetime.EditorMinutes(DateTimeOffset.UtcNow.ToUnixTimeSeconds())??"1440";
+  paused=offer?.Lifetime.Paused==true;
   originalMinutes=minutes;durability=offer?.Durability is {} d?Number(d):"";maximum=offer?.MaxDurability is {} m?Number(m):"";
   persistent=offer?.Persistent??true;inactive=offer!=null&&!offer.Active;
   search="";notice="";scroll=Vector2.zero;open=true;input.SetOpen(true,Time.frameCount);
@@ -32,11 +32,15 @@ internal static class FleaOfferEditor {
  internal static void Show(EFT.UI.Ragfair.Offer offer){
   if(Open||Saving)return;
   var repair=offer.Item?.GetItemComponent<RepairableComponent>();
-  long expiry=new DateTimeOffset(DateTime.FromBinary(offer.EndTime.ToBinary()).ToUniversalTime()).ToUnixTimeSeconds();
-  Show(new FleaMarketPanel.CustomOffer(offer.Id,offer.Item?.StringTemplateId??"",offer.User?.Nickname??"Player",offer.RequirementsCost,offer.Quantity,expiry,offer.User?.Rating??0,repair?.Durability,repair?.MaxDurability,false,true,"active",expiry>=253402300799));
-  reading=CharacterDataPanel.Call("/local/gear/data","characterData",new Dictionary<string,object?>{["action"]="fleaPriceStatus",["template"]=template});
+  long expiry=NativeExpiry(offer);
+  var known=FleaMarketPanel.FindOffer(offer.Id);
+  Show(new FleaMarketPanel.CustomOffer(offer.Id,offer.Item?.StringTemplateId??"",offer.User?.Nickname??"Player",offer.RequirementsCost,offer.Quantity,expiry,offer.User?.Rating??0,repair?.Durability,repair?.MaxDurability,known?.Persistent??false,true,"active",known?.Permanent??false,PausedRemainingSeconds:known?.PausedRemainingSeconds));
+  // Native EndTime alone cannot distinguish a paused quote from a permanent one.
+  if(known==null&&expiry>=LocalFleaShared.FleaOfferLifetime.PermanentEndTime)minutes=originalMinutes="";
+  reading=CharacterDataPanel.Call("/local/gear/data","characterData",new Dictionary<string,object?>{["action"]="fleaPriceStatus",["template"]=template}).WaitAsync(TimeSpan.FromSeconds(20));
   notice="正在读取报价保存状态…";
  }
+ internal static long NativeExpiry(EFT.UI.Ragfair.Offer offer)=>new DateTimeOffset(DateTime.FromBinary(offer.EndTime.ToBinary()).ToUniversalTime()).ToUnixTimeSeconds();
  static int Integer(string text,string caption)=>int.TryParse(text,NumberStyles.Integer,CultureInfo.InvariantCulture,out var n)?n:throw new ArgumentException(caption+": 请输入有效整数。");
  static double Decimal(string text,string caption)=>double.TryParse(text,NumberStyles.Float,CultureInfo.InvariantCulture,out var n)&&double.IsFinite(n)?n:throw new ArgumentException(caption+": 请输入有限数值。");
  static void Save(){try{
@@ -53,7 +57,10 @@ internal static class FleaOfferEditor {
    using var doc=JsonDocument.Parse(reading.GetAwaiter().GetResult());var root=doc.RootElement;
    if(root.TryGetProperty("err",out var err)&&err.GetInt32()!=0)throw new ArgumentException("读取报价状态失败，请重试。");
    FleaMarketPanel.OffersChanged(CharacterDataPanel.Data(root),template);
-   var saved=FleaMarketPanel.FindOffer(id);if(saved!=null){id=saved.Id;persistent=saved.Persistent;paused=saved.PausedRemainingSeconds!=null;minutes=saved.PausedRemainingSeconds is {} frozen?((long)Math.Ceiling(frozen/60d)).ToString(CultureInfo.InvariantCulture):saved.Permanent?"-1":minutes;originalMinutes=minutes;}notice="";
+   var saved=FleaMarketPanel.FindOffer(id);
+   if(saved!=null){id=saved.Id;persistent=saved.Persistent;paused=saved.Lifetime.Paused;minutes=saved.Lifetime.EditorMinutes(DateTimeOffset.UtcNow.ToUnixTimeSeconds());}
+   else if(minutes.Length==0)throw new ArgumentException("无法读取报价剩余时间，请刷新后重试。");
+   originalMinutes=minutes;notice="";
   }catch(Exception e){Close();FeatureToasts.Show(e.Message);}finally{reading=null;}}
   if(saving?.IsCompleted==true){try{
    using var doc=JsonDocument.Parse(saving.GetAwaiter().GetResult());var root=doc.RootElement;

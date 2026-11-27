@@ -68,9 +68,19 @@ internal static class PersistentFleaChecks {
   Check(store.Find(Saved("sold").Id)!.State=="sold"&&store.Find(Saved("expired").Id)!.State=="expired"&&store.Find(Saved("withdrawn").Id)!.State=="withdrawn"&&store.Find("missing")!.State=="unavailable","sold, expired, withdrawn and missing-template records remain saved without becoming active");
   var pausedNow=store.Find(Saved("paused").Id)!;var pausedLive=service.GetOfferByOfferId(new(pausedNow.OfferId))!;
   Check(pausedNow.PausedRemainingSeconds==1020&&CustomFleaOffers.PausedRemaining(pausedLive)==1020&&!CustomFleaOffers.Permanent(pausedLive),"paused countdown survives a real process restart separately from permanent lifetime");
+  using(var pausedList=JsonDocument.Parse(JsonSerializer.Serialize(manager.List()))){
+   var description=pausedList.RootElement.EnumerateArray().Single(o=>o.GetProperty("id").GetString()==pausedNow.Id);
+   var lifetime=new LocalFleaShared.FleaOfferLifetime(description.GetProperty("endTime").GetInt64(),description.GetProperty("permanent").GetBoolean(),description.GetProperty("pausedRemainingSeconds").GetInt64());
+   long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+   Check(lifetime.EditorMinutes(now)=="17"&&lifetime.Clock(now)=="00:17:00"&&lifetime.Clock(now+3600)=="00:17:00","authoritative paused metadata shows the original duration in editor and native timer after restart");
+   Check((lifetime with{Permanent=true}).EditorMinutes(now)=="17","frozen duration takes priority over a stale native permanent flag instead of displaying -1");
+  }
   manager.Edit(pausedNow.Id,pausedNow.Template,pausedNow.Draft with{Paused=false},true);
   var resumed=store.Find(pausedNow.Id)!;long resumedSeconds=resumed.EndTime-DateTimeOffset.UtcNow.ToUnixTimeSeconds();
   Check(resumed.PausedRemainingSeconds==null&&resumedSeconds is >=1018 and <=1020,"resuming starts from frozen seconds instead of counting server downtime");
+  var resumedDisplay=new LocalFleaShared.FleaOfferLifetime(resumed.EndTime,false);
+  Check(!resumedDisplay.Paused&&resumedDisplay.RemainingSeconds(DateTimeOffset.UtcNow.ToUnixTimeSeconds()+60)<resumedSeconds,"resumed quote display counts down from the frozen duration");
+  Check(new LocalFleaShared.FleaOfferLifetime(CustomFleaOffers.PermanentEndTime,true).EditorMinutes(DateTimeOffset.UtcNow.ToUnixTimeSeconds())=="-1","only a permanent quote without frozen seconds displays -1");
   manager.Edit(resumed.Id,resumed.Template,resumed.Draft with{Paused=true},true);var pausedAgain=store.Find(resumed.Id)!;
   Check(pausedAgain.PausedRemainingSeconds is >=1018 and <=1020,"pausing an active countdown captures its exact remaining seconds");
   manager.Edit(resumed.Id,resumed.Template,resumed.Draft with{Paused=true,RemainingMinutes=9},false);

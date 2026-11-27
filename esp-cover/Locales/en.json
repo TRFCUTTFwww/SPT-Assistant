@@ -5529,5 +5529,9 @@
   "下架按钮 · 开启": "Withdraw button · On",
   "下架按钮 · 关闭": "Withdraw button · Off",
   "搜索物品、卖家或模板 ID…": "Search items, sellers or template IDs…",
-  "瞄准镜贴纸": "Scope stickers"
+  "瞄准镜贴纸": "Scope stickers",
+  "正在读取剩余时间…": "Reading remaining time…",
+  "剩余时间读取失败": "Could not read remaining time",
+  "报价已更新，请刷新": "Offer updated; refresh the list",
+  "无法读取报价剩余时间，请刷新后重试。": "Could not read the offer lifetime. Refresh the list and try again."
 }

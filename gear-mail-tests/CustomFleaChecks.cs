@@ -38,6 +38,11 @@ internal static class CustomFleaChecks {
   var paused=json.Deserialize<RagfairOffer>(json.Serialize(offer))!;CustomFleaOffers.Apply(paused,draft with{Paused=true});
   paused=json.Deserialize<RagfairOffer>(json.Serialize(paused))!;
   Check(CustomFleaOffers.PausedRemaining(paused)==73*60&&!CustomFleaOffers.Permanent(paused)&&paused.EndTime==CustomFleaOffers.PermanentEndTime,"paused temporary quotes retain frozen seconds through native serialization without becoming permanent");
+  CustomFleaOffers.Pause(paused,73*60-29);
+  using(var details=JsonDocument.Parse(JsonSerializer.Serialize(CustomFleaOffers.Describe(paused)))){
+   var data=details.RootElement;var lifetime=new LocalFleaShared.FleaOfferLifetime(data.GetProperty("endTime").GetInt64(),data.GetProperty("permanent").GetBoolean(),data.GetProperty("pausedRemainingSeconds").GetInt64());
+   Check(lifetime.EditorMinutes(100)=="73"&&lifetime.Clock(100)=="01:12:31"&&lifetime.Clock(100000)=="01:12:31","temporary paused offers expose their exact frozen seconds without requiring SQLite or counting elapsed time");
+  }
   CustomFleaOffers.Apply(paused,draft);Check(CustomFleaOffers.PausedRemaining(paused)==null&&paused.EndTime-paused.StartTime==73*60,"resuming ordinary quote creation removes the pause marker");
   string baseline=json.Serialize(offer)!;
   var copy=MarketSupply.Copy(offer);

@@ -14,7 +14,8 @@ internal static class NativeFleaOfferEdit {
  sealed class Buttons(OfferView view){internal readonly OfferView View=view;internal DefaultUIButton? Edit,Withdraw;}
  static readonly Dictionary<IntPtr,Buttons> buttons=new();
  static readonly List<(InteractionButtonsContainer Container,SimpleContextMenuButton Button)> menuButtons=[];
- static Task<string>? withdrawing;static string withdrawalTemplate="";
+ static Task<string>? withdrawing,timingRead;static string withdrawalTemplate="",timingError="";
+ static float nextTimingRead;static long timingRevision;
  internal static void Initialize(Plugin plugin){
   BepInEx.Configuration.ConfigEntry<bool> Bind(string key,string label,string help)=>plugin.Config.Bind("Flea Market",key,false,new BepInEx.Configuration.ConfigDescription(help,null,new CnConfig.ConfigurationManagerAttributes{DispName=label,Category=MenuSections.FleaMarket}));
   enabled=Bind("Show edit offer button","显示修改按钮","开启后在原生报价操作区与右键菜单显示修改。");
@@ -38,6 +39,12 @@ internal static class NativeFleaOfferEdit {
   RefreshAll();FeatureToasts.Show("正在下架报价…");
  }catch(Exception e){FeatureToasts.Show(e.Message);}}
  internal static void Tick(){
+  if(timingRead?.IsCompleted==true){try{
+   using var doc=JsonDocument.Parse(timingRead.GetAwaiter().GetResult());var root=doc.RootElement;
+   if(root.TryGetProperty("err",out var error)&&error.GetInt32()!=0)throw new ArgumentException("剩余时间读取失败");
+   if(timingRevision==FleaMarketPanel.OfferRevision)FleaMarketPanel.OffersChanged(CharacterDataPanel.Data(root),"");else nextTimingRead=0;
+   timingError="";
+  }catch{timingError="剩余时间读取失败";}finally{timingRead=null;}}
   if(withdrawing?.IsCompleted!=true)return;
   try{
    using var doc=JsonDocument.Parse(withdrawing.GetAwaiter().GetResult());var root=doc.RootElement;
@@ -72,8 +79,19 @@ internal static class NativeFleaOfferEdit {
   Refresh(pair);
  }catch(Exception e){Plugin.Self?.Log.LogWarning("Flea offer actions: "+e.Message);}}
  static void Timing(OfferView __instance){try{
-  var offer=__instance.Offer==null?null:FleaMarketPanel.FindOffer(__instance.Offer.Id);
-  if(offer?.PausedRemainingSeconds is {} seconds&&__instance._expirationLabel!=null)__instance._expirationLabel.text=I18n.Text("已暂停")+$" {seconds/3600:D2}:{seconds/60%60:D2}:{seconds%60:D2}";
+  if(__instance.Offer==null||__instance._expirationLabel==null)return;
+  var offer=FleaMarketPanel.FindOffer(__instance.Offer.Id);
+  if(offer!=null){
+   var lifetime=offer.Lifetime;long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+   __instance._expirationLabel.text=lifetime.Paused?I18n.Text("已暂停")+" "+lifetime.Clock(now):lifetime.IsPermanent?I18n.Text("永久"):lifetime.Clock(now);
+  }else if(FleaOfferEditor.NativeExpiry(__instance.Offer)>=LocalFleaShared.FleaOfferLifetime.PermanentEndTime){
+   // A newly opened native market has not fetched Assistant quote metadata yet.
+   if(timingRead==null&&Time.unscaledTime>=nextTimingRead){
+    timingRevision=FleaMarketPanel.OfferRevision;nextTimingRead=Time.unscaledTime+12;
+    timingRead=CharacterDataPanel.Call("/local/gear/data","characterData",new Dictionary<string,object?>{["action"]="fleaPriceStatus"}).WaitAsync(TimeSpan.FromSeconds(20));
+   }
+   __instance._expirationLabel.text=I18n.Text(timingError.Length>0?timingError:timingRead!=null?"正在读取剩余时间…":"报价已更新，请刷新");
+  }
  }catch{}}
  static void Context(OfferView __instance){try{
   var menu=__instance._itemUiContext?.ContextMenu;
@@ -97,6 +115,6 @@ internal static class NativeFleaOfferEdit {
  }
  internal static void Reset(){
   if(changed!=null){enabled.SettingChanged-=changed;withdrawEnabled.SettingChanged-=changed;}changed=null;ClearMenus();
-  foreach(var pair in buttons.Values){if(pair.Edit!=null)UnityEngine.Object.Destroy(pair.Edit.gameObject);if(pair.Withdraw!=null)UnityEngine.Object.Destroy(pair.Withdraw.gameObject);}buttons.Clear();withdrawing=null;
+  foreach(var pair in buttons.Values){if(pair.Edit!=null)UnityEngine.Object.Destroy(pair.Edit.gameObject);if(pair.Withdraw!=null)UnityEngine.Object.Destroy(pair.Withdraw.gameObject);}buttons.Clear();withdrawing=timingRead=null;nextTimingRead=0;timingError="";
  }
 }

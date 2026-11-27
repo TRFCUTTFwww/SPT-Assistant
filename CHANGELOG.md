@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.4 — Paused flea countdown display (2026-11-27)
+
+- Keep the original frozen duration when editing a paused quote; reserve -1 for permanent quotes. Resolve native quote metadata before treating a long expiry as permanent.
+- Hydrate paused timing on the native market without first opening the MOD offer page. Share the frozen-time display between native rows, custom rows and the editor; reject stale background responses.
+
+[Paused countdown fix / 暂停报价剩余时间](docs/release-flea-paused-time-20261127.md)
+
 ## 2.4 — Main package and menu polish (2026-11-26)
 
 - Keep uninstall/reimport support without deleting saved module data. Discover settings from module metadata, including legacy installed manifests, without compiling optional module identities into the core.

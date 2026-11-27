@@ -18,10 +18,13 @@ internal static partial class FleaMarketPanel {
   [property:JsonPropertyName("status")]string Status="active",
   [property:JsonPropertyName("permanent")]bool Permanent=false,
   [property:JsonPropertyName("offerId")]string? OfferId=null,
-  [property:JsonPropertyName("pausedRemainingSeconds")]long? PausedRemainingSeconds=null);
+  [property:JsonPropertyName("pausedRemainingSeconds")]long? PausedRemainingSeconds=null){
+  internal LocalFleaShared.FleaOfferLifetime Lifetime=>new(EndTime,Permanent,PausedRemainingSeconds);
+ }
  static string offerFilter="",offerDelete="";
  static int offerState;
  static Vector2 offerScroll;
+ internal static long OfferRevision=>stateRevision;
  internal static CustomOffer? FindOffer(string nativeId)=>(prices?.CustomOffers??[]).FirstOrDefault(o=>o.Id==nativeId||o.OfferId==nativeId);
  internal static void OffersChanged(System.Text.Json.JsonElement data,string templateId){
   stateRevision++;
@@ -71,9 +74,8 @@ internal static partial class FleaMarketPanel {
     InterfaceMenu.Label(new(padding,info,textWidth,22),seller,null,12,false,false);
     string details="₽"+offer.UnitPrice.ToString("N0")+" · "+I18n.Text("存量")+" "+offer.Stock.ToString("N0")+" · "+I18n.Text("市场信誉")+" "+offer.Rating.ToString("0.##");
     InterfaceMenu.Label(new(padding,info+26,textWidth,22),details,null,12,false,false);
-    long remaining=Math.Max(0,offer.EndTime-DateTimeOffset.UtcNow.ToUnixTimeSeconds());
-    if(offer.PausedRemainingSeconds is {} frozen)remaining=frozen;
-    string lifetime=offer.PausedRemainingSeconds!=null?I18n.Text("已暂停")+$" {remaining/3600:D2}:{remaining/60%60:D2}":offer.Permanent?I18n.Text("永久"):$"{remaining/3600:D2}:{remaining/60%60:D2}";
+    long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    string lifetime=offer.Lifetime.Paused?I18n.Text("已暂停")+" "+offer.Lifetime.Clock(now):offer.Lifetime.IsPermanent?I18n.Text("永久"):offer.Lifetime.Clock(now);
     string status=offer.Status switch{"sold"=>"已售罄","expired"=>"已到期","withdrawn"=>"已下架","unavailable"=>"物品不可用","pending"=>"等待恢复",_=>"出售中"};
     InterfaceMenu.Label(new(padding,info+52,textWidth,22),I18n.Text(status)+" · "+lifetime+" · "+I18n.Text(offer.Persistent?"SQLite 已保存":"临时报价"),null,12,false,false);
     float buttonWidth=compact?(inner-padding*2-gap*2)/3:90;
