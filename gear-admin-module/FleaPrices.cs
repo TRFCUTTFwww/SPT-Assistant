@@ -344,8 +344,8 @@ internal static class FleaPrices
         }
 
         int count = request.Count;
-        if (count < 1 || count > 95L * Math.Max(1, tpl.Properties?.StackMaxSize ?? 1))
-            throw new ArgumentException("购买数量超出单笔直购上限。");
+        if (count < 1)
+            throw new ArgumentException("请输入正整数购买数量。");
         int unitPrice = MiscService.Options.ClearanceMarket
             ? 1
             : state.TryGet(tplId, out int configured)

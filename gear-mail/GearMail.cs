@@ -142,38 +142,17 @@ public class GearMailService(
    if(Props(t).TryGetProperty(key,out var slots)&&slots.ValueKind==JsonValueKind.Array)
     foreach(var slot in slots.EnumerateArray())yield return slot;
  }
- bool IsA(string id,string ancestor){
-  var seen=new HashSet<string>();
-  while(seen.Add(id)){
-   if(id==ancestor)return true;
-   if(!templates.Items.TryGetValue(new MongoId(id),out var template)||template.Parent.ToString()==id)return false;
-   id=template.Parent.ToString();if(!MongoPattern.IsMatch(id))return false;
-  }return false;
- }
- bool Allowed(string item,JsonElement slot){
-  foreach(var filter in slot.GetProperty("_props").GetProperty("filters").EnumerateArray()){
-   var included=filter.TryGetProperty("Filter",out var values)&&values.EnumerateArray().Any(v=>IsA(item,v.GetString()!));
-   var excluded=filter.TryGetProperty("ExcludedFilter",out var denied)&&denied.EnumerateArray().Any(v=>IsA(item,v.GetString()!));
-   if(included&&!excluded)return true;
-  }return false;
- }
  List<GearSpec> ValidateAndExpand(List<GearSpec> input,bool allowIncomplete){
-  if(input is null||input.Count is <1 or >100)throw new ArgumentException("Provide 1 to 100 items");
+  if(input is null||input.Count<1)throw new ArgumentException("Provide at least 1 item");
   var result=input.Select(s=>s is null?throw new ArgumentException("Null item"):new GearSpec{Ref=s.Ref,Template=s.Template,Parent=string.IsNullOrEmpty(s.Parent)?null:s.Parent,Slot=s.Slot,Count=s.Count,PoisonUses=s.PoisonUses,Attributes=s.Attributes,Location=s.Location}).ToList();
   if(result.Any(s=>!IdPattern.IsMatch(s.Ref??""))||result.Select(s=>s.Ref).Distinct().Count()!=result.Count)throw new ArgumentException("Item refs must be unique safe names");
   for(int i=0;i<result.Count;i++){
-   if(result.Count>100)throw new ArgumentException("Too many required parts");
    var spec=result[i];var t=Template(spec.Template);var props=Props(t);
    if(t.GetProperty("_type").GetString()!="Item")throw new ArgumentException("Template is not an item");
-   // Some non-stackable attachment templates use zero for their inherited stack limit.
-   int max=props.TryGetProperty("StackMaxSize",out var stack)?Math.Max(1,(int)stack.GetDouble()):1;
-   if(spec.Count<1||spec.Count>max)throw new ArgumentException("Invalid stack count: "+spec.Ref);
-   if(spec.Parent is not null&&spec.Slot!="cartridges"&&spec.Count!=1)throw new ArgumentException("Attached items must have count=1");
+   if(spec.Count<1)throw new ArgumentException("Invalid stack count: "+spec.Ref);
    GearAttributeRules.Apply(helper.GenerateUpdForItem(templates.Items[new MongoId(spec.Template)])??new Upd(),spec.Attributes,props,spec.Template);
-   if(spec.PoisonUses is double poison){
-    if(spec.Template!="5fc64ea372b0dd78d51159dc")throw new ArgumentException("poisonUses is only supported for the cultist knife");
-    if(!double.IsFinite(poison)||poison<0||poison>(double)float.MaxValue)throw new ArgumentException("poisonUses must be a nonnegative finite value representable by Float32");
-   }
+   if(spec.PoisonUses is double poison&&!double.IsFinite(poison))
+    throw new ArgumentException("poisonUses must be a finite value");
    foreach(var slot in Slots(t).Where(s=>s.TryGetProperty("_required",out var r)&&r.ValueKind==JsonValueKind.True)){
     var name=slot.GetProperty("_name").GetString()!;
     if(result.Any(s=>s.Parent==spec.Ref&&s.Slot==name))continue;
@@ -189,22 +168,11 @@ public class GearMailService(
   var byRef=result.ToDictionary(s=>s.Ref);var used=new HashSet<(string,string)>();
   foreach(var spec in result){
    if(spec.Parent is null){if(!string.IsNullOrEmpty(spec.Slot))throw new ArgumentException("Root item cannot specify a slot");continue;}
-   if(!byRef.TryGetValue(spec.Parent,out var parent)||string.IsNullOrEmpty(spec.Slot))throw new ArgumentException("Invalid parent/slot: "+spec.Ref);
+   if(!byRef.TryGetValue(spec.Parent,out _)||string.IsNullOrEmpty(spec.Slot))throw new ArgumentException("Invalid parent/slot: "+spec.Ref);
    if(!used.Add((spec.Parent,spec.Slot+(spec.Slot=="cartridges"?":"+spec.Location:""))))throw new ArgumentException("Duplicate attachment slot");
-   var slot=Slots(Template(parent.Template)).FirstOrDefault(s=>s.GetProperty("_name").GetString()==spec.Slot);
-   if(slot.ValueKind==JsonValueKind.Undefined||!Allowed(spec.Template,slot))throw new ArgumentException("Incompatible attachment: "+spec.Ref);
-   if(spec.Slot=="cartridges"){
-    if(spec.Location is not int position||position<0)throw new ArgumentException("Invalid cartridge position");
-    int capacity=slot.GetProperty("_max_count").GetInt32();
-    if(capacity<=0||result.Where(s=>s.Parent==spec.Parent&&s.Slot=="cartridges").Sum(s=>s.Count)>capacity)throw new ArgumentException("Magazine capacity exceeded");
-   }else if(spec.Location.HasValue)throw new ArgumentException("Only cartridges may specify a position");
+   if(spec.Slot=="cartridges"&&(spec.Location is not int position||position<0))throw new ArgumentException("Invalid cartridge position");
    var seen=new HashSet<string>{spec.Ref};var walk=spec;
    while(walk.Parent is not null){if(!seen.Add(walk.Parent))throw new ArgumentException("Attachment cycle");walk=byRef[walk.Parent];}
-  }
-  foreach(var root in result.Where(s=>s.Parent is null)){
-   bool Descendant(GearSpec s){while(s.Parent is not null){s=byRef[s.Parent];}return s.Ref==root.Ref;}
-   var group=result.Where(Descendant).ToList();var selected=group.Select(s=>s.Template).ToHashSet();
-   foreach(var spec in group){var props=Props(Template(spec.Template));if(props.TryGetProperty("ConflictingItems",out var conflicts)&&conflicts.EnumerateArray().Any(v=>selected.Contains(v.GetString()!)))throw new ArgumentException("Conflicting equipment parts");}
   }
   return result;
  }

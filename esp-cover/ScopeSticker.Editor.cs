@@ -204,8 +204,16 @@ internal static partial class ScopeSticker
             transform.m00 = horizontal.x; transform.m01 = vertical.x; transform.m03 = editCorners[3].x - lens.x;
             transform.m10 = horizontal.y; transform.m11 = vertical.y; transform.m13 = editCorners[3].y - lens.y;
             GUI.matrix = oldMatrix * transform;
-            GUI.color = new Color(1, 1, 1, draft!.Opacity);
-            GUI.DrawTexture(new Rect(0, 0, 1, 1), texture);
+            bool flashing = IsFlashing(draft!);
+            if (flashing && ScopeStickerRules.TryHex(draft!.HitColor, out var hitRgb))
+                GUI.color = new Color(hitRgb.R / 255f, hitRgb.G / 255f, hitRgb.B / 255f, draft.Opacity);
+            else if (draft!.ColorMode != 0)
+            {
+                var dyn = ScopeStickerRules.EvaluateDynamicColor(draft, Time.unscaledTime);
+                GUI.color = new Color(dyn.R / 255f, dyn.G / 255f, dyn.B / 255f, draft.Opacity * dyn.AlphaFactor);
+            }
+            else GUI.color = new Color(1, 1, 1, draft.Opacity);
+            GUI.DrawTexture(new Rect(0, 0, 1, 1), flashing || (draft.ColorMode != 0 && draft.ColorUseMask) ? WhiteMask() : texture);
         }
         finally { GUI.matrix = oldMatrix; GUI.color = oldColor; GUI.EndGroup(); }
     }
@@ -319,7 +327,8 @@ internal static partial class ScopeSticker
         int cols = w >= 560 ? 2 : 1;
         float extraRowsHeight = MathF.Ceiling(extraEntries.Length / (float)cols) * 94;
         float baseY = offset + 94 + extraRowsHeight;
-        float height = baseY + 230 + (store?.Profiles.Count ?? 0) * 62;
+        float colorHeight = MenuColorSettingsHeight();
+        float height = baseY + 240 + colorHeight + (store?.Profiles.Count ?? 0) * 62;
         settingsScroll = GUI.BeginScrollView(rect, settingsScroll, new Rect(0, 0, rect.width - 20, Math.Max(height, rect.height - 1)));
         string? removeKey = null;
         ScopeStickerProfile? defaultSource = null;
@@ -349,11 +358,15 @@ internal static partial class ScopeSticker
             }
             InterfaceMenu.Label(new Rect(4, baseY + 102, w - 8, 24), $"PNG / JPG · ≤4096×4096 · ≤16 MB · 图库 {store?.Images.Count ?? 0} 张", null, 12, translate: false);
             InterfaceMenu.Paragraph(new Rect(4, baseY + 130, w - 8, 40), notice.Length > 0 ? notice : "导入图片会复制到本地图片库，保留原图透明度。", null, 12);
-            InterfaceMenu.Label(new Rect(4, baseY + 176, w - 8, 26), "已保存的倍镜方案", InterfaceMenu.Accent, 15);
+
+            float colorY = baseY + 176;
+            DrawMenuColorSettings(4, ref colorY, w - 8);
+
+            InterfaceMenu.Label(new Rect(4, colorY + 6, w - 8, 26), "已保存的倍镜方案", InterfaceMenu.Accent, 15);
             int index = 0;
             if (store != null) foreach (var pair in store.Profiles.OrderBy(p => p.Value.Name))
             {
-                float row = baseY + 210 + index++ * 62;
+                float row = colorY + 40 + index++ * 62;
                 InterfaceMenu.Surface(new Rect(0, row, w, 56), Color.Lerp(InterfaceMenu.Background, InterfaceMenu.Text, .035f), 6);
                 InterfaceMenu.Label(new Rect(10, row + 5, Math.Max(60, w - 210), 24), pair.Value.Name.Length > 0 ? pair.Value.Name : pair.Key, null, 13, translate: false);
                 InterfaceMenu.Label(new Rect(10, row + 29, Math.Max(60, w - 210), 22), ImageName(pair.Value.Image), null, 12, translate: false);
@@ -365,6 +378,11 @@ internal static partial class ScopeSticker
         if (defaultSource != null)
         {
             width.Value = defaultSource.Width; x.Value = defaultSource.X; y.Value = defaultSource.Y; opacity.Value = defaultSource.Opacity;
+            defaultColorMode.Value = defaultSource.ColorMode;
+            defaultColorPrimary.Value = defaultSource.ColorPrimary;
+            defaultColorSecondary.Value = defaultSource.ColorSecondary;
+            defaultColorSpeed.Value = defaultSource.ColorSpeed;
+            defaultColorUseMask.Value = defaultSource.ColorUseMask;
             notice = "已将该倍镜布局设为新倍镜默认模板。";
         }
         if (removeKey != null && store != null && store.DeleteProfile(removeKey))

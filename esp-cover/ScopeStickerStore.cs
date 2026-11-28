@@ -22,6 +22,11 @@ internal sealed record ScopeStickerProfile
     public bool HitFlash { get; init; }
     public string HitColor { get; init; } = "#FF4040";
     public float HitSeconds { get; init; } = .18f;
+    public int ColorMode { get; init; }
+    public float ColorSpeed { get; init; } = 1f;
+    public string ColorPrimary { get; init; } = "#00F0FF";
+    public string ColorSecondary { get; init; } = "#FF38B8";
+    public bool ColorUseMask { get; init; }
 
     internal ScopeStickerProfile Normalized() => this with
     {
@@ -33,7 +38,11 @@ internal sealed record ScopeStickerProfile
         Opacity = float.IsFinite(Opacity) ? Math.Clamp(Opacity, 0, 1) : .7f,
         Rotation = float.IsFinite(Rotation) ? ((Rotation % 360 + 540) % 360) - 180 : 0,
         HitColor = ScopeStickerRules.TryHex(HitColor, out var color) ? color.Hex : "#FF4040",
-        HitSeconds = float.IsFinite(HitSeconds) ? Math.Clamp(HitSeconds, .05f, 1) : .18f
+        HitSeconds = float.IsFinite(HitSeconds) ? Math.Clamp(HitSeconds, .05f, 1) : .18f,
+        ColorMode = ColorMode is >= 0 and <= 4 ? ColorMode : 0,
+        ColorSpeed = float.IsFinite(ColorSpeed) && ColorSpeed > 0 ? Math.Clamp(ColorSpeed, .01f, 50f) : 1f,
+        ColorPrimary = ScopeStickerRules.TryHex(ColorPrimary, out var primary) ? primary.Hex : "#00F0FF",
+        ColorSecondary = ScopeStickerRules.TryHex(ColorSecondary, out var secondary) ? secondary.Hex : "#FF38B8"
     };
 }
 
@@ -104,6 +113,41 @@ internal sealed class ScopeStickerStore
         // The active selection and only this scope/image pair are committed together.
         if (ValidImageId(value.Image)) variants[value.Image] = value;
         next.Variants[key] = variants;
+        Write(next);
+    }
+
+    internal void ApplyColorToAll(int mode, string primaryHex, string secondaryHex, float speed, bool useMask)
+    {
+        var next = Copy();
+        foreach (var key in next.Profiles.Keys.ToArray())
+        {
+            var p = next.Profiles[key];
+            next.Profiles[key] = (p with
+            {
+                ColorMode = mode,
+                ColorPrimary = primaryHex,
+                ColorSecondary = secondaryHex,
+                ColorSpeed = speed,
+                ColorUseMask = useMask
+            }).Normalized();
+        }
+        foreach (var scopeKey in next.Variants.Keys.ToArray())
+        {
+            var dict = new Dictionary<string, ScopeStickerProfile>(next.Variants[scopeKey], StringComparer.Ordinal);
+            foreach (var imgKey in dict.Keys.ToArray())
+            {
+                var v = dict[imgKey];
+                dict[imgKey] = (v with
+                {
+                    ColorMode = mode,
+                    ColorPrimary = primaryHex,
+                    ColorSecondary = secondaryHex,
+                    ColorSpeed = speed,
+                    ColorUseMask = useMask
+                }).Normalized();
+            }
+            next.Variants[scopeKey] = dict;
+        }
         Write(next);
     }
 

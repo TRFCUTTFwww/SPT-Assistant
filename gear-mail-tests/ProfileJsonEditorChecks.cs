@@ -104,7 +104,15 @@ internal static class ProfileJsonEditorChecks
         if (!JsonNode.Parse(withNull)!["characters"]!["pmc"]!["Info"]!.AsObject().ContainsKey("lastCompletedWipe"))
             throw new Exception("Literal JSON null value was not applied");
 
-        // 5. Reject locked identity mutations (direct and via ancestor object replacement)
+        // 5. Unrestricted editing: formerly locked paths (info.id, inraid, custom _tpl) are now editable; only root deletion and syntax errors are rejected
+        string editedInraid = ProfileJsonEditorRules.Apply(sampleProfile, "$.inraid", "{\"location\":\"bigmap\"}", false, null, Installed);
+        if (JsonNode.Parse(editedInraid)!["inraid"]!["location"]!.GetValue<string>() != "bigmap")
+            throw new Exception("inraid field should be freely editable");
+
+        string editedCustomTpl = ProfileJsonEditorRules.Apply(sampleProfile, "$.characters.pmc.Inventory.items[5]._tpl", "\"ffffffffffffffffffffffff\"", false, null, Installed);
+        if (JsonNode.Parse(editedCustomTpl)!["characters"]!["pmc"]!["Inventory"]!["items"]![5]!["_tpl"]!.GetValue<string>() != "ffffffffffffffffffffffff")
+            throw new Exception("custom/modded item template should be freely editable");
+
         void ExpectReject(Action act, string reason)
         {
             try { act(); }
@@ -112,13 +120,7 @@ internal static class ProfileJsonEditorChecks
             throw new Exception("Expected rejection for: " + reason);
         }
 
-        ExpectReject(() => ProfileJsonEditorRules.Apply(sampleProfile, "$.info.id", "\"000000000000000000000000\"", false, null, Installed), "direct info.id edit");
-        ExpectReject(() => ProfileJsonEditorRules.Apply(sampleProfile, "$.characters.pmc._id", "\"000000000000000000000000\"", false, null, Installed), "direct pmc._id edit");
-        ExpectReject(() => ProfileJsonEditorRules.Apply(sampleProfile, "$.inraid", "{\"location\":\"bigmap\"}", false, null, Installed), "direct inraid edit");
-        ExpectReject(() => ProfileJsonEditorRules.Apply(sampleProfile, "$.info", "{\"id\":\"changed\",\"scavId\":\"6adfe3f6ac082b0a00181eab\",\"aid\":1992553}", false, null, Installed), "ancestor info.id tamper");
-        ExpectReject(() => ProfileJsonEditorRules.Apply(sampleProfile, "$.characters.pmc", null, true, null, Installed), "deleting pmc root");
-        ExpectReject(() => ProfileJsonEditorRules.Apply(sampleProfile, "$.characters.pmc.Inventory.items[5]._tpl", "\"ffffffffffffffffffffffff\"", false, null, Installed), "unknown item template");
-        ExpectReject(() => ProfileJsonEditorRules.Apply(sampleProfile, "$.characters.pmc.Inventory.items[5].parentId", "\"111111111111111111111111\"", false, null, Installed), "missing parent container");
+        ExpectReject(() => ProfileJsonEditorRules.Apply(sampleProfile, "$", null, true, null, Installed), "deleting root document");
         ExpectReject(() => ProfileJsonEditorRules.Apply(sampleProfile, "$.characters.pmc.Info", "{broken json", false, null, Installed), "invalid JSON syntax");
 
         const string xpPath = "$.characters.pmc.Info.Experience";
@@ -155,7 +157,7 @@ internal static class ProfileJsonEditorChecks
             throw new Exception("Rebasing an array append lost another append");
         ExpectReject(() => ProfileJsonEditorRules.Apply(liveJson, "$", sampleProfile, false, null, Installed, sampleProfile), "whole-profile replacement after a native update");
 
-        // 6. Field catalog coverage & bilingual purity
+        // 6. Field catalog coverage & bilingual purity (no fields are artificially locked)
         string[] checkPaths =
         [
             "$", "$.info.edition", "$.info.id", "$.characters.pmc.Info.Experience",
@@ -174,9 +176,9 @@ internal static class ProfileJsonEditorChecks
                 throw new Exception("Catalog missing authored field description for: " + p);
             if (en.Title.Any(c => c is >= '\u3400' and <= '\u9fff') || en.Detail.Any(c => c is >= '\u3400' and <= '\u9fff'))
                 throw new Exception("English catalog entry contains Chinese characters: " + p);
+            if (zh.Locked || en.Locked)
+                throw new Exception("Profile JSON fields must not be artificially locked: " + p);
         }
-        if (!ProfileFieldCatalog.Describe("$.info.id", false).Locked || ProfileFieldCatalog.Describe("$.info.edition", false).Locked)
-            throw new Exception("Catalog lock state mismatch");
 
         // 7. Real profile round-trip check when present on this machine
         string liveProfile = Path.Combine(gameRoot, "SPT_Runtime", "user", "profiles", "6adfe3f6ac082b0a00181eaa.json");
@@ -197,6 +199,6 @@ internal static class ProfileJsonEditorChecks
                 throw new Exception("Real 6adfe3f6ac082b0a00181eaa.json profile lost data during SptProfile round-trip");
         }
 
-        Console.WriteLine("PASS profile JSON editor path mutations, concurrent edit checks, identity locks, inventory/template validation, field catalog and real SptProfile round-trip");
+        Console.WriteLine("PASS profile JSON editor unrestricted path mutations, concurrent edit checks, field catalog and real SptProfile round-trip");
     }
 }

@@ -121,10 +121,13 @@ public class CharacterDataService {
    }
    snapshot=json.Deserialize<SptProfile>(json.Serialize(profile))!;
    var directory=System.IO.Path.Combine(AppContext.BaseDirectory,"user","mods","LocalGearMail","backups","character-data");Directory.CreateDirectory(directory);
-   await File.WriteAllTextAsync(System.IO.Path.Combine(directory,$"{session}-{DateTime.UtcNow:yyyyMMdd-HHmmssfff}.json"),json.Serialize(profile,true),ct);
+   await File.WriteAllTextAsync(System.IO.Path.Combine(directory,$"{session}-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmssfff}.json"),json.Serialize(profile,true),ct);
    Item? editedItem=null;
    List<Item>? editedTree=null;
+   List<Item>? gridAddedItems=null;
    switch(request.Action){
+    case "inventoryGridAddItems":
+     gridAddedItems=InventoryItemJson.AddItemsToGrid(Inventory(),request.Preview,json);break;
     case "inventoryItemTreeJsonSave":
      editedTree=InventoryItemJson.ApplyTree(Inventory(),request.Id,request.Template,request.Preview,request.Revision,json);break;
     case "inventoryItemJsonSave":
@@ -139,20 +142,20 @@ public class CharacterDataService {
     case "fleaRating":KarmaRules.ApplyFlea(pmc,request.Value,request.ExpectedValue);break;
     case "karma":var bounds=ServerSettingsService.ScavBounds();KarmaRules.Apply(pmc,request.Id,request.Value,request.ExpectedValue,bounds.Min,bounds.Max);break;
     case "deposit":CharacterDataRules.Deposit(pmc,request.ExpectedCoins,request.ExpectedBalance);break;
-    case "wallet":if(!double.IsFinite(request.Value)||request.Value!=Math.Truncate(request.Value)||request.Value<0||request.Value>int.MaxValue)throw new ArgumentException("请输入有效的非负整数余额。");CharacterDataRules.Wallet(pmc,(int)request.Value,request.ExpectedBalance);break;
+    case "wallet":if(!double.IsFinite(request.Value)||request.Value!=Math.Truncate(request.Value)||request.Value<int.MinValue||request.Value>int.MaxValue)throw new ArgumentException("请输入 Int32 范围内的整数余额。");CharacterDataRules.Wallet(pmc,(int)request.Value,request.ExpectedBalance);break;
     case "bodyHealth":{
      var health=pmc.Health??throw new ArgumentException("当前角色没有生命值数据。");
      string[] allowed=["Head","Chest","Stomach","LeftArm","RightArm","LeftLeg","RightLeg"];
      if(request.Settings.Count is not (7 or 9)||allowed.Any(part=>!request.Settings.ContainsKey(part))||request.Settings.Keys.Any(key=>!allowed.Contains(key)&&key is not ("Energy" or "Hydration")))throw new ArgumentException("必须提供全部七个部位的生命值。");
-     var raw=System.Text.Json.Nodes.JsonNode.Parse(json.Serialize(health)!)!;
+     var raw=JsonNode.Parse(json.Serialize(health)!)!;
      foreach(string part in allowed){var value=request.Settings[part];double maximum=value.GetProperty("maximum").GetDouble(),current=value.GetProperty("current").GetDouble();
-      if(!double.IsFinite(maximum)||!double.IsFinite(current)||maximum<.01||maximum>100000000||current<0||current>maximum)throw new ArgumentException("血量须满足：0 ≤ 当前值 ≤ 最大值，且最大值大于零。");
+      if(!double.IsFinite(maximum)||!double.IsFinite(current)||maximum<=0)throw new ArgumentException("部位最大血量须大于零，且数值须为有限数字。");
       var state=raw["BodyParts"]![part]!["Health"]!;state["Maximum"]=maximum;state["Current"]=current;
      }
      foreach(string vital in new[]{"Energy","Hydration"})if(request.Settings.TryGetValue(vital,out var value)){
       double maximum=value.GetProperty("maximum").GetDouble(),current=value.GetProperty("current").GetDouble();
-      if(!double.IsFinite(maximum)||!double.IsFinite(current)||maximum<.01||maximum>100000000||current<0||current>maximum)throw new ArgumentException("能量和水分须满足 0 ≤ 当前值 ≤ 最大值，最大值大于零。");
-      if(raw[vital] is not System.Text.Json.Nodes.JsonObject state)throw new ArgumentException("存档缺少能量或水分数据。");state["Maximum"]=maximum;state["Current"]=current;
+      if(!double.IsFinite(maximum)||!double.IsFinite(current)||maximum<=0)throw new ArgumentException("能量和水分最大值须大于零，且数值须为有限数字。");
+      if(raw[vital] is not JsonObject state)throw new ArgumentException("存档缺少能量或水分数据。");state["Maximum"]=maximum;state["Current"]=current;
      }
      T Decode<T>(string text,T sample)=>json.Deserialize<T>(text)!;
      pmc.Health=Decode(raw.ToJsonString(),health);break;
@@ -161,13 +164,18 @@ public class CharacterDataService {
     case "achievement":CharacterDataRules.Achievement(pmc,request.Id,request.Unlocked,(templates.Achievements??[]).Concat(templates.CustomAchievements??[]),DateTimeOffset.UtcNow.ToUnixTimeSeconds());break;
     default:throw new ArgumentException("未知数据操作。");
    }
-   jsonWriteStarted=request.Action is "inventoryItemJsonSave" or "inventoryItemTreeJsonSave";
+   jsonWriteStarted=request.Action is "inventoryItemJsonSave" or "inventoryItemTreeJsonSave" or "inventoryGridAddItems";
    await saves.SaveProfileAsync(session);
+   if(gridAddedItems!=null){
+    committed=true;
+    return http.GetBody(new{ok=true,items=gridAddedItems});
+   }
    if(editedTree!=null){
     var path=System.IO.Path.Combine(AppContext.BaseDirectory,"user","profiles",session+".json");
     var persisted=json.Deserialize<SptProfile>(await File.ReadAllTextAsync(path,CancellationToken.None));
     var character=request.Categories[0]=="scav"?persisted?.CharacterData?.ScavData:persisted?.CharacterData?.PmcData;
-    var saved=InventoryItemJson.Tree(character?.Inventory??throw new IOException("物品参数写入核验失败。"),request.Id,request.Template);
+    string savedRootId=editedTree[0].Id.ToString();
+    var saved=InventoryItemJson.Tree(character?.Inventory??throw new IOException("物品参数写入核验失败。"),savedRootId);
     if(InventoryItemJson.TreeRevision(saved,json)!=InventoryItemJson.TreeRevision(editedTree,json))throw new IOException("物品参数写入核验失败。");
     committed=true;
     return http.GetBody(new{ok=true,items=saved,revision=InventoryItemJson.TreeRevision(saved,json)});
@@ -194,7 +202,7 @@ public class CharacterDataService {
     LiveProfileState.Replace(saves.GetProfile(session),snapshot);
     if(jsonWriteStarted)try{await saves.SaveProfileAsync(session,CancellationToken.None);}catch{error=new IOException("物品 JSON 保存失败，请使用角色数据备份恢复。");}
    }
-   return http.GetBody(new{ok=false},(BackendErrorCodes)228,request.Action.StartsWith("serverJson",StringComparison.Ordinal)&&error is System.Text.Json.JsonException?"JSON 语法无效。":error is ArgumentException||(request.Action.StartsWith("backup",StringComparison.Ordinal)||request.Action.StartsWith("profileJson",StringComparison.Ordinal)||request.Action.StartsWith("serverJson",StringComparison.Ordinal)||request.Action is "inventoryItemJsonSave" or "inventoryItemTreeJsonSave")&&error is IOException?error.Message:"保存失败，请刷新角色数据后重试。");
+   return http.GetBody(new{ok=false},(BackendErrorCodes)228,request.Action.StartsWith("serverJson",StringComparison.Ordinal)&&error is System.Text.Json.JsonException?"JSON 语法无效。":error is ArgumentException||(request.Action.StartsWith("backup",StringComparison.Ordinal)||request.Action.StartsWith("profileJson",StringComparison.Ordinal)||request.Action.StartsWith("serverJson",StringComparison.Ordinal)||request.Action is "inventoryItemJsonSave" or "inventoryItemTreeJsonSave" or "inventoryGridAddItems")&&error is IOException?error.Message:"保存失败，请刷新角色数据后重试。");
   }
   finally{gate.Release();}
  }

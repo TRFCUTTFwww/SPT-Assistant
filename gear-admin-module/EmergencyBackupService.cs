@@ -10,8 +10,8 @@ public static class EmergencyBackupService {
   if(request.Categories.Length!=1||request.Categories[0] is not ("pmc" or "scav"))throw new ArgumentException("救援角色类型无效。");
   var copy=json.Deserialize<SptProfile>(json.Serialize(profile))??throw new ArgumentException("无法创建救援快照。");var character=request.Categories[0]=="pmc"?copy.CharacterData?.PmcData:copy.CharacterData?.ScavData;
   if(character?.Id.ToString()!=request.Id)throw new ArgumentException("救援角色身份不匹配。");var inventory=character.Inventory??throw new ArgumentException("角色库存尚未就绪。");string root=inventory.Equipment?.ToString()??throw new ArgumentException("装备根容器缺失。");
-  var raw=request.StashItems??throw new ArgumentException("缺少装备快照。");if(raw.GetRawText().Length>8*1024*1024)throw new ArgumentException("救援快照超过大小限制。");
-  var normalized=RaidStashJson.Normalize(raw.GetRawText(),out _,out _);var items=json.Deserialize<List<Item>>(normalized.ToJsonString())??throw new ArgumentException("救援物品格式无效。");if(items.Count>8192||items.Any(i=>!templates.Items.ContainsKey(i.Template)))throw new ArgumentException("救援快照包含未加载的物品。");
+  var raw=request.StashItems??throw new ArgumentException("缺少装备快照。");
+  var normalized=RaidStashJson.Normalize(raw.GetRawText(),out _,out _);var items=json.Deserialize<List<Item>>(normalized.ToJsonString())??throw new ArgumentException("救援物品格式无效。");
   // Merge only into an immutable backup, never the live profile or stash.
   var original=inventory.Items!.Single(i=>i.Id.ToString()==root);var replacement=items.SingleOrDefault(i=>i.Id.ToString()==root)??throw new ArgumentException("装备根容器不匹配。");replacement.ParentId=original.ParentId;replacement.SlotId=original.SlotId;replacement.Location=original.Location;
   inventory.Items=RaidStashRules.Merge(inventory.Items!,root,items);string body=json.Serialize(copy)!;var store=new SqliteSnapshots(System.IO.Path.Combine(AppContext.BaseDirectory,"user","mods","LocalGearMail","backups","profiles.sqlite"));var row=store.Add(session.ToString(),ProfileRestoreRules.Nickname(body),"错误救援 · 战局装备（"+request.Categories[0]+"）",body);

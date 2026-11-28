@@ -970,7 +970,7 @@ Console.WriteLine("PASS native PMC dashboard integration, exact lifetime counter
 CultistCircleChecks.Run();
 Assert(!MenuSections.Pages("数据").Contains("赛季")&&MenuSections.Pages("数据").Contains("JSON 编辑")&&!core.MainModule.Types.Any(t=>t.Name is "SeasonMenuControl" or "SeasonSelectionControl"),
  "the independent season menu and native hooks are retired, while the profile JSON editor is available under Data");
-Assert(ProfileFieldCatalog.Describe("$.characters.pmc.Info.Experience",false).Title.Contains("经验")&&ProfileFieldCatalog.Describe("$.info.id",false).Locked,"profile JSON editor field catalog annotates field purpose and locks core identity");
+Assert(ProfileFieldCatalog.Describe("$.characters.pmc.Info.Experience",false).Title.Contains("经验")&&!ProfileFieldCatalog.Describe("$.info.id",false).Locked,"profile JSON editor field catalog annotates field purpose without artificial locks");
 Console.WriteLine("PASS season menu and character-switch hooks removed from the client");
 RecentLocalizationChecks.Run(sourceRoot);
 var englishText=JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(Path.Combine(sourceRoot,"esp-cover/Locales/en.json")))!;
@@ -1047,6 +1047,30 @@ Check("Player","get_Destroyed",0);Check("Player","get_PlayerBones",0);Check("Pla
 Assert(ServerEditRules.Number("0.25",0,1)==.25&&ServerEditRules.Number("2147483647",0,int.MaxValue,true)==int.MaxValue,"server editor retains double precision and exact Int32 time limits");
 foreach(string invalidValue in new[]{"NaN","Infinity","-0.5","2.2"})Reject(()=>ServerEditRules.Number(invalidValue,-1,10,true,true),"invalid server editor number");
 Console.WriteLine("PASS complete AI role catalog, unavailable-role reasons, server sidebar routing and precise numeric editor boundaries");
+var injectorsType=core.MainModule.Types.Single(t=>t.Name=="InfiniteInjectors");
+var injectorInitStrings=injectorsType.Methods.Single(m=>m.Name=="Initialize").Body.Instructions.Where(i=>i.OpCode.Code==Mono.Cecil.Cil.Code.Ldstr).Select(i=>(string)i.Operand).ToArray();
+Assert(injectorInitStrings.Contains("GetItemResourceUsageMultiplier")&&injectorInitStrings.Contains("RegularUpdate")&&injectorInitStrings.Contains("Residue")&&injectorInitStrings.Contains("RemoveItem"),"InfiniteInjectors hooks multiplier, MedEffect residue/update and single-use MedEffectHelper.RemoveItem");
+Assert(core.MainModule.Types.Single(t=>t.Name=="BtrControl").Methods.Any(m=>m.Name=="ClearHostility")&&core.MainModule.Types.Any(t=>t.Name=="GridCellItemCreator"),"BTR hostility reset and empty grid cell item creator are wired into core");
+Console.WriteLine("PASS InfiniteInjectors single/multi-use hooks, BTR hostility reset and empty grid cell item creator");
+
+var poolGuardType=core.MainModule.Types.Single(t=>t.Name=="RaidItemPoolGuard");
+Assert(poolGuardType.Methods.Single(m=>m.Name=="NativeYield").Body.Instructions.Any(i=>i.Operand is MethodReference r&&r.DeclaringType.Name=="JobYieldPriority"&&r.Name=="get_General"),"RaidItemPoolGuard uses native JobYieldPriority.General");
+var poolGuardTickCalls=poolGuardType.Methods.Where(m=>m.HasBody).SelectMany(m=>m.Body.Instructions).Select(i=>i.Operand).OfType<MethodReference>().ToArray();
+Assert(poolGuardTickCalls.Any(m=>m.DeclaringType.Name=="ObjectsFactory"&&m.Name=="LoadBundlesAndCreatePools")&&poolGuardTickCalls.Any(m=>m.DeclaringType.Name=="SlotView"&&m.Name=="LoadItem"),"RaidItemPoolGuard loads missing Raid bundles/pools and refreshes missing PlayerBody SlotViews");
+Assert(RaidItemPoolRules.ShouldRecoverOrphanedHands(true,true,false,false,true,false,1.2f)&&!RaidItemPoolRules.ShouldRecoverOrphanedHands(true,true,true,false,true,false,5f)&&!RaidItemPoolRules.ShouldRecoverOrphanedHands(true,true,false,false,true,true,5f),"RaidItemPoolRules orphan recovery guards active controllers and active bundle loads");
+Assert(RaidItemPoolRules.CanReplayProceed(10,10,20,20,true,true,false,true)&&!RaidItemPoolRules.CanReplayProceed(10,11,20,20,true,true,false,true)&&!RaidItemPoolRules.CanReplayProceed(10,10,20,20,true,false,false,true)&&!RaidItemPoolRules.CanReplayProceed(10,10,20,20,true,true,true,true),"RaidItemPoolRules deferred Proceed replay validates world, actor, ownership and held state");
+Console.WriteLine("PASS RaidItemPoolGuard weapon/attachment Raid bundle & pool preloading, Proceed gate and SlotView recovery");
+
+Assert(AiFastSpawnRules.MaxBatchSize("Savage",false)==4&&AiFastSpawnRules.MaxBatchSize("Usec",false)==4&&AiFastSpawnRules.MaxBatchSize("Bear",false)==4&&AiFastSpawnRules.MaxBatchSize("Usec",true)==1,"AI batch size allows 4 concurrent spawns for both Savage and PMC roles while isolating corpse revivals");
+Assert(AiFastSpawnRules.ShouldSettleImmediately(true,false,4,4,0f)&&!AiFastSpawnRules.ShouldSettleImmediately(true,false,3,4,0.2f)&&AiFastSpawnRules.ShouldSettleImmediately(true,false,3,4,0.8f)&&!AiFastSpawnRules.ShouldSettleImmediately(false,false,4,4,2f),"AI batch settles with zero post-wait once all expected actors are ready while retaining 0.75s fallback when incomplete");
+Assert(AiFastSpawnRules.AcceptsDonorRole("pmcUSEC","Usec","pmcUSEC","Savage")&&AiFastSpawnRules.AcceptsDonorRole("pmcUSEC","Usec","pmcUSEC","Usec")&&!AiFastSpawnRules.AcceptsDonorRole("pmcUSEC","Usec","assault","Savage")&&AiFastSpawnRules.AcceptsDonorRole("bossKilla","Savage","bossKilla","Savage")&&!AiFastSpawnRules.AcceptsDonorRole("bossKilla","Savage","assault","Savage"),"warm donor role matching preserves strict role identity and PMC transport side rules");
+Assert(AiFastSpawnRules.IsFixedBossNickname("bossKilla")&&AiFastSpawnRules.GenerateVariedNickname("bossKilla","Savage","Killa",3)=="Killa"&&AiFastSpawnRules.GenerateVariedNickname("pmcUSEC","Usec","Striker",1)!="Striker","boss nicknames stay canonical while repeated generic clones diversify callsigns");
+Assert(AiFastSpawnRules.SelectSeedSlot(3,0)==0&&AiFastSpawnRules.SelectSeedSlot(3,4)==1&&AiFastSpawnRules.SelectSeedSlot(0,2)==-1&&AiFastSpawnRules.ShouldQueueReplenish(1,2,false)&&!AiFastSpawnRules.ShouldQueueReplenish(2,2,false)&&!AiFastSpawnRules.ShouldQueueReplenish(0,2,true),"warm seed round-robin selection and background replenishment gating");
+var warmPoolType=core.MainModule.Types.Single(t=>t.Name=="AiWarmProfilePool");
+var warmPoolCalls=warmPoolType.Methods.Where(m=>m.HasBody).SelectMany(m=>m.Body.Instructions).Select(i=>i.Operand).OfType<MethodReference>().ToArray();
+Assert(warmPoolCalls.Any(m=>m.DeclaringType.Name=="ProfileDescriptor"&&m.Name==".ctor")&&warmPoolCalls.Any(m=>m.DeclaringType.Name=="ItemFactory"&&m.Name=="get_NextId")&&warmPoolCalls.Any(m=>m.DeclaringType.Name=="MongoID"&&m.Name=="Generate")&&warmPoolCalls.Any(m=>m.DeclaringType.Name=="ObjectsFactory"&&m.Name=="LoadBundlesAndCreatePools")&&warmPoolCalls.Any(m=>m.DeclaringType.Name=="JobYieldPriority"&&m.Name=="get_General"),"AiWarmProfilePool deep-clones profiles with fresh MongoIDs and pre-warms Raid pools at General priority");
+Assert(nativeSpawn.Methods.Single(m=>m.Name=="BeginBatch").Body.Instructions.Any(i=>i.Operand is MethodReference m&&m.DeclaringType.Name=="AiWarmProfilePool"&&m.Name=="TryCreateInstantBatch")&&nativeSpawn.Methods.Single(m=>m.Name=="Reset").Body.Instructions.Any(i=>i.Operand is MethodReference m&&m.DeclaringType.Name=="AiWarmProfilePool"&&m.Name=="Reset"),"AiSpawnService connects instant warm cloning and raid reset cleanup");
+Console.WriteLine("PASS instant AI warm seed cloning, zero-wait ready settlement, concurrent PMC batching and Raid pool verification");
 
 }
 catch(Exception error){Console.Error.WriteLine("FAIL "+error);Environment.ExitCode=1;}

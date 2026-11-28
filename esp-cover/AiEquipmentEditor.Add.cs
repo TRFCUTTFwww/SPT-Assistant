@@ -17,7 +17,7 @@ internal static partial class AiEquipmentEditor {
   var factory=Singleton<ItemFactory>.Instance??throw new ArgumentException("物品工厂尚未就绪。");var tree=ItemAttachments.NewNode(template,0);var item=factory.CreateItem(factory.NextId.ToString(),template,null);ItemAttachments.Apply(item,factory,tree);
   if(addingSlot==EquipmentSlot.Scabbard?item.GetItemComponent<KnifeComponent>()==null:item.TryCast<Weapon>()==null)throw new ArgumentException("请选择对应类型的武器。");
   var controller=target.InventoryController;var address=destination.CreateItemAddress();var added=ItemManipulator.Add(item,address,controller,true);if(!added.Succeeded)throw new ArgumentException("该武器不适合此槽位，原装备保持不变。");
-  controller.AddAndRaiseEvents(item,address);target.RecalculateEquipmentParams();target.Physical?.MarkWeightAsDirty();var manager=target.AIData.BotOwner.WeaponManager;manager?.UpdateWeaponsList();manager?.Selector?.FindItemsInSlots(true);manager?.Selector?.UpdateWeaponsList();
+  controller.AddAndRaiseEvents(item,address);RaidItemPoolGuard.Warm(item);target.RecalculateEquipmentParams();target.Physical?.MarkWeightAsDirty();var manager=target.AIData.BotOwner.WeaponManager;manager?.UpdateWeaponsList();manager?.Selector?.FindItemsInSlots(true);manager?.Selector?.UpdateWeaponsList();
   if(addingSlot==EquipmentSlot.Scabbard&&manager?.Melee is {} melee)melee.HaveMelee=true;
   addingWeapon=false;ReadSlot();notice="已添加武器："+ItemSpawner.TemplateName(template);FeatureToasts.Show(notice);
  }

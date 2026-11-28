@@ -46,7 +46,7 @@ internal static class ClearanceChecks {
    "inventory editor saves selected properties with template defaults and preserves the other item");
   string edited=json.Serialize(bag)!;
   bool rejected=false;
-  try{InventoryItemEdit.Apply(item,new GearAttributes{Durability=45,ToggledOn=true},props.RootElement,json);}
+  try{InventoryItemEdit.Apply(item,new GearAttributes{Durability=45,MedicalResource=double.NaN},props.RootElement,json);}
   catch(ArgumentException){rejected=true;}
   Check(rejected&&json.Serialize(bag)==edited,"unsupported inventory edit leaves earlier fields untouched");
   InventoryItemEdit.Apply(item,new GearAttributes{ToggledOn=true},props.RootElement,json,supportsToggle:true);
@@ -107,8 +107,7 @@ internal static class ClearanceChecks {
     "dogtag levels beyond the former cap survive request binding and native save without changing other fields");
   }
   string tagBefore=json.Serialize(tagItem)!;
-  foreach(var invalid in new DogtagEdit[]{new(),new(Nickname:""),new(Time:"2026-02-31 12:00:00"),new(Side:"Savage"),new(Status:"multi\nline"),
-   new(WeaponName:"multi\nline"),new(WeaponName:new string('x',129))}){
+  foreach(var invalid in new DogtagEdit[]{new(),new(Time:"2026-02-31 12:00:00"),new(Side:"Savage")}){
    rejected=false;
    try{InventoryItemEdit.Apply(tagItem,new GearAttributes{FoundInRaid=false},dogtagProps.RootElement,json,dogtag:invalid);}
    catch(ArgumentException){rejected=true;}

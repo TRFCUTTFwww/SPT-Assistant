@@ -17,17 +17,18 @@ internal static class ImpactAiSpawner {
   toyOnly=FeatureConfig.Bind(section,"Toy gun only","仅绑定玩具枪",true,"仅 20×1 毫米玩具枪触发；关闭后所有玩家枪械均可触发。");
   role=FeatureConfig.Bind(section,"Impact AI role","弹着点 AI 类型","assault");count=FeatureConfig.Bind(section,"Impact AI count","每次弹着点生成数量","1");
   difficulty=FeatureConfig.Bind(section,"Impact AI difficulty","弹着点 AI 难度",1,"0 简单／1 普通／2 困难／3 极难",new AcceptableValueRange<int>(0,3));
-  cooldown=FeatureConfig.Bind(section,"Impact spawn interval","弹着点生成间隔（秒）",1f,"限制连射产生的请求数量；生成队列最多等待 16 个请求。",new AcceptableValueRange<float>(.1f,30));
+  cooldown=FeatureConfig.Bind(section,"Impact spawn interval","弹着点生成间隔（秒）",1f,"限制连射产生的请求数量；生成队列最多等待 16 个请求。",new AcceptableValueRange<float>(.05f,30));
   plugin.Patches.Patch(AccessTools.Method(typeof(Shot),"HandleCollision"),postfix:new HarmonyMethod(typeof(ImpactAiSpawner),nameof(Collided)));
   plugin.Log.LogInfo("Impact AI spawning ready: real local bullet collision, toy-only option, per-trigger deduplication and queued native activation");
  }
  internal static void Reset(){gate.Reset();notice="";}
- internal static void SetSelection(AiSpawnOption option,int level,string amount){role.Value=option.Role;difficulty.Value=level;count.Value=amount;}
+ internal static void SetSelection(AiSpawnOption option,int level,string amount){role.Value=option.Role;difficulty.Value=level;count.Value=amount;AiWarmProfilePool.HintSelection(option,level);}
  internal static string CountText=>count.Value;
  internal static float SelectionHeight=>choosing?484:240;
  internal static void DrawSelection(Rect rect){float x=rect.x,y=rect.y,w=rect.width;InterfaceMenu.Label(new Rect(x,y,w,26),"生成类型、难度与数量",InterfaceMenu.Accent,16);y+=34;if(InterfaceMenu.Button(new Rect(x,y,w,36),"类型："+(AiSpawnCatalog.Options.FirstOrDefault(o=>o.Role==role.Value)?.Name??"请选择")+"  ›"))choosing=!choosing;y+=46;
   if(choosing){query=InterfaceMenu.Field(new Rect(x,y,w,30),query);y+=40;var options=AiSpawnCatalog.Options.Where(o=>o.Enabled&&(o.Group+" "+o.Name+" "+o.Role).Contains(query,StringComparison.OrdinalIgnoreCase)).ToArray();rolesScroll=GUI.BeginScrollView(new Rect(x,y,w,188),rolesScroll,new Rect(0,0,w-22,options.Length*38));for(int i=0;i<options.Length;i++)if(InterfaceMenu.Button(new Rect(0,i*38,w-28,32),options[i].Group+" · "+options[i].Name,role.Value==options[i].Role)){role.Value=options[i].Role;SceneTemplates.ClearSelection();ToyDeveloper.UseTemplate();choosing=false;}GUI.EndScrollView();y+=204;}
   var levels=new[]{"简单","普通","困难","极难"};float cell=(w-18)/4;for(int i=0;i<4;i++)if(InterfaceMenu.Button(new Rect(x+i*(cell+6),y,cell,30),levels[i],difficulty.Value==i))difficulty.Value=i;y+=42;InterfaceMenu.Label(new Rect(x,y,w,24),"每次开枪生成数量",null,13);y+=30;count.Value=InterfaceMenu.Field(new Rect(x,y,w,32),count.Value);y+=40;InterfaceMenu.Paragraph(new Rect(x,y,w,48),"选类型会退出模板模式；选右侧模板后，类型、血量与动作以模板为准。",null,12);
+  AiWarmProfilePool.HintSelection(AiSpawnCatalog.Options.FirstOrDefault(o=>o.Role==role.Value),difficulty.Value);
  }
  internal static AiSpawnOption CurrentOption=>Option();internal static int CurrentDifficulty=>difficulty.Value;internal static int CurrentCount=>AiSpawnRules.Count(count.Value);internal static void SpawnAt(GameWorld current,Vector3 point,AiBirthPreset birth)=>AiSpawnService.Enqueue(current,point,Option(),difficulty.Value,AiSpawnRules.Count(count.Value),birth,"玩具枪开发者工具"); static AiSpawnOption Option()=>AiSpawnCatalog.Options.FirstOrDefault(option=>option.Role==role.Value)??throw new ArgumentException("请选择可用的 AI 类型。");
  static void Collided(Shot __instance){
@@ -50,7 +51,8 @@ internal static class ImpactAiSpawner {
   if(choosing){query=InterfaceMenu.Field(new Rect(x,y,w,32),query);y+=42;var options=AiSpawnCatalog.Options.Where(option=>option.Enabled&&(option.Name+" "+option.Role+" "+option.Group).Contains(query,StringComparison.OrdinalIgnoreCase)).ToArray();rolesScroll=GUI.BeginScrollView(new Rect(x,y,w,166),rolesScroll,new Rect(0,0,w-20,options.Length*40));for(int i=0;i<options.Length;i++)if(InterfaceMenu.Button(new Rect(0,i*40,w-26,32),options[i].Group+" · "+options[i].Name,options[i].Role==role.Value)){role.Value=options[i].Role;choosing=false;}GUI.EndScrollView();y+=180;}
   string[] difficulties={"简单","普通","困难","极难"};float cell=(w-24)/4;for(int i=0;i<4;i++)if(InterfaceMenu.Button(new Rect(x+i*(cell+8),y,cell,32),difficulties[i],difficulty.Value==i))difficulty.Value=i;y+=46;
   InterfaceMenu.Label(new Rect(x,y,half,24),"每次生成数量",null,13);InterfaceMenu.Label(new Rect(x+half+12,y,half,24),"最短触发间隔（秒）",null,13);y+=30;
-  count.Value=InterfaceMenu.Field(new Rect(x,y,half,34),count.Value);string delay=InterfaceMenu.Field(new Rect(x+half+12,y,half,34),cooldown.Value.ToString("G4",System.Globalization.CultureInfo.InvariantCulture));if(float.TryParse(delay,System.Globalization.NumberStyles.Float,System.Globalization.CultureInfo.InvariantCulture,out var value)&&float.IsFinite(value)&&value>=.1f&&value<=30)cooldown.Value=value;y+=48;
+  count.Value=InterfaceMenu.Field(new Rect(x,y,half,34),count.Value);string delay=InterfaceMenu.Field(new Rect(x+half+12,y,half,34),cooldown.Value.ToString("G4",System.Globalization.CultureInfo.InvariantCulture));if(float.TryParse(delay,System.Globalization.NumberStyles.Float,System.Globalization.CultureInfo.InvariantCulture,out var value)&&float.IsFinite(value)&&value>=.05f&&value<=30)cooldown.Value=value;y+=48;
+  AiWarmProfilePool.HintSelection(AiSpawnCatalog.Options.FirstOrDefault(o=>o.Role==role.Value),difficulty.Value);
   if(InterfaceMenu.Button(new Rect(x,y,half,34),"预加载所选 AI"))Action(()=>AiSpawnService.Preload(Option(),difficulty.Value,AiSpawnRules.Count(count.Value)));
   if(InterfaceMenu.Button(new Rect(x+half+12,y,half,34),"取消剩余生成"))AiSpawnService.Cancel(true);y+=48;
   InterfaceMenu.Paragraph(new Rect(x,y,w,82),AiSpawnService.Status+"\n"+notice,InterfaceMenu.Accent,12);y+=96;

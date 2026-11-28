@@ -65,7 +65,7 @@ internal static class ItemAttachments {
  }
  internal static void Apply(Item item,ItemFactory factory,ItemAttachmentNode specification,bool? inheritedFir=null){ApplyChildren(item,factory,specification,inheritedFir,0);}
  static void ApplyChildren(Item parent,ItemFactory factory,ItemAttachmentNode node,bool? inheritedFir,int depth){
-  if(depth>12)throw new ArgumentException("附件层级超过限制。");
+  if(depth>128)throw new ArgumentException("附件层级包含循环引用。");
   if(node.Cartridges.Count>0){var magazine=parent.TryCast<Magazine>()??throw new ArgumentException("弹药预设的父物品不是弹匣。");var slot=magazine.Cartridges;if(slot.Count!=0)throw new ArgumentException("默认弹匣已有弹药。");foreach(var specification in node.Cartridges){var ammo=factory.CreateItem(factory.NextId.ToString(),specification.Template,null)?.TryCast<Ammo>()??throw new ArgumentException("弹药创建失败。");ammo.StackObjectsCount=specification.Count;specification.Parameters.Apply(ammo,inheritedFir);if(!slot.Add(ammo,false).Succeeded)throw new ArgumentException("弹药装填失败。");}}
   foreach(var pair in node.Children){
    var definition=ItemSpawner.SlotsFor(node.Template).FirstOrDefault(slot=>slot.Id==pair.Key)??throw new ArgumentException("物品没有附件槽位："+pair.Key);
@@ -83,14 +83,13 @@ internal static class ItemAttachments {
   }
  }
  internal static void AppendMail(List<Dictionary<string,object?>> items,string rootRef,ItemAttachmentNode node,bool? inheritedFir=null,int depth=0){
-  if(depth>12)throw new ArgumentException("附件层级超过限制。");
-  int position=0;foreach(var cartridge in node.Cartridges){var attributes=cartridge.Parameters.Attributes();if(!attributes.ContainsKey("foundInRaid")&&inheritedFir.HasValue)attributes["foundInRaid"]=inheritedFir.Value;items.Add(new Dictionary<string,object?>{{"ref","cartridge_"+items.Count},{"template",cartridge.Template},{"parent",rootRef},{"slot","cartridges"},{"location",position++},{"count",cartridge.Count},{"attributes",attributes}});if(items.Count>100)throw new ArgumentException("整套装备含弹药和附件最多 100 个条目。");}
+  if(depth>128)throw new ArgumentException("附件层级包含循环引用。");
+  int position=0;foreach(var cartridge in node.Cartridges){var attributes=cartridge.Parameters.Attributes();if(!attributes.ContainsKey("foundInRaid")&&inheritedFir.HasValue)attributes["foundInRaid"]=inheritedFir.Value;items.Add(new Dictionary<string,object?>{{"ref","cartridge_"+items.Count},{"template",cartridge.Template},{"parent",rootRef},{"slot","cartridges"},{"location",position++},{"count",cartridge.Count},{"attributes",attributes}});}
   foreach(var pair in node.Children){
    var definition=ItemSpawner.SlotsFor(node.Template).FirstOrDefault(slot=>slot.Id==pair.Key)??throw new ArgumentException("物品没有附件槽位。");
    if(!ItemSpawner.Compatible(pair.Value.Template,definition.Allowed,definition.Excluded))throw new ArgumentException("不兼容的附件。");
    string id="part_"+items.Count;var properties=pair.Value.Parameters.Attributes();if(!properties.ContainsKey("foundInRaid")&&inheritedFir.HasValue)properties["foundInRaid"]=inheritedFir.Value;
    var spec=new Dictionary<string,object?>{{"ref",id},{"template",pair.Value.Template},{"parent",rootRef},{"slot",pair.Key},{"count",1}};if(properties.Count>0)spec["attributes"]=properties;items.Add(spec);
-   if(items.Count>100)throw new ArgumentException("附件过多，单次最多 100 个物品条目。");
    AppendMail(items,id,pair.Value,pair.Value.Parameters.FoundInRaid??inheritedFir,depth+1);
   }
  }

@@ -13,7 +13,7 @@ namespace LocalSpt5Esp;
 
 internal static class ServerJsonEditorPanel
 {
-    const int Limit = 14000;
+    const int Limit = 250000;
     const string Control = "LocalServerJsonEditorArea";
     static Task<string>? request, check;
     static Task<string?>? dialog;
@@ -34,7 +34,7 @@ internal static class ServerJsonEditorPanel
     static float measuredWidth, measuredHeight;
     static bool Busy => request != null || dialog != null || fileWrite != null || draining;
     static bool Dirty => draft != original;
-    static bool Large => ready && (Flag(node, "large") && draft.Length == 0 || draft.Length > Limit);
+        static bool Large => ready && Flag(node, "large") && original.Length == 0 && draft.Length == 0;
     static Color Muted => Color.Lerp(InterfaceMenu.Text, InterfaceMenu.Background, .38f);
     static Color Card => Color.Lerp(InterfaceMenu.Background, InterfaceMenu.Text, .045f);
     static JsonElement Prop(JsonElement e, string name)
@@ -145,9 +145,18 @@ internal static class ServerJsonEditorPanel
             {
                 var data = Response(completed);
                 if (action == "serverJsonList") { files = Rows(data, "files"); requested = true; Notice("已读取 JSON 文件列表。"); }
-                else if (action == "serverJsonSearch") { hits = Rows(data, "hits"); searching = true; listScroll = Vector2.zero; Notice(Flag(data, "truncated") ? "仅显示前 160 项，请缩小搜索范围。" : "搜索完成。"); }
+                else if (action == "serverJsonSearch") { hits = Rows(data, "hits"); searching = true; listScroll = Vector2.zero; Notice(Flag(data, "truncated") ? "仅显示前 2000 项，请缩小搜索范围。" : "搜索完成。"); }
                 else if (action == "serverJsonBackups") { backups = Rows(data, "backups"); showingBackups = true; confirmRestore = ""; backupScroll = Vector2.zero; Notice($"已读取 {backups.Length} 条历史备份。"); }
                 else if (action == "serverJsonExport") { fileWrite = File.WriteAllTextAsync(exportPath, Str(data, "raw"), new UTF8Encoding(false)); }
+                else if (action == "serverJsonLoadFull")
+                {
+                    string rawText = Str(data, "raw");
+                    try { var parsed = JsonNode.Parse(rawText, documentOptions: JsonEditPath.ParseOptions); rawText = parsed?.ToJsonString(new JsonSerializerOptions { WriteIndented = true, MaxDepth = 1024, NewLine = "\n" }) ?? rawText; } catch { }
+                    original = JsonEditPath.EditorText(rawText);
+                    draft = drafts.GetValueOrDefault(id + "\n" + path, original);
+                    codeScroll = Vector2.zero; measured = diffSource = "";
+                    Notice("已加载当前节点完整文本，可直接内联编辑保存。");
+                }
                 else if (action == "reload") Notice("管理模块已重载，请重新打开文件。");
                 else
                 {
@@ -359,14 +368,19 @@ internal static class ServerJsonEditorPanel
         bool old = GUI.enabled;
         string type = Str(node, "type");
         var operations=new List<(string Label,string Op)>();
-        if(!Large){operations.Add(("格式化","format"));operations.Add(("还原草稿","reset"));}
+        if(Large)operations.Add(("展开完整文本","loadFull"));
+        else{operations.Add(("格式化","format"));operations.Add(("还原草稿","reset"));}
+        operations.Add(("复制","copy"));operations.Add(("粘贴","paste"));
         operations.Add(("导出节点","export"));operations.Add(("导入节点","import"));
         if(!Dirty&&type is "Object" or "Array")operations.Add((type=="Array"?"+ 追加元素":"+ 新增字段","add"));
         if(!Dirty&&path!="$")operations.Add((deleting?"确认删除":"删除此项","delete"));
-        int operation=ActionButtons.Draw(new(x,y,w,28),operations.Select(o=>o.Label).ToArray(),out float operationHeight,3);
+        int operation=ActionButtons.Draw(new(x,y,w,28),operations.Select(o=>o.Label).ToArray(),out float operationHeight,4);
         if(operation>=0)switch(operations[operation].Op){
-            case "format":try{var value=JsonNode.Parse(draft,documentOptions:JsonEditPath.ParseOptions);draft=value?.ToJsonString(new JsonSerializerOptions{WriteIndented=true,MaxDepth=256,NewLine="\n"})??"null";}catch{Notice("JSON 语法无效。",true);}break;
+            case "loadFull":action="serverJsonLoadFull";request=CharacterDataPanel.Call("/local/gear/data","characterData",Payload("serverJsonExport"),SPTushonka.Common.Http.RequestHandler.SessionId);Notice("正在读取完整节点文本…");break;
+            case "format":try{var value=JsonNode.Parse(draft,documentOptions:JsonEditPath.ParseOptions);draft=value?.ToJsonString(new JsonSerializerOptions{WriteIndented=true,MaxDepth=1024,NewLine="\n"})??"null";}catch{Notice("JSON 语法无效。",true);}break;
             case "reset":draft=original;drafts.Remove(id+"\n"+path);break;
+            case "copy":if(draft.Length>0){GUIUtility.systemCopyBuffer=draft;Notice("已复制节点 JSON 到剪贴板。");}break;
+            case "paste":{string clip=GUIUtility.systemCopyBuffer??"";if(!string.IsNullOrWhiteSpace(clip)){draft=JsonEditorText.Accept(clip);Notice("已粘贴草稿，点击保存写入服务端。");}}break;
             case "export":dialogMode="export";dialog=WindowsDialogs.PickSaveFile(I18n.Text("导出 JSON 节点"),"json",Path.GetFileNameWithoutExtension(id)+".node.json");break;
             case "import":dialogMode="import";dialog=WindowsDialogs.PickOpenFile(I18n.Text("导入 JSON 节点"));break;
             case "add":adding=!adding;childValue="null";break;
@@ -409,7 +423,7 @@ internal static class ServerJsonEditorPanel
         try
         {
             GUI.SetNextControlName(Control);
-            draft = JsonEditorText.Accept(GUI.TextArea(new(0, 0, width, height), draft, Limit, codeStyle));
+            draft = JsonEditorText.Accept(GUI.TextArea(new(0, 0, width, height), draft, codeStyle));
             if (revealCaret)
             {
                 var editor = GUIUtility.GetStateObject(Il2CppInterop.Runtime.Il2CppType.Of<TextEditor>(), GUIUtility.keyboardControl)?.TryCast<TextEditor>();

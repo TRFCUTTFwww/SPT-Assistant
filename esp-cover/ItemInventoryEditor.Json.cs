@@ -1,8 +1,15 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
+using EFT.UI;
+using EFT.UI.DragAndDrop;
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using LocalSpt.Shared;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
@@ -24,12 +31,11 @@ internal static partial class ItemInventoryEditor {
   {"action",action},{"id",current.Id},{"template",current.Template},
   {"categories",new[]{current.Owner.Side==EPlayerSide.Savage?"scav":"pmc"}}
  };
- static JsonArray CaptureJson(Item item){
+ internal static JsonArray CaptureJson(Item item){
   var flat=Singleton<ItemFactory>.Instance.TreeToFlatItems(new Item[]{item});
   var data=RaidStashJson.Normalize(Newtonsoft.Json.JsonConvert.SerializeObject(new Il2CppSystem.Object(flat.Pointer)),out _,out _);
   return data;
  }
- static JsonObject CaptureRecord(Item item)=>CaptureJson(item).OfType<JsonObject>().Single(entry=>entry["_id"]?.GetValue<string>()==item.Id.ToString());
  static void LoadedJson(string text,string revision){
   jsonBaseline=InventoryItemJsonRules.Format(text);jsonDraft=jsonBaseline;jsonRevision=revision;
   jsonScroll=chipScroll=Vector2.zero;chipSource="";jumpCharIndex=-1;notice="";
@@ -38,7 +44,7 @@ internal static partial class ItemInventoryEditor {
   if(chipSource==jsonDraft)return;
   chipSource=jsonDraft;jsonChips.Clear();
   try{
-   using var doc=JsonDocument.Parse(jsonDraft);
+   using var doc=JsonDocument.Parse(jsonDraft,new JsonDocumentOptions{AllowTrailingCommas=true,CommentHandling=JsonCommentHandling.Skip,MaxDepth=1024});
    if(doc.RootElement.ValueKind!=JsonValueKind.Array)return;
    int idx=0;
    foreach(var el in doc.RootElement.EnumerateArray()){
@@ -48,7 +54,7 @@ internal static partial class ItemInventoryEditor {
     if(id.Length==0)continue;
     string slot=el.TryGetProperty("slotId",out var sProp)&&sProp.ValueKind==JsonValueKind.String?sProp.GetString()??"":"";
     int stack=el.TryGetProperty("upd",out var upd)&&upd.ValueKind==JsonValueKind.Object&&upd.TryGetProperty("StackObjectsCount",out var sc)&&sc.TryGetInt32(out int count)?count:1;
-    string itemName=tpl.Length==24?LootDisplay.TemplateName(tpl):tpl;
+    string itemName=tpl.Length==24?ItemSpawner.TemplateName(tpl):tpl;
     string label=idx++==0?$"★ {itemName}":(slot.Length>0?$"{slot}: {itemName}":itemName);
     if(stack>1)label+=$" ×{stack}";
     jsonChips.Add(new(id,label));
@@ -89,58 +95,109 @@ internal static partial class ItemInventoryEditor {
    var candidate=InventoryItemJsonRules.ValidateTree(jsonBaseline,jsonDraft);
    if(current.IsInRaid){
     if(ChatFikaSession.Role!=0)throw new ArgumentException("FIKA 战局暂不支持右键编辑库存物品。");
-    var baseline=InventoryItemJsonRules.ParseTree(jsonBaseline);
-    var live=CaptureJson(current.Item);
-    if(!JsonNode.DeepEquals(baseline,live))throw new ArgumentException("物品数据已有更新，请刷新后重试。");
-    for(int i=0;i<candidate.Count;i++){
-     var onlyUpd=(JsonObject)candidate[i]!.DeepClone();
-     if(baseline[i]!.AsObject().ContainsKey("upd"))onlyUpd["upd"]=baseline[i]!["upd"]?.DeepClone();else onlyUpd.Remove("upd");
-     if(!JsonNode.DeepEquals(baseline[i],onlyUpd))throw new ArgumentException("战局中只能修改物品的 upd 数据。");
-    }
-    ApplyJson(current,candidate,true);Close();FeatureToasts.Show("物品参数已应用，随战局正常结算。");return;
+    ApplyJson(current,candidate,true);Close();FeatureToasts.Show("物品 JSON 已应用，随战局正常结算。");return;
    }
    var payload=JsonRequest(current,"inventoryItemTreeJsonSave");payload["preview"]=candidate.ToJsonString();payload["revision"]=jsonRevision;
    saving=CharacterDataPanel.Call("/local/gear/data","characterData",payload);submittedJson=candidate;notice="正在保存物品…";
   }catch(Exception error){notice=error.Message;}
  }
  static void WriteUpd(Item item,JsonObject upd)=>ItemDeserializer.CreateItem(item,new UnparsedData{JToken=JToken.Parse(upd.ToJsonString())});
- static void ApplyJson(Target current,JsonArray candidate,bool validate){
-  var factory=Singleton<ItemFactory>.Instance;
-  var live=InventoryItemJsonRules.Index(CaptureJson(current.Item));
-  var requestedItems=InventoryItemJsonRules.Index(candidate);
-  if(live.Count!=requestedItems.Count||live.Keys.Any(id=>!requestedItems.ContainsKey(id)))throw new ArgumentException("物品数据已有更新，请刷新后重试。");
-  var baseline=InventoryItemJsonRules.Index(InventoryItemJsonRules.ParseTree(jsonBaseline));
-  var items=new Dictionary<string,Item>{{current.Id,current.Item}};
-  foreach(var item in current.Item.GetAllItems())items.TryAdd(item.Id.ToString(),item);
-  var changes=new List<(Item Item,JsonObject Original,JsonObject Requested,JsonObject Desired)>();
-  foreach(var pair in requestedItems){
-   if(!items.TryGetValue(pair.Key,out var item)||item.StringTemplateId!=pair.Value["_tpl"]?.GetValue<string>())throw new ArgumentException("物品数据已有更新，请刷新后重试。");
-   var requested=InventoryItemJsonRules.Update(pair.Value);
-   if(JsonNode.DeepEquals(baseline[pair.Key]["upd"],pair.Value["upd"]))continue;
-   var original=InventoryItemJsonRules.Update(live[pair.Key]);
-   if(InventoryItemJsonRules.RemovesFields(original,requested))throw new ArgumentException("删除的物品字段需要重新进入角色后生效。");
-   var sample=factory.CreateItem(factory.NextId.ToString(),item.StringTemplateId,new UnparsedData{JToken=JToken.Parse(requested.ToJsonString())});
-   var desired=InventoryItemJsonRules.Update(CaptureRecord(sample));
-   if(validate&&!InventoryItemJsonRules.Matches(requested,desired))throw new ArgumentException("游戏未接受其中一项 JSON 字段，请调整后重试。");
-   var replay=factory.CreateItem(factory.NextId.ToString(),item.StringTemplateId,new UnparsedData{JToken=JToken.Parse(original.ToJsonString())});
-   WriteUpd(replay,requested);
-   if(!JsonNode.DeepEquals(desired,InventoryItemJsonRules.Update(CaptureRecord(replay))))
-    throw new ArgumentException("此项 JSON 修改需要重新进入角色后生效。");
-   changes.Add((item,original,requested,desired));
+
+ internal static Item BuildClientTree(JsonArray items,string rootId){
+  var factory=Singleton<ItemFactory>.Instance??throw new ArgumentException("物品工厂尚未就绪。");
+  var flat=new Il2CppReferenceArray<JsonType.FlatItem>(items.Count);
+  for(int i=0;i<items.Count;i++){
+   var obj=items[i] as JsonObject??throw new ArgumentException("物品 JSON 元素必须是对象。");
+   string id=obj["_id"]?.GetValue<string>()??throw new ArgumentException("缺少物品 _id。");
+   string tpl=obj["_tpl"]?.GetValue<string>()??throw new ArgumentException("缺少物品 _tpl。");
+   var native=new JsonType.FlatItem{_id=new MongoID(id),_tpl=new MongoID(tpl)};
+   if(obj["parentId"] is JsonValue pv&&pv.TryGetValue<string>(out var parent)&&!string.IsNullOrWhiteSpace(parent)&&id!=rootId)
+    native.parentId=RaidStash.ParentId(parent);
+   if(obj["slotId"] is JsonValue sv&&sv.TryGetValue<string>(out var slot)&&!string.IsNullOrWhiteSpace(slot)&&id!=rootId)
+    native.slotId=slot;
+   if(obj["location"] is JsonNode locNode&&id!=rootId)
+    native.location=new UnparsedData{JToken=JToken.Parse(locNode.ToJsonString())};
+   if(obj["upd"] is JsonObject updNode)
+    native.upd=new UnparsedData{JToken=JToken.Parse(updNode.ToJsonString())};
+   flat[i]=native;
   }
-  int applied=0;
-  try{
-   foreach(var change in changes){
-    applied++;WriteUpd(change.Item,change.Requested);
-    if(!JsonNode.DeepEquals(change.Desired,InventoryItemJsonRules.Update(CaptureRecord(change.Item))))
-     throw new ArgumentException("游戏未接受其中一项 JSON 字段，请调整后重试。");
-   }
-  }catch{
-   for(int i=applied-1;i>=0;i--)WriteUpd(changes[i].Item,changes[i].Original);throw;
-  }
-  foreach(var change in changes)if(change.Item.Pointer!=current.Item.Pointer)ItemFirContext.Refresh(current.Owner,change.Item);
-  ItemFirContext.Refresh(current.Owner,current.Item);
+  var tree=factory.FlatItemsToTree(flat,false,null);
+  if(tree?.Items==null||!tree.Items.ContainsKey(rootId))
+   throw new ArgumentException("无法根据 JSON 构建物品实例，请检查 _tpl 与子槽位名称。");
+  return tree.Items[rootId];
  }
+
+ static bool CanApplyUpdInPlace(JsonArray liveArray,JsonArray candidate){
+  var live=InventoryItemJsonRules.Index(liveArray);
+  var req=InventoryItemJsonRules.Index(candidate);
+  if(live.Count!=req.Count||live.Keys.Any(k=>!req.ContainsKey(k)))return false;
+  foreach(var pair in req){
+   var before=live[pair.Key];
+   var after=pair.Value;
+   if(!JsonNode.DeepEquals(before["_tpl"],after["_tpl"])
+    ||!JsonNode.DeepEquals(before["parentId"],after["parentId"])
+    ||!JsonNode.DeepEquals(before["slotId"],after["slotId"])
+    ||!JsonNode.DeepEquals(before["location"],after["location"]))return false;
+   var beforeUpd=InventoryItemJsonRules.Update(before);
+   var afterUpd=InventoryItemJsonRules.Update(after);
+   if(InventoryItemJsonRules.RemovesFields(beforeUpd,afterUpd))return false;
+  }
+  return true;
+ }
+
+ static void ApplyJson(Target current,JsonArray candidate,bool _){
+  var liveArray=CaptureJson(current.Item);
+  if(CanApplyUpdInPlace(liveArray,candidate)){
+   var req=InventoryItemJsonRules.Index(candidate);
+   var items=new Dictionary<string,Item>{{current.Id,current.Item}};
+   foreach(var item in current.Item.GetAllItems())items.TryAdd(item.Id.ToString(),item);
+   foreach(var pair in req){
+    if(!items.TryGetValue(pair.Key,out var targetItem))continue;
+    WriteUpd(targetItem,InventoryItemJsonRules.Update(pair.Value));
+    if(targetItem.Pointer!=current.Item.Pointer)ItemFirContext.Refresh(current.Owner,targetItem);
+   }
+   ItemFirContext.Refresh(current.Owner,current.Item);
+   return;
+  }
+
+  // Full live replacement: supports changing _tpl, adding/removing child attachments/ammo,
+  // deleting upd fields, or relocating within the container without relogging.
+  var rootObj=InventoryItemJsonRules.FindRoot(candidate);
+  string newRootId=rootObj["_id"]!.GetValue<string>();
+  var rebuilt=BuildClientTree(candidate,newRootId);
+  var address=current.Item.CurrentAddress??throw new ArgumentException("无法读取原物品所在容器地址。");
+  if(address.TryCast<GridItemAddress>() is {} gridAddr){
+   var grid=gridAddr.Grid;
+   var loc=gridAddr.LocationInGrid;
+   if(rootObj["location"] is JsonObject customLoc){
+    int cx=customLoc["x"]?.GetValue<int>()??loc.x;
+    int cy=customLoc["y"]?.GetValue<int>()??loc.y;
+    bool vert=customLoc["r"] is JsonValue rv&&(rv.ToString() is "1" or "Vertical");
+    loc=new LocationInGrid(cx,cy,vert?ItemRotation.Vertical:ItemRotation.Horizontal);
+   }
+   if(!grid.RemoveWithoutRestrictions(current.Item).Succeeded)
+    throw new ArgumentException("无法从当前格位移除旧物品。");
+   if(!grid.AddItemWithoutRestrictions(rebuilt,loc).Succeeded){
+    grid.AddItemWithoutRestrictions(current.Item,gridAddr.LocationInGrid);
+    throw new ArgumentException("替换后的物品无法放入当前格位。");
+   }
+   GridCellItemCreator.RefreshGridViews(grid,current.Owner,rebuilt);
+   return;
+  }
+  if(address.TryCast<SlotItemAddress>() is {} slotAddr){
+   var slot=slotAddr.Slot;
+   if(!slot.RemoveItemWithoutRestrictions().Succeeded)
+    throw new ArgumentException("无法从当前装备槽移除旧物品。");
+   if(!slot.AddWithoutRestrictions(rebuilt).Succeeded){
+    slot.AddWithoutRestrictions(current.Item);
+    throw new ArgumentException("替换后的物品无法装入当前槽位。");
+   }
+   ItemFirContext.Refresh(current.Owner,rebuilt);
+   return;
+  }
+  throw new ArgumentException("当前物品容器类型暂不支持原位结构替换，请重登角色生效。");
+ }
+
  static void JumpToText(string needle,int startOffset=0){
   if(string.IsNullOrEmpty(needle)||jsonDraft.Length==0)return;
   int idx=jsonDraft.IndexOf(needle,Math.Clamp(startOffset,0,jsonDraft.Length),StringComparison.OrdinalIgnoreCase);
@@ -193,7 +250,7 @@ internal static partial class ItemInventoryEditor {
   jsonScroll=GUI.BeginScrollView(viewport,jsonScroll,new Rect(0,0,width,height),false,true);
   try{
    GUI.SetNextControlName("LocalItemJson");
-   jsonDraft=JsonEditorText.Accept(GUI.TextArea(new Rect(0,0,width,height),jsonDraft,InventoryItemJsonRules.TreeLimit,jsonStyle));
+   jsonDraft=JsonEditorText.Accept(GUI.TextArea(new Rect(0,0,width,height),jsonDraft,jsonStyle));
    if(caretVisible){
     var text=GUIUtility.GetStateObject(Il2CppInterop.Runtime.Il2CppType.Of<TextEditor>(),GUIUtility.keyboardControl)?.TryCast<TextEditor>();
     if(text!=null){var caret=jsonStyle.GetCursorPixelPosition(new(0,0,width,height),new GUIContent(jsonDraft),Math.Clamp(text.cursorIndex,0,jsonDraft.Length));

@@ -83,7 +83,8 @@ public class ProfileAdminService {
     case "hideout":
      var type=(HideoutAreas)request.AreaType;var definition=hideout.Areas.SingleOrDefault(area=>area.Type==type&&area.IsEnabled)??throw new ArgumentException("未知藏身处区域。");
      var area=pmc.Hideout?.Areas?.SingleOrDefault(area=>area.Type==type)??throw new ArgumentException("该区域尚无角色数据。");
-     int current=area.Level??0;if(request.Level<current||request.Level>20||definition.Stages==null||!definition.Stages.ContainsKey(request.Level.ToString()))throw new ArgumentException("请选择当前等级到该区域最大等级之间的等级。");
+     int current=area.Level??0;if(request.Level<0||definition.Stages==null||!definition.Stages.ContainsKey(request.Level.ToString()))throw new ArgumentException("请选择 0 到该区域最大等级之间的有效等级。");
+     if(request.Level<current){area.Level=request.Level;area.Constructing=false;area.CompleteTime=0;}
      while((area.Level??0)<request.Level){int before=area.Level??0;area.Constructing=true;area.CompleteTime=0;controller.UpgradeComplete(pmc,new HideoutUpgradeCompleteRequestData{AreaType=type,Timestamp=DateTimeOffset.UtcNow.ToUnixTimeSeconds()},session,output.GetOutput(session));if((area.Level??0)<=before)throw new ArgumentException("该区域无法完成升级。");}
      output.ResetOutput(session);break;
     case "scav-save":

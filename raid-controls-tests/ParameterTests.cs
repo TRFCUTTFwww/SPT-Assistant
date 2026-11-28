@@ -37,11 +37,12 @@ internal static class ParameterTests {
    Reject(()=>Execute("apply","AI",new(){["map/BotMax"]=31,["map/Waves/0/slots_min"]=8}),"min max");
    Reject(()=>Execute("apply","AI",new(){["assistant/AiEnabled"]="true"}),"boolean string");
    Reject(()=>Execute("apply","AI",new(){["map/BotMax"]=1.5}),"fractional count");
-   Reject(()=>Execute("apply","AI",new(){["map/BotMax"]=501}),"cap maximum");
-   Reject(()=>Execute("apply","AI",new(){["map/BossLocationSpawn/0/BossChance"]=101}),"probability");
    Reject(()=>Execute("apply","AI",new(){["assistant/NoLoot"]=true}),"group isolation");
    Reject(()=>Execute("apply","AI",new(){["map/unknown"]=1}),"unknown field");
    Check(File.ReadAllText(Path.Combine(directory,"parameters.json"))==before,"invalid operations are atomic");
+   Execute("apply","AI",new(){["map/BotMax"]=501});
+   Check(store.Effective("bigmap",source)["map"]!["BotMax"]!.GetValue<int>()==501,"unrestricted BotMax above old cap accepted");
+   Execute("apply","AI",new(){["map/BotMax"]=30});
    Execute("save","AI");Execute("apply","战局",new(){["map/EscapeTimeLimit"]=60,["assistant/NoLoot"]=true});
    Check(store.Read("bigmap",source,"AI").Presets.SequenceEqual(new[]{"方案一"})&&store.Read("woods",source).Presets.Length==0&&store.Read("bigmap",source,"战局").Presets.Length==0,"preset list filters map and group");Reject(()=>Execute("save","战局"),"prevent other-group overwrite");
    Execute("defaults","AI");Check(store.Effective("bigmap",source)["map"]!["BotMax"]!.GetValue<int>()==20,"map defaults restore baseline");Check(store.EffectiveAssistant("bigmap",original).NoLoot,"reset AI preserves raid settings");Check(!store.EffectiveAssistant("bigmap",original).AiEnabled,"reset assistant default");

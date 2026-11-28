@@ -33,5 +33,5 @@ namespace EFT {
 }
 public static class TestState {
  public static int MainThread,Init,Unload,Updates,Prepares;
- public static bool FailNextInit,FailNextUnload,FailFrameCallbacks,CanReload=true;public static int Rescues;public static string Click="";
+ public static bool FailNextInit,FailNextUnload,FailFrameCallbacks,CanReload=true,FastMode;public static int Rescues;public static string Click="";
 }

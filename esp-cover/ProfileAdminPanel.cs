@@ -92,7 +92,7 @@ internal static class ProfileAdminPanel {
    string key="hideout_area_"+type+"_name",name=LocalizationExtensions.Localized(key,EStringCase.None);if(name==key)name=area.GetProperty("name").GetString()??key;
    InterfaceMenu.Label(new Rect(0,y,width-190,32),$"{name}  {level}/{maximum}");
    var raw=Edit("area_"+type,level.ToString(),new Rect(width-180,y,90,31));
-   if(InterfaceMenu.Button(new Rect(width-80,y,80,31),"升级")&&request==null)try{int target=ItemSpawnRules.Integer(raw,level,maximum,"区域等级");Begin(new(){{"action","hideout"},{"areaType",type},{"level",target}});}catch(ArgumentException error){status=error.Message;}
+   if(InterfaceMenu.Button(new Rect(width-80,y,80,31),"升级")&&request==null)try{int target=ItemSpawnRules.Integer(raw,0,maximum,"区域等级");Begin(new(){{"action","hideout"},{"areaType",type},{"level",target}});}catch(ArgumentException error){status=error.Message;}
    y+=52;
   }GUI.EndScrollView();
  }

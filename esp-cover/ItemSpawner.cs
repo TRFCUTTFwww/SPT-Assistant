@@ -254,11 +254,11 @@ internal static class ItemSpawner {
   float current=0,max=0,medical=0,food=0;int used=0,ammunition=0;
   var s=schema;
   bool repair=changeDurability&&s?.Repairable==true,med=changeMed&&s?.Medical==true,meal=changeFood&&s?.Food==true,key=changeKey&&s?.Key==true,mag=loadMagazine&&s?.MagazineCapacity>0;
-  if(repair){max=ItemSpawnRules.Number(maxDurability,.01f,ItemComponentParameters.StorageMaximum,"最大耐久");current=ItemSpawnRules.Number(durability,0,max,"当前耐久");}
+  if(repair){max=ItemSpawnRules.Number(maxDurability,.01f,ItemComponentParameters.StorageMaximum,"最大耐久");current=ItemSpawnRules.Number(durability,0,ItemComponentParameters.StorageMaximum,"当前耐久");}
   if(med)medical=ItemSpawnRules.Number(medResource,0,ItemComponentParameters.StorageMaximum,"医疗剩余使用量");
   if(meal)food=ItemSpawnRules.Number(foodResource,0,ItemComponentParameters.StorageMaximum,"食物剩余使用量");
-  if(key)used=ItemSpawnRules.Integer(keyUses,0,int.MaxValue,"钥匙剩余次数");
-  if(mag){ammunition=ItemSpawnRules.Integer(rounds,0,s!.MagazineCapacity,"装填发数");if(ammunition>0&&!compatibleAmmo.Any(item=>item.Id==ammoId))throw new ArgumentException("请选择兼容的弹药。");}
+  if(key)used=ItemSpawnRules.Integer(keyUses,int.MinValue,int.MaxValue,"钥匙剩余次数");
+  if(mag){ammunition=ItemSpawnRules.Integer(rounds,0,int.MaxValue,"装填发数");if(ammunition>0&&!compatibleAmmo.Any(item=>item.Id==ammoId))throw new ArgumentException("请选择兼容的弹药。");}
   return new(repair,current,max,med,medical,meal,food,key,used,mag,ammunition,ammoId,fir,extraEditor?.Read()??new());
  }
  static void Spawn(Entry entry){
@@ -274,7 +274,7 @@ internal static class ItemSpawner {
    var controller=player.InventoryController;var factory=Singleton<ItemFactory>.Instance;
    if(controller==null||factory==null){status="库存尚未就绪。";return;}
    int stacks=0;
-   while(added<count&&stacks++<100){
+   while(added<count&&stacks++<10000){
     var item=factory.CreateItem(factory.NextId.ToString(),entry.Id,null);
     if(item==null)break;
     item.StackObjectsCount=Math.Min(count-added,Math.Max(1,item.StackMaxSize));
@@ -297,6 +297,7 @@ internal static class ItemSpawner {
     if(destination==null)break;
     controller.AddAndRaiseEvents(item,destination);
     if(item.CurrentAddress==null)break;
+    RaidItemPoolGuard.Warm(item);
     added+=item.StackObjectsCount;
    }
    equipment?.RaiseRefreshEvent(false,true);
@@ -325,7 +326,6 @@ internal static class ItemSpawner {
     var ammo=catalog.First(item=>item.Id==values.AmmoId);int left=values.Rounds,position=0;
     while(left>0){int amount=Math.Min(left,ammo.StackMax);var cartridge=new Dictionary<string,object?>{{"ref",id+"_ammo_"+position},{"template",ammo.Id},{"parent",id},{"slot","cartridges"},{"location",position++},{"count",amount}};if(values.Fir!=0)cartridge["attributes"]=new Dictionary<string,object?>{{"foundInRaid",values.Fir==1}};result.Add(cartridge);left-=amount;}
    }
-   if(result.Count>100)throw new ArgumentException("邮件单次最多 100 个物品条目（含弹匣内弹药），请减少数量。");
   }
   return result;
  }
@@ -353,5 +353,5 @@ internal static class ItemSpawner {
   }
  }
  internal static void SetCommandFir(Item item,bool value)=>SetFir(item,value,0);
- static void SetFir(Item item,bool value,int depth){if(depth>12)return;item.SpawnedInSession=value;foreach(var child in LootDisplay.Children(item))SetFir(child,value,depth+1);}
+ static void SetFir(Item item,bool value,int depth){if(depth>128)return;item.SpawnedInSession=value;foreach(var child in LootDisplay.Children(item))SetFir(child,value,depth+1);}
 }

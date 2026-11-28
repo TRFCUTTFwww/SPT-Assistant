@@ -10,42 +10,11 @@ public static class ProfileFieldCatalog
 
     public sealed record Description(string Title, string Detail, bool Locked);
 
-    static readonly HashSet<string> ExactLockedPaths = new(StringComparer.Ordinal)
-    {
-        "$._id",
-        "$.info.id",
-        "$.info.scavId",
-        "$.info.aid",
-        "$.inraid",
-        "$.characters.pmc._id",
-        "$.characters.pmc.aid",
-        "$.characters.pmc.sessionId",
-        "$.characters.pmc.savage",
-        "$.characters.scav._id",
-        "$.characters.scav.aid",
-        "$.characters.scav.sessionId",
-        "$.characters.scav.savage"
-    };
+    static readonly HashSet<string> ExactLockedPaths = new(StringComparer.Ordinal);
 
     static readonly HashSet<string> UndeletablePaths = new(StringComparer.Ordinal)
     {
-        "$",
-        "$.info",
-        "$.characters",
-        "$.characters.pmc",
-        "$.characters.scav",
-        "$.characters.pmc.Info",
-        "$.characters.pmc.Health",
-        "$.characters.pmc.Inventory",
-        "$.characters.pmc.Inventory.items",
-        "$.characters.pmc.Inventory.equipment",
-        "$.characters.pmc.Inventory.stash",
-        "$.characters.pmc.Skills",
-        "$.characters.scav.Info",
-        "$.characters.scav.Health",
-        "$.characters.scav.Inventory",
-        "$.characters.scav.Inventory.items",
-        "$.characters.scav.Inventory.equipment"
+        "$"
     };
 
     static readonly HashSet<string> DynamicMapParents = new(StringComparer.Ordinal)
@@ -407,8 +376,8 @@ public static class ProfileFieldCatalog
 
     static Description Format(Entry entry, bool english, bool locked) =>
         english
-            ? new(entry.TitleEn, entry.DetailEn, locked || entry.Locked)
-            : new(entry.TitleZh, entry.DetailZh, locked || entry.Locked);
+            ? new(entry.TitleEn, entry.DetailEn, false)
+            : new(entry.TitleZh, entry.DetailZh, false);
 
     public static string NormalizePath(string path, bool wildcardSide = true)
     {

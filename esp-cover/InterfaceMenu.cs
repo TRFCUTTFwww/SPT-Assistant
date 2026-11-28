@@ -38,7 +38,7 @@ internal static partial class InterfaceMenu {
  internal static bool AiPage=>Open&&category=="AI 工作台";
  internal static bool AirdropPage=>Open&&category=="载具与空投"&&otherPage=="空投控制";
  internal static bool BuffPage=>Open&&category=="人物与移动"&&otherPage=="Buff 状态";
- internal static bool InputBlocked=>inputGate.Blocked||RaidChat.InputBlocked||FloatingStatus.Capturing||WorldEditor.InputBlocked||FleaOfferEditor.InputBlocked||ItemInventoryEditor.InputBlocked||ScopeSticker.InputBlocked;
+ internal static bool InputBlocked=>inputGate.Blocked||RaidChat.InputBlocked||FloatingStatus.Capturing||WorldEditor.InputBlocked||FleaOfferEditor.InputBlocked||ItemInventoryEditor.InputBlocked||GridCellItemCreator.InputBlocked||ScopeSticker.InputBlocked;
  internal static bool Editing=>Open&&editing;
  sealed class Slot {
   internal string Name="";
@@ -97,7 +97,7 @@ internal static partial class InterfaceMenu {
  static bool AllowTrigger(Player.FirearmController __instance,bool __0)=>(!InputBlocked&&!DirectorStage.FreeActive&&!WorldEditor.Active)||!__0||__instance._player==null||!__instance._player.IsYourPlayer;
  internal static void KeepCursor(){ScopeSticker.KeepCursor();WorldEditor.KeepCursor();RaidChat.KeepCursor();if(Open){Cursor.lockState=CursorLockMode.None;Cursor.visible=true;}}
  internal static void Update(){
-  if(!FleaOfferEditor.InputBlocked&&!ItemInventoryEditor.InputBlocked&&!RaidChat.Open&&capture==null&&Input.GetKeyDown(menuKey.Value)){
+  if(!FleaOfferEditor.InputBlocked&&!ItemInventoryEditor.InputBlocked&&!GridCellItemCreator.InputBlocked&&!RaidChat.Open&&capture==null&&Input.GetKeyDown(menuKey.Value)){
    if(!Open&&FleaMarketShortcut.Expanded)Navigate(MenuSections.FleaMarket);
    SetOpen(!Open);
   }

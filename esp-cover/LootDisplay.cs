@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -29,7 +29,7 @@ internal static partial class LootDisplay {
  record Snapshot(string Name,double Value,List<Row> Lines,AmmoStack[] Ammo,float Expires);
  internal static void Initialize(Plugin p){
   Opacity=CnConfig.Bind(p.Config,"6. Loot details","Opacity percent",50,new ConfigDescription("Opacity of loot/container text, shadows, panels and position lines. 0 = invisible; 50 = semi-transparent; 100 = full opacity.",new AcceptableValueRange<int>(0,100)));
-  Prices=CnConfig.Bind(p.Config,"6. Loot details","Show item values",true,"Estimated ruble value from the server price snapshot, including stack quantity and attachments. Not a live sale quote.");
+  Prices=CnConfig.Bind(p.Config,"6. Loot details","Show item values",true,"Estimated ruble value from synced flea prices, falling back to cached or local prices, including stack quantity and attachments. Not a live sale quote.");
   Contents=CnConfig.Bind(p.Config,"6. Loot details","Show container contents",true,"Show container name, contents and total estimated value.");
   AmmoDetails=FeatureConfig.Bind("06. 物品与容器详情","Show ammo details","显示弹药详情",true,
    "准星指向地面弹药时显示参数与相邻等级；查看容器时可用详情热键翻到弹药页。");
@@ -39,17 +39,27 @@ internal static partial class LootDisplay {
   HighValueThreshold=CnConfig.Bind(p.Config,"6. Loot details","High value threshold",100000,new ConfigDescription("",new AcceptableValueRange<int>(1,100000000)));
   LootPalette.Initialize();
   string dir=Path.Combine(BepInEx.Paths.PluginPath,"LocalSpt5ESP");
-  try{prices=JsonSerializer.Deserialize<Dictionary<string,double>>(File.ReadAllText(Path.Combine(dir,"esp5-prices.json")))??new();names=JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(Path.Combine(dir,"esp5-names.json")))??new();p.Log.LogInfo($"Loot price snapshot loaded: {prices.Count} prices, {names.Count} names");}
-  catch(Exception e){p.Log.LogWarning("Loot price/name snapshot unavailable: "+e.Message);}
-  try{string fallback=Path.Combine(dir,"item-name-fallbacks.json");if(File.Exists(fallback))foreach(var pair in JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(fallback))??new()){
-   if(pair.Key.EndsWith(" ShortName",StringComparison.Ordinal)&&names.TryGetValue(pair.Key[..^10],out var fullName)&&ReadableName(fullName))continue;
-   if(!names.TryGetValue(pair.Key,out var existing)||!ReadableName(existing))names[pair.Key]=pair.Value;
-  }}
-  catch(Exception e){p.Log.LogWarning("Item name supplement unavailable: "+e.Message);}
-  foreach(var clue in new[]{("68616c6c6f7765656e6b6579","停车场车钥匙"),("68616c6c6f7765656e6d6170","收集者地图")}){names[clue.Item1]=clue.Item2;names[clue.Item1+" ShortName"]=clue.Item2;}
+  const string LootCacheKey="LocalSpt5Esp.LootSnapshotCache.v1";
+  string pFile=Path.Combine(dir,"esp5-prices.json"),nFile=Path.Combine(dir,"esp5-names.json"),fFile=Path.Combine(dir,"item-name-fallbacks.json");
+  string stamp=$"{(File.Exists(pFile)?File.GetLastWriteTimeUtc(pFile).Ticks:0)}|{(File.Exists(nFile)?File.GetLastWriteTimeUtc(nFile).Ticks:0)}|{(File.Exists(fFile)?File.GetLastWriteTimeUtc(fFile).Ticks:0)}";
+  if(AppDomain.CurrentDomain.GetData(LootCacheKey) is ValueTuple<string,Dictionary<string,double>,Dictionary<string,string>> cachedLoot&&cachedLoot.Item1==stamp){
+   prices=new Dictionary<string,double>(cachedLoot.Item2,StringComparer.Ordinal);
+   names=new Dictionary<string,string>(cachedLoot.Item3,StringComparer.Ordinal);
+  }else{
+   try{prices=JsonSerializer.Deserialize<Dictionary<string,double>>(File.ReadAllText(pFile))??new();names=JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(nFile))??new();p.Log.LogInfo($"Loot price snapshot loaded: {prices.Count} prices, {names.Count} names");}
+   catch(Exception e){p.Log.LogWarning("Loot price/name snapshot unavailable: "+e.Message);}
+   try{if(File.Exists(fFile))foreach(var pair in JsonSerializer.Deserialize<Dictionary<string,string>>(File.ReadAllText(fFile))??new()){
+    if(pair.Key.EndsWith(" ShortName",StringComparison.Ordinal)&&names.TryGetValue(pair.Key[..^10],out var fullName)&&ReadableName(fullName))continue;
+    if(!names.TryGetValue(pair.Key,out var existing)||!ReadableName(existing))names[pair.Key]=pair.Value;
+   }}
+   catch(Exception e){p.Log.LogWarning("Item name supplement unavailable: "+e.Message);}
+   foreach(var clue in new[]{("68616c6c6f7765656e6b6579","停车场车钥匙"),("68616c6c6f7765656e6d6170","收集者地图")}){names[clue.Item1]=clue.Item2;names[clue.Item1+" ShortName"]=clue.Item2;}
+   if(prices.Count>0||names.Count>0)
+    AppDomain.CurrentDomain.SetData(LootCacheKey,(stamp,new Dictionary<string,double>(prices,StringComparer.Ordinal),new Dictionary<string,string>(names,StringComparer.Ordinal)));
+  }
  }
  internal static void Reset()=>snapshots.Clear();
- internal static void Shutdown(){snapshots.Clear();prices=new(StringComparer.Ordinal);names=new(StringComparer.Ordinal);}
+ internal static void Shutdown(){LootPrices.Reset();snapshots.Clear();prices=new(StringComparer.Ordinal);names=new(StringComparer.Ordinal);}
  [System.Text.RegularExpressions.GeneratedRegex("^[a-fA-F0-9]{24}( Name| ShortName| Description)?$")]
  private static partial System.Text.RegularExpressions.Regex UnlocalizedName();
  static bool ReadableName(string? text)=>!string.IsNullOrWhiteSpace(text)&&!UnlocalizedName().IsMatch(text);
@@ -79,7 +89,7 @@ internal static partial class LootDisplay {
   if(compound.Slots!=null)for(int i=0;i<compound.Slots.Length;i++){var child=compound.Slots[i]?.ContainedItem;if(child!=null)yield return child;}
   var magazine=compound.TryCast<Magazine>();if(magazine?.Cartridges!=null)foreach(var round in magazine.Cartridges.Items)if(round!=null)yield return round;
  }
- internal static double TemplatePrice(string id)=>id==LocalRaidShared.BitcoinRules.Template&&BitcoinControl.Price is double live?live:prices.TryGetValue(id,out var price)?price:0;
+ internal static double TemplatePrice(string id)=>id==LocalRaidShared.BitcoinRules.Template&&BitcoinControl.Price is double live?live:LootPrices.Resolve(id,prices.TryGetValue(id,out var price)?price:0);
  internal static double Value(Item root)=>root==null?0:ValueTree(root,root.StringTemplateId,Math.Max(1,root.StackObjectsCount));
  static double ValueTree(Item item,string id,int count,bool forEsp=false,HashSet<IntPtr>? seen=null,int depth=0,
   Dictionary<string,int>? rounds=null){

@@ -16,7 +16,7 @@ internal static partial class WeaponEditor {
   }).ToArray();
   var copy=Clone(gun.Template);foreach(var plan in plans)Set(copy,plan.Field,plan.Value);
   foreach(var plan in plans)if(Get(copy,plan.Field)!=(plan.Field.Integer?plan.Value:(float)plan.Value))throw new ArgumentException("枪械参数回读失败："+plan.Field.Path);
-  if(validateOnly)return;if(owned.Count>=512&&!owned.ContainsKey(gun.Pointer))throw new ArgumentException("本局枪械参数实例已达512件上限。");worldPointer=Singleton<GameWorld>.Instance.Pointer;
+  if(validateOnly)return;worldPointer=Singleton<GameWorld>.Instance.Pointer;
   owned.TryGetValue(gun.Pointer,out var state);state??=new Owned{Gun=gun,Owner=new LiveActorReference(Singleton<GameWorld>.Instance,owner),Original=gun.Template,Command=true};
   var previous=gun.Template;var previousClone=state.Clone;bool previousIgnore=state.Ignore,previousCommand=state.Command,existed=owned.ContainsKey(gun.Pointer);
   try{state.Command=true;state.Clone=copy;state.Ignore=ignore;owned[gun.Pointer]=state;gun._Template_k__BackingField=copy;

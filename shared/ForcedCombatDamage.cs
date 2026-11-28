@@ -9,6 +9,7 @@ namespace LocalAiCombat;
 // processing solely because the bots have the same role or native squad.
 internal static class ForcedCombatDamage {
     static Func<BotOwner,IPlayer,bool>? hostile;
+    internal static void Install(Action<System.Reflection.MethodBase,HarmonyMethod> patch,Func<BotOwner,IPlayer,bool> rule) { hostile=rule; var m=typeof(BotEnemiesMissController).GetMethod("ShouldApplyDamage",new[]{typeof(Player),typeof(DamageInfo),typeof(EBodyPart)})??throw new MissingMethodException("BotEnemiesMissController.ShouldApplyDamage"); patch(m,new HarmonyMethod(typeof(ForcedCombatDamage),nameof(Before))); }
     internal static void Install(Harmony harmony,Func<BotOwner,IPlayer,bool> rule) {
         hostile=rule;
         var method=typeof(BotEnemiesMissController).GetMethod("ShouldApplyDamage",new[]{typeof(Player),typeof(DamageInfo),typeof(EBodyPart)})

@@ -59,7 +59,7 @@ internal static class FleaClientHooks
         Patch(h, typeof(ItemMarketPricesPanel), nameof(ItemMarketPricesPanel._UpdatePrices_b__22_0), postfix: nameof(OnMarketPricesLoaded));
     }
 
-    private static void Patch(Harmony h, Type type, string method, string? prefix = null, string? postfix = null)
+    private static void Patch(PersistentHarmonyPatcher h, Type type, string method, string? prefix = null, string? postfix = null)
     {
         var target = AccessTools.Method(type, method);
         if (target == null)
@@ -72,7 +72,7 @@ internal static class FleaClientHooks
             postfix: postfix == null ? null : new HarmonyMethod(typeof(FleaClientHooks), postfix));
     }
 
-    private static void PatchExact(Harmony h, Type type, string method, Type[] parameters, string? prefix = null, string? postfix = null)
+    private static void PatchExact(PersistentHarmonyPatcher h, Type type, string method, Type[] parameters, string? prefix = null, string? postfix = null)
     {
         var target = AccessTools.Method(type, method, parameters);
         if (target == null)

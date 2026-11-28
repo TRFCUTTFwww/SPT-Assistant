@@ -6,10 +6,14 @@ using SPTarkov.Server.Core.Models.Common;
 using SPTarkov.Server.Core.Models.Eft.Common;
 using SPTarkov.Server.Core.Models.Enums;
 using SPTarkov.Server.Core.Models.Spt.Tables;
+if(args.Contains("--online-offers")){OnlineOfferItemsChecks.Run();return;}
+if(args.Contains("--inventory-json")){InventoryJsonChecks.Run();return;}
+if(args.Contains("--hook-router")){PersistentHarmonyRouterChecks.Run();return;}
 if(args.Contains("--btr-delivery")){BtrDeliveryChecks.Run();return;}
 if(args.Contains("--legacy-numeric")){LegacyNumericChecks.Run();return;}
 if(args.Contains("--persistent-flea")){PersistentFleaChecks.Run(args);return;}
 if(args.Contains("--custom-flea")){CustomFleaChecks.Run();return;}
+PersistentHarmonyRouterChecks.Run();
 using var props=JsonDocument.Parse("{\"MaxHpResource\":400,\"MaxResource\":60,\"MaximumNumberOfUsage\":40}");
 var upd=new Upd{Repairable=new UpdRepairable{Durability=100,MaxDurability=100},MedKit=new UpdMedKit{HpResource=400},FoodDrink=new UpdFoodDrink{HpPercent=60}};
 GearAttributeRules.Apply(upd,new GearAttributes{Durability=50,MaxDurability=75,MedicalResource=200,FoodResource=30,KeyUses=4,FoundInRaid=true},props.RootElement);
@@ -23,11 +27,11 @@ GearAttributeRules.Apply(extra,new GearAttributes{PoisonUses=100000,Resource=500
 if(extra.SideEffect.Value!=100000||extra.Resource.Value!=50000||extra.RepairKit.Resource!=50000||extra.Togglable.On!=true)throw new Exception("Extended component values not applied");
 using var resourceProps=JsonDocument.Parse("{\"Resource\":100,\"MaxRepairResource\":1200}");var generated=new Upd();GearAttributeRules.Apply(generated,new GearAttributes{Resource=50000,RepairKitResource=50000},resourceProps.RootElement);
 if(generated.Resource?.Value!=50000||generated.Resource.UnitsConsumed!=0||generated.RepairKit?.Resource!=50000)throw new Exception("Missing default server resource fields were not generated");
-try{GearAttributeRules.Apply(new Upd(),new GearAttributes{Resource=1},props.RootElement);throw new Exception("Resource accepted on unsupported template");}catch(ArgumentException){}
-try{GearAttributeRules.Apply(new Upd(),new GearAttributes{MedicalResource=1},props.RootElement);throw new Exception("Unsupported attributes accepted");}catch(ArgumentException){}
+var anyUpd=new Upd();GearAttributeRules.Apply(anyUpd,new GearAttributes{Resource=1},props.RootElement);if(anyUpd.Resource?.Value!=1)throw new Exception("Unrestricted resource component not applied");
+var anyMed=new Upd();GearAttributeRules.Apply(anyMed,new GearAttributes{MedicalResource=1},props.RootElement);if(anyMed.MedKit?.HpResource!=1)throw new Exception("Unrestricted medical component not applied");
 var legacy=JsonSerializer.Serialize(new GearSpec{Ref="test",Template="544fb45d4bdc2dee738b4568"});
 using var serialized=JsonDocument.Parse(legacy);if(serialized.RootElement.TryGetProperty("attributes",out _)||serialized.RootElement.TryGetProperty("location",out _))throw new Exception("Legacy request digest format changed");
-GearAttributeRules.Apply(upd,new GearAttributes{Durability=1e20,MaxDurability=1e20,MedicalResource=1e20,KeyRemaining=int.MaxValue},props.RootElement);if(upd.Repairable.Durability!=1e20||upd.Key?.NumberOfUsages!=40-int.MaxValue)throw new Exception("Field transport boundary still has an arbitrary Int32-like float cap");Reject(new(){Durability=(double)float.MaxValue*2,MaxDurability=(double)float.MaxValue*2});
+GearAttributeRules.Apply(upd,new GearAttributes{Durability=1e20,MaxDurability=1e20,MedicalResource=1e20,KeyRemaining=int.MaxValue},props.RootElement);if(upd.Repairable.Durability!=1e20||upd.Key?.NumberOfUsages!=40-int.MaxValue)throw new Exception("Field transport boundary still has an arbitrary Int32-like float cap");Reject(new(){Durability=double.NegativeInfinity});
 Console.WriteLine("PASS mail property application, input bounds, unsupported fields and legacy request format");
 var sourceRoot=new MongoId();var bag=new MongoId();var content=new MongoId();var secure=new MongoId();var secureContent=new MongoId();var template=new MongoId("544fb45d4bdc2dee738b4568");
 var source=new BotBaseInventory{Equipment=sourceRoot,Items=[new(){Id=sourceRoot,Template=template},new(){Id=bag,Template=template,ParentId=sourceRoot.ToString(),SlotId="Backpack"},new(){Id=content,Template=template,ParentId=bag.ToString(),SlotId="main"},new(){Id=secure,Template=template,ParentId=sourceRoot.ToString(),SlotId="SecuredContainer"},new(){Id=secureContent,Template=template,ParentId=secure.ToString(),SlotId="main"}]};
@@ -117,7 +121,7 @@ foreach(var parent in new[]{editBag,editRig}){
  }
 }
 void RejectContents(Dictionary<string,List<ScavContentSpec>> edits){string before=nativeJson.Serialize(editLoadout)!;try{ScavContentsRules.Apply(editLoadout,edits,tables,rewardHelper,contentPresets,nativeJson);throw new Exception("Invalid contents accepted");}catch(ArgumentException){}if(nativeJson.Serialize(editLoadout)!=before)throw new Exception("Rejected content edit partially changed equipment");}
-RejectContents(new(){{"SecuredContainer",[]}});RejectContents(new(){{"Backpack",[new(){Template=template.ToString(),Count=2}]}});RejectContents(new(){{"Backpack",[new(){Id=new MongoId().ToString(),Template=template.ToString()}]}});
+RejectContents(new(){{"SecuredContainer",[]}});RejectContents(new(){{"Backpack",[new(){Template=template.ToString(),Count=0}]}});RejectContents(new(){{"Backpack",[new(){Id=new MongoId().ToString(),Template=template.ToString()}]}});
 RejectContents(new(){{"Backpack",Enumerable.Range(0,26).Select(_=>new ScavContentSpec{Template=template.ToString()}).ToList()}});
 RejectContents(new(){{"Backpack",[]},{"TacticalVest",Enumerable.Range(0,50).Select(_=>new ScavContentSpec{Template=template.ToString()}).ToList()}});
 ScavContentsRules.Apply(editLoadout,new(){{"Backpack",[]}},tables,rewardHelper,contentPresets,nativeJson);

@@ -52,17 +52,16 @@ public static class OnlineTradingService {
   return double.IsFinite(raw)&&raw>0?Math.Ceiling(raw):0;
  }
 
- static List<Item> ParseAndValidate(CharacterDataRequest request,JsonUtil json,TemplateTable templates,out Item root,out int stack){
+ static OnlineOfferItems.Selection ParseAndValidate(CharacterDataRequest request,JsonUtil json,TemplateTable templates){
   var raw=request.StashItems??throw new ArgumentException("缺少物品数据。");
   var normalized=RaidStashJson.Normalize(raw.GetRawText(),out _,out _);
   var items=json.Deserialize<List<Item>>(normalized.ToJsonString())??throw new ArgumentException("物品格式无效。");
-  if(items.Count==0)throw new ArgumentException("物品数据为空。");
-  root=items[0];
-  if(!templates.Items.TryGetValue(root.Template,out var tpl)||tpl.Properties?.QuestItem==true)
-   throw new ArgumentException("任务物品或未知物品无法上架跳蚤市场。");
+  var selection=OnlineOfferItems.Read(items);
+  foreach(var item in items)
+   if(!templates.Items.TryGetValue(item.Template,out var tpl)||tpl.Properties?.QuestItem==true)
+    throw new ArgumentException("任务物品或未知物品无法上架跳蚤市场。");
   if(FleaPrices.HasBlockedItem(items))throw new ArgumentException(FleaPrices.ListingBlocked);
-  stack=Math.Max(1,(int)(root.Upd?.StackObjectsCount??1));
-  return items;
+  return selection;
  }
 
  static List<Item> RemapIds(List<Item> items){
@@ -123,10 +122,13 @@ public static class OnlineTradingService {
   if(!MiscService.Options.OnlineTrading)throw new ArgumentException("请先在杂项设置中开启「线上交易」。");
   var controller=FleaAutomation.Controller??throw new ArgumentException("跳蚤控制器尚未就绪，请先打开一次跳蚤市场或等待后台刷新。");
   var pmc=profile.CharacterData?.PmcData??throw new ArgumentException("当前角色尚未创建。");
-  var items=ParseAndValidate(request,json,templates,out var root,out int stack);
+  var selection=ParseAndValidate(request,json,templates);
+  var items=selection.Representative;
+  var root=items[0];
+  int stack=selection.Count;
   string currency=ValidCurrency(request.Currency)?request.Currency:Rub;
   int count=request.Count>0?Math.Clamp(request.Count,1,stack):stack;
-  if(items.Count>1)count=stack;
+  if(items.Count>1||selection.Roots.Count>1)count=stack;
   double price=double.IsFinite(request.Value)&&request.Value>=1?Math.Truncate(request.Value):0;
   int activeOffers=pmc.RagfairInfo?.Offers?.Count??0;
   int maxOffers=MaxOffers(controller,pmc);
@@ -158,7 +160,7 @@ public static class OnlineTradingService {
   var cloned=RemapIds(items);
   var offerRoot=cloned[0];
   offerRoot.Upd??=new Upd();
-  if(items.Count==1)offerRoot.Upd.StackObjectsCount=count;
+  offerRoot.Upd.StackObjectsCount=count;
 
   long taxCost=(long)Math.Ceiling(tax);
   if(taxCost>0)DeductRubFromStash(pmc,taxCost);

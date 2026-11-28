@@ -69,7 +69,7 @@ try
     Reject(() => Call("serverJsonSave", "$", delete: true), "root delete denied");
     Reject(() => Call("serverJsonSave", "$", "1", key: "value"), "duplicate child denied");
     Reject(() => Run(new("serverJsonNode", id, token), "another-owner"), "snapshot ownership enforced");
-    foreach (string forbidden in new[] { "../test.json", "SPT_Data/configs/../../../outside.json", "SPT_Data/configs/x.json:stream", "SPT_Data/configs/x.json.", "SPT_Data/configs/../database/test.json", "user/profiles/test.json", "user/mods/x/backups/a.json", "user/mods/x/.git/config.json", "D:/escape.json" })
+    foreach (string forbidden in new[] { "../test.json", "SPT_Data/configs/../../../outside.json", "SPT_Data/configs/x.json:stream", "SPT_Data/configs/x.json.", "SPT_Data/configs/../database/test.json", "user/mods/x/.git/config.json", "D:/escape.json" })
         Reject(() => Run(new("serverJsonOpen", forbidden)), "path rejected " + forbidden);
     byte[] beforeInvalid = File.ReadAllBytes(file);
     try { Call("serverJsonSave", "$.value", "{invalid}"); throw new Exception("Invalid JSON saved"); } catch (JsonException) { passed++; }
@@ -80,29 +80,36 @@ try
     Assert(Call("serverJsonNode").GetProperty("type").GetString() == "Null", "null root supported");
     Call("serverJsonSave", "$", "\"text\"");
     Assert(Call("serverJsonExport").GetProperty("raw").GetString() == "\"text\"", "scalar root export supported");
-    File.WriteAllBytes(file, new UTF8Encoding(true).GetPreamble().Concat(Encoding.UTF8.GetBytes("{/* comment */\"a\":1,}" )).ToArray());
+    File.WriteAllBytes(file, new UTF8Encoding(true).GetPreamble().Concat(Encoding.UTF8.GetBytes("{/* comment */\"a\":1,}")).ToArray());
     open = Run(new("serverJsonOpen", id)); token = open.GetProperty("token").GetString()!;
     Call("serverJsonSave", "$.a", "2");
     Assert(Call("serverJsonNode", "$.a").GetProperty("raw").GetString() == "2", "BOM, comments and trailing commas supported");
     File.Delete(file);
     Assert(Call("serverJsonCheck").GetProperty("changed").GetBoolean(), "deletion generates update notice");
     Assert(Call("serverJsonNode", "$.a").GetProperty("raw").GetString() == "2", "deleted file snapshot still browsable");
-    Directory.CreateDirectory(Path.Combine(work, "user/mods/test/backups"));
-    File.WriteAllText(Path.Combine(work, "user/mods/test/backups/hidden.json"), "{}");
-    File.WriteAllText(Path.Combine(work, "user/mods/test/settings.json"), "{}");
-    Assert(Run(new("serverJsonList")).GetProperty("files").EnumerateArray().All(f => !f.GetProperty("id").GetString()!.Contains("backups")), "backups excluded from inventory");
+
+    // Unrestricted directory discovery under SPT_Runtime (profiles, custom dirs, mods, while skipping own backup folder)
+    Directory.CreateDirectory(Path.Combine(work, "user/profiles"));
+    File.WriteAllText(Path.Combine(work, "user/profiles/custom.json"), "{\"ok\":true}");
+    Directory.CreateDirectory(Path.Combine(work, "custom_folder"));
+    File.WriteAllText(Path.Combine(work, "custom_folder/extra.json"), "{\"ok\":1}");
+    var listedIds = Run(new("serverJsonList")).GetProperty("files").EnumerateArray().Select(f => f.GetProperty("id").GetString()!).ToList();
+    Assert(listedIds.Contains("user/profiles/custom.json") && listedIds.Contains("custom_folder/extra.json"), "unrestricted server JSON store lists all runtime subdirectories");
+    Assert(listedIds.All(fid => !fid.StartsWith("user/mods/LocalGearMail/backups/server-json", StringComparison.OrdinalIgnoreCase)), "own server-json backups excluded from inventory");
+
     var large = new JsonObject();
     for (int i = 0; i < 5000; i++) large["key" + i] = new JsonObject { ["number"] = i, ["text"] = new string('x', 100) };
     File.WriteAllText(file, large.ToJsonString());
     open = Run(new("serverJsonOpen", id)); token = open.GetProperty("token").GetString()!;
     Assert(open.GetProperty("large").GetBoolean() && open.GetProperty("raw").GetString() == "", "large root bounded preview");
+    Assert(Call("serverJsonLoadFull").GetProperty("raw").GetString()!.Length > ServerJsonStore.InlineLimit, "serverJsonLoadFull expands complete node text on demand");
     Assert(open.GetProperty("children").GetArrayLength() == 60, "large children pagination");
     Assert(Call("serverJsonNode", offset: 4980).GetProperty("children").GetArrayLength() == 20, "last page exact");
     Assert(Call("serverJsonNode", offset: int.MaxValue).GetProperty("offset").GetInt32() == 4980, "out of range page clamped");
     Assert(Call("serverJsonNode", "$[\"key4999\"][\"number\"]").GetProperty("raw").GetString() == "4999", "deep field outside first page");
     Assert(Call("serverJsonSearch", query: "key4999 number").GetProperty("hits").GetArrayLength() == 1, "deep file search");
     var search = Call("serverJsonSearch", query: "key");
-    Assert(search.GetProperty("hits").GetArrayLength() == 160 && search.GetProperty("truncated").GetBoolean(), "search bounded");
+    Assert(search.GetProperty("hits").GetArrayLength() == 2000 && search.GetProperty("truncated").GetBoolean(), "search supports expanded hit limit");
     Call("serverJsonSave", "$[\"key4999\"][\"number\"]", "-9007199254740993");
     Assert(JsonNode.Parse(File.ReadAllText(file))!["key4999"]!["number"]!.GetValue<long>() == -9007199254740993L, "numeric precision preserved");
     Assert(Call("serverJsonExport").GetProperty("raw").GetString()!.Length > ServerJsonStore.InlineLimit, "large export is complete");

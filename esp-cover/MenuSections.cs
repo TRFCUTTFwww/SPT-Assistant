@@ -6,7 +6,7 @@ internal static class MenuSections {
  internal static string Lane(string category)=>category is "AI 工作台" or "枪械编辑" or "模型与镜头" or "玩具枪工具" or "内存编辑" or "开发工具"?"开发工具":category=="设置与热键"?"设置":"常用辅助";
  internal static string DisplayName(string category)=>category switch{"战斗与枪械"=>"射击","人物与移动"=>"人物","镜头与画面"=>"视觉","传送与导航"=>"导航","战局与物资"=>"战局","载具与空投"=>"载具","物品与装备"=>"物品","AI 工作台"=>"AI 开发","玩具枪工具"=>"玩具枪开发","设置与热键"=>"设置与热键",_=>category};
  internal static int Number(string section){int dot=section.IndexOf('.');return dot>=0&&int.TryParse(section.AsSpan(0,dot),out int value)?value:0;}
- internal static string Group(string section)=>Number(section) switch{69=>"数据",8 or 9 or 10 or 28 or 39 or 40 or 53 or 54=>"战斗与枪械",45=>"枪械编辑",2 or 4 or 17 or 19 or 20 or 29=>"人物与移动",43=>"模型与镜头",61 or 65=>"趣味功能",34 or 49=>"AI 工作台",50 or 46=>"玩具枪工具",63 or 64=>"开发工具",1 or 6 or 7 or 11 or 12 or 16 or 21 or 22 or 23 or 35 or 48 or 52 or 58 or 62 or 71 or 73 or 74 or 75=>"镜头与画面",55 or 57 or 59=>"战局与物资",56=>"物品与装备",13 or 26 or 27 or 30 or 31 or 37 or 42=>"战局与物资",18 or 38=>"载具与空投",14 or 15 or 33 or 41 or 60=>"传送与导航",_=>"设置与热键"};
+ internal static string Group(string section)=>Number(section) switch{69=>"数据",8 or 9 or 10 or 28 or 39 or 40 or 53 or 54=>"战斗与枪械",45=>"枪械编辑",2 or 4 or 17 or 19 or 20 or 29=>"人物与移动",43=>"模型与镜头",61 or 65=>"趣味功能",34 or 49=>"AI 工作台",50 or 46=>"玩具枪工具",63 or 64=>"开发工具",1 or 6 or 7 or 11 or 12 or 16 or 21 or 22 or 23 or 35 or 48 or 52 or 58 or 62 or 71 or 73 or 74 or 75=>"镜头与画面",55 or 57 or 59=>"战局与物资",56 or 76=>"物品与装备",13 or 26 or 27 or 30 or 31 or 37 or 42=>"战局与物资",18 or 38=>"载具与空投",14 or 15 or 33 or 41 or 60=>"传送与导航",_=>"设置与热键"};
  internal static bool ThirdPersonKey(string key)=>key.Contains("Third person",StringComparison.OrdinalIgnoreCase)||key.StartsWith("Camera ",StringComparison.OrdinalIgnoreCase)||key=="First person when aiming";
  internal static string Group(string section,string key)=>Number(section)==18&&key.StartsWith("Stop marker",StringComparison.Ordinal)?"镜头与画面":Number(section)==3&&key=="AI ignore toggle"?"人物与移动":Number(section)==43&&ThirdPersonKey(key)?"镜头与画面":Number(section)==43&&key.StartsWith("Selected AI",StringComparison.OrdinalIgnoreCase)?"AI 工作台":Number(section)==43&&key.Contains("Crouch",StringComparison.OrdinalIgnoreCase)?"人物与移动":Group(section);
  internal static string[] Pages(string category)=>category switch{
@@ -27,7 +27,7 @@ internal static class MenuSections {
   "战局与物资"=>new[]{"时间与环境","本局物资","范围拾取","AI 难度","刷新规则","活动控制","任务物资","战局信息","战局显示","地图模式"},
   "载具与空投"=>new[]{"BTR 控制","装甲列车","空投控制"},
   "传送与导航"=>new[]{"撤离定位","撤离控制","地图过图","任务定位","路面导航","角色传送"},
-  "物品与装备"=>new[]{"添加物品","玩家枪械预设","整套装备","修理与耐久"},
+  "物品与装备"=>new[]{"添加物品","库存右键菜单","玩家枪械预设","整套装备","修理与耐久"},
   _=>new[]{"全部热键","配置方案","主题与布局","JavaScript","版本更新","日志与诊断","事件通知","其他设置"}
  };
  internal static string Subtitle(string category)=>category switch{"内存编辑"=>"数值/特征码扫描、指针地址表、硬件断点监控、反汇编改码与内存浏览","历史战局"=>"入场装备、撤离物品与击杀记录","趣味功能"=>"模块与设置","杂项"=>"趣味规则与特殊待遇，每项独立开关","主页面"=>"当前存档、角色资产、战绩与常用入口","服务端"=>"服务端配置、PMC 与 Scav 业力、跳蚤市场信誉及装备入口","AI 工作台"=>"选一次角色，连续完成生成、动作、装备与场景编辑","玩具枪工具"=>"生成类型、模板、命中操作和射击设置都在这里","战斗与枪械"=>"瞄准、伤害与命中反馈","人物与移动"=>"生存、移动、穿墙与状态","镜头与画面"=>"人物标记、第三人称、HUD 与战斗显示","战局与物资"=>"本局时间、物资、任务与下局刷新规则","载具与空投"=>"BTR 路线与空投投放","传送与导航"=>"撤离点定位、撤离控制、地图过图与路面导航","物品与装备"=>"物品添加、枪械与整套装备方案","枪械编辑"=>"当前武器与配件参数编辑","模型与镜头"=>"自由镜头、人物模型与动作锁定","剧情"=>"主线进度、任务重做与剧情走向","数据"=>"技能、成就、商城钱包与角色管理","开发工具"=>"角色管理与命令控制台",_=>"快捷键、配置方案与界面设置"};
@@ -39,6 +39,7 @@ internal static class MenuSections {
   ("战局与物资","本局物资")=>n==59,
   ("战局与物资","地图模式")=>n==57,
   ("物品与装备","修理与耐久")=>n==56,
+  ("物品与装备","库存右键菜单")=>n==76,
   ("战斗与枪械","击杀特效")=>n==53,
   ("战斗与枪械","射击辅助")=>n is 8 or 9 or 10 or 28 or 39 or 40,
   ("人物与移动","生存防护")=>n is 2 or 4 or 19 or 29||n==3&&key=="AI ignore toggle",

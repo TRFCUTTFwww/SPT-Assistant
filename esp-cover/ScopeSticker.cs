@@ -16,7 +16,10 @@ internal static partial class ScopeSticker
     private const CameraEvent RenderEvent = CameraEvent.AfterEverything;
     private static ConfigEntry<bool> enabled = null!;
     private static ConfigEntry<Shortcut> editKey = null!, previousKey = null!, nextKey = null!;
-    private static ConfigEntry<float> width = null!, x = null!, y = null!, opacity = null!;
+    private static ConfigEntry<float> width = null!, x = null!, y = null!, opacity = null!, defaultColorSpeed = null!;
+    private static ConfigEntry<int> defaultColorMode = null!;
+    private static ConfigEntry<string> defaultColorPrimary = null!, defaultColorSecondary = null!;
+    private static ConfigEntry<bool> defaultColorUseMask = null!;
     private static ScopeStickerStore? store;
     private static Camera? camera;
     private static Camera.CameraCallback? callback;
@@ -34,7 +37,19 @@ internal static partial class ScopeSticker
     private static int lastRenderFrame = -10;
     private static float nextAttempt;
     private static bool reported;
-    private static ScopeStickerProfile Defaults => new() { Image = store?.Images.Keys.FirstOrDefault() ?? "", Width = width.Value, X = x.Value, Y = y.Value, Opacity = opacity.Value };
+    private static ScopeStickerProfile Defaults => new ScopeStickerProfile
+    {
+        Image = store?.Images.Keys.FirstOrDefault() ?? "",
+        Width = width.Value,
+        X = x.Value,
+        Y = y.Value,
+        Opacity = opacity.Value,
+        ColorMode = defaultColorMode.Value,
+        ColorPrimary = defaultColorPrimary.Value,
+        ColorSecondary = defaultColorSecondary.Value,
+        ColorSpeed = defaultColorSpeed.Value,
+        ColorUseMask = defaultColorUseMask.Value
+    }.Normalized();
     private static ScopeStickerProfile Value => draft ?? current;
 
     internal static void Initialize()
@@ -56,6 +71,11 @@ internal static partial class ScopeSticker
         x = FeatureConfig.Bind(section, "Horizontal position", "新倍镜默认水平位置（%）", 8f, "", new AcceptableValueRange<float>(-150, 150));
         y = FeatureConfig.Bind(section, "Vertical position", "新倍镜默认垂直位置（%）", 0f, "", new AcceptableValueRange<float>(-150, 150));
         opacity = FeatureConfig.Bind(section, "Opacity", "新倍镜默认透明度", .7f, "", new AcceptableValueRange<float>(0, 1));
+        defaultColorMode = FeatureConfig.Bind(section, "Default color mode", "新倍镜默认颜色模式", 0, "", new AcceptableValueRange<int>(0, 4));
+        defaultColorPrimary = FeatureConfig.Bind(section, "Default primary color", "新倍镜默认主颜色", "#00F0FF");
+        defaultColorSecondary = FeatureConfig.Bind(section, "Default secondary color", "新倍镜默认副颜色", "#FF38B8");
+        defaultColorSpeed = FeatureConfig.Bind(section, "Default color speed", "新倍镜默认变色速度", 1f, "", new AcceptableValueRange<float>(.01f, 50f));
+        defaultColorUseMask = FeatureConfig.Bind(section, "Default mask tint", "新倍镜默认纯色剪影", false);
         try
         {
             var host = (LocalSpt5Esp.HotReload.IHostServices)Plugin.Self.Host;
@@ -199,7 +219,7 @@ internal static partial class ScopeSticker
             commands = new CommandBuffer { name = "SPT Assistant optic sticker after effects" };
             camera!.AddCommandBuffer(RenderEvent, commands);
         }
-        if (Value.AutoContrast || Value.HitFlash) WhiteMask();
+        if (Value.AutoContrast || Value.HitFlash || (Value.ColorMode != 0 && Value.ColorUseMask)) WhiteMask();
         return true;
     }
 
@@ -217,12 +237,19 @@ internal static partial class ScopeSticker
         }
         mesh!.vertices = vertices!; mesh.RecalculateBounds();
         bool flashing = IsFlashing(value);
-        var tint = flashing && ScopeStickerRules.TryHex(value.HitColor, out var rgb)
-            ? new Color(rgb.R / 255f, rgb.G / 255f, rgb.B / 255f, value.Opacity) : new Color(1, 1, 1, value.Opacity);
+        Color tint;
+        if (flashing && ScopeStickerRules.TryHex(value.HitColor, out var rgb))
+            tint = new Color(rgb.R / 255f, rgb.G / 255f, rgb.B / 255f, value.Opacity);
+        else if (value.ColorMode != 0)
+        {
+            var dyn = ScopeStickerRules.EvaluateDynamicColor(value, Time.unscaledTime);
+            tint = new Color(dyn.R / 255f, dyn.G / 255f, dyn.B / 255f, value.Opacity * dyn.AlphaFactor);
+        }
+        else tint = new Color(1, 1, 1, value.Opacity);
         for (int i = 0; i < 4; i++) vertexColors![i] = tint;
         mesh.colors = vertexColors!;
         material!.color = Color.white;
-        material.mainTexture = flashing ? WhiteMask() : texture;
+        material.mainTexture = flashing || (value.ColorMode != 0 && value.ColorUseMask) ? WhiteMask() : texture;
         // Draw after TAA/postprocessing in optic UV space. Neither weapon sway,
         // camera movement nor jittered scene matrices participate in placement.
         var color = target.targetTexture != null ? new RenderTargetIdentifier(target.targetTexture) : new RenderTargetIdentifier(BuiltinRenderTextureType.CameraTarget);

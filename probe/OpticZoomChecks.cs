@@ -46,11 +46,11 @@ internal static class OpticZoomChecks
             firearm.Properties.Single(p => p.Name == "_aimingSens").PropertyType.FullName == "System.Single" &&
             firearm.Properties.Single(p => p.Name == "_isAiming").PropertyType.FullName == "System.Boolean",
             "native firearm sensitivity application and aiming guard contracts match");
-        Check(MenuSections.Pages("镜头与画面").Contains("瞄准镜") &&
+        Check(MenuSections.Pages("镜头与画面").Contains("瞄准镜贴纸") &&
             !MenuSections.Pages("镜头与画面").Contains("倍镜变倍") &&
             MenuSections.Group("74. 倍镜变倍") == "镜头与画面" &&
-            MenuSections.OnPage("镜头与画面", "瞄准镜", "74. 倍镜变倍", "Extended optical zoom") &&
-            MenuSections.OnPage("镜头与画面", "瞄准镜", "73. 倍镜贴纸", "Enabled"),
+            MenuSections.OnPage("镜头与画面", "瞄准镜贴纸", "74. 倍镜变倍", "Extended optical zoom") &&
+            MenuSections.OnPage("镜头与画面", "瞄准镜贴纸", "73. 倍镜贴纸", "Enabled"),
             "zoom and sticker settings share one optics page");
         var sight = native.MainModule.Types.Single(t => t.FullName == "EFT.InventoryLogic.SightComponent");
         Check(sight.Methods.Single(m => m.Name == "SetScopeMode").Parameters.All(p => p.ParameterType.FullName == "System.Int32") &&

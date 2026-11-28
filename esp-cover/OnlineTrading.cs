@@ -36,8 +36,8 @@ internal static class OnlineTrading {
 
  static NativeSession? activeSession;
  static Task<string>? submitting;
- static Item? pendingItem;
- static ItemController? pendingController;
+ sealed record PendingItem(Item Item,ItemController Controller);
+ static PendingItem[] pendingItems=Array.Empty<PendingItem>();
  static Il2CppSystem.Action? pendingCallback;
  static IntPtr pendingRaid;
 
@@ -99,23 +99,25 @@ internal static class OnlineTrading {
   try{
    if(Saving)return false;
    if(__1==null||__1.Length==0)throw new ArgumentException("请选择要上架的物品。");
-   if(__1.Length>1)throw new ArgumentException("战局内线上交易每次请只选择一件或一组物品。");
    if(__2==null||__2.Length==0||__2[0]==null)throw new ArgumentException("请先设置报价币种与金额。");
 
-   string itemId=__1[0];
-   var item=session.FindItem(itemId)??throw new ArgumentException("物品已离开当前容器，请重新选择。");
-   var controller=item.Owner?.TryCast<ItemController>()??session.Controller;
+   var selected=__1.Select(id=>session.FindItem(id)??throw new ArgumentException("物品已离开当前容器，请重新选择。")).ToArray();
+   OnlineOfferAncestry.Validate(selected,item=>item.Id.ToString(),
+    item=>item.CurrentAddress?.Container?.TryCast<ItemController>()!=null,
+    item=>item.CurrentAddress?.Container?.ParentItem);
+   foreach(var item in selected){
+    if(item.TemplateId!=selected[0].TemplateId)throw new ArgumentException("同一报价请选择同类物品。");
+   }
    var factory=Singleton<ItemFactory>.Instance??throw new ArgumentException("物品工厂尚未就绪。");
-   var flat=factory.TreeToFlatItems(new Item[]{item});
+   var flat=factory.TreeToFlatItems(selected);
    string jsonTree=LocalSpt.Shared.RaidStashJson.Normalize(Newtonsoft.Json.JsonConvert.SerializeObject(new Il2CppSystem.Object(flat.Pointer)),out _,out _).ToJsonString();
 
    var req=__2[0];
    string currency=req._tpl??"5449016a4bdc2d6f028b456f";
    double price=Math.Truncate(req.count);
-   int count=Math.Max(1,item.StackObjectsCount);
+   int count=selected.Sum(item=>Math.Max(1,item.StackObjectsCount));
 
-   pendingItem=item;
-   pendingController=controller;
+   pendingItems=selected.Select(item=>new PendingItem(item,item.Owner?.TryCast<ItemController>()??session.Controller)).ToArray();
    pendingCallback=__3;
    pendingRaid=session.Raid;
    submitting=CharacterDataPanel.Call("/local/gear/data","characterData",new(){
@@ -128,6 +130,7 @@ internal static class OnlineTrading {
    });
    FeatureToasts.Show(I18n.Text("正在上架到跳蚤市场…"));
   }catch(Exception error){
+   Plugin.Self?.Log.LogWarning("Online offer preparation failed: "+error.Message);
    FeatureToasts.Show(error.Message);
   }
   return false;
@@ -168,8 +171,8 @@ internal static class OnlineTrading {
    listed=data.TryGetProperty("ok",out var ok)&&ok.ValueKind==JsonValueKind.True;
    if(!listed)throw new ArgumentException("上架结果无法确认。");
    bool instantSold=data.TryGetProperty("instantSold",out var sold)&&sold.GetBoolean();
-   if(CurrentRaid()==pendingRaid&&pendingItem!=null&&pendingController!=null)
-    RemoveFromRaid(pendingItem,pendingController);
+   if(CurrentRaid()==pendingRaid)
+    foreach(var pending in pendingItems)RemoveFromRaid(pending.Item,pending.Controller);
    try{pendingCallback?.Invoke();}catch{}
    try{if(activeSession?.Window!=null&&activeSession.Window.gameObject.activeInHierarchy)activeSession.Window.Close();}catch{}
    activeSession=null;
@@ -184,8 +187,7 @@ internal static class OnlineTrading {
    }
   }finally{
    submitting=null;
-   pendingItem=null;
-   pendingController=null;
+   pendingItems=Array.Empty<PendingItem>();
    pendingCallback=null;
    pendingRaid=IntPtr.Zero;
   }
@@ -194,8 +196,7 @@ internal static class OnlineTrading {
  internal static void Reset(){
   activeSession=null;
   submitting=null;
-  pendingItem=null;
-  pendingController=null;
+  pendingItems=Array.Empty<PendingItem>();
   pendingCallback=null;
   pendingRaid=IntPtr.Zero;
  }

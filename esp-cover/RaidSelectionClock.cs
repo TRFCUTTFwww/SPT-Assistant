@@ -21,6 +21,7 @@ internal static class RaidSelectionClock {
  static long displayedSecond=-1;
  static JsonType.EDateTime displayedPhase;
  static bool displayedBoth;
+ static string? displayedLocation;
  static bool wasSelecting,localSession;
 
  internal static void Initialize(Plugin plugin){
@@ -93,13 +94,17 @@ internal static class RaidSelectionClock {
    long second=current.Ticks/TimeSpan.TicksPerSecond;
    var phase=target.SelectedDateTime;
    bool both=target._takeFromCurrent;
-   if(second==displayedSecond&&phase==displayedPhase&&both==displayedBoth)return;
+   // Switching maps reuses this panel and writes native server time into its labels.
+   // A paused clock has no new second to invalidate the previous map's display.
+   string location=selection.SelectedLocation.Id;
+   if(second==displayedSecond&&phase==displayedPhase&&both==displayedBoth&&location==displayedLocation)return;
    var first=both?current:Phase(current,phase);
    if(target._currentPhaseTime!=null)EFT.StringExtensions.SetMonospaceText(target._currentPhaseTime,first.ToString("HH:mm:ss"),true);
    if(both&&target._nextPhaseTime!=null)EFT.StringExtensions.SetMonospaceText(target._nextPhaseTime,Phase(current,JsonType.EDateTime.PAST).ToString("HH:mm:ss"),true);
    displayedSecond=second;
    displayedPhase=phase;
    displayedBoth=both;
+   displayedLocation=location;
   }catch(Exception error){panel=null;Warn(error);}
  }
 

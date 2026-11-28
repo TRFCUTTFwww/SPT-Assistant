@@ -23,7 +23,7 @@ internal sealed class ItemComponentParameters {
  internal static string AttributeName(string key)=>key switch {"durability"=>"当前耐久","maxDurability"=>"最大耐久","medicalResource"=>"医疗余量","foodResource"=>"食物余量","keyRemaining"=>"钥匙次数","poisonUses"=>"毒素余量","resource"=>"资源余量","repairKitResource"=>"维修工具余量","toggledOn"=>"开关状态","foundInRaid"=>"搜刮标记",_=>key};
  internal Dictionary<string,object?> Attributes(){var result=new Dictionary<string,object?>();void Add(string key,object? value){if(value!=null)result[key]=value;}Add("durability",Durability);Add("maxDurability",MaxDurability);Add("medicalResource",MedicalResource);Add("foodResource",FoodResource);Add("keyRemaining",KeyRemaining);Add("poisonUses",PoisonUses);Add("resource",Resource);Add("repairKitResource",RepairKitResource);Add("toggledOn",ToggledOn);Add("foundInRaid",FoundInRaid);return result;}
  internal void Apply(Item item,bool? inheritedFir=null){
-  if(Durability.HasValue||MaxDurability.HasValue){var component=item.GetItemComponent<RepairableComponent>()??throw new ArgumentException("物品没有耐久属性。");float maximum=MaxDurability??component.MaxDurability;float current=Durability??component.Durability;Check(maximum,.01f,StorageMaximum);Check(current,0,maximum);component.MaxDurability=maximum;component.Durability=current;}
+  if(Durability.HasValue||MaxDurability.HasValue){var component=item.GetItemComponent<RepairableComponent>()??throw new ArgumentException("物品没有耐久属性。");float maximum=MaxDurability??component.MaxDurability;float current=Durability??component.Durability;Check(maximum,.01f,StorageMaximum);Check(current,0,StorageMaximum);component.MaxDurability=maximum;component.Durability=current;}
   if(MedicalResource is float medical){Check(medical,0,StorageMaximum);(item.GetItemComponent<MedKitComponent>()??throw new ArgumentException("物品没有医疗使用量。")).HpResource=medical;}
   if(FoodResource is float food){Check(food,0,StorageMaximum);(item.GetItemComponent<FoodDrinkComponent>()??throw new ArgumentException("物品没有食物使用量。")).HpPercent=food;}
   if(KeyRemaining is int remaining){var key=item.GetItemComponent<KeyComponent>()??throw new ArgumentException("物品不是钥匙。");key.NumberOfUsages=checked(key.Template.MaximumNumberOfUsage-remaining);}
@@ -98,8 +98,8 @@ internal sealed class ItemComponentEditor {
  internal ItemComponentParameters Read(){
   var result=new ItemComponentParameters{ToggledOn=toggle==0?null:toggle==1,FoundInRaid=fir==0?null:fir==1};
   foreach(var field in fields)if(!field.Dogtag&&enabled.Contains(field.Key)){
-   if(field.Integer){result.KeyRemaining=ItemSpawnRules.Integer(draft[field.Key],0,int.MaxValue,field.Name);continue;}
-   float value=ItemSpawnRules.Number(draft[field.Key],field.Key=="maxDurability"?.01f:0,ItemComponentParameters.StorageMaximum,field.Name);
+   if(field.Integer){result.KeyRemaining=ItemSpawnRules.Integer(draft[field.Key],int.MinValue,int.MaxValue,field.Name);continue;}
+   float value=ItemSpawnRules.Number(draft[field.Key],-ItemComponentParameters.StorageMaximum,ItemComponentParameters.StorageMaximum,field.Name);
    switch(field.Key){case "durability":result.Durability=value;break;case "maxDurability":result.MaxDurability=value;break;case "medicalResource":result.MedicalResource=value;break;case "foodResource":result.FoodResource=value;break;case "keyRemaining":result.KeyRemaining=(int)value;break;case "poisonUses":result.PoisonUses=value;break;case "resource":result.Resource=value;break;case "repairKitResource":result.RepairKitResource=value;break;}
   }
   return result;

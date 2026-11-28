@@ -47,7 +47,7 @@ public sealed class RaidParameterStore(string directory) {
   return list.ToArray();
  }
  static string Faction(string f)=>f switch{"scav"=>"Scav","usec"=>"USEC","bear"=>"BEAR","boss"=>"Boss","follower"=>"保镖","cultist"=>"邪教徒","blackDivision"=>"黑色军团","raider"=>"掠夺者","rogue"=>"游荡者",_=>f};
- static void Validate(Definition d,JsonNode? value){if(d.Boolean){if(value is not JsonValue b||!b.TryGetValue<bool>(out _))throw new ArgumentException(d.Name+"必须为开关。");return;}if(value==null||!double.TryParse(value.ToJsonString(),NumberStyles.Float,CultureInfo.InvariantCulture,out double v)||!double.IsFinite(v)||v<d.Min||v>d.Max||d.Integer&&v!=Math.Truncate(v))throw new ArgumentException($"{d.Name}须为 {d.Min}～{d.Max} 范围内的{(d.Integer?"整数":"数字")}。");}
+ static void Validate(Definition d,JsonNode? value){if(d.Boolean){if(value is not JsonValue b||!b.TryGetValue<bool>(out _))throw new ArgumentException(d.Name+"必须为开关。");return;}if(value==null||!double.TryParse(value.ToJsonString(),NumberStyles.Float,CultureInfo.InvariantCulture,out double v)||!double.IsFinite(v)||d.Integer&&v!=Math.Truncate(v))throw new ArgumentException($"{d.Name}请输入有效的{(d.Integer?"整数":"数字")}。");}
  static void Ranges(JsonObject result){
   void Pair(JsonNode owner,string lo,string hi){var a=owner[lo];var b=owner[hi];if(a!=null&&b!=null&&double.TryParse(a.ToString(),NumberStyles.Float,CultureInfo.InvariantCulture,out double x)&&double.TryParse(b.ToString(),NumberStyles.Float,CultureInfo.InvariantCulture,out double y)&&x>y)throw new ArgumentException(lo+"不能大于 "+hi+"。");}
   foreach(string stem in new[]{"BotSpawnTimeOn","BotSpawnTimeOff"})Pair(result["map"]!,stem+"Min",stem+"Max");

@@ -17,8 +17,9 @@ internal static class ItemFirContext {
  const string EditButtonId="assistant.edit-inventory-item";
  const string FirButtonId="assistant.found-in-raid";
  const string OfferButtonId="assistant.online-add-offer";
- internal static bool CanReload=>request==null&&!ItemInventoryEditor.Saving&&!OnlineTrading.Saving;
+ internal static bool CanReload=>request==null&&!ItemInventoryEditor.Saving&&!OnlineTrading.Saving&&!GridCellItemCreator.Saving;
  internal static void Initialize(Plugin plugin){
+  InventoryContextSettings.Initialize();
   var method=AccessTools.Method(typeof(ItemUiContext),nameof(ItemUiContext.ShowContextMenu));
   if(Harmony.GetPatchInfo(method) is {} patches)
    foreach(var patch in patches.Postfixes)
@@ -52,7 +53,7 @@ internal static class ItemFirContext {
     ClearButtons(container);
   }catch(Exception error){Warn(error);}
  }
- static void ClearButtons(InteractionButtonsContainer? container){
+ internal static void ClearButtons(InteractionButtonsContainer? container){
   if(container?._buttonsContainer==null)return;
   foreach(var button in container._buttonsContainer.GetComponentsInChildren<SimpleContextMenuButton>(true)){
    try{
@@ -78,20 +79,22 @@ internal static class ItemFirContext {
   button.SetButtonInteraction(Comfort.Common.SuccessfulResult.New);
  }
  static void Menu(ItemUiContext __instance,ItemContext __0){try{
+  GridCellItemCreator.NativeItemMenuOpened();
   var item=__0?.Item;var owner=__instance._profile;var container=__instance.ContextMenu?._interactionButtonsContainer;
   ClearButtons(container);
   if(item==null||container?._buttonTemplate==null||container._buttonsContainer==null)return;
+  RaidItemPoolGuard.Warm(item);
   if(MiscPanel.Options.OnlineTrading&&ItemSpawner.InRaid()&&ChatFikaSession.Role==0&&!OnlineTrading.Open&&!OnlineTrading.Saving&&!ItemInventoryEditor.Open&&!ItemInventoryEditor.Saving){
    AddButton(container,OfferButtonId,I18n.Text("新增报价"),()=>{try{OnlineTrading.OpenNative(item,__instance,__instance._itemController??__instance._inventoryController);}catch(Exception error){FeatureToasts.Show(error.Message);}});
   }
   if(owner==null||!Owned(owner,item))return;
-  if(!ItemInventoryEditor.Open&&!ItemInventoryEditor.Saving){
-   AddButton(container,EditButtonId,I18n.Text("编辑"),()=>{try{ItemInventoryEditor.Show(owner,item);}catch(Exception error){FeatureToasts.Show(error.Message);}});
+  if(InventoryContextSettings.Edit&&!ItemInventoryEditor.Open&&!ItemInventoryEditor.Saving){
+   AddButton(container,EditButtonId,I18n.Text("编辑"),()=>{try{if(InventoryContextSettings.Edit)ItemInventoryEditor.Show(owner,item);}catch(Exception error){FeatureToasts.Show(error.Message);}});
   }
-  if(request!=null||ItemInventoryEditor.Saving)return;
+  if(!InventoryContextSettings.Fir||request!=null||ItemInventoryEditor.Saving)return;
   string caption=item.SpawnedInSession?"移除战局内发现标记":"添加战局内发现标记";
   bool original=item.SpawnedInSession;
-  AddButton(container,FirButtonId,I18n.Text(caption),()=>{try{if(item.SpawnedInSession!=original)throw new ArgumentException("物品标记已经改变，请重新打开右键菜单。");Change(owner,item,!original);}catch(Exception e){FeatureToasts.Show(e.Message);}});
+  AddButton(container,FirButtonId,I18n.Text(caption),()=>{try{if(!InventoryContextSettings.Fir)return;if(item.SpawnedInSession!=original)throw new ArgumentException("物品标记已经改变，请重新打开右键菜单。");Change(owner,item,!original);}catch(Exception e){FeatureToasts.Show(e.Message);}});
  }catch(Exception error){Warn(error);}
  }
  internal static IEnumerable<(string Id,string Name)> Items(){var owner=ItemUiContext.Instance?._profile;return owner?.Inventory?.AllRealPlayerItems?.Where(i=>i!=null).Select(i=>(i.Id,LootDisplay.ItemName(i,false))).ToArray()??Array.Empty<(string,string)>();}
@@ -122,6 +125,7 @@ internal static class ItemFirContext {
  internal static void Tick(){if(request?.IsCompleted!=true)return;string message;try{using var doc=JsonDocument.Parse(request.GetAwaiter().GetResult());var root=doc.RootElement;if(root.TryGetProperty("err",out var err)&&err.GetInt32()!=0)throw new ArgumentException(root.TryGetProperty("errmsg",out var msg)?msg.GetString():"保存失败。");if(profile!=null&&pending!=null&&Owned(profile,pending))Apply(profile,pending,desired);message=desired?"已添加战局内发现标记并保存。":"已移除战局内发现标记并保存。";}catch(Exception e){message=e.Message;FeatureToasts.Show(message);}if(fromCommand)RaidChat.Output(message);request=null;pending=null;profile=null;fromCommand=false;}
  internal static void Reset(){
   ItemInventoryEditor.Reset();
+  GridCellItemCreator.Reset();
   ClearLoadedMenus();
   ItemUiContext.Instance?.ContextMenu?.Close();
   request=null;pending=null;profile=null;fromCommand=false;

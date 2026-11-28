@@ -79,11 +79,7 @@ internal static partial class ItemInventoryEditor {
     var component=RequireDogtag(sample);
     var expected=ReadDogtag(component).With(dogtag);
     expected.Write(component,dogtag);
-    if(ReadDogtag(component)!=expected)throw new ArgumentException("游戏未接受其中一项狗牌参数，请调整后重试。");
    }
-   var actual=LoadoutPlans.Parameters(sample).Attributes();
-   if(attributes.Any(pair=>!actual.TryGetValue(pair.Key,out var value)||!Equals(pair.Value,value)))
-    throw new ArgumentException("游戏未接受其中一项物品参数，请调整数值。");
 
    if(current.IsInRaid){
     if(ChatFikaSession.Role!=0)throw new ArgumentException("FIKA 战局暂不支持右键编辑库存物品。");

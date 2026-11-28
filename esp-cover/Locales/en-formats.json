@@ -643,5 +643,13 @@
   "已直购 {0} ×{1}（-₽{2}），×{3} 已转入邮件": "Bought {0} ×{1} (-₽{2}); remaining ×{3} sent to mail",
   "已直购到背包：{0} ×{1}（-₽{2}）": "Bought to bag: {0} ×{1} (-₽{2})",
   "已重新生成 AI 报盘（清理旧单 {0} 条）": "Regenerated AI offers (cleared {0} stale offers)",
-  "JSON 语法无效：第 {0} 行，第 {1} 列。": "Invalid JSON at line {0}, column {1}."
+  "JSON 语法无效：第 {0} 行，第 {1} 列。": "Invalid JSON at line {0}, column {1}.",
+  "空格位 ({0}, {1})": "Empty cell ({0}, {1})",
+  "在格位 ({0}, {1}) 添加物品": "Add item at cell ({0}, {1})",
+  "已向格位 ({0}, {1}) 添加 {2} 件物品。": "Added {2} item(s) at cell ({0}, {1}).",
+  "目标格位 ({0}, {1}) 空间不足或受容器限制，可勾选「自动寻位」或「忽略容器限制」。": "Cell ({0}, {1}) lacks space or is restricted; enable Auto-fit cell or Ignore container rules.",
+  "{0}须为有效整数。": "{0} must be a valid integer.",
+  "{0}须为有效数字。": "{0} must be a valid number.",
+  "热更新完成 · {0} ms": "Hot reload complete · {0} ms",
+  "切换武器失败：{0}": "Could not switch weapon: {0}"
 }

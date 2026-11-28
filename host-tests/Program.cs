@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Diagnostics;
 using LocalSpt5Esp.HotReload;
 using UnityEngine;
+LifecycleBatchChecks.Run();
 void Check(bool condition,string message){if(!condition)throw new Exception(message);}
 TestState.MainThread=Environment.CurrentManagedThreadId;
 string home=Path.Combine(Path.GetTempPath(),"spt-host-tests-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(Path.Combine(home,"runtime"));
@@ -34,4 +35,28 @@ var game=new EFT.AbstractGame{GameTimer=new()};Comfort.Common.Singleton<EFT.Abst
 Console.WriteLine("PASS wall-clock raid deadline compensation and exact original time scale restoration");
 Comfort.Common.Singleton<EFT.AbstractGame>.Instance=null;TestState.FailNextUnload=true;host.RequestReload();Pump(()=>host.SafetyBlocked);host.RollbackPreviousVersion();for(int i=0;i<20;i++){host.Update();host.Draw();}Check(host.SafetyBlocked&&Time.timeScale==0,"unsafe unload allowed rollback or automatic resume");
 Console.WriteLine("PASS failed unload prevents unsafe rollback and retains pause");
+
+// Fast silent time-budgeted swap mode verification
+string fastHome=Path.Combine(Path.GetTempPath(),"spt-host-fast-tests-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(Path.Combine(fastHome,"runtime"));
+File.Copy(args[0],Path.Combine(fastHome,"runtime","Local.Spt5.ESP.Core.module"));
+TestState.FastMode=true;TestState.Init=0;TestState.Unload=0;Time.timeScale=0.75f;
+using(var fastHost=new RuntimeReloader(new BepInEx.Configuration.ConfigFile(),new BepInEx.Logging.ManualLogSource(),fastHome)){
+ fastHost.Start();
+ var swFast=Stopwatch.StartNew();
+ int frames=0;
+ while(swFast.Elapsed.TotalSeconds<5){
+  frames++;
+  fastHost.Update();fastHost.LateUpdate();fastHost.Draw();
+  var st=Path.Combine(fastHome,"runtime","hotreload-status.json");
+  if(File.Exists(st)){using var d=JsonDocument.Parse(File.ReadAllBytes(st));if(d.RootElement.GetProperty("generation").GetInt32()==1)break;}
+  Thread.Sleep(1);
+ }
+ Check(TestState.Init==3&&Time.timeScale==0.75f,"time-budgeted fast reload completed all steps and immediately restored Time.timeScale without waiting on 2-frame modal or backup disk writes");
+ TestState.FailNextInit=true;fastHost.RequestReload();
+ var swFail=Stopwatch.StartNew();
+ while(!fastHost.SafetyBlocked&&swFail.Elapsed.TotalSeconds<5){fastHost.Update();fastHost.Draw();Thread.Sleep(1);}
+ Check(fastHost.SafetyBlocked&&Time.timeScale==0,"fast reload mode still immediately pauses and blocks on init failure");
+}
+TestState.FastMode=false;
+Console.WriteLine("PASS silent time-budgeted fast reload mode and immediate failure pause guard");
 // Test files remain in an isolated temporary directory for inspection.

@@ -83,8 +83,6 @@ public static class ProfileJsonEditorService
                 liveJson == baseline ? null : baseline);
             var candidate = json.Deserialize<SptProfile>(mergedJson)
                 ?? throw new ArgumentException("修改后的 JSON 无法转换为当前 SPT 服务端存档模型。");
-            if (candidate.CharacterData?.PmcData?.Id != profile.CharacterData?.PmcData?.Id)
-                throw new ArgumentException("目标角色身份校验失败。");
             return candidate;
         }
 

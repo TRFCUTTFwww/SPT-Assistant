@@ -32,27 +32,45 @@ internal static class ItemCatalog {
   }
  }
  static Dictionary<string,Node> ReadDatabase(){
-  using var stream=File.OpenRead(DatabasePath);
-  using var json=JsonDocument.Parse(stream);
-  var result=new Dictionary<string,Node>(StringComparer.Ordinal);
-  foreach(var entry in json.RootElement.EnumerateObject()){
-   var template=entry.Value;
-   string parent=template.TryGetProperty("_parent",out var p)?p.GetString()??"":"";
-   string name=template.TryGetProperty("_name",out var n)?n.GetString()??"":"";
-   bool quest=false;
-   AmmoStats? ammo=null;
-   if(template.TryGetProperty("_props",out var props)&&props.ValueKind==JsonValueKind.Object){
-    quest=props.TryGetProperty("QuestItem",out var q)&&q.ValueKind==JsonValueKind.True;
-    if(template.TryGetProperty("_type",out var type)&&type.ValueEquals("Item")&&
-       props.TryGetProperty("Caliber",out var caliber)&&caliber.ValueKind==JsonValueKind.String&&
-       caliber.GetString() is { Length: >0 } nameOfCaliber&&Number(props,"Damage") is double damage&&
-       Number(props,"PenetrationPower") is double penetration){
-     double pellets=Number(props,"buckshotBullets")??0;
-     ammo=new(entry.Name,nameOfCaliber,damage,penetration,Number(props,"ArmorDamage"),
-      Number(props,"InitialSpeed"),Number(props,"ammoRec"),pellets>0?pellets:Math.Max(1,Number(props,"ProjectileCount")??1));
+  const string CacheKey="LocalSpt5Esp.ItemCatalogRaw.v1";
+  string dbPath=DatabasePath;
+  long ticks=File.GetLastWriteTimeUtc(dbPath).Ticks;
+  string stamp=dbPath+"|"+ticks;
+  (string Id,string Parent,string Name,bool Quest,bool HasAmmo,string Caliber,double Dmg,double Pen,double? ArmorDmg,double? Speed,double? Recoil,double Proj)[] rawRows;
+  if(AppDomain.CurrentDomain.GetData(CacheKey) is ValueTuple<string,(string,string,string,bool,bool,string,double,double,double?,double?,double?,double)[]> cached&&cached.Item1==stamp){
+   rawRows=cached.Item2;
+  }else{
+   using var stream=File.OpenRead(dbPath);
+   using var json=JsonDocument.Parse(stream);
+   var list=new List<(string,string,string,bool,bool,string,double,double,double?,double?,double?,double)>(4096);
+   foreach(var entry in json.RootElement.EnumerateObject()){
+    var template=entry.Value;
+    string parent=template.TryGetProperty("_parent",out var p)?p.GetString()??"":"";
+    string name=template.TryGetProperty("_name",out var n)?n.GetString()??"":"";
+    bool quest=false,hasAmmo=false;
+    string cal="";double dmg=0,pen=0,proj=1;double? ad=null,spd=null,rec=null;
+    if(template.TryGetProperty("_props",out var props)&&props.ValueKind==JsonValueKind.Object){
+     quest=props.TryGetProperty("QuestItem",out var q)&&q.ValueKind==JsonValueKind.True;
+     if(template.TryGetProperty("_type",out var type)&&type.ValueEquals("Item")&&
+        props.TryGetProperty("Caliber",out var caliber)&&caliber.ValueKind==JsonValueKind.String&&
+        caliber.GetString() is { Length: >0 } nameOfCaliber&&Number(props,"Damage") is double damage&&
+        Number(props,"PenetrationPower") is double penetration){
+      double pellets=Number(props,"buckshotBullets")??0;
+      hasAmmo=true;cal=nameOfCaliber;dmg=damage;pen=penetration;
+      ad=Number(props,"ArmorDamage");spd=Number(props,"InitialSpeed");rec=Number(props,"ammoRec");
+      proj=pellets>0?pellets:Math.Max(1,Number(props,"ProjectileCount")??1);
+     }
     }
+    list.Add((entry.Name,parent,name,quest,hasAmmo,cal,dmg,pen,ad,spd,rec,proj));
    }
-   result[entry.Name]=new(parent,name,quest,ammo);
+   rawRows=list.ToArray();
+   AppDomain.CurrentDomain.SetData(CacheKey,(stamp,rawRows));
+  }
+  var result=new Dictionary<string,Node>(rawRows.Length,StringComparer.Ordinal);
+  for(int i=0;i<rawRows.Length;i++){
+   var r=rawRows[i];
+   AmmoStats? ammo=r.HasAmmo?new(r.Id,r.Caliber,r.Dmg,r.Pen,r.ArmorDmg,r.Speed,r.Recoil,r.Proj):null;
+   result[r.Id]=new(r.Parent,r.Name,r.Quest,ammo);
   }
   foreach(var caliber in result.Values.Select(node=>node.Ammo).OfType<AmmoStats>().GroupBy(round=>round.Caliber)){
    var tiers=caliber.OrderBy(round=>round.Penetration).ThenBy(round=>round.Damage)

@@ -15,4 +15,7 @@
     <EmbeddedResource Include="Assets/Story.png" LogicalName="LocalSpt5Esp.Assets.Story.png" />
     <EmbeddedResource Include="Assets/Server.png" LogicalName="LocalSpt5Esp.Assets.Server.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../shared/LifecycleSteps.cs" Link="LifecycleSteps.cs" />
+  </ItemGroup>
 </Project>

@@ -27,7 +27,7 @@ public sealed class RaidSettings {
  public string AirdropType {get;set;}="random";
  public int AirdropQuality {get;set;}
  public void Validate(){if(Schema!=1)throw new ArgumentException("设置版本不受支持。");void Nonnegative(double value,string name){if(!double.IsFinite(value)||value<0)throw new ArgumentException(name+"须为非负有限数字。");}
-  if(!double.IsFinite(NextRaidMinutes)||NextRaidMinutes<0||NextRaidMinutes>10080)throw new ArgumentException("战局时间为 0（默认）或最多 10080 分钟。 ");
+  if(!double.IsFinite(NextRaidMinutes)||NextRaidMinutes<0)throw new ArgumentException("战局时间须为非负有限数字。");
   if(FactionMultipliers==null)throw new ArgumentException("阵营设置无效。");foreach(var pair in FactionMultipliers){if(Array.IndexOf(RaidSpawnRules.Factions,pair.Key)<0)throw new ArgumentException("未知阵营："+pair.Key);Nonnegative(pair.Value,"阵营刷新倍率");}
   if(ItemWeights==null)throw new ArgumentException("单物品权重设置无效。");foreach(var pair in ItemWeights){if(pair.Key.Length!=24)throw new ArgumentException("物品编号无效。");foreach(char c in pair.Key)if(!Uri.IsHexDigit(c))throw new ArgumentException("物品编号无效。");Nonnegative(pair.Value,"单物品权重");}
   Nonnegative(LooseMultiplier,"散落物倍率");Nonnegative(ContainerMultiplier,"容器物资倍率");Nonnegative(HighValueMultiplier,"高价值权重倍率");if(HighValueMultiplier==0)throw new ArgumentException("高价值权重倍率须大于 0，候选概率池必须保留正权重。");Nonnegative(ValueThreshold,"高价值门槛");if(Array.IndexOf(new[]{"random","mixed","weaponArmor","foodMedical","barter"},AirdropType)<0||AirdropQuality<0||AirdropQuality>2)throw new ArgumentException("空投类型或品质无效。");}

@@ -28,24 +28,47 @@ internal static class InventoryJsonChecks {
   void Reject(Action action,string name){bool rejected=false;try{action();}catch(ArgumentException){rejected=true;}Check(rejected&&json.Serialize(inventory)==unchanged,name);}
   Reject(()=>InventoryItemJson.Apply(inventory,request.Id,request.Template,request.Preview,revision,json),"stale item revisions preserve live data");
   Reject(()=>InventoryItemJson.Find(inventory,request.Id,new MongoId().ToString()),"stale templates cannot address another item");
+
+  // Unrestricted _tpl and placement edits are now supported
   string latest=json.Serialize(saved)!;
-  foreach(string key in new[]{"_id","_tpl","parentId","slotId","location"}){
-   var invalid=InventoryItemJsonRules.Parse(latest);invalid[key]="changed";
-   Reject(()=>InventoryItemJson.Apply(inventory,request.Id,request.Template,invalid.ToJsonString(),InventoryItemJson.Revision(saved,json),json),"identity and placement locked: "+key);
-  }
-  foreach(string invalid in new[]{"[]","null","{", "{\"_id\":1,\"_id\":2}",new string('x',InventoryItemJsonRules.Limit+1)})
-   Reject(()=>InventoryItemJsonRules.Parse(invalid),"invalid, duplicate or oversized document rejected");
-  foreach(JsonNode invalidCount in new JsonNode[]{JsonValue.Create(1.5)!,JsonValue.Create("2")!,new JsonObject()}){
+  var tplChange=InventoryItemJsonRules.Parse(latest);
+  string newTpl="59faff1d86f7746c51718c9c";
+  tplChange["_tpl"]=newTpl;
+  var reTemplated=InventoryItemJson.Apply(inventory,saved.Id.ToString(),saved.Template.ToString(),tplChange.ToJsonString(),InventoryItemJson.Revision(saved,json),json);
+  Check(reTemplated.Template.ToString()==newTpl,"unrestricted item JSON allows changing _tpl");
+  unchanged=json.Serialize(inventory)!;
+  latest=json.Serialize(reTemplated)!;
+
+  var collideSibling=InventoryItemJsonRules.Parse(latest);
+  collideSibling["_id"]=sibling.Id.ToString();
+  Reject(()=>InventoryItemJson.Apply(inventory,reTemplated.Id.ToString(),reTemplated.Template.ToString(),collideSibling.ToJsonString(),InventoryItemJson.Revision(reTemplated,json),json),"colliding with an unrelated inventory _id is still prevented");
+
+  foreach(string invalid in new[]{"[]","null","{"})
+   Reject(()=>InventoryItemJsonRules.Parse(invalid),"invalid or non-object document rejected");
+  foreach(JsonNode invalidCount in new JsonNode[]{JsonValue.Create("invalid")!,new JsonObject()}){
    var invalid=InventoryItemJsonRules.Parse(latest);invalid["upd"]!["StackObjectsCount"]=invalidCount;
-   Reject(()=>InventoryItemJson.Apply(inventory,request.Id,request.Template,invalid.ToJsonString(),InventoryItemJson.Revision(saved,json),json),"invalid count rejected without a partial write");
+   Reject(()=>InventoryItemJson.Apply(inventory,reTemplated.Id.ToString(),reTemplated.Template.ToString(),invalid.ToJsonString(),InventoryItemJson.Revision(reTemplated,json),json),"invalid count rejected without a partial write");
   }
   var wrongType=InventoryItemJsonRules.Parse(latest);wrongType["upd"]!["Dogtag"]!["Level"]="wrong";
-  Reject(()=>InventoryItemJson.Apply(inventory,request.Id,request.Template,wrongType.ToJsonString(),InventoryItemJson.Revision(saved,json),json),"native field type errors leave inventory untouched");
+  Reject(()=>InventoryItemJson.Apply(inventory,reTemplated.Id.ToString(),reTemplated.Template.ToString(),wrongType.ToJsonString(),InventoryItemJson.Revision(reTemplated,json),json),"native field type errors leave inventory untouched");
   var remove=InventoryItemJsonRules.Parse(latest);remove.Remove("upd");
-  var cleared=InventoryItemJson.Apply(inventory,request.Id,request.Template,remove.ToJsonString(),InventoryItemJson.Revision(saved,json),json);
+  var cleared=InventoryItemJson.Apply(inventory,reTemplated.Id.ToString(),reTemplated.Template.ToString(),remove.ToJsonString(),InventoryItemJson.Revision(reTemplated,json),json);
   Check(cleared.Upd==null&&JsonNode.DeepEquals(remove,JsonNode.Parse(json.Serialize(cleared)!)),"an item without upd is accepted and round trips without invented fields");
-  Check(InventoryItemJsonRules.RemovesFields(new(){["Tag"]=new JsonObject{["Name"]="old"}},new(){["Tag"]=new JsonObject()}),"native component deletions require a profile refresh");
+  Check(InventoryItemJsonRules.RemovesFields(new(){["Tag"]=new JsonObject{["Name"]="old"}},new(){["Tag"]=new JsonObject()}),"native component deletions detected for in-place vs full-tree rebuild");
   Check(InventoryItemJsonRules.Matches(new(){["StackObjectsCount"]=1,["SpawnedInSession"]=false},new()),"native omitted defaults retain a single item and false FIR");
+
+  // Grid cell JSON add normalization (single object, flat array, preset wrapper, Base64)
+  var (singleRoots,singleArr)=InventoryItemJsonRules.NormalizeForGridAdd("{\"_tpl\":\"59faff1d86f7746c51718c9c\",\"upd\":{\"StackObjectsCount\":1}}");
+  Check(singleRoots.Count==1&&singleArr.Count==1&&singleArr[0]!["_id"]!.GetValue<string>().Length==24,"single object JSON auto-generates a fresh 24-hex _id for grid placement");
+  string presetJson="{\"Items\":[{\"_id\":\"oldroot\",\"_tpl\":\"5447a9cd4bdc2dbd208b4567\"},{\"_id\":\"oldchild\",\"_tpl\":\"55d480c04bdc2d1d4e8b456a\",\"parentId\":\"oldroot\",\"slotId\":\"mod_magazine\"}]}";
+  var (presetRoots,presetArr)=InventoryItemJsonRules.NormalizeForGridAdd(presetJson);
+  Check(presetRoots.Count==1&&presetArr.Count==2&&presetArr[0]!["_id"]!.GetValue<string>()!="oldroot"&&presetArr[1]!["parentId"]!.GetValue<string>()==presetRoots[0],"weapon build Items wrapper remaps all _id and parentId links cleanly");
+  string b64=Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(presetJson));
+  var (b64Roots,b64Arr)=InventoryItemJsonRules.NormalizeForGridAdd(b64);
+  Check(b64Roots.Count==1&&b64Arr.Count==2,"Base64 encoded preset JSON unwraps and normalizes for grid placement");
+  var addedToInv=InventoryItemJson.AddItemsToGrid(inventory,presetArr.ToJsonString(),json);
+  Check(addedToInv.Count==2&&inventory.Items!.Count==4,"AddItemsToGrid appends normalized item tree to profile inventory");
+
   string food="{\"_id\":\""+new MongoId()+"\",\"_tpl\":\"5448fee04bdc2dbc018b4567\",\"upd\":{\"FoodDrink\":{\"HpPercent\":600}}}";
   string windows=JsonNode.Parse(food)!.ToJsonString(new JsonSerializerOptions{WriteIndented=true,NewLine="\r\n"});
   string display=InventoryItemJsonRules.Format(windows);

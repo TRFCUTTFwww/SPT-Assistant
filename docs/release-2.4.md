@@ -3,6 +3,17 @@
 
 Target: SPT 5.0 BE / EFT 1.3.0.1.48558, Windows x64. Changes since GitHub v2.3.5.
 
+## Release refresh — 2026-11-28
+
+- Speed up AI spawning with warm donor profile cloning, concurrent PMC preparation and immediate settlement when the spawn is ready.
+- Add fast client hot reload with persistent Harmony hooks; preserve initialization order and harden fallback hook cleanup.
+- Load missing item/attachment pools before switching hands and avoid the shared generic IL2CPP Proceed stub when installing the guard.
+- Add solid/custom scope sticker colors with presets, RGB/HEX input and synchronization across saved optics.
+- Fix online sale freezing at native inventory roots, support multiple selected items, and use synced flea prices for ESP valuation.
+- Add native inventory context actions and unrestricted JSON editing; improve empty-cell item creation, BTR friendliness, injector use, grenade trajectories and map-clock refresh.
+
+The refresh includes the full current source snapshot, changelog and linked documentation. Update with the full installer or ZIP when server components change. Game visuals remain subject to in-game verification by the user.
+
 ## Downloads
 
 - `SPT-Assistant-2.4-Setup.exe`: full offline installer. Chinese and English appear together throughout Setup; the language selector sets the in-game Assistant language.

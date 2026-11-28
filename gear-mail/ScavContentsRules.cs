@@ -23,7 +23,7 @@ public static class ScavContentsRules {
   var working=json.Deserialize<LoadoutSnapshot>(json.Serialize(loadout))!;
   foreach(var edit in edits){
    if(!Slots.Contains(edit.Key))throw new ArgumentException("只能编辑弹挂和背包的内容物。");
-   if(edit.Value==null||edit.Value.Count>512)throw new ArgumentException("内容物条目过多。");
+   if(edit.Value==null)throw new ArgumentException("内容物列表为空。");
    var container=working.Items.SingleOrDefault(i=>i.ParentId==working.EquipmentRoot&&i.SlotId==edit.Key);
    if(container==null){if(edit.Value.Count==0)continue;throw new ArgumentException("请先为该槽位选择容器。");}
    var grids=templates.Items[container.Template].Properties.Grids?.Where(g=>g.Properties!=null).ToArray()??[];
@@ -32,7 +32,6 @@ public static class ScavContentsRules {
    var seen=new HashSet<string>();var groups=new List<List<Item>>();
    foreach(var spec in edit.Value){
     if(spec.Count<1||!MongoId.IsValidMongoId(spec.Template)||!templates.Items.TryGetValue(new MongoId(spec.Template),out var definition)||definition.Type!="Item")throw new ArgumentException("内容物模板或数量无效。");
-    if(spec.Count>Math.Max(1,definition.Properties.StackMaxSize))throw new ArgumentException("数量超过单组上限，请分为多条添加。");
     List<Item> group;Item root;
     if(spec.Id.Length>0){
      if(!seen.Add(spec.Id)||!roots.TryGetValue(spec.Id,out root!)||root.Template.ToString()!=spec.Template)throw new ArgumentException("原内容物已变化，请刷新装备方案。");

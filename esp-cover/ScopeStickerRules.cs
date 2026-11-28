@@ -11,6 +11,54 @@ internal static class ScopeStickerRules
     {
         internal string Hex => $"#{R:X2}{G:X2}{B:X2}";
     }
+    internal readonly record struct AnimatedTint(byte R, byte G, byte B, float AlphaFactor);
+
+    internal static AnimatedTint EvaluateDynamicColor(ScopeStickerProfile value, float now)
+    {
+        if (!float.IsFinite(now)) now = 0;
+        float speed = float.IsFinite(value.ColorSpeed) && value.ColorSpeed > 0 ? Math.Clamp(value.ColorSpeed, .01f, 50f) : 1f;
+        switch (value.ColorMode)
+        {
+            case 1:
+            {
+                float h = ((now * speed) % 1f + 1f) % 1f * 6f;
+                int sector = (int)MathF.Floor(h) % 6;
+                float f = h - MathF.Floor(h);
+                byte q = (byte)Math.Clamp(MathF.Round((1f - f) * 255f), 0, 255);
+                byte t = (byte)Math.Clamp(MathF.Round(f * 255f), 0, 255);
+                return sector switch
+                {
+                    0 => new(255, t, 0, 1f),
+                    1 => new(q, 255, 0, 1f),
+                    2 => new(0, 255, t, 1f),
+                    3 => new(0, q, 255, 1f),
+                    4 => new(t, 0, 255, 1f),
+                    _ => new(255, 0, q, 1f)
+                };
+            }
+            case 2:
+            {
+                if (!TryHex(value.ColorPrimary, out var a)) a = new(0, 240, 255);
+                if (!TryHex(value.ColorSecondary, out var b)) b = new(255, 56, 184);
+                float mix = .5f - .5f * MathF.Cos(now * speed * MathF.PI * 2f);
+                byte Lerp(byte x, byte y) => (byte)Math.Clamp(MathF.Round(x + (y - x) * mix), 0, 255);
+                return new(Lerp(a.R, b.R), Lerp(a.G, b.G), Lerp(a.B, b.B), 1f);
+            }
+            case 3:
+            {
+                if (!TryHex(value.ColorPrimary, out var c)) c = new(0, 240, 255);
+                float pulse = .22f + .78f * (.5f - .5f * MathF.Cos(now * speed * MathF.PI * 2f));
+                return new(c.R, c.G, c.B, pulse);
+            }
+            case 4:
+            {
+                if (!TryHex(value.ColorPrimary, out var solid)) solid = new(0, 240, 255);
+                return new(solid.R, solid.G, solid.B, 1f);
+            }
+            default:
+                return new(255, 255, 255, 1f);
+        }
+    }
 
     internal static bool TryHex(string? text, out Rgb color)
     {

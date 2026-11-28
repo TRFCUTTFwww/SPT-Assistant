@@ -166,8 +166,8 @@ public static class ProfileJsonEditorRules
 
         if (deleteNode)
         {
-            if (!ProfileFieldCatalog.CanDeletePath(trimmedPath))
-                throw new ArgumentException("核心角色结构或只读身份字段不可删除。");
+            if (trimmedPath == "$")
+                throw new ArgumentException("不能删除存档根节点。");
             DeleteAt(candidate, trimmedPath);
         }
         else if (!string.IsNullOrEmpty(childKey))
@@ -187,17 +187,11 @@ public static class ProfileJsonEditorRules
                     throw new ArgumentException("只有 JSON 对象才能新增命名字段。");
                 if (obj.ContainsKey(childKey))
                     throw new ArgumentException($"字段「{childKey}」已存在，请直接选中它进行编辑。");
-                string createdPath = AppendProperty(trimmedPath, childKey);
-                if (ProfileFieldCatalog.IsLockedPath(createdPath))
-                    throw new ArgumentException("核心身份字段只读。");
                 obj[childKey] = parsedChild;
             }
         }
         else
         {
-            if (ProfileFieldCatalog.IsLockedPath(trimmedPath))
-                throw new ArgumentException("核心身份或战局状态字段（_id / aid / sessionId / scavId / inraid）只读。");
-
             JsonNode? replacement = ParseReplacement(valueJson);
             if (trimmedPath == "$")
             {
@@ -210,8 +204,6 @@ public static class ProfileJsonEditorRules
             }
         }
 
-        VerifyCoreStructureAndIdentity(original, candidate);
-        ProfileRestoreRules.Validate(candidate, installed);
         return candidate.ToJsonString();
     }
 

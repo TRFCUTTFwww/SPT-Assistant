@@ -19,10 +19,12 @@ internal static class AiSpawnService {
  sealed record Retired(NativeTask Task,Il2CppSystem.Threading.CancellationTokenSource? Cancellation,BotCreationData? Data);
  static readonly Queue<Job> queue=new();static readonly List<Retired> retired=new();static readonly ConcurrentQueue<(Job Job,int Serial,BotOwner Bot)> callbacks=new();
  static Job? active;static BotSpawner? spawner;static BotZone? zone;static BotCreationData? data;
- static Il2CppSystem.Threading.Tasks.Task<Profile>? generatingProfile;static Il2CppSystem.Threading.Tasks.Task<BotCreationData>? generating;static NativeTask? activating;
+ static Il2CppSystem.Threading.Tasks.Task<Profile>? generatingProfile;static Il2CppSystem.Threading.Tasks.Task<BotCreationData>? generating;static NativeTask? warmingPools;static NativeTask? activating;
+ static Il2CppSystem.Collections.Generic.List<ISpawnPoint>? pendingPositions;
  static Il2CppSystem.Threading.CancellationTokenSource? cancellation;static Il2CppSystem.Action<BotOwner>? callback;
  static int serial;static float nextStatus,nextWarning;internal static string Status{get;private set;}="尚无生成请求。";internal static int Revision{get;private set;}
  internal static bool Busy=>active!=null||queue.Count>0||retired.Any(entry=>!entry.Task.IsCompleted);
+ internal static bool PreparingCold=>generating!=null||generatingProfile!=null||warmingPools!=null;
  internal static int QueueCount=>queue.Count;
  static void Report(string message,bool toast=false){if(Status!=message){Status=message;Revision++;}if(toast)FeatureToasts.Show(message);}
  static BotsController Controller()=>Singleton<AbstractGame>.Instance?.TryCast<IBotGame>()?.BotsController??throw new ArgumentException("当前战局 AI 控制器尚未就绪。");
@@ -44,9 +46,9 @@ internal static class AiSpawnService {
   if(!area.HaveFreeSpace(count))throw new ArgumentException("该区域当前空位不足；区域原生容量为 "+area.MaxPersons+"，请减少数量或更换位置。");
   if(!AiLimitCompatibility.HasNavigation(controller.CoversData,position)||AICorePointHolder.GetClosest(position)==null)throw new ArgumentException("目标缺少完整 AI 导航节点，请换到原生 AI 活动区域。");
   queue.Enqueue(new(){SceneRestore=sceneRestore,World=current.Pointer,Position=position,Option=option,Difficulty=difficulty,Preset=preset,Ledger=new(count),Label=label,Revival=revival});
-  Report("已排队："+option.Name+" ×"+count+"；等待请求 "+queue.Count,true);
+  Report("已排队："+option.Name+" ×"+count+"；等待请求 "+queue.Count,queue.Count>1||active!=null);
  }
- internal static void Preload(AiSpawnOption option,int difficulty,int count){if(!option.Enabled)throw new ArgumentException(option.Unavailable);if(!Enum.TryParse<WildSpawnType>(option.Role,out _))throw new ArgumentException("当前客户端不支持此 AI 类型。");var creator=Controller().GetSpawner()?._botCreator??throw new ArgumentException("AI 资料加载器尚未就绪。");creator.AddToTargetBackup((BotDifficulty)difficulty,Enum.Parse<WildSpawnType>(option.Role),Math.Clamp(count,1,8));Report("已请求预加载："+option.Name+"；只准备资料和资源，不生成角色。",true);}
+ internal static void Preload(AiSpawnOption option,int difficulty,int count){if(!option.Enabled)throw new ArgumentException(option.Unavailable);if(!Enum.TryParse<WildSpawnType>(option.Role,out _))throw new ArgumentException("当前客户端不支持此 AI 类型。");var creator=Controller().GetSpawner()?._botCreator??throw new ArgumentException("AI 资料加载器尚未就绪。");int clamped=Math.Clamp(count,1,8);creator.AddToTargetBackup((BotDifficulty)difficulty,Enum.Parse<WildSpawnType>(option.Role),clamped);AiWarmProfilePool.PreloadNow(option,difficulty,clamped);Report("已请求预加载："+option.Name+"；只准备资料和资源，不生成角色。",true);}
  static readonly List<Job> cancelledRevivals=new();static float nextRevivalCleanup;
  static void CollectRetired(){var world=Singleton<GameWorld>.Instance;if(world==null){cancelledRevivals.Clear();}else if(Time.unscaledTime>=nextRevivalCleanup){nextRevivalCleanup=Time.unscaledTime+.5f;foreach(var job in cancelledRevivals.ToArray()){if(job.World!=world.Pointer){cancelledRevivals.Remove(job);continue;}var actors=world.AllAlivePlayersList?.ToArray().Where(p=>p!=null&&job.Expected.ContainsKey(p.ProfileId)).ToArray()??Array.Empty<Player>();if(actors.Length>0)AiRemoval.Delete(world,actors,false);}}
   for(int i=retired.Count-1;i>=0;i--){var entry=retired[i];if(!entry.Task.IsCompleted)continue;try{entry.Data?.StopSpawn();if(entry.Task.TryCast<Il2CppSystem.Threading.Tasks.Task<BotCreationData>>() is {} generated&&!generated.IsFaulted&&!generated.IsCanceled)generated.Result?.StopSpawn();entry.Cancellation?.Dispose();}catch{}retired.RemoveAt(i);}
@@ -54,54 +56,92 @@ internal static class AiSpawnService {
  static void ReleaseBatch(bool stop){
   try{if(stop){data?.StopSpawn();cancellation?.Cancel();}}catch{}
   RaidSpawnControl.ForgetManual(data);
-  NativeTask? task=activating??(NativeTask?)generating??generatingProfile;
+  NativeTask? task=activating??warmingPools??(NativeTask?)generating??generatingProfile;
   if(task!=null&&!task.IsCompleted)retired.Add(new(task,cancellation,data));else try{cancellation?.Dispose();}catch{}
-  generating=null;generatingProfile=null;activating=null;data=null;cancellation=null;callback=null;
+  generating=null;generatingProfile=null;warmingPools=null;activating=null;pendingPositions=null;data=null;cancellation=null;callback=null;
  }
  internal static void Cancel(bool notify){
   if(notify)SceneTemplates.CancelRestore();
   int made=active?.Ledger.Created.Count??0,wanted=active?.Ledger.Wanted??0;serial++;foreach(var queued in queue)queued.Revival?.Release();active?.Revival?.Release();if(active?.Revival is {Completed:false})cancelledRevivals.Add(active);queue.Clear();ReleaseBatch(true);active=null;spawner=null;zone=null;callbacks.Clear();
   if(notify)Report($"已取消剩余生成；已出现 {made}/{wanted} 名 AI 保留。",true);
  }
- internal static void Reset(){Cancel(false);CollectRetired();}
- static void Finish(string reason){var job=active;if(job==null)return;if(job.SceneRestore)SceneTemplates.SceneJobFinished(job.Ledger.Created.Count,job.Ledger.Wanted);ReleaseBatch(false);active=null;spawner=null;zone=null;if(job.Revival is {} revival){revival.Release();Report(revival.Completed?"已复活："+job.Preset.Name:"复活未完成，原尸体保留。"+(revival.Failure.Length>0?revival.Failure:reason),true);return;}Report($"{job.Option.Name}：实际生成 {job.Ledger.Created.Count}/{job.Ledger.Wanted}，用时 {Time.unscaledTime-job.Started:F1} 秒。"+reason+(job.PresetFailures>0?$" {job.PresetFailures} 名 AI 的部分出生设置失败，见日志。":""),true);}
+ internal static void Reset(){Cancel(false);CollectRetired();AiWarmProfilePool.Reset();}
+ static void Finish(string reason){var job=active;if(job==null)return;if(job.SceneRestore)SceneTemplates.SceneJobFinished(job.Ledger.Created.Count,job.Ledger.Wanted);ReleaseBatch(false);active=null;spawner=null;zone=null;if(job.Revival is {} revival){revival.Release();Report(revival.Completed?"已复活："+job.Preset.Name:"复活未完成，原尸体保留。"+(revival.Failure.Length>0?revival.Failure:reason),true);return;}float elapsed=Math.Max(0f,Time.unscaledTime-job.Started);string secondsText=elapsed<1f?elapsed.ToString("F2",System.Globalization.CultureInfo.InvariantCulture):elapsed.ToString("F1",System.Globalization.CultureInfo.InvariantCulture);Report($"{job.Option.Name}：实际生成 {job.Ledger.Created.Count}/{job.Ledger.Wanted}，用时 {secondsText} 秒。"+reason+(job.PresetFailures>0?$" {job.PresetFailures} 名 AI 的部分出生设置失败，见日志。":""),true);}
  static void BeginBatch(GameWorld current){
   var job=active!;if(job.Ledger.Missing==0){Finish("已完成。");return;}
   var controller=Controller();spawner=controller.GetSpawner()??throw new ArgumentException("AI 生成器尚未就绪。");
   zone=spawner.GetClosestZone(job.Position,out _)??throw new ArgumentException("目标 AI 区域不可用。");
-  job.BatchWanted=Math.Min(job.Ledger.Missing,job.Option.Side=="Savage"?4:1);
+  job.BatchWanted=Math.Min(job.Ledger.Missing,AiFastSpawnRules.MaxBatchSize(job.Option.Side,job.Revival!=null));
   while(job.BatchWanted>0&&!zone.HaveFreeSpace(job.BatchWanted))job.BatchWanted--;
   if(job.BatchWanted==0)throw new ArgumentException("该区域已无可用空位，未生成的数量保留在结果中。");
   job.BeforeBatch=job.Ledger.Created.Count;job.Expected.Clear();job.Completed=-1;job.Serial=++serial;
   job.Phase="资料与资源准备";job.PhaseStart=job.LastProgress=Time.unscaledTime;
   var parameters=new BotSpawnParams{TriggerType=SpawnTriggerType.none,ShallBeGroup=new ShallBeGroupParams(job.BatchWanted>1,job.Option.Boss,job.BatchWanted),Id_spawn="assistant-"+Guid.NewGuid().ToString("N")};
   var profile=new GetProfileDataParams(Enum.Parse<EPlayerSide>(job.Option.Side),Enum.Parse<WildSpawnType>(job.Option.Role),(BotDifficulty)job.Difficulty,0,parameters,true);
+  job.RequestedProfile=profile;
+
+  if(AiWarmProfilePool.TryCreateInstantBatch(current,spawner,job.Option,job.Difficulty,job.BatchWanted,out var instantProfiles)){
+   data=BotCreationData.CreateWithoutProfile(profile.Cast<IGetProfileData>());
+   data._botCreator=spawner._botCreator;
+   data._tokenGetter=spawner.Cast<ITokenGetter>();
+   for(int i=0;i<instantProfiles.Count;i++)data.AddProfile(instantProfiles[i]);
+   AiWarmProfilePool.RequestReplenish(job.Option,job.Difficulty);
+   Plugin.Self.Log.LogInfo($"Manual AI instant warm batch: role={job.Option.Role}/{job.Option.Side}, count={instantProfiles.Count}, missing={job.Ledger.Missing}, source={job.Label}");
+   Activate(current);
+   return;
+  }
+
   if(job.Option.Side!="Savage"){
-   job.RequestedProfile=profile;
    var loadingSide=Enum.Parse<EPlayerSide>(AiPmcProfileRules.LoadingSide(job.Option.Role,job.Option.Side));
    var loadingProfile=new GetProfileDataParams(loadingSide,Enum.Parse<WildSpawnType>(job.Option.Role),(BotDifficulty)job.Difficulty,0,parameters,true);
    data=BotCreationData.CreateWithoutProfile(loadingProfile.Cast<IGetProfileData>());data._botCreator=spawner._botCreator;data._tokenGetter=spawner.Cast<ITokenGetter>();cancellation=new();generatingProfile=spawner._botCreator.GenerateProfile(data,cancellation.Token,true);
-   Plugin.Self.Log.LogInfo($"PMC profile selection: requested={job.Option.Role}/{job.Option.Side}; backendLoadingSide={loadingSide}; difficulty={(BotDifficulty)job.Difficulty}");
-  }else generating=BotCreationData.Create(profile.Cast<IGetProfileData>(),spawner._botCreator,job.BatchWanted,spawner.Cast<ITokenGetter>());
-  Plugin.Self.Log.LogInfo($"Manual AI batch requested: {job.Option.Role}, wanted={job.BatchWanted}, missing={job.Ledger.Missing}, source={job.Label}");
+   Plugin.Self.Log.LogInfo($"PMC cold profile selection: requested={job.Option.Role}/{job.Option.Side}; backendLoadingSide={loadingSide}; difficulty={(BotDifficulty)job.Difficulty}");
+  }else generating=BotCreationData.Create(profile.Cast<IGetProfileData>(),spawner._botCreator,1,spawner.Cast<ITokenGetter>());
+  Plugin.Self.Log.LogInfo($"Manual AI cold batch requested: {job.Option.Role}, wanted={job.BatchWanted}, missing={job.Ledger.Missing}, source={job.Label}");
+ }
+ static void ExpandBatchFromColdSeed(Job job,Profile seed){
+  AiWarmProfilePool.StoreWarmSeed(job.Option.Role,seed);
+  if(job.BatchWanted>1){
+   var sideEnum=Enum.Parse<EPlayerSide>(job.Option.Side);
+   var roleEnum=Enum.Parse<WildSpawnType>(job.Option.Role);
+   var diffEnum=(BotDifficulty)job.Difficulty;
+   while(data!.Profiles.Count<job.BatchWanted){
+    var sibling=AiWarmProfilePool.CloneProfile(seed,sideEnum,roleEnum,diffEnum,varyNickname:true,restoreFullHealth:true);
+    data.AddProfile(sibling);
+   }
+  }
+  AiWarmProfilePool.RequestReplenish(job.Option,job.Difficulty);
  }
  static void Activate(GameWorld current){
-  var job=active!;if(generating!=null){data=generating.Result;generating=null;}
+  var job=active!;if(generating!=null){data=generating.Result;generating=null;if(data?.Profiles is {Count:>0})ExpandBatchFromColdSeed(job,data.Profiles[0]);}
   if(data?.Profiles==null||data.Profiles.Count==0){RetryPreparation("加载器返回的 AI 资料为空。");return;}
   while(data.Profiles.Count>job.BatchWanted){int before=data.Profiles.Count;data.RemoveProfile(data.Profiles[before-1]);if(data.Profiles.Count>=before)throw new InvalidOperationException("原生资料集合未能缩减，已停止激活以避免超额生成。");}
   var positions=new Il2CppSystem.Collections.Generic.List<ISpawnPoint>();
+  var preparedProfiles=new List<Profile>(data.Profiles.Count);
   for(int i=0;i<data.Profiles.Count;i++){
    var profile=data.Profiles[i];if(profile==null||job.Expected.ContainsKey(profile.Id))throw new ArgumentException("加载器返回了重复或无效的 AI 身份。");
-   job.Revival?.Prepare(profile);AiSpawnPresets.Prepare(profile,job.Preset);job.Expected[profile.Id]=profile;
+   job.Revival?.Prepare(profile);AiSpawnPresets.Prepare(profile,job.Preset);job.Expected[profile.Id]=profile;preparedProfiles.Add(profile);
    int index=job.Ledger.Created.Count+i;float radius=index==0?0:2.1f*Mathf.Sqrt(index);var point=Ground(job.Position+new Vector3(Mathf.Cos(index*2.4f),0,Mathf.Sin(index*2.4f))*radius,current.MainPlayer,job.SceneRestore);
    if(!AiLimitCompatibility.HasNavigation(Controller().CoversData,point))throw new ArgumentException("分散生成点缺少导航数据。");
    var core=AICorePointHolder.GetClosest(point)??throw new ArgumentException("生成点附近没有 AI 核心节点。");
    var spawn=new SpawnPoint{Id="assistant-"+Guid.NewGuid().ToString("N"),Name="SPT Assistant",Position=point,Rotation=job.Preset.Scene?.Enabled==true?Quaternion.Euler(0,job.Preset.Scene.Yaw,0):Quaternion.identity,BotZone=zone,CorePointId=core.Id,Sides=(EPlayerSideMask)(-1),Categories=(ESpawnCategoryMask)(-1)};positions.Add(spawn.Cast<ISpawnPoint>());
   }
+  pendingPositions=positions;
+  var missingResources=AiWarmProfilePool.CollectMissingProfileResources(preparedProfiles);
+  var factory=Singleton<ObjectsFactory>.Instance;
+  if(missingResources.Count>0&&factory!=null){
+   job.Phase="装备资源补齐";job.PhaseStart=job.LastProgress=Time.unscaledTime;cancellation??=new();
+   warmingPools=factory.LoadBundlesAndCreatePools(ObjectsFactory.PoolsCategory.Raid,ObjectsFactory.AssemblyType.Local,missingResources,AiWarmProfilePool.GeneralYield(),null,cancellation.Token);
+   return;
+  }
+  StartNativeActivation();
+ }
+ static void StartNativeActivation(){
+  var job=active!;var positions=pendingPositions!;pendingPositions=null;
   int expectedSerial=job.Serial;callback=DelegateSupport.ConvertDelegate<Il2CppSystem.Action<BotOwner>>(new Action<BotOwner>(bot=>{if(bot!=null)callbacks.Enqueue((job,expectedSerial,bot));}));
-  Plugin.Self.Log.LogInfo($"Manual AI profiles ready: returned={job.Expected.Count}/{job.BatchWanted}, prepareSeconds={Time.unscaledTime-job.PhaseStart:F2}, bundles={spawner!._botCreator.BundlesLoading}");
-  job.Phase="地图激活";job.PhaseStart=job.LastProgress=Time.unscaledTime;cancellation??=new();RaidSpawnControl.AllowManual(data);
-  activating=spawner!.ActivateBots(positions,zone!,data,callback,new BotSpawnBossAndGroupParams(job.Option.Boss,job.BatchWanted>1),cancellation.Token);
+  Plugin.Self.Log.LogInfo($"Manual AI profiles ready: returned={job.Expected.Count}/{job.BatchWanted}, prepareSeconds={Time.unscaledTime-job.PhaseStart:F3}, bundles={spawner!._botCreator.BundlesLoading}");
+  job.Phase="地图激活";job.PhaseStart=job.LastProgress=Time.unscaledTime;cancellation??=new();RaidSpawnControl.AllowManual(data!);
+  activating=spawner!.ActivateBots(positions,zone!,data!,callback,new BotSpawnBossAndGroupParams(job.Option.Boss,job.BatchWanted>1),cancellation.Token);
  }
  static void Confirm(GameWorld current,Player actor){
   var job=active!;if(!job.Expected.ContainsKey(actor.ProfileId)||job.Ledger.Created.Contains(actor.ProfileId)||actor.HealthController==null)return;
@@ -133,13 +173,14 @@ internal static class AiSpawnService {
  static void RetryPreparation(string reason){var job=active!;ReleaseBatch(true);job.Failures++;Plugin.Self.Log.LogWarning("Manual AI preparation: "+reason);if(job.Failures>2)Finish("资料准备补尝试两次后仍失败："+reason);else Report("资料准备未成功，将进行第 "+job.Failures+" 次补尝试；"+reason);}
  internal static void Tick(GameWorld? current,Player? player){
   CollectRetired();
+  AiWarmProfilePool.Tick(current,player);
   if(current==null||player?.HealthController?.IsAlive!=true){if(active!=null||queue.Count>0)Cancel(false);return;}
   if(active!=null&&active.World!=current.Pointer){Cancel(false);return;}
   if(!GameStarted)return;
   if(active==null){if(retired.Count>0){if(queue.Count>0)Report("等待上次取消的原生加载结束，避免重复生成。");return;}if(queue.Count==0)return;active=queue.Dequeue();if(active.World!=current.Pointer){Cancel(false);return;}active.Started=Time.unscaledTime;}
   try{
    while(callbacks.TryDequeue(out var message))if(ReferenceEquals(message.Job,active)&&message.Serial==active.Serial&&message.Bot?.GetPlayer is {} actor)Confirm(current,actor);
-   if(generating==null&&generatingProfile==null&&activating==null)BeginBatch(current);
+   if(generating==null&&generatingProfile==null&&warmingPools==null&&activating==null)BeginBatch(current);
    if(active==null)return;var job=active;
    if(generatingProfile!=null){
     if(generatingProfile.IsFaulted||generatingProfile.IsCanceled){var error=generatingProfile.Exception;Plugin.Self.Log.LogWarning("PMC direct profile preparation failed: "+error);RetryPreparation(error?.GetBaseException()?.Message??"PMC 资料准备已取消");return;}
@@ -147,7 +188,8 @@ internal static class AiSpawnService {
      var profile=generatingProfile.Result??throw new ArgumentException("PMC 资料加载器未返回角色。");string actualRole=profile.Info?.Settings?.Role.ToString()??"",actualSide=profile.Side.ToString();
      if(!AiPmcProfileRules.Accepts(job.Option.Role,job.Option.Side,actualRole,actualSide))throw new ArgumentException($"PMC 资料不匹配：请求 {job.Option.Role}/{job.Option.Side}，返回 {actualRole}/{actualSide}，未用 Scav 代替。");
      profile.Info!.Side=Enum.Parse<EPlayerSide>(job.Option.Side);data!._profileData=job.RequestedProfile!.Cast<IGetProfileData>();data.AddProfile(profile);
-     Plugin.Self.Log.LogInfo($"PMC profile selected: role={actualRole}; backendSide={actualSide}; activatedSide={profile.Side}; profile={profile.Id}");
+     ExpandBatchFromColdSeed(job,profile);
+     Plugin.Self.Log.LogInfo($"PMC profile selected: role={actualRole}; backendSide={actualSide}; activatedSide={profile.Side}; profile={profile.Id}; expanded={data.Profiles.Count}");
      generatingProfile=null;Activate(current);
     }else if(Time.unscaledTime-job.PhaseStart>180){ReleaseBatch(true);Finish("PMC 资料／资源准备超时。");return;}
    }
@@ -155,16 +197,21 @@ internal static class AiSpawnService {
     if(generating.IsFaulted||generating.IsCanceled){RetryPreparation(generating.Exception?.ToString()??"资料准备已取消");return;}
     if(generating.IsCompleted)Activate(current);else if(Time.unscaledTime-job.PhaseStart>180){ReleaseBatch(true);Finish("资料／资源准备超时；未继续叠加请求。");return;}
    }
+   if(warmingPools!=null){
+    if(warmingPools.IsFaulted||warmingPools.IsCanceled){RetryPreparation(warmingPools.Exception?.GetBaseException()?.Message??"装备模型资源准备已取消");return;}
+    if(warmingPools.IsCompleted){warmingPools=null;StartNativeActivation();}
+    else if(Time.unscaledTime-job.PhaseStart>120){ReleaseBatch(true);Finish("装备模型资源准备超时。");return;}
+   }
    if(activating!=null){
     Reconcile(current);
     if(activating.IsCompleted){
      if(job.Completed<0)job.Completed=Time.unscaledTime;
-     if(Time.unscaledTime-job.Completed>=.75f){
-      int made=job.Ledger.Created.Count-job.BeforeBatch;bool fault=activating.IsFaulted||activating.IsCanceled;
+     int made=job.Ledger.Created.Count-job.BeforeBatch;bool fault=activating.IsFaulted||activating.IsCanceled;
+     if(AiFastSpawnRules.ShouldSettleImmediately(true,fault,made,job.Expected.Count,Time.unscaledTime-job.Completed)){
       if(made<job.Expected.Count&&(AccountUnready(current)||spawner!._botCreator.BotsLoading>0)){if(Time.unscaledTime-job.Completed>30){ReleaseBatch(true);Finish("原生初始化未完成，已保留实际出现的 AI 并停止后续生成，避免重复注册；详见日志。");return;}}
       else{
        string error=fault?activating.Exception?.Message??"原生激活已取消":"";
-       Plugin.Self.Log.LogInfo($"Manual AI activation settled: created={made}/{job.BatchWanted}, seconds={Time.unscaledTime-job.PhaseStart:F2}, error={error}");
+       Plugin.Self.Log.LogInfo($"Manual AI activation settled: created={made}/{job.BatchWanted}, seconds={Time.unscaledTime-job.PhaseStart:F3}, error={error}");
        ReleaseBatch(fault);
        if(job.Revival is {} revival&&!revival.Completed){revival.Failure=error.Length>0?error:"原生 AI 激活未确认成功，已停止自动重试。";Finish(revival.Failure);return;}
        if(made<job.BatchWanted){job.Failures++;if(job.Failures>2){Finish("补生成两次后仍有缺额。"+error);return;}}else job.Failures=0;

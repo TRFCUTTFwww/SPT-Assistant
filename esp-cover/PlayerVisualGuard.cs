@@ -14,12 +14,14 @@ internal static class PlayerVisualGuard {
   // Keep this independent of feature unpatching: native players continue their
   // visual pass while the host replaces modules. Install the new guard before
   // releasing the old one, so only one previous module is retained temporarily.
-  log=plugin.Log;string owner="local.spt5.esp.visual-lifecycle."+Guid.NewGuid().ToString("N");
+  log=plugin.Log;
   var method=AccessTools.Method(typeof(Player),"VisualPass");
-  new Harmony(owner).Patch(method,prefix:new HarmonyMethod(typeof(PlayerVisualGuard),nameof(Ready)){priority=Priority.First});
+  plugin.Patches.PatchSwapSafe("PlayerVisualGuard",method,new HarmonyMethod(typeof(PlayerVisualGuard),nameof(Ready)){priority=Priority.First});
   string? previous=AppDomain.CurrentDomain.GetData(OwnerKey) as string;
-  AppDomain.CurrentDomain.SetData(OwnerKey,owner);
-  if(previous!=null)new Harmony(previous).Unpatch(method,HarmonyPatchType.All,previous);
+  if(previous!=null){
+   AppDomain.CurrentDomain.SetData(OwnerKey,null);
+   new Harmony(previous).Unpatch(method,HarmonyPatchType.All,previous);
+  }
  }
  internal static bool Ready(Player __instance){
   var player=__instance;

@@ -355,8 +355,6 @@ internal static partial class FleaMarketPanel
             if (probe.QuestItem)
                 throw new ArgumentException("任务物品无法直购。");
             int stackMax = Math.Max(1, probe.StackMaxSize);
-            if (count > 95L * stackMax)
-                throw new ArgumentException("购买数量超出单笔直购上限。");
             probe.StackObjectsCount = Math.Min(count, stackMax);
             if (FindRaidDestination(player, controller, probe) == null)
                 throw new ArgumentException("背包、胸挂或口袋空间不足，请先腾出格位。");

@@ -7,7 +7,7 @@ namespace LocalSpt5Esp;
 internal static class EditorItemRules {
  internal static JsonArray Remap(string snapshot,string root,Func<string> next,out string newRoot){
   var data=JsonNode.Parse(snapshot) as JsonArray??throw new ArgumentException("Invalid item snapshot.");
-  if(data.Count is <1 or >4096)throw new ArgumentException("Invalid item count.");
+  if(data.Count<1)throw new ArgumentException("Invalid item count.");
   var entries=new Dictionary<string,JsonObject>(StringComparer.Ordinal);
   foreach(var node in data){var entry=node as JsonObject??throw new ArgumentException("Invalid item.");string id=entry["_id"]?.GetValue<string>()??"",tpl=entry["_tpl"]?.GetValue<string>()??"";if(id.Length!=24||tpl.Length!=24||!id.All(Uri.IsHexDigit)||!tpl.All(Uri.IsHexDigit)||!entries.TryAdd(id,entry))throw new ArgumentException("Invalid or duplicate item ID.");}
   if(!entries.ContainsKey(root))throw new ArgumentException("Missing root item.");

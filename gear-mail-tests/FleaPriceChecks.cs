@@ -357,25 +357,23 @@ internal static class FleaPriceChecks
         {
             miscProp.SetValue(null, new MiscSettings { ClearanceMarket = true });
             book.SetRules(new FleaRules(UnbanAll: true));
-            buyReq.Count = 96;
-            try
+            var largeBuy = new CharacterDataRequest { Action = "fleaRaidBuy", Id = Guid.NewGuid().ToString("N"), Template = item.ToString(), Count = 120 };
+            using (var largeDoc = JsonDocument.Parse(await Buy(largeBuy)))
             {
-                await Buy(buyReq);
-                throw new InvalidOperationException("fleaRaidBuy should reject orders too large to mail");
+                Check(largeDoc.RootElement.GetProperty("data").GetProperty("totalCost").GetInt64() == 120 &&
+                      pmc.Inventory.Items.Single().Upd!.StackObjectsCount == 3880,
+                    "unrestricted fleaRaidBuy supports large multi-stack orders");
             }
-            catch (ArgumentException) { }
-            Check(writes == 1 && pmc.Inventory.Items.Single().Upd!.StackObjectsCount == 4000,
-                "a purchase above the mail stack limit has no side effects");
             try
             {
                 await FleaPrices.HandleRaidBuy(buyBanned, profile, () => Task.FromException(new IOException()), http, templates);
                 throw new InvalidOperationException("fleaRaidBuy should surface save failure");
             }
             catch (IOException) { }
-            Check(pmc.Inventory.Items.Single().Upd!.StackObjectsCount == 4000, "failed save rolls back the charge");
+            Check(pmc.Inventory.Items.Single().Upd!.StackObjectsCount == 3880, "failed save rolls back the charge");
             using var cheapDoc = JsonDocument.Parse(await Buy(buyBanned));
             Check(cheapDoc.RootElement.GetProperty("data").GetProperty("totalCost").GetInt64() == 1 &&
-                  pmc.Inventory.Items.Single().Upd!.StackObjectsCount == 3999,
+                  pmc.Inventory.Items.Single().Upd!.StackObjectsCount == 3879,
                 "fleaRaidBuy honors UnbanAll and ClearanceMarket 1 RUB price");
         }
         finally

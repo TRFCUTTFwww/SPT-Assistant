@@ -79,8 +79,8 @@ internal static class ScopeStickerChecks
         Check(!assembly.MainModule.Resources.Any(r => r.Name == "LocalSpt5Esp.Assets.ScopeSticker.png") &&
             !File.Exists(Path.Combine(sourceRoot, "esp-cover/Assets/ScopeSticker.png")),
             "the core and source contain no built-in scope sticker artwork");
-        Check(MenuSections.Group("73. 倍镜贴纸") == "镜头与画面" && MenuSections.Pages("镜头与画面").Contains("瞄准镜") &&
-            MenuSections.OnPage("镜头与画面", "瞄准镜", "73. 倍镜贴纸", "Enabled") &&
+        Check(MenuSections.Group("73. 倍镜贴纸") == "镜头与画面" && MenuSections.Pages("镜头与画面").Contains("瞄准镜贴纸") &&
+            MenuSections.OnPage("镜头与画面", "瞄准镜贴纸", "73. 倍镜贴纸", "Enabled") &&
             !MenuSections.OnPage("镜头与画面", "人物显示", "73. 倍镜贴纸", "Enabled"),
             "sticker settings share the optics page");
         Console.WriteLine("PASS imported-only scope stickers and shared optics settings page");
@@ -150,10 +150,42 @@ internal static class ScopeStickerChecks
             !ScopeStickerRules.FlashActive(10, 10, 0) && !ScopeStickerRules.FlashActive(10, 10, float.NaN), "flash interval includes start, excludes end and rejects invalid clocks");
         var defaults = new ScopeStickerProfile();
         Check(!defaults.AutoContrast && !defaults.HitFlash && defaults.HitColor == "#FF4040" && defaults.HitSeconds == .18f &&
+            defaults.ColorMode == 0 && defaults.ColorSpeed == 1f && defaults.ColorPrimary == "#00F0FF" && defaults.ColorSecondary == "#FF38B8" && !defaults.ColorUseMask &&
             new ScopeStickerProfile { HitColor = "abcd12", HitSeconds = .001f }.Normalized() is { HitColor: "#ABCD12", HitSeconds: .05f } &&
             new ScopeStickerProfile { HitColor = "invalid", HitSeconds = float.NaN }.Normalized() is { HitColor: "#FF4040", HitSeconds: .18f } &&
             new ScopeStickerProfile { HitSeconds = 5 }.Normalized().HitSeconds == 1, "effects default off and normalize colors and duration safely");
-        Console.WriteLine("PASS scope sticker RGB/HEX parsing, contrast thresholds, flash boundaries and safe profile defaults");
+
+        // Dynamic color animation & speed checks
+        var rainbowSlow = new ScopeStickerProfile { ColorMode = 1, ColorSpeed = 0.5f };
+        var rainbowFast = new ScopeStickerProfile { ColorMode = 1, ColorSpeed = 2.0f };
+        var c0 = ScopeStickerRules.EvaluateDynamicColor(rainbowSlow, 0f);
+        var cHalfSlow = ScopeStickerRules.EvaluateDynamicColor(rainbowSlow, 0.5f);
+        var cQuarterFast = ScopeStickerRules.EvaluateDynamicColor(rainbowFast, 0.125f);
+        Check((c0.R, c0.G, c0.B) != (cHalfSlow.R, cHalfSlow.G, cHalfSlow.B) && cHalfSlow == cQuarterFast,
+            "rainbow HSV animation scales phase proportionally to ColorSpeed");
+        var gradient = new ScopeStickerProfile { ColorMode = 2, ColorSpeed = 1f, ColorPrimary = "#FF0000", ColorSecondary = "#0000FF" };
+        var gStart = ScopeStickerRules.EvaluateDynamicColor(gradient, 0f);
+        var gPeak = ScopeStickerRules.EvaluateDynamicColor(gradient, 0.5f);
+        Check(gStart.R == 255 && gStart.B == 0 && gPeak.R == 0 && gPeak.B == 255,
+            "two-color gradient smoothly oscillates between primary and secondary colors");
+        var breath = new ScopeStickerProfile { ColorMode = 3, ColorSpeed = 2f, ColorPrimary = "#00FF80" };
+        var bLow = ScopeStickerRules.EvaluateDynamicColor(breath, 0f);
+        var bHigh = ScopeStickerRules.EvaluateDynamicColor(breath, 0.25f);
+        Check(bLow.AlphaFactor < 0.35f && bHigh.AlphaFactor > 0.99f && bHigh.G == 255,
+            "breathing pulse modulates alpha factor at configured speed");
+        var solid = new ScopeStickerProfile { ColorMode = 4, ColorPrimary = "#FF3B30" };
+        var s0 = ScopeStickerRules.EvaluateDynamicColor(solid, 0f);
+        var sLater = ScopeStickerRules.EvaluateDynamicColor(solid, 1.37f);
+        Check(s0 == new ScopeStickerRules.AnimatedTint(255, 59, 48, 1f) && s0 == sLater &&
+            (solid.Normalized() is { ColorMode: 4, ColorPrimary: "#FF3B30" }),
+            "static custom color mode holds exact RGB and unit alpha across time");
+        Check(new ScopeStickerProfile { ColorMode = 9, ColorSpeed = 999f, ColorPrimary = "bad", ColorSecondary = "112233" }.Normalized()
+            is { ColorMode: 0, ColorSpeed: 50f, ColorPrimary: "#00F0FF", ColorSecondary: "#112233" } &&
+            new ScopeStickerProfile { ColorSpeed = .001f }.Normalized().ColorSpeed == .01f &&
+            new ScopeStickerProfile { ColorSpeed = 0f }.Normalized().ColorSpeed == 1f,
+            "dynamic color mode, speed bounds and hex fallbacks normalize cleanly");
+
+        Console.WriteLine("PASS scope sticker RGB/HEX parsing, dynamic color animation & speed, contrast thresholds, flash boundaries and safe profile defaults");
     }
 
     private static void StoreChecks(byte[] artwork, Action<bool, string> Check)
@@ -191,13 +223,13 @@ internal static class ScopeStickerChecks
                 store.CycleImage(imageA, -1) == imageB && store.CycleImage(imageA, 1) == imageB &&
                 store.CycleImage("missing", 1) == imageA && store.CycleImage("missing", -1) == imageB &&
                 store.CycleImage(imageA, 0) == imageA, "image shortcuts follow library order, wrap in both directions and recover missing selections");
-            var a1 = new ScopeStickerProfile { Name = "A", Image = imageA, Width = 30, X = 10, Y = 20, Opacity = .2f, Rotation = 12, AutoContrast = true, HitFlash = true, HitColor = "#00FF80", HitSeconds = .5f };
-            var a2 = a1 with { Image = imageB, Width = 48, X = 24, Opacity = .8f, Rotation = -45, AutoContrast = false, HitColor = "#112233", HitSeconds = .1f };
-            var b1 = a1 with { Name = "B", Width = 15, Y = 12, Rotation = 90, HitFlash = false };
+            var a1 = new ScopeStickerProfile { Name = "A", Image = imageA, Width = 30, X = 10, Y = 20, Opacity = .2f, Rotation = 12, AutoContrast = true, HitFlash = true, HitColor = "#00FF80", HitSeconds = .5f, ColorMode = 2, ColorSpeed = 3.5f, ColorPrimary = "#123456", ColorSecondary = "#654321", ColorUseMask = true };
+            var a2 = a1 with { Image = imageB, Width = 48, X = 24, Opacity = .8f, Rotation = -45, AutoContrast = false, HitColor = "#112233", HitSeconds = .1f, ColorMode = 1, ColorSpeed = .75f, ColorUseMask = false };
+            var b1 = a1 with { Name = "B", Width = 15, Y = 12, Rotation = 90, HitFlash = false, ColorMode = 3, ColorSpeed = 2f };
             store.Save(a, a1); store.Save(b, b1); store.Save(sub, defaults); store.Save(a, a2);
             var reloaded = new ScopeStickerStore(directory);
             Check(reloaded.Get(a, defaults) == a2 && reloaded.Get(b, defaults) == b1 && reloaded.Get(sub, defaults) == defaults,
-                "active image and layout survive reload independently per scope and sub-sight");
+                "active image, dynamic color settings and layout survive reload independently per scope and sub-sight");
             Check(reloaded.ForImage(a, imageA, defaults) == a1 && reloaded.ForImage(a, imageB, defaults) == a2 &&
                 reloaded.ForImage(b, imageA, defaults) == b1 && reloaded.ForImage(b, imageB, defaults) == (defaults with { Image = imageB }),
                 "same scope restores image-specific layout without borrowing another scope's variant");
@@ -224,7 +256,7 @@ internal static class ScopeStickerChecks
             Check((legacyValue with { Image = "builtin" }).Normalized().Image == "" &&
                 (legacyValue with { Image = "builtin" }).Normalized().Width == legacyValue.Width,
                 "retired built-in selections become empty without discarding their layout");
-            Check(legacyValue.Rotation == 0 && !legacyValue.AutoContrast && !legacyValue.HitFlash && legacyValue.HitColor == "#FF4040" && legacyValue.HitSeconds == .18f && legacyValue.Width == 41 && legacyValue.X == 9 && legacyValue.Y == -4 &&
+            Check(legacyValue.Rotation == 0 && !legacyValue.AutoContrast && !legacyValue.HitFlash && legacyValue.HitColor == "#FF4040" && legacyValue.HitSeconds == .18f && legacyValue.ColorMode == 0 && legacyValue.ColorSpeed == 1f && legacyValue.Width == 41 && legacyValue.X == 9 && legacyValue.Y == -4 &&
                 legacyValue.Opacity == .4f && File.ReadAllText(legacyFile) == oldJson, "old profiles default to upright without rewriting the file");
             legacyStore.Save("legacy:0", legacyValue with { Rotation = 75 });
             Check(new ScopeStickerStore(legacy).Get("legacy:0", defaults) == (legacyValue with { Rotation = 75 }),

@@ -6,7 +6,7 @@ using BepInEx;
 using BepInEx.Unity.IL2CPP;
 using UnityEngine;
 namespace LocalSpt5Esp.HotReload;
-[BepInPlugin("local.spt5.esp","SPT Assistant","1.6.3")]
+[BepInPlugin("local.spt5.esp","SPT Assistant","1.7.0")]
 public sealed class HostPlugin:BasePlugin {
  internal static HostPlugin? Instance;
  internal RuntimeReloader? Runtime;
@@ -21,7 +21,10 @@ public sealed class HostPlugin:BasePlugin {
  }
  void RefreshMenu(){
   var manager=IL2CPPChainloader.Instance.Plugins.Values.FirstOrDefault(p=>p.Metadata.GUID=="com.bepis.bepinex.configurationmanager")?.Instance;
-  manager?.GetType().GetMethod("BuildSettingList",BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance)?.Invoke(manager,null);
+  if(manager==null)return;
+  var showing=manager.GetType().GetProperty("DisplayingWindow",BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance);
+  if(showing!=null&&showing.GetValue(manager) is false)return;
+  manager.GetType().GetMethod("BuildSettingList",BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance)?.Invoke(manager,null);
  }
  public override bool Unload(){try{Runtime?.Dispose();}finally{Runtime=null;Instance=null;}return true;}
 }
@@ -30,5 +33,4 @@ public sealed class RuntimeDriver:MonoBehaviour {
  public void Update()=>HostPlugin.Instance?.Update();
  public void LateUpdate()=>HostPlugin.Instance?.Runtime?.LateUpdate();
  public void OnGUI()=>HostPlugin.Instance?.Runtime?.Draw();
-
 }

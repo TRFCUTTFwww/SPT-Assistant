@@ -10,8 +10,8 @@ namespace LocalGearMail;
 public sealed record ServerJsonCommand(string Action, string Id = "", string Token = "", string Path = "$", int Offset = 0, string Query = "", string? Value = null, bool Delete = false, string? ChildKey = null, bool Append = false);
 public sealed class ServerJsonStore(string root, Func<string, string, string?>? modelDoc = null) : IDisposable
 {
-    public const int PageSize = 60, InlineLimit = 14000;
-    static readonly JsonSerializerOptions Pretty = new() { WriteIndented = true, NewLine = "\n", Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, MaxDepth = 256 };
+    public const int PageSize = 60, InlineLimit = 250000, MaxSearchHits = 2000;
+    static readonly JsonSerializerOptions Pretty = new() { WriteIndented = true, NewLine = "\n", Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, MaxDepth = 1024 };
     readonly object gate = new();
     readonly Dictionary<string, Snapshot> snapshots = new(StringComparer.Ordinal);
     sealed class Snapshot(string owner, string id, byte[] bytes) : IDisposable
@@ -30,12 +30,11 @@ public sealed class ServerJsonStore(string root, Func<string, string, string?>? 
         if (string.IsNullOrEmpty(id) || id.Contains('\\') || id.Contains(':') || id.StartsWith('/') || !id.EndsWith(".json", StringComparison.OrdinalIgnoreCase)) return false;
         string[] parts = id.Split('/');
         if (parts.Any(p => p is "" or "." or ".." || p.TrimEnd(' ', '.') != p)) return false;
-        if (!(id.StartsWith("SPT_Data/", StringComparison.OrdinalIgnoreCase) || id.StartsWith("user/mods/", StringComparison.OrdinalIgnoreCase))) return false;
-        return !parts.Any(p => p.Equals("backups", StringComparison.OrdinalIgnoreCase) || p.Equals("node_modules", StringComparison.OrdinalIgnoreCase) || p.Equals("cache", StringComparison.OrdinalIgnoreCase) || p.Equals("logs", StringComparison.OrdinalIgnoreCase) || p.Equals(".git", StringComparison.OrdinalIgnoreCase) || p.Equals("bin", StringComparison.OrdinalIgnoreCase) || p.Equals("obj", StringComparison.OrdinalIgnoreCase));
+        return !parts.Any(p => p.Equals(".git", StringComparison.OrdinalIgnoreCase) || p.Equals("node_modules", StringComparison.OrdinalIgnoreCase));
     }
     string Resolve(string id)
     {
-        if (!Allowed(id)) throw new ArgumentException("请选择服务端配置或数据库中的 JSON 文件。");
+        if (!Allowed(id)) throw new ArgumentException("请选择服务端目录中的有效 JSON 文件路径。");
         string fullRoot = System.IO.Path.GetFullPath(root).TrimEnd(System.IO.Path.DirectorySeparatorChar) + System.IO.Path.DirectorySeparatorChar;
         string current = fullRoot;
         foreach (string part in id.Split('/'))
@@ -73,7 +72,7 @@ public sealed class ServerJsonStore(string root, Func<string, string, string?>? 
                 return new { ok = true, changed = snapshot.Changed };
             }
             if (cmd.Action == "serverJsonSearch") return Search(snapshot, cmd.Query, ct);
-            if (cmd.Action == "serverJsonExport") return new { ok = true, raw = JsonEditPath.Read(snapshot.Document.RootElement, cmd.Path).GetRawText() };
+            if (cmd.Action is "serverJsonExport" or "serverJsonLoadFull") return new { ok = true, raw = JsonEditPath.Read(snapshot.Document.RootElement, cmd.Path).GetRawText() };
             if (cmd.Action == "serverJsonBackups") return Backups(snapshot);
             if (cmd.Action == "serverJsonRestore") return Restore(snapshot, cmd.Value, ct);
             if (cmd.Action == "serverJsonSave") return Save(snapshot, cmd, ct);
@@ -82,18 +81,15 @@ public sealed class ServerJsonStore(string root, Func<string, string, string?>? 
     }
     IEnumerable<object> Files()
     {
-        foreach (string relative in new[] { "SPT_Data", "user/mods" })
+        if (!Directory.Exists(root)) yield break;
+        var options = new EnumerationOptions { RecurseSubdirectories = true, AttributesToSkip = FileAttributes.ReparsePoint, IgnoreInaccessible = true };
+        foreach (string path in Directory.EnumerateFiles(root, "*.json", options).Order(StringComparer.OrdinalIgnoreCase))
         {
-            string start = System.IO.Path.Combine(root, relative.Replace('/', System.IO.Path.DirectorySeparatorChar));
-            if (!Directory.Exists(start)) continue;
-            var options = new EnumerationOptions { RecurseSubdirectories = true, AttributesToSkip = FileAttributes.ReparsePoint, IgnoreInaccessible = true };
-            foreach (string path in Directory.EnumerateFiles(start, "*.json", options).Order(StringComparer.OrdinalIgnoreCase))
-            {
-                string id = System.IO.Path.GetRelativePath(root, path).Replace('\\', '/');
-                if (!Allowed(id)) continue;
-                Resolve(id);
-                yield return new { id, bytes = new FileInfo(path).Length, purpose = ServerJsonCatalog.File(id) };
-            }
+            string id = System.IO.Path.GetRelativePath(root, path).Replace('\\', '/');
+            if (!Allowed(id)) continue;
+            if (id.StartsWith("user/mods/LocalGearMail/backups/", StringComparison.OrdinalIgnoreCase)) continue;
+            try { Resolve(id); } catch { continue; }
+            yield return new { id, bytes = new FileInfo(path).Length, purpose = ServerJsonCatalog.File(id) };
         }
     }
     JsonPurpose Purpose(Snapshot s, string path, JsonElement value) => ServerJsonCatalog.Field(s.Id, path, value.ValueKind, modelDoc);
@@ -130,7 +126,7 @@ public sealed class ServerJsonStore(string root, Func<string, string, string?>? 
         try
         {
             using var stream = new PreviewStream();
-            using var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true, NewLine = "\n", Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, MaxDepth = 256 });
+            using var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true, NewLine = "\n", Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, MaxDepth = 1024 });
             value.WriteTo(writer); writer.Flush();
             return Encoding.UTF8.GetString(stream.ToArray());
         }
@@ -157,16 +153,16 @@ public sealed class ServerJsonStore(string root, Func<string, string, string?>? 
         void Walk(JsonElement value, string path, string key)
         {
             ct.ThrowIfCancellationRequested();
-            if (rows.Count > 160) return;
+            if (rows.Count > MaxSearchHits) return;
             var purpose = Purpose(s, path, value);
             string text = path + " " + purpose.TitleZh + " " + purpose.DetailZh + " " + purpose.DetailEn;
             string scalar = value.ValueKind == JsonValueKind.String ? value.GetString() ?? "" : value.ValueKind is JsonValueKind.Object or JsonValueKind.Array ? "" : value.GetRawText();
             if (terms.All(t => text.Contains(t, StringComparison.OrdinalIgnoreCase) || scalar.Contains(t, StringComparison.OrdinalIgnoreCase))) rows.Add(Brief(s, path, key, value));
-            if (value.ValueKind == JsonValueKind.Object) foreach (var p in value.EnumerateObject()) { if (rows.Count > 160) break; Walk(p.Value, JsonEditPath.Key(path, p.Name), p.Name); }
-            else if (value.ValueKind == JsonValueKind.Array) { int i = 0; foreach (var v in value.EnumerateArray()) { if (rows.Count > 160) break; Walk(v, JsonEditPath.Index(path, i), "[" + i++ + "]"); } }
+            if (value.ValueKind == JsonValueKind.Object) foreach (var p in value.EnumerateObject()) { if (rows.Count > MaxSearchHits) break; Walk(p.Value, JsonEditPath.Key(path, p.Name), p.Name); }
+            else if (value.ValueKind == JsonValueKind.Array) { int i = 0; foreach (var v in value.EnumerateArray()) { if (rows.Count > MaxSearchHits) break; Walk(v, JsonEditPath.Index(path, i), "[" + i++ + "]"); } }
         }
         Walk(s.Document.RootElement, "$", "$");
-        return new { ok = true, hits = rows.Take(160), truncated = rows.Count > 160 };
+        return new { ok = true, hits = rows.Take(MaxSearchHits), truncated = rows.Count > MaxSearchHits };
     }
     object Backups(Snapshot s)
     {

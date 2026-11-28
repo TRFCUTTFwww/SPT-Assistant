@@ -15,9 +15,9 @@ namespace LocalSpt5Esp;
 internal static class ProfileJsonEditorPanel
 {
     const int PageSize = 60;
-    const int MaxSearchResults = 160;
-    const int MaxInlineChars = 14000;
-    const int LargePreviewChars = 6000;
+    const int MaxSearchResults = 2000;
+    const int MaxInlineChars = 120000;
+    const int LargePreviewChars = 12000;
     const string EditorControl = "LocalProfileJsonEditorArea";
 
     static readonly JsonSerializerOptions PrettyOptions = new()
@@ -291,6 +291,21 @@ internal static class ProfileJsonEditorPanel
                 var parsed = JsonNode.Parse(imported, documentOptions: LooseParseOptions) as JsonObject
                     ?? throw new ArgumentException("所选文件不是有效的存档 JSON 对象。");
                 BeginSave("$", parsed.ToJsonString());
+            }
+            else if (mode == "exportNode" && rootNode != null)
+            {
+                var node = ReadAt(rootNode, selectedPath);
+                string pretty = (node?.ToJsonString(PrettyOptions) ?? "null") + Environment.NewLine;
+                File.WriteAllText(path, pretty, new UTF8Encoding(false));
+                SetNotice($"已导出节点 JSON：{path}");
+            }
+            else if (mode == "importNode")
+            {
+                string imported = File.ReadAllText(path, Encoding.UTF8);
+                var parsed = JsonNode.Parse(imported, documentOptions: LooseParseOptions);
+                draftText = parsed == null ? "null" : parsed.ToJsonString(PrettyOptions);
+                isOversizeNode = false;
+                SetNotice("已导入节点草稿，点击保存写入存档。");
             }
         }
         catch (Exception ex)
@@ -789,66 +804,100 @@ internal static class ProfileJsonEditorPanel
         bool isBool = !desc.Locked && currentNode is JsonValue bv && bv.TryGetValue<bool>(out _);
         bool canDelete = ProfileFieldCatalog.CanDeletePath(selectedPath);
 
-        float toolBtnW = (w - gap * 4) / 5f;
-        GUI.enabled = prevGui && !isOversizeNode && !desc.Locked;
-        if (InterfaceMenu.Button(new Rect(x, y, toolBtnW, 28), "格式化"))
-        {
-            try
-            {
-                var parsed = JsonNode.Parse(draftText, documentOptions: LooseParseOptions);
-                draftText = parsed == null ? "null" : parsed.ToJsonString(PrettyOptions);
-                SetNotice("已格式化当前节点 JSON。");
-            }
-            catch (JsonException ex)
-            {
-                SetNotice($"JSON 语法错误（第 {ex.LineNumber + 1} 行）：{ex.Message}", true);
-            }
-        }
-        GUI.enabled = prevGui;
-        if (InterfaceMenu.Button(new Rect(x + (toolBtnW + gap), y, toolBtnW, 28), "复制 JSON"))
-        {
-            GUIUtility.systemCopyBuffer = isOversizeNode && currentNode != null
-                ? currentNode.ToJsonString(PrettyOptions)
-                : draftText;
-            SetNotice("已将当前节点完整 JSON 复制到剪贴板。");
-        }
-        GUI.enabled = prevGui && !isOversizeNode && draftText != originalText;
-        if (InterfaceMenu.Button(new Rect(x + 2 * (toolBtnW + gap), y, toolBtnW, 28), "还原草稿"))
-        {
-            draftText = originalText;
-            SetNotice("已恢复为当前存档中的原始值。");
-        }
-        GUI.enabled = prevGui && (isBool || isContainer);
         string fourthLabel = isBool ? "切换布尔值" : (currentNode is JsonArray ? "+ 追加元素" : "+ 新增字段");
-        if (InterfaceMenu.Button(new Rect(x + 3 * (toolBtnW + gap), y, toolBtnW, 28), fourthLabel, addingChild))
-        {
-            if (isBool && currentNode is JsonValue flagVal && flagVal.TryGetValue<bool>(out bool curBool))
-            {
-                draftText = (!curBool).ToString().ToLowerInvariant();
-                BeginSave(selectedPath, draftText);
-            }
-            else
-            {
-                addingChild = !addingChild;
-                if (addingChild && newChildValue.Length == 0) newChildValue = "null";
-            }
-        }
-        GUI.enabled = prevGui && canDelete;
         bool confirmingDelete = confirmDeletePath == selectedPath;
-        if (InterfaceMenu.Button(
-            new Rect(x + 4 * (toolBtnW + gap), y, toolBtnW, 28),
-            confirmingDelete ? "确认删除" : "删除此项",
-            confirmingDelete))
+        var toolbar = new List<(string Label, string Op)>
         {
-            if (confirmingDelete) BeginSave(selectedPath, null, deleteNode: true);
-            else
+            (isOversizeNode ? "展开完整文本" : "格式化", "formatOrExpand"),
+            ("复制 JSON", "copy"),
+            ("粘贴覆盖", "paste"),
+            ("导出节点", "exportNode"),
+            ("导入节点", "importNode"),
+            ("还原草稿", "reset")
+        };
+        if (isBool || isContainer) toolbar.Add((fourthLabel, "addOrBool"));
+        if (canDelete) toolbar.Add((confirmingDelete ? "确认删除" : "删除此项", "delete"));
+
+        GUI.enabled = prevGui;
+        int opIndex = ActionButtons.Draw(new Rect(x, y, w, 28), toolbar.Select(t => t.Label).ToArray(), out float toolbarH, 4);
+        if (opIndex >= 0)
+        {
+            switch (toolbar[opIndex].Op)
             {
-                confirmDeletePath = selectedPath;
-                SetNotice("再次点击确认删除。", true);
+                case "formatOrExpand":
+                    if (isOversizeNode && currentNode != null)
+                    {
+                        originalText = draftText = currentNode.ToJsonString(PrettyOptions);
+                        isOversizeNode = false;
+                        SetNotice("已加载当前节点完整 JSON，可直接编辑保存。");
+                    }
+                    else
+                    {
+                        try
+                        {
+                            var parsed = JsonNode.Parse(draftText, documentOptions: LooseParseOptions);
+                            draftText = parsed == null ? "null" : parsed.ToJsonString(PrettyOptions);
+                            SetNotice("已格式化当前节点 JSON。");
+                        }
+                        catch (JsonException ex)
+                        {
+                            SetNotice($"JSON 语法错误（第 {ex.LineNumber + 1} 行）：{ex.Message}", true);
+                        }
+                    }
+                    break;
+                case "copy":
+                    GUIUtility.systemCopyBuffer = isOversizeNode && currentNode != null
+                        ? currentNode.ToJsonString(PrettyOptions)
+                        : draftText;
+                    SetNotice("已将当前节点完整 JSON 复制到剪贴板。");
+                    break;
+                case "paste":
+                    string clip = GUIUtility.systemCopyBuffer ?? "";
+                    if (!string.IsNullOrWhiteSpace(clip))
+                    {
+                        if (isOversizeNode && currentNode != null) originalText = currentNode.ToJsonString(PrettyOptions);
+                        draftText = JsonEditorText.Accept(clip);
+                        isOversizeNode = false;
+                        SetNotice("已从剪贴板粘贴草稿，点击保存写入存档。");
+                    }
+                    break;
+                case "exportNode":
+                    dialogMode = "exportNode";
+                    dialogTask = WindowsDialogs.PickSaveFile(I18n.Text("导出 JSON 节点"), "json", (session.Length > 0 ? session : "profile") + ".node.json");
+                    break;
+                case "importNode":
+                    if (isOversizeNode && currentNode != null) originalText = currentNode.ToJsonString(PrettyOptions);
+                    dialogMode = "importNode";
+                    dialogTask = WindowsDialogs.PickOpenFile(I18n.Text("导入 JSON 节点"));
+                    break;
+                case "reset":
+                    if (currentNode != null) LoadSelectionIntoEditor(selectedPath);
+                    SetNotice("已恢复为当前存档中的原始值。");
+                    break;
+                case "addOrBool":
+                    if (isBool && currentNode is JsonValue flagVal && flagVal.TryGetValue<bool>(out bool curBool))
+                    {
+                        draftText = (!curBool).ToString().ToLowerInvariant();
+                        BeginSave(selectedPath, draftText);
+                    }
+                    else
+                    {
+                        addingChild = !addingChild;
+                        if (addingChild && newChildValue.Length == 0) newChildValue = "null";
+                    }
+                    break;
+                case "delete":
+                    if (confirmingDelete) BeginSave(selectedPath, null, deleteNode: true);
+                    else
+                    {
+                        confirmDeletePath = selectedPath;
+                        SetNotice("再次点击确认删除。", true);
+                    }
+                    break;
             }
         }
         GUI.enabled = prevGui;
-        y += 34;
+        y += toolbarH + 4;
 
         // Optional inline Add Child / Append Element drawer
         if (addingChild && isContainer)
@@ -974,7 +1023,7 @@ internal static class ProfileJsonEditorPanel
         try
         {
             GUI.SetNextControlName(EditorControl);
-            string next = JsonEditorText.Accept(GUI.TextArea(new Rect(0, 0, width, height), draftText, MaxInlineChars, codeStyle));
+            string next = JsonEditorText.Accept(GUI.TextArea(new Rect(0, 0, width, height), draftText, codeStyle));
             if (revealCaret)
             {
                 var editor = GUIUtility.GetStateObject(Il2CppInterop.Runtime.Il2CppType.Of<TextEditor>(), GUIUtility.keyboardControl)?.TryCast<TextEditor>();
@@ -1075,7 +1124,7 @@ internal static class ProfileJsonEditorPanel
 
     static void SearchWalk(string path, string keyName, JsonNode? node, string[] terms, int depth)
     {
-        if (searchHits.Count >= MaxSearchResults || depth > 9) return;
+        if (searchHits.Count >= MaxSearchResults || depth > 32) return;
         var desc = ProfileFieldCatalog.Describe(path, I18n.English);
         string entity = ResolveEntityLabel(path, node);
         string scalar = node is JsonValue val ? val.ToJsonString() : "";
