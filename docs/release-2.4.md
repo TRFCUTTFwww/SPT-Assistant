@@ -3,6 +3,12 @@
 
 Target: SPT 5.0 BE / EFT 1.3.0.1.48558, Windows x64. Changes since GitHub v2.3.5.
 
+## Startup notification fix — 2026-11-28
+
+- Restore saved settings before enabling toggle notifications, preventing false startup messages for kill effects and raid notifications.
+- Avoid duplicate notification subscriptions and detach the listener before module teardown.
+- Default firearm kill effects and the center kill marker to off, retaining existing saved choices.
+
 ## Release refresh — 2026-11-28
 
 - Speed up AI spawning with warm donor profile cloning, concurrent PMC preparation and immediate settlement when the spawn is ready.

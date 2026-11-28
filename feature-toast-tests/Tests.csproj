@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><TargetFramework>net10.0</TargetFramework><OutputType>Exe</OutputType><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+ <ItemGroup>
+  <Compile Include="../esp-cover/FeatureToasts.cs" Link="FeatureToasts.cs"/>
+  <Reference Include="$(GameRoot)/BepInEx/core/BepInEx.Core.dll"/>
+  <Reference Include="$(GameRoot)/BepInEx/core/Mono.Cecil.dll"/>
+ </ItemGroup>
+</Project>

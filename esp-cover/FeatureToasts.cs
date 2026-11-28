@@ -8,7 +8,7 @@ internal static class FeatureToasts {
  sealed record Request(string Text,float Lifetime,IntPtr Raid);
  sealed record Toast(Request Notice,float Time);
  static readonly System.Collections.Concurrent.ConcurrentQueue<Request> pending=new();static readonly List<Toast> entries=new();static ConfigFile? config;
- internal static void Initialize(Plugin plugin){config=plugin.Config;config.SettingChanged+=Changed;}
+ internal static void Initialize(Plugin plugin){if(ReferenceEquals(config,plugin.Config))return;if(config!=null)config.SettingChanged-=Changed;config=plugin.Config;config.SettingChanged+=Changed;}
  static void Changed(object? sender,SettingChangedEventArgs args){var entry=args.ChangedSetting;bool enabled;if(entry.BoxedValue is bool flag)enabled=flag;else if(entry.BoxedValue is Enum mode&&Enum.GetNames(mode.GetType()).Contains("Off"))enabled=mode.ToString()!="Off";else return;string name=entry.Description.Tags.OfType<CnConfig.ConfigurationManagerAttributes>().FirstOrDefault()?.DispName??entry.Definition.Key;Show(name,enabled);}
  internal static void Show(string name,bool enabled)=>Show(name+(enabled?" · 已开启":" · 已关闭"));
  internal static void Show(string text)=>pending.Enqueue(new(text,4,IntPtr.Zero));

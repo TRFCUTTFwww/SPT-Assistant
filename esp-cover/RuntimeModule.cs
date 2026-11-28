@@ -38,12 +38,13 @@ public sealed class RuntimeModule:IRuntimeModule {
   yield return RaidChat.Initialize;
   yield return ()=>InterfaceMenu.Initialize(plugin,host.PluginDirectory);
   yield return PerformanceHud.Initialize;
-  yield return ()=>FeatureToasts.Initialize(plugin);
   yield return ()=>RaidNotifications.Initialize(plugin);
   yield return KillEffects.Initialize;
   yield return ()=>I18n.Initialize(plugin);
   yield return ()=>overlay=new Overlay();
   yield return ReloadInputRecovery.Arm;
+  // Config binding restores saved values and emits SettingChanged. Listen only after startup is complete.
+  yield return ()=>FeatureToasts.Initialize(plugin!);
   yield return ()=>{
    int reused=plugin!.Patches.ReusedCount,created=plugin.Patches.CreatedCount;
    if(AppDomain.CurrentDomain.GetData(ReloadStampKey) is long started){
@@ -65,7 +66,7 @@ public sealed class RuntimeModule:IRuntimeModule {
  public void Unload(){foreach(var step in UnloadSteps())step();}
  public IEnumerable<Action> UnloadSteps(){
   AppDomain.CurrentDomain.SetData(ReloadStampKey,Stopwatch.GetTimestamp());
-  var actions=new List<Action>{DiagnosticsPanel.Reset,UpdateChecker.Reset,BtrServices.Reset,BtrInstantTransfer.Reset,FunModuleManager.Reset,OptionalCombatIntegration.Reset,RaidChat.Reset,WorldEditor.Reset,ContainerLibrary.Reset,MineLibrary.Reset,RaidParameterPanel.Reset,AiServerInfo.Reset,WorldItemPlacement.Reset,RaidItemPoolGuard.Reset,AiFreePlacement.Reset,AiDifficultyControl.Shutdown,I18n.Shutdown,QuestWaitSync.Reset,HideoutCraftControl.Shutdown,CultistCircleControl.Shutdown,CornerVersionControl.Shutdown,ProfileAdminPanel.Reset,ProfileBackupPanel.Reset,ProfileJsonEditorPanel.Reset,ServerJsonEditorPanel.Reset,RaidHistoryPanel.Reset,HomeDashboard.Reset,ItemFirContext.Reset,ItemInventoryEditor.Reset,PlayerWeaponPresets.Reset,WeaponEditor.ShutdownStash,OnlineTrading.Reset,MiscPanel.Reset,MagazineAmmoCompatibility.Reset,NightVisionAssist.Shutdown,ScopeSticker.Shutdown,OpticZoom.Shutdown,MiscNativeProtection.Reset,FleaFees.Reset,FleaClientHooks.Reset,FleaMarketPanel.Reset,FleaOfferEditor.Reset,NativeFleaOfferEdit.Reset,FleaMarketShortcut.Reset,ScavDiplomacy.Reset,UniversalKeys.Reset,LaserEyes.Reset,RaidClock.Shutdown,RaidStash.Shutdown,GrenadeArc.Dispose,KillEffects.Reset,PasscodeHints.Reset,CommandoConsole.Reset,RuntimePerformance.Shutdown,FeatureToasts.Shutdown,RaidNotifications.Reset,FloatingStatus.Shutdown,InterfaceMenu.Shutdown};
+  var actions=new List<Action>{FeatureToasts.Shutdown,DiagnosticsPanel.Reset,UpdateChecker.Reset,BtrServices.Reset,BtrInstantTransfer.Reset,FunModuleManager.Reset,OptionalCombatIntegration.Reset,RaidChat.Reset,WorldEditor.Reset,ContainerLibrary.Reset,MineLibrary.Reset,RaidParameterPanel.Reset,AiServerInfo.Reset,WorldItemPlacement.Reset,RaidItemPoolGuard.Reset,AiFreePlacement.Reset,AiDifficultyControl.Shutdown,I18n.Shutdown,QuestWaitSync.Reset,HideoutCraftControl.Shutdown,CultistCircleControl.Shutdown,CornerVersionControl.Shutdown,ProfileAdminPanel.Reset,ProfileBackupPanel.Reset,ProfileJsonEditorPanel.Reset,ServerJsonEditorPanel.Reset,RaidHistoryPanel.Reset,HomeDashboard.Reset,ItemFirContext.Reset,ItemInventoryEditor.Reset,PlayerWeaponPresets.Reset,WeaponEditor.ShutdownStash,OnlineTrading.Reset,MiscPanel.Reset,MagazineAmmoCompatibility.Reset,NightVisionAssist.Shutdown,ScopeSticker.Shutdown,OpticZoom.Shutdown,MiscNativeProtection.Reset,FleaFees.Reset,FleaClientHooks.Reset,FleaMarketPanel.Reset,FleaOfferEditor.Reset,NativeFleaOfferEdit.Reset,FleaMarketShortcut.Reset,ScavDiplomacy.Reset,UniversalKeys.Reset,LaserEyes.Reset,RaidClock.Shutdown,RaidStash.Shutdown,GrenadeArc.Dispose,KillEffects.Reset,PasscodeHints.Reset,CommandoConsole.Reset,RuntimePerformance.Shutdown,RaidNotifications.Reset,FloatingStatus.Shutdown,InterfaceMenu.Shutdown};
   if(overlay!=null)actions.AddRange(overlay.UnloadSteps());
   // Deactivate all persistent bridge delegates in O(N) pointer clears (<0.1ms)
   // without triggering Harmony.Unpatch / DobbyDetour native recompilation.

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.4 — Silence startup feature toggles and default kill effects off (2026-11-28)
+
+- Subscribe to toggle notifications after startup config restoration, prevent duplicate listeners, and detach before module teardown.
+- Default firearm kill effects and the center kill marker to off.
+- Add real BepInEx configuration and compiled startup/default regression checks.
+
+[Details / 更新说明](docs/release-startup-feature-toasts-20261128.md)
+
+
 ## 2.4 — Refresh GitHub release from current source (2026-11-28)
 
 - Rebuild the full installer, manual ZIP and standalone core from source snapshot `04f9e0f`, including the latest AI spawn, hot-reload, inventory, trading and scope sticker changes.
